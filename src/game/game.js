@@ -1,3 +1,4 @@
+import { updateParrot, shoulder } from './parrot.js';
 import { instalarCarona, horseSeat } from './horseRide.js';
 import { bossDamage, strikeShell } from './combatRules.js';
 import { blocks, tickExpedition, expeditionInteractions, drawExpedition } from './expeditions.js';
@@ -437,9 +438,10 @@ export class Game {
   }
   // Golpe do animal: mais leve que o do jogador (sem tremer a tela nem pausar o jogo)
   petHit(a, e, luta) {
+    if (e.hp <= 0 || e.inv || e.submerged || e.clone || e.id === 'leviata') return;
     if (!this.souHost() && e.nid) return this.netGolpe(e, luta.mult, Math.atan2(e.y - a.y, e.x - a.x), 40, luta.mult * 9, luta.som);
     (e.hitBy = e.hitBy || new Set()).add(this.meuId());
-    const { dmg } = this.dmgCalc(luta.mult, e);
+    const dmg = bossDamage(e, this.dmgCalc(luta.mult, e).dmg);
     e.hp -= dmg; e.flash = 0.1; e.aggro = true; if (e.kind === 'boss') e.lastHit = this.T;
     if (e.kind !== 'boss') { const ang = Math.atan2(e.y - a.y, e.x - a.x); e.kx += Math.cos(ang) * 40; e.ky += Math.sin(ang) * 40; }
     if (config.numerosDano) this.addText(e.x + rand(-6, 6), e.y - e.r - 8, luta.som + ' ' + dmg, '#FFE38A', 11);
@@ -449,6 +451,7 @@ export class Game {
   // Animal que acompanha o jogador: segue atrás; o cachorro morde vícios e acha moedas; a ovelha cura devagar
   updatePet(dt) {
     const a = this.pet, p = this.p; if (!a || p.dead) return;
+    if (a.kind === 'papagaio') return updateParrot(this, a, dt);
     if (p.mounted) { a.x = p.x; a.y = p.y; a.fx = p.fx; a.moving = p.moving; return; }
     a.cd -= dt;
     let tx = p.x - p.fx * 26, ty = p.y - p.fy * 14 + 4, spd = this.st.spd * 1.15;
@@ -1536,8 +1539,8 @@ export class Game {
   /* ================= Rede ================= */
   sendPos() {
     const p = this.p, c = this.char;
-    const st = { id: c.id, w: this.worldSince, sala: this.salaAtual(), rideDriver: this.rideDriver?.id || null, ridePassenger: this.ridePassenger?.id || null, rideToken: (this.rideDriver || this.ridePassenger)?.token || null, boat: !!p.boat, swimming: !!p.swimming, hp: +(Math.max(0, p.hp) / this.st.maxHp).toFixed(2), name: c.name, cls: c.cls, look: c.look, lvl: c.level, cla: this.social.clan?.tag, pet: this.st.pet ? { k: this.st.pet, m: p.mounted ? 1 : 0 } : undefined, x: Math.round(p.x), y: Math.round(p.y), fx: +p.fx.toFixed(2), fy: +p.fy.toFixed(2), mv: p.moving ? 1 : 0, atk: p.atkT > 0 ? 1 : 0, eq: c.data.eq };
-    const key = st.x + ',' + st.y + ',' + st.atk + ',' + st.fx + ',' + st.boat + ',' + st.swimming + ',' + st.pet?.m + ',' + st.rideDriver + ',' + st.ridePassenger + ',' + st.rideToken;
+    const st = { id: c.id, w: this.worldSince, sala: this.salaAtual(), rideDriver: this.rideDriver?.id || null, ridePassenger: this.ridePassenger?.id || null, rideToken: (this.rideDriver || this.ridePassenger)?.token || null, boat: !!p.boat, swimming: !!p.swimming, hp: +(Math.max(0, p.hp) / this.st.maxHp).toFixed(2), name: c.name, cls: c.cls, look: c.look, lvl: c.level, cla: this.social.clan?.tag, pet: this.st.pet ? { k: this.st.pet, m: p.mounted ? 1 : 0, ...(this.st.pet === 'papagaio' && this.pet ? { x: Math.round(this.pet.x), y: Math.round(this.pet.y), f: !!this.pet.moving, fx: this.pet.fx } : {}) } : undefined, x: Math.round(p.x), y: Math.round(p.y), fx: +p.fx.toFixed(2), fy: +p.fy.toFixed(2), mv: p.moving ? 1 : 0, atk: p.atkT > 0 ? 1 : 0, eq: c.data.eq };
+    const key = st.x + ',' + st.y + ',' + st.atk + ',' + st.fx + ',' + st.boat + ',' + st.swimming + ',' + st.pet?.m + ',' + st.rideDriver + ',' + st.ridePassenger + ',' + st.rideToken + ',' + st.pet?.x + ',' + st.pet?.y + ',' + st.pet?.f;
     if (key === this.lastSent && this.T - (this.lastSentT || 0) < 3) return;
     this.lastSent = key; this.lastSentT = this.T;
     this.net.send(st);
@@ -1554,6 +1557,10 @@ export class Game {
     for (const [id, o] of this.others) {
       if (now - o.seen > 12000) { this.others.delete(id); continue; }
       o.x = lerp(o.x, o.tx, Math.min(1, dt * 10)); o.y = lerp(o.y, o.ty, Math.min(1, dt * 10));
+      if (o.pet?.k === 'papagaio' && Number.isFinite(o.pet.x) && Number.isFinite(o.pet.y)) {
+        const a = o.parrotDraw || (o.parrotDraw = { x: o.pet.x, y: o.pet.y });
+        a.x = lerp(a.x, o.pet.x, Math.min(1, dt * 15)); a.y = lerp(a.y, o.pet.y, Math.min(1, dt * 15));
+      } else o.parrotDraw = null;
       if (o.mv) o.walk += dt;
     }
   }
@@ -1818,7 +1825,7 @@ export class Game {
       if (dv) for (let i = 0; i < 9; i++) { const sx = dv.x + 40 + Math.cos(i * 2.1) * 70 + Math.sin(T0 * 0.3 + i) * 10, sy = dv.y + Math.sin(i * 1.7) * 50; list.push({ y: sy, d: () => drawSheep(g, sx, sy, T0 + i, false) }); }
     }
     if (this.pecado) list.push({ y: this.pecado.y, d: () => drawBoss(g, { id: 'pecado', x: this.pecado.x, y: this.pecado.y, r: 22, alpha: Math.min(1, this.pecado.t * 0.5), flash: 0 }, T0) });
-    if (this.pet && !p.mounted && !p.dead) { const a = this.pet; list.push({ y: a.y, d: () => drawAnimal(g, a.kind, a.x, a.y, { t: T0, fx: a.fx, moving: a.moving, walk: a.walk }) }); }
+    if (this.pet && this.pet.kind !== 'papagaio' && !p.mounted && !p.dead) { const a = this.pet; list.push({ y: a.y, d: () => drawAnimal(g, a.kind, a.x, a.y, { t: T0, fx: a.fx, moving: a.moving, walk: a.walk }) }); }
     if (!p.dead) list.push({ y: p.y, d: () => this.drawPlayer(g) });
     list.sort((a, b) => a.y - b.y);
     for (const it of list) it.d();
@@ -1947,6 +1954,7 @@ export class Game {
     if (ride) g.restore();
     if (seat) g.restore();
     g.globalAlpha = 1;
+    if (this.pet?.kind === 'papagaio') { const a = this.pet, at = a.state === 'perched' || !a.state ? shoulder(p, !!this.rideDriver) : a; drawAnimal(g, 'papagaio', at.x, at.y, { t: T0, fx: a.fx, moving: a.moving }); }
     this.nameTag(g, p.x + (seat?.x || 0), p.y - 56 + (seat ? seat.y - 14 : 0) - (ride ? RIDE_H[this.pet.kind] || 12 : 0), c.name, c.level, '#FFE38A', this.social.clan?.tag);
   }
 
@@ -1954,7 +1962,7 @@ export class Game {
     const seat = o.rideDriver ? horseSeat(o.fx, o.fy) : null;
     const ride = !seat && o.pet?.m;
     if (seat) { g.save(); g.translate(seat.x, seat.y); }
-    if (o.pet && !ride && !seat) drawAnimal(g, o.pet.k, o.x - (o.fx || 1) * 26, o.y + 2, { t: this.T, fx: o.fx || 1, moving: !!o.mv, walk: o.walk });
+    if (o.pet && o.pet.k !== 'papagaio' && !ride && !seat) drawAnimal(g, o.pet.k, o.x - (o.fx || 1) * 26, o.y + 2, { t: this.T, fx: o.fx || 1, moving: !!o.mv, walk: o.walk });
     if (ride) { drawAnimal(g, o.pet.k, o.x, o.y, { t: this.T, fx: o.fx, moving: !!o.mv, walk: o.walk }); g.save(); g.translate(0, -(RIDE_H[o.pet.k] || 12)); }
     const kind = ITEMS[o.eq?.arma]?.palavra ? 'espada' : CLASSES[o.cls]?.arma || 'espada';
     drawPerson(g, o.x, o.y, 1, o.look || {}, personMotion(o, o.look || {}, { t: this.T, fx: o.fx, fy: o.fy, walk: ride || seat ? 0 : o.walk, moving: ride || seat ? false : !!o.mv,
@@ -1962,6 +1970,11 @@ export class Game {
       ...this.equipLook(o.eq || {}) }));
     if (ride) g.restore();
     if (seat) g.restore();
+    if (o.pet?.k === 'papagaio') {
+      const flying = o.pet.f && Number.isFinite(o.pet.x) && Number.isFinite(o.pet.y);
+      const at = flying ? (o.parrotDraw || o.pet) : shoulder(o, !!seat);
+      drawAnimal(g, 'papagaio', at.x, at.y, { t: this.T, fx: o.pet.fx ?? o.fx, moving: !!flying });
+    }
     // amigos em verde, colegas de clã em dourado
     const mesmoCla = o.cla && o.cla === this.social.clan?.tag;
     this.nameTag(g, o.x + (seat?.x || 0), o.y - 56 + (seat ? seat.y - 14 : ride ? -17 : 0), o.name, o.lvl, this.social.friends.has(o.id) ? '#7CE0A0' : mesmoCla ? '#FFD23F' : '#9FD8FF', o.cla);

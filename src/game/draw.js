@@ -1,3 +1,4 @@
+import { drawParrot } from './parrot.js';
 // Desenho procedural de personagens, inimigos e chefes (tudo em canvas, sem imagens).
 import { TAU, rr, ell } from '../util.js';
 export { drawPerson, drawWeapon, getPersonPose } from './character-art.js';
@@ -59,6 +60,7 @@ const ANIMAIS = {
   gato: { body: '#E08A3C', dark: '#9A5420', mane: '#9A5420', w: 7, h: 4, leg: 4, head: 0.5, cao: true, gato: true }
 };
 export function drawAnimal(g, kind, x, y, st) {
+  if (kind === 'papagaio') return drawParrot(g, x, y, st);
   if (kind === 'ovelha') return drawSheep(g, x, y, st.t, false, st.fx < 0);
   const A = ANIMAIS[kind]; if (!A) return;
   const t = st.t || 0, dir = (st.fx || 1) < 0 ? -1 : 1, ph = st.moving ? st.walk * (A.cao ? 20 : 13) : 0;

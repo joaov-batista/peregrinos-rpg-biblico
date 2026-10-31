@@ -42,3 +42,11 @@ No mundo online, um cavalo comporta **um condutor e um passageiro**. Aproxime-se
 O dono conduz; o passageiro acompanha o cavalo e aparece sentado atrás. **R**, o botão de montaria ou **Interagir** permitem ao passageiro descer. Para combater, ele precisa descer. Desmontar, cair da montaria, morrer, guardar/trocar o cavalo, mudar de área ou perder a conexão encerra a carona. Pedidos e reservas expiram; o segundo assento não aceita dois passageiros simultaneamente. A carona não é salva entre sessões.
 
 `npm test` inclui os testes do protocolo de carona. `node tests/horse-browser.cjs`, com Vite e Playwright disponíveis, abre dois clientes locais e testa os botões, movimento, desembarque, reembarque e queda. Esse teste usa transporte simulado entre navegadores; não depende de credenciais Supabase.
+
+## Papagaio de combate
+
+Labão vende o **Papagaio** por **650 denários**, a partir do **nível 4**. Ele usa o slot de companheiro. Ao comprar com o slot vazio, é equipado automaticamente; caso já tenha um animal, equipe-o em **Menu → Personagem**.
+
+O papagaio repousa no ombro e voa para bicar um inimigo visível a até 230 pixels. Cada voo causa uma única bicada (38% do ataque do jogador, antes de defesa e demais regras), seguida do retorno ao ombro, com intervalo de 1,8s entre ataques. Não desperta chefes fora de combate, não ataca através de paredes nem perfura as escamas do Leviatã. Na garupa, permanece no ombro sem atacar. Outros jogadores recebem a posição e o estado do voo pela sincronização normal.
+
+Validação específica: `node tests/parrot-browser.cjs` com Vite e Playwright disponíveis; cobre compra, equipamento, desenho, dano, retorno, mensagem de rede e persistência. `npm test` também cobre as transições de comportamento.

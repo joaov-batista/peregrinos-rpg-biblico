@@ -19,7 +19,7 @@ export const WORLD_NPCS = [
   {
     id: 'labao', nome: 'Labão, o Criador', tx: 99, ty: 76, loja: 'animais',
     look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#7A5232', cape: '#ECE3CF', style: 'turbante', body: 'robusto', beard: true },
-    falas: ['Jacó cuidou dos meus rebanhos por vinte anos (Gn 31:41). Tenho burrinhos, cavalos, ovelhas, gatos e cães!', 'Montaria se monta com R (ou o botão 🐎). O burrinho é manso, mas o cavalo corre como o vento!']
+    falas: ['Jacó cuidou dos meus rebanhos por vinte anos (Gn 31:41). Tenho burrinhos, cavalos, ovelhas, gatos, cães e papagaios!', 'Montaria se monta com R (ou o botão 🐎). O burrinho é manso, mas o cavalo corre como o vento!']
   },
   {
     id: 'samuel', nome: 'Samuel, o Profeta', tx: 100, ty: 81, classe: true,
@@ -185,7 +185,7 @@ export const LOJAS = {
       'chicote_trancado', 'aguilhada_sangar', 'chicote_gideao', 'chicote_juiz',
       'sandalias', 'botas_viajante', 'botas_couro_fino', 'cinto_couro', 'cinto_sacerdote', 'anel_jose', 'manto_cores']
   },
-  animais: { nome: 'Curral de Labão', itens: ['burrinho', 'ovelha', 'gato', 'cachorro', 'cavalo'] },
+  animais: { nome: 'Curral de Labão', itens: ['burrinho', 'ovelha', 'gato', 'cachorro', 'papagaio', 'cavalo'] },
   provisoes: { nome: 'Tenda de Lídia', itens: ['pao', 'uvas', 'tamaras', 'peixe', 'agua_viva', 'mana', 'roma', 'mel', 'oleo', 'leite_mel', 'pergaminho', 'semente_trigo', 'semente_uva', 'semente_tamara', 'semente_roma'] }
 };
 
