@@ -8,11 +8,13 @@
 // b.step / b.stepT controlam as etapas; o golpe termina chamando G.endAct(b, espera).
 import { TAU, rand, pick, angDiff } from '../util.js';
 import { sfx } from '../audio.js';
+import { CHALLENGE_MOVES, CHALLENGE_RULES } from './bossChallenges.js';
 import { FALSAS } from '../data/bestiary.js';
 
 const fala = (G, b, o, dy = 60) => { if (o.fala) G.addText(b.x, b.y - dy, o.fala, o.corFala || '#FFFFFF', 15); };
 
 export const MOVES = {
+  ...CHALLENGE_MOVES,
   // Anel de projéteis em volta do chefe (moedas do Mamom). n, vel, raio, cor, som, aviso
   anel(G, b, o) {
     if (b.step === 0) { b.step = 1; b.talk = true; G.tele.push({ kind: 'circle', x: b.x, y: b.y, r: b.r + 20, t: o.aviso ?? 0.5, max: o.aviso ?? 0.5, color: o.corAviso || '242,193,78' }); }
@@ -45,7 +47,7 @@ export const MOVES = {
   // Chama vícios para ajudar. tipos[], n, forca (multiplicador), espalha (px), fala
   invocar(G, b, o) {
     const s = o.espalha ?? 60;
-    for (let i = 0; i < (o.n ?? 2); i++) G.enemies.push(G.makeEnemy(pick(o.tipos), b.x + rand(-s, s), b.y + rand(-20, s), o.forca ?? 1.2));
+    for (let i = 0; i < Math.min(o.n ?? 2, 10 - G.enemies.filter(e => e.summoner === b.nid).length); i++) { const e = G.makeEnemy(pick(o.tipos), b.x + rand(-s, s), b.y + rand(-20, s), o.forca ?? 1.2); e.summoner = b.nid; e.xp = 0; e.ouro = 0; G.enemies.push(e); }
     fala(G, b, o, 70); G.endAct(b, o.espera ?? 2);
   },
 
@@ -65,7 +67,7 @@ export const MOVES = {
   // Cria cópias falsas de 1 de vida (somem num golpe). n, fala
   clones(G, b, o) {
     G.burst(b.x, b.y, 30, b.d.cor, 240); fala(G, b, o);
-    for (let i = 0; i < (o.n ?? 3); i++) {
+    for (let i = G.enemies.filter(e => e.clone).length; i < (o.n ?? 3); i++) {
       const k = G.makeBoss(b.id, b.x + rand(-140, 140), b.y + rand(-80, 80));
       k.clone = true; k.hp = 1; k.max = 1; k.engaged = true; k.cd = rand(1, 2);
       if (G.cur.map.collides(k.x, k.y, k.r)) { k.x = b.x; k.y = b.y; }
@@ -107,7 +109,7 @@ export const MOVES = {
     const vezes = o.vezes ?? 3, R = o.raioArea ?? 74;
     if (b.stepT > (o.intervalo ?? 0.5) * b.step && b.step < vezes) {
       b.step++; const x = c.p.x, y = c.p.y;
-      G.tele.push({ kind: 'circle', x, y, r: R, t: o.aviso ?? 0.85, max: o.aviso ?? 0.85, color: o.corAviso || '255,60,60', dano: b.atk * (o.dano ?? 1.4), onEnd: () => { G.shake(8); G.burst(x, y, 24, o.cor || '#FF5A3C', 260); if (Math.hypot(G.p.x - x, G.p.y - y) < R + G.p.r) G.damagePlayer(b.atk * (o.dano ?? 1.4), { x, y }); } });
+      G.tele.push({ kind: 'circle', x, y, r: R, rock: o.rocha, t: o.aviso ?? 0.85, max: o.aviso ?? 0.85, src: b, color: o.corAviso || '255,60,60', dano: b.atk * (o.dano ?? 1.4), onEnd: () => { G.shake(8); G.burst(x, y, 24, o.cor || '#FF5A3C', 260); if (Math.hypot(G.p.x - x, G.p.y - y) < R + G.p.r) G.damagePlayer(b.atk * (o.dano ?? 1.4), { x, y, src: b }); } });
     }
     if (b.stepT > (o.dur ?? 2.4)) G.endAct(b, o.espera ?? 1.2);
   },
@@ -119,7 +121,7 @@ export const MOVES = {
       b.step = 1; sfx('boss'); fala(G, b, o, 70);
       for (let i = 0; i < (o.n ?? 5); i++) {
         const x = c.p.x + rand(-(o.espalhaX ?? 140), o.espalhaX ?? 140), y = c.p.y + rand(-(o.espalhaY ?? 110), o.espalhaY ?? 110), t = 0.85 + i * 0.12;
-        G.tele.push({ kind: 'circle', x, y, r: R, t, max: t, color: o.corAviso || '255,120,60', dano: b.atk * (o.dano ?? 1.1), onEnd: () => { G.shake(5); G.burst(x, y, 14, o.cor || '#9A8466', 180); if (Math.hypot(G.p.x - x, G.p.y - y) < R + G.p.r) G.damagePlayer(b.atk * (o.dano ?? 1.1), { x, y }); } });
+        G.tele.push({ kind: 'circle', x, y, r: R, t, max: t, src: b, color: o.corAviso || '255,120,60', dano: b.atk * (o.dano ?? 1.1), onEnd: () => { G.shake(5); G.burst(x, y, 14, o.cor || '#9A8466', 180); if (Math.hypot(G.p.x - x, G.p.y - y) < R + G.p.r) G.damagePlayer(b.atk * (o.dano ?? 1.1), { x, y, src: b }); } });
       }
     }
     if (b.stepT > (o.dur ?? 2.2)) G.endAct(b, o.espera ?? 1.1);
@@ -130,7 +132,7 @@ export const MOVES = {
     if (b.step === 0) { b.step = 1; G.tele.push({ kind: 'circle', x: b.x, y: b.y, r: b.r + 30, t: 0.7, max: 0.7, color: o.corAviso || '255,120,60' }); }
     if (b.step === 1 && b.stepT > 0.7) {
       b.step = 2; G.shake(14); sfx('boss');
-      for (let k = 0; k < (o.ondas ?? 2); k++) G.hazards.push({ ring: true, x: b.x, y: b.y, r: b.r, spd: o.vel ?? 240, t: 1.6, delay: k * 0.5, dmg: b.atk * (o.dano ?? 1), hit: false, color: o.cor || '255,170,90' });
+      for (let k = 0; k < (o.ondas ?? 2); k++) G.hazards.push({ ring: true, x: b.x, y: b.y, r: b.r, spd: o.vel ?? 240, t: 1.6, delay: k * 0.5, dmg: b.atk * (o.dano ?? 1), hit: false, src: b, color: o.cor || '255,170,90' });
     }
     if (b.stepT > (o.dur ?? 2.6)) G.endAct(b, o.espera ?? 1.2);
   },
@@ -141,7 +143,7 @@ export const MOVES = {
       b.step = 1; const R = o.raioArea ?? 56, cor = o.cor || '210,65,110';
       for (let i = 0; i < (o.n ?? 4); i++) {
         const x = c.p.x + rand(-(o.espalhaX ?? 90), o.espalhaX ?? 90), y = c.p.y + rand(-(o.espalhaY ?? 90), o.espalhaY ?? 90);
-        G.tele.push({ kind: 'circle', x, y, r: R, t: 0.9, max: 0.9, color: cor, onEnd: () => G.hazards.push({ x, y, r: R, t: o.duracao ?? 3.2, dmg: b.atk * (o.dano ?? 0.5), tick: 0, color: cor }) });
+        G.tele.push({ kind: 'circle', x, y, r: R, t: 0.9, max: 0.9, color: cor, onEnd: () => G.hazards.push({ x, y, r: R, t: o.duracao ?? 3.2, dmg: b.atk * (o.dano ?? 0.5), tick: 0, src: b, color: cor }) });
       }
     }
     if (b.stepT > (o.dur ?? 1.2)) G.endAct(b, o.espera ?? 1.6);
@@ -151,7 +153,7 @@ export const MOVES = {
   encanto(G, b, o, dt, c) {
     const alcance = o.alcance ?? 320;
     if (b.step === 0) { b.step = 1; G.tele.push({ kind: 'ring', x: b.x, y: b.y, r: alcance, t: 0.8, max: 0.8, color: o.corAviso || '255,120,170' }); fala(G, b, o, 70); }
-    if (b.step === 1 && b.stepT > 0.8) { b.step = 2; if (c.dist < alcance + 10) { c.p.charm = { src: b, t: o.duracao ?? 2.4 }; G.addText(c.p.x, c.p.y - 44, o.aviso || 'ESQUIVE PARA FUGIR!', '#FFB3D1', 15); } }
+    if (b.step === 1 && b.stepT > 0.8) { b.step = 2; if (c.dist < alcance + 10 && !(c.p.dodgeT > 0) && !(c.p.inv > 0)) { c.p.charm = { src: b, t: o.duracao ?? 2.4 }; G.addText(c.p.x, c.p.y - 44, o.aviso || 'ESQUIVE PARA FUGIR!', '#FFB3D1', 15); } }
     if (b.stepT > (o.dur ?? 3.3)) G.endAct(b, o.espera ?? 1.2);
   },
 
@@ -198,7 +200,7 @@ export const MOVES = {
   // Onda em faixa reta na direção do jogador. comprimento, largura, repete (true = 2ª onda mirando de novo)
   onda(G, b, o, dt, c) {
     const len = o.comprimento ?? 520, w = o.largura ?? 70, cor = o.corAviso || '90,200,230';
-    const solta = (a, t) => G.tele.push({ kind: 'line', x: b.x, y: b.y, a, len, w, t, max: t, color: cor, dano: b.atk * (o.dano ?? 1.5), onEnd: () => {
+    const solta = (a, t) => G.tele.push({ kind: 'line', x: b.x, y: b.y, a, len, w, t, max: t, src: b, color: cor, dano: b.atk * (o.dano ?? 1.5), onEnd: () => {
       G.shake(10);
       for (let i = 0; i < 30; i++) G.parts.push({ x: b.x + Math.cos(a) * i * 17, y: b.y + Math.sin(a) * i * 17, vx: rand(-40, 40), vy: rand(-80, -20), life: 0.8, max: 0.8, size: 6, color: o.cor || '#9FE6F0' });
       if (G.inLine(G.p, b.x, b.y, a, len, w)) G.damagePlayer(b.atk * (o.dano ?? 1.5), b);
@@ -222,6 +224,7 @@ export const MOVIMENTOS = {
 
 // Regras passivas que valem a luta toda (a "lição" do chefe costuma morar aqui).
 export const REGRAS = {
+  ...CHALLENGE_RULES,
   // aura que deixa o jogador lento. raio, lentidao, falas[], cor
   aura(G, b, r, dt, c) {
     if (c.dist >= (r.raio ?? 190)) return;
@@ -250,6 +253,7 @@ export const REGRAS = {
 
 // Multiplicador de dano que as regras do chefe aplicam aos golpes do jogador.
 export function modDano(G, b) {
+  if (b.id === 'behemote') return b.shellOpen > 0 ? 0.65 : 0.06;
   const r = b.d?.regras?.armadura; if (!r) return 1;
   if (b.exposto > 0) return (r.bonus ?? 1.5) * (r.bonusArma?.[G.st.weapon] ?? 1);
   if (G.T - (b.tinc || 0) > 1.2) { b.tinc = G.T; G.addText(b.x, b.y - b.r - 50, 'A armadura protege! Apare a ' + (r.nomeGolpe || 'lança') + '.', '#D9C7A0', 12); sfx('block'); }

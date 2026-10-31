@@ -15,13 +15,13 @@ export function newCharData(cls) {
   };
 }
 
-export function xpNeed(lv) { return Math.floor(40 * Math.pow(lv, 1.55)); }
+export function xpNeed(lv) { return Math.floor(85 * Math.pow(lv, 1.62)); }
 
 export function computeStats(c) {
   const C = CLASSES[c.cls], lv = c.level - 1;
   const s = {
     maxHp: Math.round(C.base.hp + C.grow.hp * lv), maxFe: Math.round(C.base.fe + C.grow.fe * lv),
-    atk: C.base.atk + C.grow.atk * lv, def: C.base.def + C.grow.def * lv, spd: C.base.spd,
+    atk: C.base.atk + C.grow.atk * lv * 0.7, def: C.base.def + C.grow.def * lv * 0.75, spd: C.base.spd,
     block: 0.5, weapon: C.arma, palavra: false, reviver: false, esquiva: 1, ouro: 1, legendary: 0
   };
   for (const slot of SLOTS) {

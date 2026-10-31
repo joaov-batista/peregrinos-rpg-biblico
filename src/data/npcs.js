@@ -188,3 +188,21 @@ export const LOJAS = {
   animais: { nome: 'Curral de Labão', itens: ['burrinho', 'ovelha', 'gato', 'cachorro', 'cavalo'] },
   provisoes: { nome: 'Tenda de Lídia', itens: ['pao', 'uvas', 'tamaras', 'peixe', 'agua_viva', 'mana', 'roma', 'mel', 'oleo', 'leite_mel', 'pergaminho', 'semente_trigo', 'semente_uva', 'semente_tamara', 'semente_roma'] }
 };
+
+// Trilha principal: recomendações não invalidam missões e saves já iniciados.
+export const MISSION_PATH = [
+  ['q_preguica', 1, 'Aprenda a sair dos avisos de sono e a aparar.'],
+  ['q_desanimo', 3, 'Controle grupos e guarde fôlego para fugir.'],
+  ['q_muros', 5, 'Sobreviva ao contato: não fique cercado.'],
+  ['q_medo', 7, 'Leia os avanços e domine a defesa perfeita.'],
+  ['q_golias', 12, 'Apare três estocadas; use a funda na abertura.'],
+  ['q_beemote', 16, 'Oito golpes pesados quebram a carcaça. Escape da prisão.'],
+  ['q_leviata', 20, 'Só lanças temporárias e jatos devolvidos vencem as escamas.']
+];
+MISSION_PATH.forEach(([id, nivel, dica], i) => {
+  Object.assign(QUESTS[id], { nivel, etapa: i + 1, requer: i ? MISSION_PATH[i - 1][0] : null, dica });
+});
+QUESTS.q_ecos = { titulo: 'Ecos esquecidos', desc: 'Investigue inscrições escondidas em 3 fases diferentes. A recompensa surge ao encontrar a terceira.', tipo: 'eco', alvo: '*', qtd: 3, recompensa: { xp: 100, itens: { selo_vigilia: 1 } } };
+QUESTS.q_lampada = { titulo: 'As cinco luzes', desc: 'Encontre os 5 ecos nas fases da semana. A última inscrição revela um tesouro.', tipo: 'eco', alvo: '*', qtd: 5, recompensa: { xp: 180, itens: { sandalias_viajante: 1 } } };
+
+for (const [id, requer] of Object.entries({ q_gideao: 'q_muros', q_sansao: 'q_medo', q_josue: 'q_medo', q_elias: 'q_medo', q_jo: 'q_leviata' })) QUESTS[id].requer = requer;

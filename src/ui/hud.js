@@ -1,3 +1,4 @@
+import { MISSION_PATH, WORLD_NPCS } from '../data/npcs.js';
 // Interface dentro do jogo: HUD, diálogos, quiz, lojas, menu, ranking e telas de vitória/derrota.
 import { $, h, fmt, shuffle, clamp } from '../util.js';
 import { sfx, audio, setMuted, initAudio, setVolumes } from '../audio.js';
@@ -493,6 +494,7 @@ export function createHud(onExit) {
     p.append(h('div', { class: 'dlg-head' }, portrait(o.look || {}), h('div', {}, h('h3', {}, (o.cla ? '[' + o.cla + '] ' : '') + o.name), h('small', { class: 'muted' }, (CLASSES[o.cls]?.nome || '') + ' · nível ' + (o.lvl || '?') + (amigo ? ' · 💚 amigo' : '')))));
     const msg = h('p', { class: 'form-msg' });
     const row = h('div', { class: 'btn-row' });
+    if (game.canAskRide(o)) row.append(h('button', { class: 'btn gold', onclick: () => { close(); game.askHorseRide(o); } }, '🐎 Pedir carona'));
     if (!amigo) row.append(h('button', { class: 'btn gold', onclick: async e => {
       e.currentTarget.disabled = true;
       try { await net.social.addFriend(game.char, o.id); msg.className = 'form-msg ok'; msg.textContent = 'Pedido de amizade enviado!'; sfx('right'); game.refreshSocial(); }
@@ -688,6 +690,13 @@ export function createHud(onExit) {
 
   function tabQuests(body, render) {
     const c = game.char, prog = faseProg(c, SEMANA_ATUAL.id);
+    body.append(h('h4', {}, 'Sua jornada — desafio crescente'));
+    for (const [id, level, hint] of MISSION_PATH) {
+      const q = QUESTS[id], state = c.data.quests[id], locked = q.requer && c.data.quests[q.requer]?.st !== 'feita';
+      const giver = WORLD_NPCS.find(n => n.missao === id);
+      body.append(h('div', { class: 'fase-row' }, h('span', { class: 'num' }, q.etapa), h('div', {}, h('b', {}, q.titulo), h('small', {}, 'Nível recomendado ' + level + ' · ' + (state?.st === 'feita' ? 'Concluída' : state?.st === 'pronta' ? 'Entregue a missão' : state?.st === 'ativa' ? 'Em andamento: ' + state.n + '/' + q.qtd : locked ? 'Após ' + QUESTS[q.requer].titulo : 'Disponível com ' + giver?.nome)), h('small', {}, hint))));
+    }
+    body.append(h('p', { class: 'muted' }, 'Equipamento ajuda; esquiva, postura e defesa perfeita decidem a luta. Alvos da missão ativa acompanham parte do seu nível, até +80% de vida e ataque.'));
     const tracked = game.trackedQuest();
     if (tracked) {
       const q = QUESTS[tracked], s = c.data.quests[tracked], r = q.recompensa;

@@ -1,3 +1,6 @@
+import { instalarCarona, horseSeat } from './horseRide.js';
+import { bossDamage, strikeShell } from './combatRules.js';
+import { blocks, tickExpedition, expeditionInteractions, drawExpedition } from './expeditions.js';
 import { personMotion } from './sprite-motion.js';
 import { drawIcon, drawItemIcon } from '../ui/icons.js';
 // Núcleo do jogo: loop, câmera, combate, inimigos, chefes, fases e mundo compartilhado.
@@ -36,7 +39,7 @@ const PERFEITA = 0.35; // janela da defesa perfeita (s) depois de levantar o esc
 const CUSTO_ATK = { espada: 10, funda: 8, cajado: 10, trombeta: 12, adaga: 6, lanca: 12, chicote: 11 };
 const CARGA = { inicio: 0.3, cheia: 0.85, custo: 22 }; // s segurando para começar e para completar; fôlego do golpe forte
 // dificuldade dos vícios: mais vida e dano, atacam mais vezes e notam o jogador de mais longe
-const DIF = { hp: 1.3, atk: 1.25, cd: 0.78, aggro: 170 };
+const DIF = { hp: 1.9, atk: 1.65, cd: 0.78, aggro: 170 };
 // dificuldade dos chefes: mais vida e dano, e menos pausa entre um golpe e outro
 const DIF_CHEFE = { hp: 1.5, atk: 1.32, ritmo: 0.78 };
 let WORLD = null; // gerado uma única vez
@@ -81,6 +84,7 @@ export class Game {
   }
 
   destroy() {
+    this.leaveHorseRide();
     this.running = false; this.net?.leave(); music(null);
     this._ro.disconnect(); removeEventListener('resize', this._rs); removeEventListener('orientationchange', this._rs); document.removeEventListener('fullscreenchange', this._rs);
   }
@@ -89,7 +93,8 @@ export class Game {
     this.st = computeStats(this.char);
     if (this.p && !this.st.montaria) this.p.mounted = false;
     if (this.p && (this.pet?.kind || null) !== (this.st.pet || null)) this.pet = this.st.pet ? { kind: this.st.pet, x: this.p.x - 24, y: this.p.y, fx: 1, walk: 0, moving: false, cd: 0 } : null;
-    this.ui.mountBtn?.(!!this.st.montaria, this.p?.mounted);
+    if (this.ridePassenger && (!this.p?.mounted || this.st.pet !== 'cavalo')) this.leaveHorseRide();
+    this.ui.mountBtn?.(!!this.st.montaria || !!this.rideDriver, this.p?.mounted || !!this.rideDriver);
     if (this.p) { this.p.hp = Math.min(this.p.hp, this.st.maxHp); this.p.fe = Math.min(this.p.fe, this.st.maxFe); } }
 
   resize() {
@@ -119,6 +124,7 @@ export class Game {
 
   /* ================= Cenas ================= */
   enterWorld(first, at) {
+    this.leaveHorseRide();
     this.scene = 'world'; this.cur = { map: this.world.map, lights: this.world.lights };
     this.projs = []; this.tele = []; this.hazards = []; this.pickups = []; this.chests = [];
     this.npcs = WORLD_NPCS.map(n => ({ ...n, x: n.tx * TS + 16, y: n.ty * TS + 16, talkT: 0 }));
@@ -144,6 +150,8 @@ export class Game {
 
   // Salão das Dungeons (um portal por semana) e sala de cada semana (5 portais de fase + guia)
   enterHub(hub, built, at) {
+    this.leaveHorseRide();
+    this.p.boat = false; this.p.swimming = false; this.spears = null;
     this.scene = 'salao'; this.hub = hub;
     this.cur = { map: built.map, lights: built.lights };
     this.projs = []; this.tele = []; this.hazards = []; this.pickups = []; this.enemies = []; this.chests = [];
@@ -199,6 +207,8 @@ export class Game {
   enterFase(sem, n, run = null) {
     const fase = sem.fases[n - 1];
     const built = buildFase(fase);
+    this.leaveHorseRide();
+    this.p.boat = false; this.p.swimming = false; this.spears = null;
     this.scene = 'fase';
     this.cur = { map: built.map, lights: built.lights };
     this.hub = null;
@@ -234,9 +244,11 @@ export class Game {
   /* ================= Entidades ================= */
   makeEnemy(type, x, y, boost = 1) {
     const d = ENEMIES[type];
-    const hp = Math.round(d.hp * boost * DIF.hp);
+    const relevant = Object.entries(this.char.data.quests).some(([id, q]) => q.st === 'ativa' && QUESTS[id]?.tipo === 'kill' && [type, '*'].includes(QUESTS[id].alvo));
+    const challenge = relevant ? Math.min(1.8, 1 + Math.max(0, this.char.level - d.lv) * 0.08) : 1;
+    const hp = Math.round(d.hp * boost * DIF.hp * challenge);
     return {
-      kind: 'enemy', nid: 'a' + String(this.char.id).slice(0, 6) + '.' + (++this.nidSeq), boost, type, d, x, y, hx: x, hy: y, r: d.r, hp, max: hp, atk: Math.round(d.atk * boost * DIF.atk), def: d.def, spd: d.spd,
+      kind: 'enemy', missionScale: challenge, nid: 'a' + String(this.char.id).slice(0, 6) + '.' + (++this.nidSeq), boost, type, d, x, y, hx: x, hy: y, r: d.r, hp, max: hp, atk: Math.round(d.atk * boost * DIF.atk * challenge), def: d.def, spd: d.spd,
       xp: Math.round(d.xp * boost), ouro: Math.round(d.ouro * boost), lv: Math.round(d.lv * boost),
       ph: Math.random() * 10, flash: 0, kx: 0, ky: 0, cd: rand(0.5, 1.5), telegraph: 0, aggro: false, stun: 0, dash: 0, stolen: 0,
       pos: 0, posMax: Math.round(22 + d.lv * 6), broken: 0
@@ -285,6 +297,7 @@ export class Game {
     const blocking = this.ui.blocking;
     this.updateFx(dt);
     this.updateOthers(dt);
+    this.updateHorseRide();
     if (blocking) {
       input.pressed.clear();
       if (this.netAtivo() && this.souHost() && this.proxies.size) { this.updateEnemies(dt); this.updateProjectiles(dt); this.updateTele(dt); this.netTick(dt); }
@@ -325,11 +338,17 @@ export class Game {
   updatePlayer(dt) {
     const p = this.p, st = this.st, m = this.cur.map;
     if (p.dead) return;
+    tickExpedition(this, dt);
+    if (p.sleep > 0) p.stun = Math.max(p.stun, p.sleep);
     for (const k in p.buffs) { p.buffs[k].t -= dt; if (p.buffs[k].t <= 0) delete p.buffs[k]; }
     p.inv = Math.max(0, p.inv - dt); p.atkT = Math.max(0, p.atkT - dt); p.atkCd -= dt; p.skillCd -= dt; p.dodgeCd -= dt; p.comboT -= dt; p.stun -= dt; p.spin = Math.max(0, p.spin - dt);
     if (p.comboT <= 0) p.combo = 0;
+    if (this.rideDriver) {
+      if (input.consume('mount') || input.consume('interact')) this.leaveHorseRide();
+      input.clear(); return;
+    }
     const mv = input.move();
-    if (p.stun > 0) { mv.x = mv.y = 0; }
+    if (p.stun > 0 || p.root > 0) { mv.x = mv.y = 0; }
     // mira / direção do rosto
     const aim = this.aimAngle();
     if (this.lock || input.padAim != null || (input.mouseAim && !input.touch)) { p.fx = Math.cos(aim); p.fy = Math.sin(aim); }
@@ -345,7 +364,7 @@ export class Game {
     // esquiva
     const dodgeCost = 26 * st.esquiva;
     if (input.consume('botija')) this.beberBotija();
-    if (input.consume('dodge') && p.dodgeCd <= 0 && p.sta >= dodgeCost && p.stun <= 0 && !(p.drink > 0)) {
+    if (input.consume('dodge') && p.dodgeCd <= 0 && p.sta >= dodgeCost && p.stun <= 0 && !(p.root > 0) && !(p.drink > 0)) {
       let dx = mv.x, dy = mv.y; if (!dx && !dy) { dx = -p.fx; dy = -p.fy; }
       const l = Math.hypot(dx, dy) || 1; p.dvx = dx / l; p.dvy = dy / l;
       p.dodgeT = 0.34; p.dodgeCd = 0.5; p.sta -= dodgeCost; p.staT = 0.6; sfx('dodge');
@@ -361,12 +380,15 @@ export class Game {
     let sp = st.spd * (p.buffs.spd?.mul || 1) * p.slow * (p.guard ? 0.6 : 1) * (p.charging ? 0.45 : 1) * (p.drink > 0 ? 0.3 : 1) * (p.mounted ? st.montaria : 1);
     const tile = m.get(Math.floor(p.x / TS), Math.floor(p.y / TS));
     if (tile === T.SHALLOW) sp *= 0.6;
+    if (p.boat) sp *= 1.25;
+    if (p.swimming) sp *= 0.25;
     let vx, vy;
-    if (p.dodgeT > 0) { p.dodgeT -= dt; const s = 560 * (0.4 + p.dodgeT / 0.34 * 0.8); vx = p.dvx * s; vy = p.dvy * s; this.puff(p.x, p.y + 10, 1, 'rgba(230,220,200,.6)'); }
+    if (p.dodgeT > 0) { p.dodgeT -= dt; const s = (p.swimming ? 100 : 560) * (0.4 + p.dodgeT / 0.34 * 0.8); vx = p.dvx * s; vy = p.dvy * s; this.puff(p.x, p.y + 10, 1, 'rgba(230,220,200,.6)'); }
     else { vx = mv.x * sp; vy = mv.y * sp; }
     if (p.charm) {
       const b = p.charm.src, dx = b.x - p.x, dy = b.y - p.y, d = Math.hypot(dx, dy) || 1;
       vx += dx / d * 150; vy += dy / d * 150; p.charm.t -= dt;
+      if (d < b.r + p.r + 18) this.damagePlayer(b.atk * 3.5, b);
       if (p.charm.t <= 0 || b.hp <= 0) p.charm = null;
     }
     this.moveEnt(p, vx * dt, vy * dt);
@@ -388,13 +410,17 @@ export class Game {
     if (p.holdT >= CARGA.cheia && p.holdT - dt < CARGA.cheia) { sfx('magic'); this.burst(p.x, p.y - 6, 14, '#FFE38A', 140); }
     p.charging = p.holdT >= CARGA.inicio;
     if (p.atkBuf > 0 && p.atkCd <= 0 && !p.guard && !p.charging) { p.atkBuf = 0; this.attack(aim); }
-    if (input.consume('skill') && !p.guard) this.skill(aim);
+    if (input.consume('skill') && !p.guard) {
+      if (this.spears?.n > 0 && this.spears.until > this.T) { this.spears.n--; this.proj({ x: p.x, y: p.y, a: aim, spd: 460, r: 9, life: 2, kind: 'lanca', challenge: 'spear', mult: 1 }); if (!this.spears.n) this.spears = null; }
+      else this.skill(aim);
+    }
     if (input.consume('item1')) this.useAtalho(0);
     if (input.consume('item2')) this.useAtalho(1);
   }
 
   toggleMount() {
     const p = this.p;
+    if (this.rideDriver) return this.leaveHorseRide();
     if (p.mounted) return this.dismount();
     if (!this.st.montaria) { this.ui.toast(this.st.pet ? 'Esse animal não é de montaria. Burrinho e cavalo podem ser montados.' : 'Você não tem montaria. Compre um burrinho ou um cavalo com Labão, na cidade.'); return; }
     if (this.scene !== 'world') { this.ui.toast('Dentro das dungeons não dá para montar.'); return; }
@@ -402,7 +428,9 @@ export class Game {
     this.ui.mountBtn?.(true, true);
   }
   dismount(quiet) {
-    const p = this.p; if (!p.mounted) return;
+    const p = this.p;
+    this.leaveHorseRide();
+    if (!p.mounted) return;
     p.mounted = false; if (this.pet) { this.pet.x = p.x - p.fx * 22; this.pet.y = p.y + 4; }
     if (!quiet) sfx('click');
     this.ui.mountBtn?.(!!this.st.montaria, false);
@@ -444,11 +472,11 @@ export class Game {
   }
 
   moveEnt(e, dx, dy) {
-    const m = this.cur.map, r = e.r * 0.8;
+    const r = e.r * 0.8;
     const steps = Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)) / 8) || 1;
     for (let i = 0; i < steps; i++) {
-      if (!m.collides(e.x + dx / steps, e.y, r)) e.x += dx / steps;
-      if (!m.collides(e.x, e.y + dy / steps, r)) e.y += dy / steps;
+      if (!blocks(this, e, e.x + dx / steps, e.y, r)) e.x += dx / steps;
+      if (!blocks(this, e, e.x, e.y + dy / steps, r)) e.y += dy / steps;
     }
   }
 
@@ -665,15 +693,18 @@ export class Game {
 
   proj(o) {
     if (o.owner === 'e' && this.netAtivo() && this.souHost() && this.proxies.size) this.netProj(o);
-    this.projs.push({ x: o.x, y: o.y, vx: Math.cos(o.a) * o.spd, vy: Math.sin(o.a) * o.spd, r: o.r, life: o.life, max: o.life, mult: o.mult, kind: o.kind, owner: o.owner || 'p', homing: o.homing || 0, pierce: o.pierce || 0, pos: o.pos, hitSet: new Set(), dmg: o.dmg, color: o.color, label: o.label, src: o.src, reflect: o.reflect });
+    this.projs.push({ x: o.x, y: o.y, vx: Math.cos(o.a) * o.spd, vy: Math.sin(o.a) * o.spd, r: o.r, life: o.life, max: o.life, mult: o.mult, kind: o.kind, owner: o.owner || 'p', homing: o.homing || 0, pierce: o.pierce || 0, pos: o.pos, hitSet: new Set(), dmg: o.dmg, color: o.color, label: o.label, src: o.src, reflect: o.reflect, challenge: o.challenge });
   }
 
-  hit(e, mult, a, knock, pos = mult * 9) {
+  hit(e, mult, a, knock, pos = mult * 9, challenge = null) {
     if (e.inv || e.hp <= 0) return;
+    if (e.id === 'leviata' && !['spear', 'reflect'].includes(challenge)) { if (this.T > (e.hintT || 0)) { e.hintT = this.T + 3; this.ui.toast('Escamas impenetráveis: apare os jatos ou use lanças da missão!'); } return; }
+    if (!this.souHost() && e.nid) return this.netGolpe(e, mult, a, knock, pos, null, challenge);
     if (e.clone) { this.burst(e.x, e.y, 14, '#B98AF0', 160); this.addText(e.x, e.y - 30, 'Ilusão!', '#E6DBFF', 13); e.hp = 0; this.enemies.splice(this.enemies.indexOf(e), 1); return; }
-    if (!this.souHost() && e.nid) return this.netGolpe(e, mult, a, knock, pos);
     (e.hitBy = e.hitBy || new Set()).add(this.meuId());
-    const { dmg, crit } = this.dmgCalc(mult, e);
+    const result = this.dmgCalc(mult, e), crit = result.crit;
+    const dmg = bossDamage(e, result.dmg, challenge);
+    if (strikeShell(e, pos)) this.ui.toast('Carcaça quebrada por 6 segundos!');
     e.hp -= dmg; e.flash = 0.12; e.lastHit = this.T; e.aggro = true; if (e.kind === 'boss') e.engaged = true;
     const kb = e.kind === 'boss' ? knock * 0.1 : knock;
     e.kx += Math.cos(a) * kb; e.ky += Math.sin(a) * kb;
@@ -697,6 +728,7 @@ export class Game {
   // XP, denários, missões e lições de quem ajudou a vencer o inimigo
   recompensa(e) {
     const c = this.char;
+    if (e.summoner) return;
     if (e.kind === 'boss') return this.bossDefeated(e);
     c.data.stats.kills++; c.data.kills[e.type] = (c.data.kills[e.type] || 0) + 1;
     if (this.fase) this.fase.kills++;
@@ -759,12 +791,15 @@ export class Game {
   useItem(id) {
     const it = ITEMS[id], p = this.p, c = this.char;
     if (!it || it.tipo !== 'consumivel' || !count(c, id)) return false;
+    if (p.itemCd > 0) { this.ui.toast('Aguarde ' + Math.ceil(p.itemCd) + 's para usar outro consumível.'); return false; }
     if (it.retorno) {
       if (this.boss?.engaged) { this.ui.toast('Não dá para fugir no meio de uma batalha com chefe!'); return false; }
+      this.leaveHorseRide();
       removeItem(c, id); this.ui.closeAll?.();
       if (this.scene !== 'world') this.enterWorld(false); else { p.x = SPAWN.x; p.y = SPAWN.y; }
       sfx('gate'); return true;
     }
+    p.itemCd = 3;
     removeItem(c, id);
     if (it.cura) { p.hp = Math.min(this.st.maxHp, p.hp + it.cura); this.addText(p.x, p.y - 36, '+' + it.cura, '#7CE0A0', 15); }
     if (it.curaPct) { p.hp = this.st.maxHp; this.addText(p.x, p.y - 36, 'Vida cheia!', '#7CE0A0', 15); }
@@ -776,17 +811,20 @@ export class Game {
 
   damagePlayer(amount, src, opts = {}) {
     const p = this.p;
+    src = src || { x: p.x, y: p.y };
     if (p.remote) return this.netDanoRemoto(p, amount, src, opts);
     if (p.dead || p.dodgeT > 0 || p.inv > 0 || this.ui.blocking) return 'miss';
-    let dmg = amount * 60 / (60 + this.st.def);
+    const attacker = src.src || src;
+    if (attacker.id === 'leviata' && p.swimming) amount = this.st.maxHp * 10;
+    let dmg = amount * Math.max(0.25, 60 / (60 + this.st.def));
     if (p.guard && !opts.unblockable) {
       const ang = Math.atan2(src.y - p.y, src.x - p.x), face = Math.atan2(p.fy, p.fx);
       if (Math.abs(angDiff(ang, face)) < 2.1) {
         if (p.guardT < PERFEITA) {
-          sfx('parry'); vibrar(70, 0.35); this.addText(p.x, p.y - 40, 'DEFESA PERFEITA!', '#FFFFFF', 15); this.burst(p.x + p.fx * 14, p.y + p.fy * 14, 16, '#FFFFFF', 220);
+          p.inv = 0.18; sfx('parry'); vibrar(70, 0.35); this.addText(p.x, p.y - 40, 'DEFESA PERFEITA!', '#FFFFFF', 15); this.burst(p.x + p.fx * 14, p.y + p.fy * 14, 16, '#FFFFFF', 220);
           this.hitstop = 0.08; p.fe = Math.min(this.st.maxFe, p.fe + 6);
           if (src.kind === 'enemy' || src.kind === 'boss') { src.stun = src.kind === 'boss' ? 0.8 : 1.4; src.kx -= Math.cos(ang) * 200; src.ky -= Math.sin(ang) * 200; }
-          if (src.kind === 'boss') aoDefender(this, src);
+          if (src.kind === 'boss') { aoDefender(this, src); if (strikeShell(src, 34)) this.ui.toast('Carcaça quebrada por 6 segundos!'); }
           if (src.kind === 'enemy' || src.kind === 'boss') this.postura(src, src.kind === 'boss' ? 34 : 999);
           if (!this.souHost() && src.nid) this.netEnviar({ t: 'parry', id: src.nid });
           return 'parry';
@@ -798,10 +836,14 @@ export class Game {
       }
     }
     dmg = Math.max(1, Math.round(dmg));
+    p.lastAttacker = attacker.id;
+    if (opts.sleep) { p.sleep = opts.sleep; this.addText(p.x, p.y - 45, 'SONO!', '#BDD6FF', 16); } else if (p.sleep > 0) { p.sleep = 0; p.stun = 0; }
+    if (opts.root) p.root = opts.root;
+    if (p.boat && attacker.id === 'leviata') { p.boat = false; p.swimming = true; p.boatCd = this.T + 10; this.ui.toast('O barco virou! Nade até a margem!'); }
     p.hp -= dmg; p.inv = 0.45; sfx('hurt'); vibrar(dmg > this.st.maxHp * 0.2 ? 220 : 120, dmg > this.st.maxHp * 0.2 ? 1 : 0.55);
-    if (p.mounted && dmg >= 6) { this.dismount(); this.addText(p.x, p.y - 52, 'Caiu da montaria!', '#FFB3B3', 12); } this.shake(7); this.ui.hurt();
+    if ((p.mounted || this.rideDriver) && dmg >= 6) { this.dismount(); this.addText(p.x, p.y - 52, 'Caiu da montaria!', '#FFB3B3', 12); } this.shake(7); this.ui.hurt();
     this.addText(p.x, p.y - 30, '-' + dmg, '#FF5A5F', 15);
-    if (src && !opts.noKnock) { const a = Math.atan2(p.y - src.y, p.x - src.x); this.moveEnt(p, Math.cos(a) * 14, Math.sin(a) * 14); }
+    if (src && !opts.noKnock) { const a = Math.atan2(p.y - src.y, p.x - src.x); this.moveEnt(p, Math.cos(a) * (opts.knock || 14), Math.sin(a) * (opts.knock || 14)); }
     if (p.hp <= 0) this.playerDown();
     return 'hit';
   }
@@ -813,6 +855,9 @@ export class Game {
       this.ui.toast('O Capacete da Salvação te levantou! "Quem crê em mim, ainda que morra, viverá" (Jo 11:25)', 5000);
       this.burst(p.x, p.y, 50, '#FFE38A', 300); sfx('heal'); return;
     }
+    if (p.lastAttacker === 'mamom') { c.data.gold = 0; this.ui.toast('Mamom tomou TODOS os seus denários!', 6000); }
+    this.leaveHorseRide();
+    p.boat = false; p.swimming = false; p.root = 0; p.sleep = 0; this.spears = null;
     p.dead = true; p.hp = 0; c.data.stats.deaths++; p.charm = null;
     input.clear();
     if (this.scene === 'fase' && this.fase.run) { this.cairEmGrupo(); this.save(); return; }
@@ -852,7 +897,7 @@ export class Game {
       if (this.scene === 'world' && dist > 1300 && e.kind !== 'boss') continue;
       // empurrão
       if (Math.abs(e.kx) + Math.abs(e.ky) > 1) { this.moveEnt(e, e.kx * dt, e.ky * dt); e.kx *= Math.pow(0.002, dt); e.ky *= Math.pow(0.002, dt); }
-      if (e.stun > 0) continue;
+      if (e.stun > 0 && e.id !== 'leviata') continue;
       this.p = alvo;
       if (e.kind === 'boss') { this.updateBoss(e, dt, dist); continue; }
       this.updateEnemy(e, dt, dist);
@@ -868,6 +913,11 @@ export class Game {
 
   updateEnemy(e, dt, dist) {
     const p = this.p, d = e.d;
+    if (dist < e.r + p.r) this.damagePlayer(e.atk * 0.8, e);
+    if (e.type === 'preguica' && e.aggro && dist < 210) { e.sleepCd = (e.sleepCd ?? 4) - dt; if (e.sleepCd <= 0) { e.sleepCd = 14; e.step = 0; MOVES.sono(this, e, { n: 5, raio: 95, duracao: 1.1 }, dt, { p }); e.step = 0; } }
+    const relevant = Object.entries(this.char.data.quests).some(([id, q]) => q.st === 'ativa' && QUESTS[id]?.tipo === 'kill' && [e.type, '*'].includes(QUESTS[id].alvo));
+    const pressure = relevant ? Math.min(1.8, 1 + Math.max(0, this.char.level - d.lv) * 0.08) : 1;
+    if (pressure > (e.missionScale || 1)) { const ratio = pressure / (e.missionScale || 1); e.hp *= ratio; e.max *= ratio; e.atk *= ratio; e.missionScale = pressure; }
     e.cd -= dt;
     if (!e.aggro && dist < DIF.aggro && !p.dead) e.aggro = true;
     const home = Math.hypot(e.x - e.hx, e.y - e.hy);
@@ -943,7 +993,7 @@ export class Game {
     // barra do chefe só para quem está perto dele
     if (Math.hypot(this.eu.x - b.x, this.eu.y - b.y) < 950) {
       if (!b._intro) { b._intro = true; this.bossIntro(b); }
-      this.boss = b; this.ui.bossBar(b.d.nome, b.hp / b.max, b.d.titulo, b.pos / b.posMax);
+      this.boss = b; this.ui.bossBar(b.d.nome, b.hp / b.max, b.id === 'behemote' ? (b.shellOpen > 0 ? 'Carcaça aberta: ' + Math.ceil(b.shellOpen) + 's' : 'Carcaça: ' + (b.shellHits || 0) + '/8 impactos pesados') : b.d.titulo, b.pos / b.posMax);
     } else if (this.boss === b) { this.boss = null; this.ui.bossBar(null); }
     b.actT -= dt;
     const d = b.d, c = { p, dist, ax: p.x - b.x, ay: p.y - b.y, al: dist || 1 };
@@ -959,7 +1009,7 @@ export class Game {
     if (!b.act) {
       const m = fase.mover || { tipo: 'perseguir' };
       MOVIMENTOS[m.tipo](this, b, m, dt, c);
-      if (b.actT <= 0) { b.act = pick(fase.golpes); b.actT = 0; b.step = 0; b.stepT = 0; }
+      if (b.actT <= 0) { b.act = b.nextAct || pick(fase.golpes); b.nextAct = null; b.actT = 0; b.step = 0; b.stepT = 0; }
       return;
     }
     if (b.act === 'accuse') return; // batalha de versículos em andamento
@@ -1027,7 +1077,7 @@ export class Game {
         for (const e of this.enemies) {
           if (e.hp <= 0 || e.submerged || q.hitSet.has(e)) continue;
           if (Math.hypot(e.x - q.x, e.y - q.y) < e.r + q.r) {
-            q.hitSet.add(e); this.hit(e, q.mult, Math.atan2(q.vy, q.vx), 120, q.pos);
+            q.hitSet.add(e); this.hit(e, q.mult, Math.atan2(q.vy, q.vx), 120, q.pos, q.challenge);
             if (q.pierce-- <= 0) { dead = true; break; }
           }
         }
@@ -1036,7 +1086,7 @@ export class Game {
           const r = this.damagePlayer(q.dmg, q);
           if (r === 'parry' && q.reflect) {
             // devolve o projétil
-            q.owner = 'p'; q.vx *= -1.3; q.vy *= -1.3; q.mult = 2; q.kind = 'luz'; q.life = 1.5; q.hitSet = new Set(); q.pierce = 0;
+            q.challenge = 'reflect'; q.owner = 'p'; q.vx *= -1.3; q.vy *= -1.3; q.mult = 2; q.kind = 'luz'; q.life = 1.5; q.hitSet = new Set(); q.pierce = 0;
             this.addText(p.x, p.y - 56, 'Devolvido!', '#FFE38A', 13);
           } else if (r !== 'miss') dead = true;
         }
@@ -1052,6 +1102,7 @@ export class Game {
       const h = this.hazards[i];
       if (h.delay > 0) { h.delay -= dt; continue; }
       h.t -= dt;
+      if (h.solid) { if (h.t <= 0) this.hazards.splice(i, 1); continue; }
       if (h.ring) {
         h.r += h.spd * dt;
         const d = Math.hypot(p.x - h.x, p.y - h.y);
@@ -1335,6 +1386,8 @@ export class Game {
       for (const c of this.chests) if (!c.open) consider(c, Math.hypot(c.x - p.x, c.y - p.y), c.locked ? 'Trancado (' + Math.ceil(c.locked) + 's)' : this.fase.keys >= 3 ? 'Abrir baú do tesouro (quiz)' : 'Abrir baú (quiz)', () => this.openChest(c));
       for (const h of this.fase.built.heal) consider(h, Math.hypot(h.x - p.x, h.y - p.y) - 10, 'Fonte de cura', () => this.faseHeal());
     }
+    expeditionInteractions(this, consider);
+    if (this.rideDriver) best = { o: p, label: 'Descer do cavalo', fn: () => this.leaveHorseRide() };
     this.interactTarget = best;
     this.ui.setInteract(best ? best.label : null);
     if (best && input.consume('interact')) best.fn();
@@ -1409,9 +1462,12 @@ export class Game {
     let texto = n.falas[(n.idx = ((n.idx ?? -1) + 1) % n.falas.length)];
     if (n.missao) {
       const qd = QUESTS[n.missao], qs = c.data.quests[n.missao];
-      if (!qs) acoes.unshift({ label: (qd.dificil ? '🔥 Missão difícil: ' : '📜 Missão: ') + qd.titulo, fn: async () => { c.data.quests[n.missao] = { st: 'ativa', n: 0 }; await this.cinema(n.missao); this.ui.toast('Missão aceita: ' + qd.titulo + ' — ' + qd.desc, 4500); sfx('right'); if (qd.tipo === 'fase' && faseProg(c, SEMANA_ATUAL.id)[qd.alvo]?.done) this.questEvent('fase', qd.alvo); } });
-      else if (qs.st === 'ativa') texto += '\n\n📜 ' + qd.titulo + ': ' + qd.desc + ' (' + qs.n + '/' + qd.qtd + ')';
-      else if (qs.st === 'pronta') acoes.unshift({ label: '🎁 Entregar missão', fn: () => this.completeQuest(n.missao) });
+      const locked = qd.requer && c.data.quests[qd.requer]?.st !== 'feita';
+      texto += qd.nivel ? '\n\nEtapa ' + qd.etapa + ' · nível recomendado ' + qd.nivel + ' · ' + qd.dica : '';
+      if (!qs && locked) texto += '\n\nAntes, conclua: ' + QUESTS[qd.requer].titulo + '.';
+      if (!qs && !locked) acoes.unshift({ label: (qd.dificil ? '🔥 Missão difícil: ' : '📜 Missão: ') + qd.titulo, fn: async () => { c.data.quests[n.missao] = { st: 'ativa', n: 0 }; c.data.track = n.missao; this.save(); await this.cinema(n.missao); this.ui.toast('Missão aceita: ' + qd.titulo + ' — ' + qd.desc, 4500); sfx('right'); if (qd.tipo === 'fase' && faseProg(c, SEMANA_ATUAL.id)[qd.alvo]?.done) this.questEvent('fase', qd.alvo); } });
+      else if (qs?.st === 'ativa') texto += '\n\n📜 ' + qd.titulo + ': ' + qd.desc + ' (' + qs.n + '/' + qd.qtd + ')';
+      else if (qs?.st === 'pronta') acoes.unshift({ label: '🎁 Entregar missão', fn: () => this.completeQuest(n.missao) });
     }
     acoes.push({ label: 'Tchau' });
     this.ui.dialog({ nome: n.nome, look: n.look, texto, acoes });
@@ -1480,8 +1536,8 @@ export class Game {
   /* ================= Rede ================= */
   sendPos() {
     const p = this.p, c = this.char;
-    const st = { id: c.id, w: this.worldSince, sala: this.salaAtual(), hp: +(Math.max(0, p.hp) / this.st.maxHp).toFixed(2), name: c.name, cls: c.cls, look: c.look, lvl: c.level, cla: this.social.clan?.tag, pet: this.st.pet ? { k: this.st.pet, m: p.mounted ? 1 : 0 } : undefined, x: Math.round(p.x), y: Math.round(p.y), fx: +p.fx.toFixed(2), fy: +p.fy.toFixed(2), mv: p.moving ? 1 : 0, atk: p.atkT > 0 ? 1 : 0, eq: c.data.eq };
-    const key = st.x + ',' + st.y + ',' + st.atk + ',' + st.fx;
+    const st = { id: c.id, w: this.worldSince, sala: this.salaAtual(), rideDriver: this.rideDriver?.id || null, ridePassenger: this.ridePassenger?.id || null, rideToken: (this.rideDriver || this.ridePassenger)?.token || null, boat: !!p.boat, swimming: !!p.swimming, hp: +(Math.max(0, p.hp) / this.st.maxHp).toFixed(2), name: c.name, cls: c.cls, look: c.look, lvl: c.level, cla: this.social.clan?.tag, pet: this.st.pet ? { k: this.st.pet, m: p.mounted ? 1 : 0 } : undefined, x: Math.round(p.x), y: Math.round(p.y), fx: +p.fx.toFixed(2), fy: +p.fy.toFixed(2), mv: p.moving ? 1 : 0, atk: p.atkT > 0 ? 1 : 0, eq: c.data.eq };
+    const key = st.x + ',' + st.y + ',' + st.atk + ',' + st.fx + ',' + st.boat + ',' + st.swimming + ',' + st.pet?.m + ',' + st.rideDriver + ',' + st.ridePassenger + ',' + st.rideToken;
     if (key === this.lastSent && this.T - (this.lastSentT || 0) < 3) return;
     this.lastSent = key; this.lastSentT = this.T;
     this.net.send(st);
@@ -1491,7 +1547,7 @@ export class Game {
     if (m.id === this.char.id) return;
     let o = this.others.get(m.id);
     if (!o) { o = { ...m, walk: 0 }; this.others.set(m.id, o); }
-    Object.assign(o, { w: m.w, sala: m.sala, hp: m.hp, tx: m.x, ty: m.y, fx: m.fx, fy: m.fy, mv: m.mv, atk: m.atk, lvl: m.lvl, look: m.look, eq: m.eq, cla: m.cla, pet: m.pet, seen: performance.now() });
+    Object.assign(o, { w: m.w, sala: m.sala, rideDriver: m.rideDriver, ridePassenger: m.ridePassenger, rideToken: m.rideToken, boat: m.boat, swimming: m.swimming, hp: m.hp, tx: m.x, ty: m.y, fx: m.fx, fy: m.fy, mv: m.mv, atk: m.atk, lvl: m.lvl, look: m.look, eq: m.eq, cla: m.cla, pet: m.pet, seen: performance.now() });
   }
   updateOthers(dt) {
     const now = performance.now();
@@ -1601,7 +1657,7 @@ export class Game {
     // sem missão: próximo portão liberado, senão alguém com missão nova
     const prog = faseProg(c, SEMANA_ATUAL.id);
     const next = SEMANA_ATUAL.fases.find(f => !prog[f.n]?.done && (f.n === 1 || prog[f.n - 1]?.done) && c.level >= f.nivel);
-    const giver = nearest(this.npcs.filter(n => n.missao && !c.data.quests[n.missao]));
+    const giver = nearest(this.npcs.filter(n => n.missao && !c.data.quests[n.missao] && (!QUESTS[n.missao].requer || c.data.quests[QUESTS[n.missao].requer]?.st === 'feita')));
     if (giver && (!next || Math.hypot(giver.x - p.x, giver.y - p.y) < 1400)) { const n = this.npcs.find(x => x.x === giver.x && x.y === giver.y); return { x: n.x, y: n.y, label: 'Nova missão: ' + n.nome }; }
     if (next) return this.dungeonTarget(SEMANA_ATUAL, next.n, 'Fase ' + next.n + ': ' + next.nome);
     return null;
@@ -1694,6 +1750,7 @@ export class Game {
     g.setTransform(k, 0, 0, k, -camL * k, -camT * k);
     g.imageSmoothingEnabled = true;
     m.draw(g, camL, camT, vw, vh);
+    drawExpedition(this, g);
     const T0 = this.T;
     // portões animados
     if (this.scene === 'world') {
@@ -1729,6 +1786,7 @@ export class Game {
     for (const t of this.tele) this.drawTele(g, t);
     for (const h of this.hazards) {
       if (h.delay > 0) continue;
+      if (h.solid) continue;
       if (h.ring) { g.strokeStyle = 'rgba(' + h.color + ',.8)'; g.lineWidth = 10; ell(g, h.x, h.y, h.r, h.r * 0.75); g.stroke(); }
       else { const gr = g.createRadialGradient(h.x, h.y, 2, h.x, h.y, h.r); gr.addColorStop(0, 'rgba(' + h.color + ',.55)'); gr.addColorStop(1, 'rgba(' + h.color + ',.15)'); g.fillStyle = gr; ell(g, h.x, h.y, h.r, h.r * 0.8); g.fill(); }
     }
@@ -1816,6 +1874,11 @@ export class Game {
   }
 
   drawTele(g, t) {
+    if (t.rock) {
+      g.save(); g.fillStyle = '#766555'; g.strokeStyle = '#D3B994'; g.lineWidth = 3;
+      const y = t.y - 220 * Math.max(0, t.t / t.max);
+      g.beginPath(); g.ellipse(t.x, y, 30, 36, 0.2, 0, TAU); g.fill(); g.stroke(); g.restore();
+    }
     const pr = 1 - t.t / t.max;
     g.save();
     if (t.kind === 'circle') {
@@ -1876,26 +1939,32 @@ export class Game {
       g.strokeStyle = 'rgba(194,221,224,' + (1 - progress) * .42 + ')'; g.lineWidth = 3;
       g.beginPath(); g.arc(0, 0, p.combo === 3 ? 42 : 35, a - 1.1, a + .7); g.stroke(); g.restore();
     }
+    const seat = this.rideDriver ? horseSeat(p.fx, p.fy) : null;
+    if (seat) { g.save(); g.translate(seat.x, seat.y); }
     const ride = p.mounted && this.pet;
     if (ride) { drawAnimal(g, this.pet.kind, p.x, p.y, { t: T0, fx: p.fx, moving: p.moving, walk: p.walk }); g.save(); g.translate(0, -(RIDE_H[this.pet.kind] || 12)); }
-    drawPerson(g, p.x, p.y, 1, c.look, personMotion(p, c.look, { t: T0, fx: p.fx, fy: p.fy, walk: ride ? 0 : p.walk, moving: ride ? false : p.moving, guard: p.guard, guardPerfect: p.guard && p.guardT < PERFEITA, cls: c.cls, weapon: w, weaponId: c.data.eq.arma, legendary: legend, shield: !!c.data.eq.escudo, atkT: p.atkT, swingA: p.swingA, combo: p.combo, spin: p.spin, ...look }));
+    drawPerson(g, p.x, p.y, 1, c.look, personMotion(p, c.look, { t: T0, fx: p.fx, fy: p.fy, walk: ride || seat ? 0 : p.walk, moving: ride || seat ? false : p.moving, guard: p.guard, guardPerfect: p.guard && p.guardT < PERFEITA, cls: c.cls, weapon: w, weaponId: c.data.eq.arma, legendary: legend, shield: !!c.data.eq.escudo, atkT: p.atkT, swingA: p.swingA, combo: p.combo, spin: p.spin, ...look }));
     if (ride) g.restore();
+    if (seat) g.restore();
     g.globalAlpha = 1;
-    this.nameTag(g, p.x, p.y - 56 - (ride ? RIDE_H[this.pet.kind] || 12 : 0), c.name, c.level, '#FFE38A', this.social.clan?.tag);
+    this.nameTag(g, p.x + (seat?.x || 0), p.y - 56 + (seat ? seat.y - 14 : 0) - (ride ? RIDE_H[this.pet.kind] || 12 : 0), c.name, c.level, '#FFE38A', this.social.clan?.tag);
   }
 
   drawOther(g, o) {
-    const ride = o.pet?.m;
-    if (o.pet && !ride) drawAnimal(g, o.pet.k, o.x - (o.fx || 1) * 26, o.y + 2, { t: this.T, fx: o.fx || 1, moving: !!o.mv, walk: o.walk });
+    const seat = o.rideDriver ? horseSeat(o.fx, o.fy) : null;
+    const ride = !seat && o.pet?.m;
+    if (seat) { g.save(); g.translate(seat.x, seat.y); }
+    if (o.pet && !ride && !seat) drawAnimal(g, o.pet.k, o.x - (o.fx || 1) * 26, o.y + 2, { t: this.T, fx: o.fx || 1, moving: !!o.mv, walk: o.walk });
     if (ride) { drawAnimal(g, o.pet.k, o.x, o.y, { t: this.T, fx: o.fx, moving: !!o.mv, walk: o.walk }); g.save(); g.translate(0, -(RIDE_H[o.pet.k] || 12)); }
     const kind = ITEMS[o.eq?.arma]?.palavra ? 'espada' : CLASSES[o.cls]?.arma || 'espada';
-    drawPerson(g, o.x, o.y, 1, o.look || {}, personMotion(o, o.look || {}, { t: this.T, fx: o.fx, fy: o.fy, walk: o.walk, moving: !!o.mv,
+    drawPerson(g, o.x, o.y, 1, o.look || {}, personMotion(o, o.look || {}, { t: this.T, fx: o.fx, fy: o.fy, walk: ride || seat ? 0 : o.walk, moving: ride || seat ? false : !!o.mv,
       cls: o.cls, weapon: kind, weaponId: o.eq?.arma, shield: !!o.eq?.escudo, attacking: !!o.atk,
       ...this.equipLook(o.eq || {}) }));
     if (ride) g.restore();
+    if (seat) g.restore();
     // amigos em verde, colegas de clã em dourado
     const mesmoCla = o.cla && o.cla === this.social.clan?.tag;
-    this.nameTag(g, o.x, o.y - 56, o.name, o.lvl, this.social.friends.has(o.id) ? '#7CE0A0' : mesmoCla ? '#FFD23F' : '#9FD8FF', o.cla);
+    this.nameTag(g, o.x + (seat?.x || 0), o.y - 56 + (seat ? seat.y - 14 : ride ? -17 : 0), o.name, o.lvl, this.social.friends.has(o.id) ? '#7CE0A0' : mesmoCla ? '#FFD23F' : '#9FD8FF', o.cla);
   }
 
   nameTag(g, x, y, name, lvl, col, tag) {
@@ -1943,3 +2012,4 @@ instalarMundoNet(Game);
 instalarDescanso(Game);
 instalarCasa(Game);
 instalarGrupo(Game);
+instalarCarona(Game);

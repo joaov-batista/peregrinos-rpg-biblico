@@ -1,3 +1,4 @@
+import { bossDamage, strikeShell } from './combatRules.js';
 // Mundo compartilhado: no mundo aberto, todos veem os MESMOS vícios e chefes.
 // Um jogador é o "anfitrião" (quem está no mundo há mais tempo): só ele simula os inimigos e manda o estado
 // para os outros (~7 vezes por segundo). Os outros desenham o que recebem e mandam seus golpes para o anfitrião,
@@ -52,7 +53,7 @@ const metodos = {
       if (agora - o.seen > 4000 || o.x == null || (o.sala || 'world') !== sala) continue;
       let px = this.proxies.get(o.id);
       if (!px) { px = { remote: true, id: o.id, r: 12, fx: 0, fy: 1, slow: 1, buffs: {}, dead: false }; this.proxies.set(o.id, px); }
-      px.x = o.x; px.y = o.y; vivos.add(o.id);
+      px.x = o.x; px.y = o.y; px.boat = !!o.boat; px.swimming = !!o.swimming; vivos.add(o.id);
     }
     for (const id of this.proxies.keys()) if (!vivos.has(id)) this.proxies.delete(id);
   },
@@ -73,20 +74,20 @@ const metodos = {
     // áreas de ataque e poças criadas pelos chefes vão para os outros resolverem no próprio aparelho
     for (const t of this.tele) if (!t._net && !t.friendly) {
       t._net = 1;
-      this.netEnviar({ t: 'tele', k: t.kind, x: Math.round(t.x), y: Math.round(t.y), r: t.r, a: t.a, len: t.len, w: t.w, d: t.t, c: t.color, dano: t.dano ? Math.round(t.dano) : undefined });
+      this.netEnviar({ t: 'tele', k: t.kind, x: Math.round(t.x), y: Math.round(t.y), r: t.r, a: t.a, len: t.len, w: t.w, d: t.t, c: t.color, sid: t.src?.nid, rock: t.rock, sl: t.sleep, rt: t.root, ub: t.unblockable, dano: t.dano ? Math.round(t.dano) : undefined });
     }
     for (const h of this.hazards) if (!h._net) {
       h._net = 1;
-      this.netEnviar({ t: 'haz', h: { x: Math.round(h.x), y: Math.round(h.y), r: h.r, t: h.t, dmg: Math.round(h.dmg), color: h.color, ring: h.ring, spd: h.spd, delay: h.delay } });
+      this.netEnviar({ t: 'haz', h: { x: Math.round(h.x), y: Math.round(h.y), r: h.r, t: h.t, dmg: Math.round(h.dmg), color: h.color, ring: h.ring, spd: h.spd, delay: h.delay, solid: h.solid, sid: h.src?.nid } });
     }
     this._snapT = (this._snapT || 0) - dt;
     if (this._snapT > 0) return;
     this._snapT = SNAP_S;
     const players = [this.eu, ...this.proxies.values()], lista = [];
     for (const e of this.enemies) {
-      if (!e.nid || e.clone) continue;
+      if (!e.nid) continue;
       if (!players.some(p => Math.hypot(p.x - e.x, p.y - e.y) < ALCANCE)) continue;
-      const s = { i: e.nid, x: Math.round(e.x), y: Math.round(e.y), h: Math.max(0, Math.round(e.hp)), m: e.max };
+      const s = { i: e.nid, x: Math.round(e.x), y: Math.round(e.y), h: Math.max(0, Math.round(e.hp)), m: e.max, atk: e.atk, shell: e.shellOpen || 0, shellHits: e.shellHits || 0, clone: !!e.clone, summoner: e.summoner };
       if (e.kind === 'boss') s.b = e.id; else { s.t = e.type; if (e.boost && e.boost !== 1) s.f = e.boost; }
       if (e.stun > 0) s.s = 1; if (e.telegraph > 0) s.g = 1; if (e.broken > 0) s.k = 1;
       if (e.pos > 0) { s.p = Math.round(e.pos); s.pm = e.posMax; }
@@ -101,6 +102,7 @@ const metodos = {
   // Mensagens recebidas pelo canal
   onNetEv(m) {
     if (String(m.de) === this.meuId()) return;
+    if (m.t?.startsWith('horse-')) return this.onHorseRide(m);
     if (m.t?.startsWith('g-')) return this.onGrupoEv(m); // convites e avisos do grupo (game/grupo.js)
     if (!this.netAtivo() || (m.sala || 'world') !== this.salaAtual()) return;
     const host = this.souHost();
@@ -110,13 +112,13 @@ const metodos = {
       case 'parry': {
         const e = host && this.porNid(m.id); if (!e) break;
         e.stun = e.kind === 'boss' ? 0.8 : 1.4;
-        if (e.kind === 'boss') aoDefender(this, e);
+        if (e.kind === 'boss') { aoDefender(this, e); strikeShell(e, 34); }
         this.postura(e, e.kind === 'boss' ? 34 : 999);
         break;
       }
       case 'dano': if (!host && String(m.para) === this.meuId()) {
         const src = this.porNid(m.id) || { x: m.sx, y: m.sy };
-        this.damagePlayer(m.d, src, { unblockable: !!m.ub, noKnock: !!m.nk });
+        this.damagePlayer(m.d, src, { unblockable: !!m.ub, noKnock: !!m.nk, sleep: m.sl, root: m.rt, knock: m.kn });
       } break;
       case 'morte': if (!host) {
         const e = this.porNid(m.id); if (!e) break;
@@ -129,7 +131,7 @@ const metodos = {
       } break;
       case 'proj': if (!host) { const o = m.o, src = this.porNid(o.sid) || { x: o.x, y: o.y }; this.proj({ ...o, owner: 'e', src }); } break;
       case 'tele': if (!host) this.teleRede(m); break;
-      case 'haz': if (!host) this.hazards.push({ ...m.h, tick: 0, hit: false }); break;
+      case 'haz': if (!host) this.hazards.push({ ...m.h, src: this.porNid(m.h.sid), tick: 0, hit: false }); break;
       case 'bau': this.receberBau(m); break;
     }
   },
@@ -152,6 +154,7 @@ const metodos = {
       e.stun = s.s ? 0.25 : 0; e.telegraph = s.g ? 0.25 : 0; e.broken = s.k ? 0.25 : 0;
       e.pos = s.p || 0; if (s.pm) e.posMax = s.pm; e.exposto = s.ex ? 0.25 : 0;
       e.submerged = !!s.sub; e.inv = !!s.sub; e.alpha = s.al ?? 1; e.talk = !!s.tk;
+      e.clone = !!s.clone; e.summoner = s.summoner; e.atk = s.atk ?? e.atk; e.shellOpen = s.shell || 0; e.shellHits = s.shellHits || 0;
       e.lanca = s.ln || null; if (s.la != null) e.lancaA = s.la; e.engaged = !!s.en; e.dash = s.ds ? 0.1 : 0;
     }
     for (const e of this.enemies.slice()) if (!vistos.has(e.nid)) { this.enemies.splice(this.enemies.indexOf(e), 1); if (this.lock === e) this.lock = null; }
@@ -172,25 +175,29 @@ const metodos = {
   },
 
   // Cliente: golpe num inimigo compartilhado (mostra na hora, o anfitrião aplica o dano)
-  netGolpe(e, mult, a, knock, pos, som) {
-    const { dmg, crit } = this.dmgCalc(mult, e);
+  netGolpe(e, mult, a, knock, pos, som, challenge) {
+    const result = this.dmgCalc(mult, e), crit = result.crit, dmg = bossDamage(e, result.dmg, challenge);
     e.flash = 0.12;
     if (config.numerosDano) this.addText(e.x + rand(-8, 8), e.y - e.r - 10, (som ? som + ' ' : crit ? '✦' : '') + dmg, crit ? '#FFD23F' : '#FFFFFF', crit ? 17 : 13);
     this.burst(e.x, e.y, crit ? 10 : 5, crit ? '#FFD23F' : '#FFF6E3', 160);
     this.hitstop = Math.max(this.hitstop, crit || pos >= 40 ? 0.07 : 0.03); this.shake(crit ? 5 : 2);
-    this.netEnviar({ t: 'golpe', id: e.nid, d: dmg, a: +a.toFixed(2), k: Math.round(knock), ps: Math.round(pos) });
+    this.netEnviar({ t: 'golpe', id: e.nid, d: dmg, a: +a.toFixed(2), k: Math.round(knock), ps: Math.round(pos), challenge });
   },
   // Anfitrião: aplica o golpe de outro jogador
   receberGolpe(m) {
     const e = this.porNid(m.id); if (!e || e.inv || e.hp <= 0) return;
-    e.hp -= m.d; e.flash = 0.12; e.lastHit = this.T; e.aggro = true; if (e.kind === 'boss') e.engaged = true;
+    const damage = bossDamage(e, Math.max(0, Number(m.d) || 0), m.challenge);
+    if (!damage) return;
+    if (e.clone) { e.hp = 0; this.enemies.splice(this.enemies.indexOf(e), 1); this.burst(e.x, e.y, 14, '#B98AF0', 160); return; }
+    strikeShell(e, m.ps);
+    e.hp -= damage; e.flash = 0.12; e.lastHit = this.T; e.aggro = true; if (e.kind === 'boss') e.engaged = true;
     const kb = e.kind === 'boss' ? m.k * 0.1 : m.k; e.kx += Math.cos(m.a) * kb; e.ky += Math.sin(m.a) * kb;
     (e.hitBy = e.hitBy || new Set()).add(String(m.de));
     if (e.hp <= 0) this.kill(e); else this.postura(e, m.ps);
   },
   // Anfitrião: um inimigo acertou outro jogador
   netDanoRemoto(px, amount, src, opts = {}) {
-    this.netEnviar({ t: 'dano', para: px.id, d: Math.round(amount), sx: Math.round(src?.x ?? px.x), sy: Math.round(src?.y ?? px.y), id: src?.nid, ub: opts.unblockable ? 1 : undefined, nk: opts.noKnock ? 1 : undefined });
+    this.netEnviar({ t: 'dano', para: px.id, d: Math.round(amount), sx: Math.round(src?.x ?? px.x), sy: Math.round(src?.y ?? px.y), id: (src?.src || src)?.nid, ub: opts.unblockable ? 1 : undefined, nk: opts.noKnock ? 1 : undefined, sl: opts.sleep, rt: opts.root, kn: opts.knock });
     return 'hit';
   },
   // Anfitrião: projétil de inimigo também aparece para os outros
@@ -199,12 +206,12 @@ const metodos = {
   },
   // Cliente: área de ataque do chefe; quando termina, confere se acertou o PRÓPRIO jogador
   teleRede(m) {
-    const t = { kind: m.k, x: m.x, y: m.y, r: m.r, a: m.a, len: m.len, w: m.w, t: m.d, max: m.d, color: m.c };
+    const t = { kind: m.k, x: m.x, y: m.y, r: m.r, a: m.a, len: m.len, w: m.w, t: m.d, max: m.d, color: m.c, rock: m.rock };
     if (m.dano) t.onEnd = () => {
-      const p = this.p, src = { x: m.x, y: m.y };
+      const p = this.p, src = { x: m.x, y: m.y, src: this.porNid(m.sid) };
       const acertou = m.k === 'line' ? this.inLine(p, m.x, m.y, m.a, m.len, m.w) : Math.hypot(p.x - m.x, p.y - m.y) < m.r + p.r;
       this.shake(6);
-      if (acertou) this.damagePlayer(m.dano, src);
+      if (acertou) this.damagePlayer(m.dano, src, { sleep: m.sl, root: m.rt, unblockable: m.ub });
     };
     this.tele.push(t);
   }

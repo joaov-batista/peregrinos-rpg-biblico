@@ -11,6 +11,8 @@ export const RARIDADE = {
 };
 
 export const ITEMS = {
+  selo_vigilia: { nome: 'Selo da Vigília', icon: '🔆', slot: 'reliquia', raridade: 'secreto', fe: 18, def: 3, desc: 'Revelado por três ecos. Mantém a fé acesa, mas não impede o sono.' },
+  sandalias_viajante: { nome: 'Sandálias do Caminho Oculto', icon: '👣', slot: 'pes', raridade: 'secreto', spd: 10, def: 4, desc: 'Tesouro das cinco inscrições. O caminho se revela a quem observa.' },
   // ---------- Consumíveis ----------
   pao: { nome: 'Pão', icon: '🍞', tipo: 'consumivel', cura: 45, preco: 12, desc: 'Recupera 45 de vida. "Eu sou o pão da vida" (Jo 6:35).' },
   peixe: { nome: 'Peixe Assado', icon: '🐟', tipo: 'consumivel', cura: 110, preco: 32, nivel: 4, desc: 'Recupera 110 de vida. Lembra a multiplicação (Jo 6:9).' },
@@ -112,7 +114,7 @@ export const ITEMS = {
 
   // ---------- Animais (slot "pet"). montaria = multiplica a velocidade quando montado (tecla R) ----------
   burrinho: { nome: 'Burrinho', icon: '🫏', slot: 'pet', pet: 'burrinho', montaria: 1.3, preco: 1500, nivel: 4, raridade: 'raro', desc: 'Montaria mansa (um pouco lenta). "Eis que o teu Rei vem a ti, manso, montado num jumentinho" (Mt 21:5). Aperte R para montar.' },
-  cavalo: { nome: 'Cavalo', icon: '🐎', slot: 'pet', pet: 'cavalo', montaria: 2.4, preco: 5000, nivel: 8, raridade: 'epico', desc: 'A montaria mais veloz do jogo (+140% de velocidade). "Vi o céu aberto, e eis um cavalo branco" (Ap 19:11). Aperte R para montar.' },
+  cavalo: { nome: 'Cavalo', icon: '🐎', slot: 'pet', pet: 'cavalo', montaria: 2.4, preco: 5000, nivel: 8, raridade: 'epico', desc: 'Leva duas pessoas: um condutor e um passageiro. Interaja com o cavaleiro para pedir carona; R para descer. A montaria mais veloz do jogo (+140% de velocidade). "Vi o céu aberto, e eis um cavalo branco" (Ap 19:11). Aperte R para montar.' },
   cachorro: { nome: 'Cachorro', icon: '🐕', slot: 'pet', pet: 'cachorro', preco: 320, nivel: 3, desc: 'Companheiro fiel: ataca os vícios perto de você com mordidas fortes e acha moedas pelo caminho.' },
   gato: { nome: 'Gato', icon: '🐈', slot: 'pet', pet: 'gato', preco: 280, nivel: 2, desc: 'Companheiro ágil: arranha os vícios perto de você bem rápido (golpes mais fracos, mas seguidos).' },
   ovelha: { nome: 'Ovelhinha', icon: '🐑', slot: 'pet', pet: 'ovelha', preco: 260, nivel: 2, desc: 'Companheira mansa: enquanto ela está com você, a vida volta aos pouquinhos. "O Senhor é o meu pastor" (Sl 23:1).' },
