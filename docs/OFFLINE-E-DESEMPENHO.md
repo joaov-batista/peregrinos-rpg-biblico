@@ -29,6 +29,6 @@ Com Chromium e Playwright disponíveis:
 
 - `node tests/offline-browser.cjs`: compila em diretório temporário, inicia servidor local e simula o Supabase. Verifica download inicial, reabertura offline, áudio parcial, sincronização automática, conflito e atualização offline. Não usa contas reais.
 - Com `npm run dev` em execução: `node tests/browser-smoke.cjs`, `node tests/horse-browser.cjs`, `node tests/parrot-browser.cjs`.
-- `node tests/mobile-browser.cjs`: compara a revisão anterior com a atual em tela móvel 3×, testa rotação, cache e opção econômica. Os tempos são de Chromium emulado, não uma medição de FPS em aparelho físico.
+- `node tests/mobile-browser.cjs`: compara a revisão anterior às otimizações (`2feb2de`) com a atual em tela móvel 3×, testa rotação, cache e opção econômica. Os tempos são de Chromium emulado, não uma medição de FPS em aparelho físico.
 
-Não houve publicação nem alteração do Supabase de produção nesta tarefa.
+A versão de offline, sincronização e nitidez foi enviada à `main` no commit `9e5babd`, antes das melhorias seguintes nos monstros. Não houve alteração do banco Supabase de produção.

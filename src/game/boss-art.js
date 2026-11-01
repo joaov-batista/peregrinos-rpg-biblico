@@ -13,7 +13,7 @@ function crown(g,C){
 function robe(g,C,t,width=1){
   g.save();g.scale(width,1);
   const hem=Math.sin(t*1.6-.6)*2.2;
-  shape(g,`M-12-36 Q-27-13-33 17 L${-40+hem} 36 Q${-26+hem} 26 ${-22+hem} 40 Q${-13+hem} 32 ${-8+hem} 43 L0 31 ${9-hem} 43 Q${17-hem} 29 ${24-hem} 39 L${39-hem} 32 Q29 4 25-13 L12-36Z`,gradient(g,C.body,C.deep));
+  shape(g,`M-12-36 Q-27-13-33 17 L${-40+hem} 36 Q${-26+hem} 26 ${-22+hem} 40 Q${-13+hem} 32 ${-8+hem} 43 L0 31 ${9-hem} 43 Q${17-hem} 29 ${24-hem} 39 L${39-hem} 32 Q29 4 25-13 L12-36Z`,gradient(g,C.body,C.deep),INK,.85,false);
   for(const sd of [-1,1]){g.save();g.scale(sd,1);line(g,'M8-28 Q14-5 10 27 L16 34 M15-24 Q22 4 27 28','#677C89',.9);ribbon(g,21,-6,46,C,t+sd);g.restore();}g.restore();
 }
 function shoulder(g,C){
@@ -130,15 +130,15 @@ const ART={
     for(let k=0;k<7;k++){const phase=(t*.22+k/7)%1;g.save();g.globalAlpha*=1-phase;oval(g,Math.sin(k*2.4+t)*27,28-phase*81,.65,1.1,C.accent,null);g.restore();}
   },
   behemote(g,t,C,b,m){
-    const stamp=/pisao/.test(b.act||'')?-m.attack*4:0;
+    const stamp=/pisao|terremoto/.test((b.artRemote?b.artAct:b.act)||'')?-m.attack*4:0;
     g.save();g.translate(0,stamp);
     const tail=Math.sin(t*1.6-.8)*5;
-    jointLimb(g,`M36-6 Q${74+tail}-11 ${66+tail}-39`,C.body,6);
+    jointLimb(g,`M36-6 Q${74+tail}-11 ${66+tail}-39`,C.body,6,false);
     g.save();g.translate(tail,0);
     shape(g,'M64-37 58-42 64-48 73-42 70-34Z',C.bone);
     g.restore();
     for(const [x,phase] of [[-31,0],[-13,Math.PI],[17,Math.PI],[34,0]]){
-      const step=m.phase*5+phase,lift=Math.max(0,Math.cos(step))*m.move*5;
+      const step=m.cycle+phase,lift=Math.max(0,Math.cos(step))*m.move*5;
       g.save();g.translate(x,-lift);g.rotate(Math.sin(step)*m.move*.1);
       shape(g,'M-8 3 Q0-1 10 3 Q5 20 8 28 Q14 34 5 35 L-9 34 Q-13 31-8 25Z',gradient(g,C.shell,C.deep));
       shape(g,'M-9 24 Q0 27 8 24 L11 31 Q10 35-1 34 L-11 33Z',C.bone);line(g,'M-4 27-4 32 M2 27 2 32','#778B89',.8);g.restore();}
@@ -164,7 +164,7 @@ const ART={
     const p=b.artPose||goliathPose(b,t),aim=p.angle,behind=Math.sin(aim)<-.25;
     const bronze=gradient(g,'#C5B18C','#5D665F'),darkBronze='#7B7A61';
     const arm=()=>{
-      jointLimb(g,`M${p.shoulder.x} ${p.shoulder.y} Q${p.elbow.x} ${p.elbow.y} ${p.hand.x} ${p.hand.y}`,darkBronze,8);
+      jointLimb(g,`M${p.shoulder.x} ${p.shoulder.y} Q${p.elbow.x} ${p.elbow.y} ${p.hand.x} ${p.hand.y}`,darkBronze,8,false);
       g.save();g.translate(p.hand.x,p.hand.y);g.rotate(aim);
       jointLimb(g,'M-28 0H88','#78664D',3.3);line(g,'M-25-1H84','#C6B48C',.65);
       shape(g,'M81-4 92-7 113 0 92 7 81 4Z',gradient(g,'#E0E3D1','#789297'));
@@ -174,7 +174,7 @@ const ART={
     };
     if(behind)arm();
     shape(g,'M-16-42 Q-26-20-29 28 L-16 22-8 34 2 24 17 32 28 23 Q26-21 16-42Z',gradient(g,'#555B64',C.deep));
-    for(const sd of [-1,1]){g.save();g.scale(sd,1);g.translate(Math.sin(m.phase*5+sd)*m.move,Math.sin(m.phase*5+sd)*m.move*2.5);
+    for(const sd of [-1,1]){g.save();g.scale(sd,1);g.translate(Math.sin(m.cycle+(sd<0?Math.PI:0))*m.move,Math.sin(m.cycle+(sd<0?Math.PI:0))*m.move*2.5);
       jointLimb(g,'M9-1 Q17 10 13 18 L13 36',C.deep,10);
       shape(g,'M7 9 20 8 19 31 24 37 5 37 7 29Z',bronze);
       line(g,'M9 14 16 14 M10 29 17 29','#D6CBA8',1);g.restore();}
@@ -271,15 +271,15 @@ function goliathPose(b,t){
 export function drawBoss(g,b,T=0){
   const id=b.d?.desenho||b.id||'generico',s=(b.r||40)/40;
   const C=palette(ACCENT[id]||b.d?.cor||'#BCCED2',b.flash>0);
-  const m=b.artMotion||creatureMotion(b,T);
+  const m={...creatureMotion(b,T),...b.artMotion};
   g.save();g.translate(b.x||0,b.y||0);g.scale(s,s);g.lineCap='round';g.lineJoin='round';
   if(b.alpha!=null)g.globalAlpha*=Math.max(0,Math.min(1,b.alpha));
   if(b.submerged)g.globalAlpha*=.4;
   // Clones deliberately use identical shadows and artwork to the real boss.
   shadow(g,id==='behemote'||id==='leviata'?57:39,7,37);
-  if(b.act&&b.step===1){g.save();g.globalAlpha*=.3+.12*Math.sin(T*16);oval(g,0,33,42,9,null,C.accent,1.1);g.restore();}
+  if(m.attack>.1){g.save();g.globalAlpha*=.3+.12*Math.sin(T*16);oval(g,0,33,42,9,null,C.accent,1.1);g.restore();}
   const bob=b.stun>0?0:Math.sin(T*(id==='procrastinacao'?1.2:1.7))*(id==='golias'?.3:1.2);
-  g.translate(0,bob+12);g.rotate(Math.sin(m.phase*4)*m.move*.018);g.translate(0,-12);
+  g.translate(m.lookX*m.strike*1.5,bob+m.bob*.65+12-m.hit*.8);g.rotate(Math.sin(m.cycle)*m.move*.018+m.lean*.35);g.translate(0,-12);
   const breath=b.stun>0?0:Math.sin(T*1.6);g.scale(1+breath*.006,1-breath*.006);
   (ART[id]||ART.generico)(g,T,C,b,m);
   g.restore();

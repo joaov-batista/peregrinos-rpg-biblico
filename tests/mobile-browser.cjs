@@ -10,7 +10,7 @@ const { execFileSync } = require('node:child_process');
       context.setDefaultTimeout(20000);
       await context.route('https://fonts.googleapis.com/**', r => r.abort());
       if (mode === 'before') for (const file of ['src/game/game.js', 'src/game/world.js']) {
-        const body = execFileSync('git', ['show', 'HEAD:' + file], { encoding: 'utf8' });
+        const body = execFileSync('git', ['show', (process.env.PEREGRINOS_BENCHMARK_BASE || '2feb2de') + ':' + file], { encoding: 'utf8' });
         await context.route('**/' + file + '*', r => r.fulfill({ contentType: 'application/javascript', body }));
       }
       const page = await context.newPage(), errors = [];

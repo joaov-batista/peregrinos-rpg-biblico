@@ -968,6 +968,7 @@ export class Game {
   }
 
   enemyStrike(e, dist) {
+    e.artAttack = (e.artAttack || 0) + 1;
     const p = this.p;
     if (e.mode === 'shoot') {
       const a = Math.atan2(p.y - e.y, p.x - e.x);

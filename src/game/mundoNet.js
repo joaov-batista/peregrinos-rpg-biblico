@@ -1,3 +1,4 @@
+import { recordEnemyPosition, interpolateEnemy } from './enemy-interpolation.js';
 import { bossDamage, strikeShell } from './combatRules.js';
 // Mundo compartilhado: no mundo aberto, todos veem os MESMOS vícios e chefes.
 // Um jogador é o "anfitrião" (quem está no mundo há mais tempo): só ele simula os inimigos e manda o estado
@@ -5,7 +6,7 @@ import { bossDamage, strikeShell } from './combatRules.js';
 // que aplica o dano. Quando o anfitrião sai, o próximo da fila assume os inimigos como estão.
 // Dungeons (fases e salão) continuam individuais. Sem Supabase (offline), tudo é local, como antes.
 // Mensagens (evento "ev" do canal): snap, golpe, parry, dano, morte, proj, tele, haz.
-import { lerp, rand } from '../util.js';
+import { rand } from '../util.js';
 import { aoDefender } from './bossMoves.js';
 import { config } from '../config.js';
 
@@ -37,6 +38,7 @@ const metodos = {
 
   // Assume a simulação: os pontos de surgimento e os chefes do mundo seguem o que já existe
   virouHost() {
+    for (const e of this.enemies) e.artRemote = false;
     if (this.scene !== 'world') { for (const e of this.enemies) { e.tx = e.ty = null; e.cd = rand(0.5, 1.5); } return; }
     for (const s of this.spawns) { s.alive = this.enemies.some(e => e.nid === 's' + s.i); if (!s.alive) s.at = this.T + rand(4, 12); }
     for (const wb of this.worldBosses) {
@@ -93,6 +95,8 @@ const metodos = {
       if (e.pos > 0) { s.p = Math.round(e.pos); s.pm = e.posMax; }
       if (e.exposto > 0) s.ex = 1; if (e.submerged) s.sub = 1; if (e.alpha != null && e.alpha < 1) s.al = +e.alpha.toFixed(2);
       if (e.talk) s.tk = 1; if (e.lanca) { s.ln = e.lanca; s.la = +(e.lancaA || 0).toFixed(2); }
+      if (e.artAttack) s.an = e.artAttack;
+      if (e.act) { s.ac = e.act; s.st = e.step; }
       if (e.engaged) s.en = 1; if (e.dash > 0) s.ds = 1;
       lista.push(s);
     }
@@ -150,6 +154,8 @@ const metodos = {
         } else { e = this.makeEnemy(s.t, s.x, s.y, s.f || 1); this.enemies.push(e); }
         e.nid = s.i; e.x = s.x; e.y = s.y;
       }
+      recordEnemyPosition(e, s.x, s.y, this.T);
+      e.artAttack = s.an || 0; e.artRemote = true; e.artAct = s.ac || null; e.artStep = s.st || 0;
       e.tx = s.x; e.ty = s.y; e.hp = s.h; e.max = s.m;
       e.stun = s.s ? 0.25 : 0; e.telegraph = s.g ? 0.25 : 0; e.broken = s.k ? 0.25 : 0;
       e.pos = s.p || 0; if (s.pm) e.posMax = s.pm; e.exposto = s.ex ? 0.25 : 0;
@@ -165,7 +171,7 @@ const metodos = {
     let chefe = null;
     for (const e of this.enemies) {
       e.flash = Math.max(0, (e.flash || 0) - dt);
-      if (e.tx != null) { e.x = lerp(e.x, e.tx, Math.min(1, dt * 10)); e.y = lerp(e.y, e.ty, Math.min(1, dt * 10)); }
+      if (e.tx != null) interpolateEnemy(e, this.T);
       if (e.kind === 'boss' && e.engaged && Math.hypot(this.eu.x - e.x, this.eu.y - e.y) < 950) chefe = e;
     }
     if (chefe) {

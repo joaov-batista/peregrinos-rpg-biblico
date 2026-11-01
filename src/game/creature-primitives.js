@@ -1,12 +1,24 @@
 // Shared ink, mineral and porcelain rendering. Cached paths stay independent of scale.
 export const INK = '#080F19', BONE = '#D8DDD1', TAU = Math.PI * 2;
 const paths = new Map();
-export function shape(g, d, fill, stroke = INK, width = .85) {
-  let p = paths.get(d); if (!p) { if(paths.size>=768)paths.clear();p = new Path2D(d); paths.set(d, p); }
+function pathFor(d, cache) {
+  let p = cache && paths.get(d);
+  if (!p) {
+    p = new Path2D(d);
+    if (cache) {
+      // Traços animados não entram aqui; uma novidade não elimina toda a arte estática.
+      if (paths.size >= 768) paths.delete(paths.keys().next().value);
+      paths.set(d, p);
+    }
+  }
+  return p;
+}
+export function shape(g, d, fill, stroke = INK, width = .85, cache = true) {
+  const p = pathFor(d, cache);
   if (fill) { g.fillStyle = fill; g.fill(p); }
   if (stroke) { g.strokeStyle = stroke; g.lineWidth = width; g.stroke(p); }
 }
-export function line(g, d, color, width = .7) { shape(g, d, null, color, width); }
+export function line(g, d, color, width = .7, cache = true) { shape(g, d, null, color, width, cache); }
 export function oval(g, x, y, rx, ry, fill, stroke = INK, width = .75) {
   g.beginPath(); g.ellipse(x,y,Math.max(.01,rx),Math.max(.01,ry),0,0,TAU);
   if(fill){g.fillStyle=fill;g.fill();}if(stroke){g.strokeStyle=stroke;g.lineWidth=width;g.stroke();}
@@ -50,11 +62,11 @@ export function claw(g,x,y,side,C,scale=1) {
   shape(g,'M-3-4 Q4-6 7-2 L10 7 6 4 4 0 5 9 2 7 0 1-1 8-3 6-4 1Z',C.bone);
   line(g,'M-1-3 3-2 6 3','#728A8E',.55);g.restore();
 }
-export function jointLimb(g,d,color,width=4) { line(g,d,INK,width+1.8);line(g,d,color,width); }
+export function jointLimb(g,d,color,width=4,cache=true) { const p=pathFor(d,cache); g.strokeStyle=INK;g.lineWidth=width+1.8;g.stroke(p);g.strokeStyle=color;g.lineWidth=width;g.stroke(p); }
 export function coin(g,x,y,r,t,C) {
   const w=r*(.35+.65*Math.abs(Math.cos(t)));
   oval(g,x,y,w,r,C.gold,INK,.65);oval(g,x,y,w*.66,r*.7,null,'#DED0A1',.5);
-  line(g,`M${x} ${y-r*.4}v${r*.8}`,'#F1E1B0',.55);
+  line(g,`M${x} ${y-r*.4}v${r*.8}`,'#F1E1B0',.55,false);
 }
 export function chain(g,points,C) {
   for(let k=1;k<points.length;k++) {

@@ -1,6 +1,6 @@
 // Visual interpolation only. Combat timers, movement and collision stay authoritative.
 import { getPersonPose } from './character-art.js';
-const people=new WeakMap(),creatures=new WeakMap();
+const people=new WeakMap();
 const damp=(from,to,rate,dt)=>from+(to-from)*(1-Math.exp(-rate*dt));
 const angleDamp=(from,to,rate,dt)=>from+Math.atan2(Math.sin(to-from),Math.cos(to-from))*(1-Math.exp(-rate*dt));
 
@@ -22,14 +22,4 @@ export function personMotion(actor,look,st){
   return {...next,pose:a.pose};
 }
 
-export function creatureMotion(actor,time){
-  let a=creatures.get(actor);
-  if(!a){a={time,x:actor.x||0,y:actor.y||0,blend:0,phase:actor.ph||0,attack:0};creatures.set(actor,a);}
-  const dt=Math.max(0,Math.min(.06,time-a.time));
-  const speed=dt>0?Math.hypot((actor.x||0)-a.x,(actor.y||0)-a.y)/dt:0;
-  const moving=Math.min(1,speed/Math.max(40,actor.spd||70));
-  a.blend=damp(a.blend,actor.stun>0?0:moving,9,dt);a.phase+=dt*(.4+a.blend*1.6);
-  a.attack=damp(a.attack,actor.telegraph>0||actor.act&&actor.step===1?1:0,9,dt);
-  a.time=time;a.x=actor.x||0;a.y=actor.y||0;
-  return {move:a.blend,phase:a.phase,attack:a.attack};
-}
+export { creatureMotion } from './creature-motion.js';

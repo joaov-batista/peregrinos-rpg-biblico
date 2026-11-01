@@ -4,6 +4,7 @@ import { creatureMotion } from './sprite-motion.js';
 // Heights are for labels only; gameplay collision radii remain in bestiary.js.
 const HEIGHT={preguica:27,distracao:38,desanimo:38,inveja:39,ganancia:33,duvida:42,ira:35,medo:44,orgulho:48,vaidade:42};
 const ACCENT={preguica:'#A6C9AD',distracao:'#D8B5DA',desanimo:'#9EB9D0',inveja:'#ACCF8B',ganancia:'#E0C28A',duvida:'#C5B0E4',ira:'#F4A17D',medo:'#A0C7D5',orgulho:'#C5B4E3',vaidade:'#A5DDDA'};
+const TINT={preguica:['#567C64','#243F36'],distracao:['#827399','#342C50'],desanimo:['#657C99','#25374F'],inveja:['#6E9A75','#243C32'],ganancia:['#998348','#493E27'],duvida:['#8B7DAB','#392D55'],ira:['#9C6255','#482A2A'],medo:['#668E9F','#203542'],orgulho:['#927AAA','#352B48'],vaidade:['#62A8A7','#21464D']};
 export function enemyArtTop(type,r=16){return (HEIGHT[type]||38)*r/16+7;}
 
 const ART={
@@ -11,7 +12,7 @@ const ART={
     // A low, weighty shell with overlapping stone scales and a dragging tail.
     const b=Math.sin(t*1.8)*.6;
     shape(g,'M-18 10 Q-31 11-29 5 Q-27-1-18-5 L15-1 Q26 2 26 9 L16 14-18 14Z',C.deep);
-    for(const sd of [-1,1]){const step=m.phase*5+(sd<0?Math.PI:0);g.save();g.translate(sd*10+Math.sin(step)*m.move*2.4,7-Math.max(0,Math.cos(step))*m.move*2.1);g.rotate(sd*Math.sin(t*2)*.07);shape(g,'M-4-4 Q0-6 4-4 L5 7 Q0 9-4 7Z',C.body);line(g,'M-2 5 0 7 2 5',C.bone,.6);g.restore();}
+    for(const sd of [-1,1]){const step=m.cycle+(sd<0?Math.PI:0);g.save();g.translate(sd*10+Math.sin(step)*m.move*2.4,7-Math.max(0,Math.cos(step))*m.move*2.1);g.rotate(sd*Math.sin(t*2)*.07);shape(g,'M-4-4 Q0-6 4-4 L5 7 Q0 9-4 7Z',C.body);line(g,'M-2 5 0 7 2 5',C.bone,.6);g.restore();}
     g.save();g.translate(0,b);
     shape(g,'M-20 2 Q-22-19-7-23 Q16-27 20-4 L15 8-13 10Z',gradient(g,C.shell,C.deep));
     for(let k=0;k<4;k++){g.save();g.translate(-13+k*8,-12+Math.abs(k-1.5)*2);g.rotate((k-1.5)*.25);shape(g,'M-6-4 Q0-12 6-4 L5 7 0 10-5 7Z',gradient(g,'#9BAF9E','#465D59'));line(g,'M-4-3 Q0-7 4-3','#D4DECA',.7);g.restore();}
@@ -20,8 +21,8 @@ const ART={
     line(g,'M-8-7 Q-16-19-12-22 M8-7 Q16-19 12-22',C.shell,2);
     oval(g,-12,-22,2,1,C.bone);oval(g,12,-22,2,1,C.bone);g.restore();
   },
-  distracao(g,t,C,e){
-    const flap=Math.sin(t*7)*.34;
+  distracao(g,t,C,e,m){
+    const flap=Math.sin(m.wing)*(.22+m.move*.22)+m.attack*.15;
     for(const sd of [-1,1]){g.save();g.scale(sd,1);g.rotate(flap);
       shape(g,'M4-11 Q16-33 30-28 Q33-14 19-5 Q29-1 21 10 Q7 12 3-3Z',gradient(g,'#91A1B5','#35475D'));
       shape(g,'M7-12 Q19-25 26-24 Q22-12 9-6Z','#CFCCCF');
@@ -34,18 +35,18 @@ const ART={
     line(g,'M-4-23 Q-12-34-17-32 M4-23 Q12-34 17-32',C.shell,1.1);
     oval(g,-17,-32,1.2,1.2,C.accent,null);oval(g,17,-32,1.2,1.2,C.accent,null);
   },
-  desanimo(g,t,C,e){
-    ribbon(g,-5,-15,34,C,t,-1);ribbon(g,4,-14,32,C,t+1);
+  desanimo(g,t,C,e,m){
+    ribbon(g,-5,-15,34,C,t+m.move,-1);ribbon(g,4,-14,32,C,t+1+m.move);
     shape(g,'M-8-28 Q0-35 8-28 Q9-10 12-8 L15 12 Q9 8 6 9 L0 16 Q-5 9-6 9 L-16 12 Q-12-1-11-8Z',gradient(g,C.shell,C.deep));
     line(g,'M-5-20 Q-9-4-8 10 M4-20 Q5-2 8 10','#697F8B',.7);
-    for(const sd of [-1,1]){g.save();g.scale(sd,1);jointLimb(g,'M9-15 Q16-6 16 8',C.body,3);oval(g,16,9,4,4,gradient(g,C.shell,C.deep));line(g,'M14 7 18 11',C.bone,.6);g.restore();}
+    for(const sd of [-1,1]){g.save();g.scale(sd,1);g.translate(0,Math.sin(m.cycle+(sd<0?Math.PI:0))*m.move*2-m.attack*3);jointLimb(g,'M9-15 Q16-6 16 8',C.body,3);oval(g,16,9,4,4,gradient(g,C.shell,C.deep));line(g,'M14 7 18 11',C.bone,.6);g.restore();}
     shape(g,'M-9-23 Q-11-36 0-36 Q11-36 9-23 L5-16-5-16Z',C.deep);
     mask(g,0,-25,.63,C);
     for(const sd of [-1,1]){const y=-15+(t*.8%1)*9;oval(g,sd*2.8,y,.6,1.6,C.accent,null);}
   },
   inveja(g,t,C,e,m){
-    const poised=-m.attack*5+Math.sin(t*2.4)*1.4;
-    for(const sd of [-1,1]){const step=m.phase*7+(sd<0?Math.PI:0),lift=Math.max(0,Math.cos(step))*m.move*3;g.save();g.scale(sd,1);jointLimb(g,`M4 0 Q${12+Math.sin(step)*m.move*2} ${8-lift} 15 ${15-lift}`,C.body,2.8);g.translate(Math.sin(step)*m.move, -lift);shape(g,'M12 12 Q15 12 17 14 L16 17 9 16Z',C.bone);g.restore();}
+    const poised=-m.attack*6+m.strike*8+Math.sin(t*2.4)*1.4;
+    for(const sd of [-1,1]){const step=m.cycle+(sd<0?Math.PI:0),lift=Math.max(0,Math.cos(step))*m.move*3;g.save();g.scale(sd,1);jointLimb(g,`M4 0 Q${12+Math.sin(step)*m.move*2} ${8-lift} 15 ${15-lift}`,C.body,2.8,false);g.translate(Math.sin(step)*m.move, -lift);shape(g,'M12 12 Q15 12 17 14 L16 17 9 16Z',C.bone);g.restore();}
     shape(g,'M0-24 7-14 5-1 0 8-5-1-7-14Z',gradient(g,C.shell,C.deep));
     for(const sd of [-1,1]){g.save();g.scale(sd,1);g.translate(0,poised);
       jointLimb(g,'M5-20 14-15 20-25',C.body,3.1);
@@ -57,7 +58,7 @@ const ART={
   },
   ganancia(g,t,C,e,m){
     for(const sd of [-1,1])for(let k=0;k<3;k++){
-      g.save();g.scale(sd,1);g.translate(0,k*5-4-Math.max(0,Math.cos(m.phase*8+k*2+sd))*m.move*2);g.rotate(Math.sin(m.phase*8+k*2+sd)*(.025+m.move*.14));
+      g.save();g.scale(sd,1);g.translate(0,k*5-4-Math.max(0,Math.cos(m.cycle+k*TAU/3+(sd<0?Math.PI:0)))*m.move*2);g.rotate(Math.sin(m.cycle+k*TAU/3+(sd<0?Math.PI:0))*(.025+m.move*.14));
       jointLimb(g,'M8-1 17 1 21 8',C.body,2.2);line(g,'M17 1 18 5',C.gold,.6);g.restore();
     }
     shape(g,'M-13-10 Q-21-22-5-29 Q18-30 19-9 L12 8-10 8Z',gradient(g,'#7C785C',C.deep));
@@ -68,8 +69,8 @@ const ART={
     shape(g,'M9-5 Q23-11 22 3 Q24 12 12 13 Q5 8 9-5Z','#645B48');
     line(g,'M10-3 Q15 0 21-3 M10 8 20 7',C.gold,.8);coin(g,15,4,3.4,t,C);
   },
-  duvida(g,t,C,e){
-    const sway=Math.sin(t*2)*1.2;
+  duvida(g,t,C,e,m){
+    const sway=Math.sin(t*2)*1.2+m.lookX*1.4;
     for(const sd of [-1,1]){g.save();g.scale(sd,1);g.rotate(sway*.025);
       shape(g,'M4-20 13-17 9-1 16 13 6 9 0 17 1-7Z',gradient(g,C.body,C.deep));
       jointLimb(g,'M8-14 17-4 20-11',C.shell,1.8);claw(g,20,-11,1,C,.55);g.restore();}
@@ -79,9 +80,9 @@ const ART={
     shape(g,'M-14-18-10-22-8-17Z',C.bone);shape(g,'M15 12 20 11 18 17Z',C.shell);g.restore();
   },
   ira(g,t,C,e,m){
-    const tilt=m.attack*.13+Math.sin(t*2.7)*.025;
+    const tilt=m.attack*.13-m.strike*.12+Math.sin(t*2.7)*.025;
     g.save();g.rotate(tilt);
-    for(const sd of [-1,1]){const step=m.phase*6+(sd<0?Math.PI:0),lift=Math.max(0,Math.cos(step))*m.move*3;g.save();g.scale(sd,1);jointLimb(g,`M9-1 Q${14+Math.sin(step)*m.move*3} ${9-lift} 18 ${12-lift}`,C.body,5.3);g.translate(Math.sin(step)*m.move*1.4,-lift);shape(g,'M12 10 19 9 Q24 13 22 15 L11 15Z',C.deep);g.restore();}
+    for(const sd of [-1,1]){const step=m.cycle+(sd<0?Math.PI:0),lift=Math.max(0,Math.cos(step))*m.move*3;g.save();g.scale(sd,1);jointLimb(g,`M9-1 Q${14+Math.sin(step)*m.move*3} ${9-lift} 18 ${12-lift}`,C.body,5.3,false);g.translate(Math.sin(step)*m.move*1.4,-lift);shape(g,'M12 10 19 9 Q24 13 22 15 L11 15Z',C.deep);g.restore();}
     shape(g,'M-17 4 Q-25-14-11-22 Q0-28 15-21 Q24-15 17 6Z',gradient(g,'#6D6663',C.deep));
     for(const sd of [-1,1]){g.save();g.scale(sd,1);
       shape(g,'M7-20 Q22-38 29-26 Q36-11 20-10 Q30-18 25-23 Q21-27 14-15Z',gradient(g,C.bone,'#74888B'));
@@ -91,8 +92,8 @@ const ART={
     line(g,'M-2-7 0-2-2 2 1 6 M11-18 15-11 12-6 15 1',C.accent,1.2);
     eyes(g,0,-12,4.5,1.8,C);g.restore();
   },
-  medo(g,t,C,e){
-    const sway=Math.sin(t*2.4)*2;
+  medo(g,t,C,e,m){
+    const sway=Math.sin(t*2.4)*2+m.lookX*2;
     for(const sd of [-1,1]){g.save();g.scale(sd,1);g.translate(0,sway*sd*.3);
       jointLimb(g,'M6-24 Q25-13 22 3',C.deep,2.2);claw(g,22,3,1,{...C,bone:C.shell},.7);
       ribbon(g,5,-13,34,C,t+sd);g.restore();}
@@ -103,7 +104,7 @@ const ART={
     oval(g,0,-7,1.3,2.3,C.accent,null);
   },
   orgulho(g,t,C,e,m){
-    for(const sd of [-1,1]){g.save();g.scale(sd,1);g.translate(0,Math.sin(m.phase*5+sd)*m.move*2.5);jointLimb(g,'M7 0 Q12 7 9 11 L13 14',C.deep,4);shape(g,'M5 9 12 9 16 15 5 15Z',C.shell);g.restore();}
+    for(const sd of [-1,1]){g.save();g.scale(sd,1);g.translate(0,Math.sin(m.cycle+(sd<0?Math.PI:0))*m.move*2.5);jointLimb(g,'M7 0 Q12 7 9 11 L13 14',C.deep,4);shape(g,'M5 9 12 9 16 15 5 15Z',C.shell);g.restore();}
     shape(g,'M-12-25 Q0-33 12-25 L19-9 14 9 0 14-14 9-19-9Z',gradient(g,C.shell,C.deep));
     for(const sd of [-1,1]){g.save();g.scale(sd,1);
       shape(g,'M5-23 16-28 22-16 16-9 8-11Z',C.bone);line(g,'M11-23 15-17 19-16',C.gold,.8);
@@ -115,8 +116,8 @@ const ART={
     shape(g,'M-6-35-7-41 0-38 7-41 6-35Z','#DFD5B8',null);
     oval(g,0,-42,1,1.7,C.accent,null);
   },
-  vaidade(g,t,C,e){
-    for(const sd of [-1,1]){g.save();g.scale(sd,1);g.rotate(Math.sin(t*2.6)*.06);
+  vaidade(g,t,C,e,m){
+    for(const sd of [-1,1]){g.save();g.scale(sd,1);g.rotate(Math.sin(m.wing)*(.06+m.move*.12)-m.attack*.1);
       shape(g,'M2-17 Q15-38 27-34 Q28-27 25-23 L33-23 Q32-14 25-12 L29-6 Q26-1 20-2 L23 8 Q15 9 9 5 L4 15Z',gradient(g,'#7FABA9','#243D4E'));
       for(let k=0;k<3;k++){g.save();g.translate(11+k*5,-3-k*9);g.rotate(.4);oval(g,0,0,3.4,5.6,C.bone);oval(g,0,0,2,3.5,C.deep);oval(g,0,0,.8,2,C.accent,null);g.restore();}
       line(g,'M4 3 Q10-17 22-29','#B9D3C7',.65);g.restore();}
@@ -130,7 +131,8 @@ const ART={
 
 export function drawEnemy(g,e,d,T=0,px=e.x,py=e.y) {
   const r=e.r||d?.r||16,t=T+(e.ph||0),C=palette(ACCENT[e.type]||d?.cor||'#B8CFCE',e.flash>0);
-  const m=e.artMotion||creatureMotion(e,T);
+  if(!e.flash&&TINT[e.type]) [C.shell,C.body]=TINT[e.type];
+  const m={...creatureMotion(e,T),...e.artMotion};
   g.save();g.translate(e.x,e.y);g.scale(r/16,r/16);g.lineCap='round';g.lineJoin='round';
   shadow(g,17,4,15);
   if(e.telegraph>0){
@@ -138,10 +140,50 @@ export function drawEnemy(g,e,d,T=0,px=e.x,py=e.y) {
     oval(g,0,12,19,5,null,'#F1BE8E',1.3);
     shape(g,'M-3 20 0 17 3 20 M-3-9 0-6 3-9',null,'#F1BE8E',1.1);g.restore();
   }
-  const bob=e.stun>0?0:e.type==='distracao'?-3-Math.sin(t*3)*2.8:Math.sin(t*1.9)*.9-Math.sin(m.phase*7)**2*m.move;
-  g.translate(Math.sin(t*1.35)*.35,bob+10);g.rotate(Math.sin(m.phase*5)*m.move*.035+Math.sin(t*1.3)*.012);g.translate(0,-10);
+  const bob=e.stun>0?0:e.type==='distracao'?-3-Math.sin(t*3)*2.8:Math.sin(t*1.9)*.65+m.bob;
+  g.translate(Math.sin(t*1.35)*.2+m.lookX*(m.strike*2-m.hit),bob+10+m.attack*1.4-m.strike*2);g.rotate(m.lean+Math.sin(m.cycle)*m.move*.02);g.translate(0,-10);
   const breath=e.stun>0?0:Math.sin(t*2);g.scale(1+breath*.012,1-breath*.009);
   if(e.type==='medo')g.globalAlpha*=.68+.2*Math.sin(t*2);
   (ART[e.type]||ART.medo)(g,t,C,e,m);
+  details(g,e.type,t,C,m);
+  g.restore();
+}
+
+// Detalhes de identidade e materiais, legíveis também no tamanho real do jogo.
+function details(g,type,t,C,m) {
+  g.save();
+  switch(type) {
+    case 'preguica':
+      for(let k=0;k<4;k++) { const x=-16+k*9,y=-14-Math.sin(k)*5; oval(g,x,y,2,1.1,'#7EAA72',null); }
+      g.translate(-10,-21);g.rotate(Math.sin(t*1.5)*.12);
+      line(g,'M0 2 Q3-3 2-6','#78915E',.9);shape(g,'M2-3 Q-5-9-5-4 Q-3 0 2-3 M2-5 Q7-12 8-7 Q7-3 2-5Z','#A7C287',INK,.55);break;
+    case 'distracao':
+      for(let k=0;k<3;k++) {const a=t*1.3+k*TAU/3;oval(g,Math.cos(a)*23,-14+Math.sin(a)*8,1.2,.7,C.accent,null);}
+      line(g,'M-2-9 0 5 2-9',C.gold,.6);break;
+    case 'desanimo':
+      g.translate(m.lookX,-7);line(g,'M-5-6 Q0 1 5-6',C.gold,.65);
+      shape(g,'M0-2 3 2 0 7-3 2Z',C.accent,INK,.7);line(g,'M0 0V4',C.bone,.5);break;
+    case 'inveja':
+      for(let k=0;k<3;k++){g.save();g.translate(0,-17+k*5);shape(g,'M-4 0 0 2 4 0 3 3 0 5-3 3Z',C.shell,INK,.65);g.restore();}
+      break;
+    case 'ganancia':
+      g.translate(16,5);g.rotate(Math.sin(m.cycle)*m.move*.15);
+      coin(g,0,0,2.8,.4,C);line(g,'M-3-9 Q2-7 6-9',C.bone,.7);break;
+    case 'duvida':
+      for(let k=0;k<3;k++){const a=t*.5+k*TAU/3;g.save();g.translate(Math.cos(a)*23,-14+Math.sin(a)*12);g.rotate(a);shape(g,'M0-3 2 0 0 4-2 0Z',C.accent,INK,.6);g.restore();}break;
+    case 'ira':
+      g.globalAlpha*=.65+.25*Math.sin(t*3);
+      line(g,'M-13-17-16-10-12-6-14 1 M11-19 14-13 11-9 14-3',C.accent,1.2);
+      for(const sd of [-1,1]){g.save();g.translate(sd*14,-7);g.rotate(sd*.25);shape(g,'M-3 0 0-4 3 0 0 4Z','#B78264',INK,.7);g.restore();}break;
+    case 'medo':
+      for(const sd of [-1,1])ribbon(g,sd*5,4,19,{...C,body:'#5B8291'},t+sd,sd);
+      oval(g,0,-16,1.5,3+m.attack*1.5,INK,null);break;
+    case 'orgulho':
+      for(const sd of [-1,1]){g.save();g.scale(sd,1);g.translate(5,0);g.rotate(Math.sin(m.cycle)*m.move*.07);shape(g,'M0-2 6-1 8 12 4 16-1 10Z',C.gold);line(g,'M2 1 4 11',C.bone,.7);g.restore();}
+      shape(g,'M0-12 2-8 0-4-2-8Z',C.accent,INK,.6);break;
+    case 'vaidade':
+      for(const sd of [-1,1]){g.save();g.scale(sd,1);g.translate(17,-23);g.rotate(Math.sin(m.wing)*.06);line(g,'M-2-3 0-6 2-3 M-3 0 0 2 3 0',C.accent,.7);g.restore();}
+      break;
+  }
   g.restore();
 }
