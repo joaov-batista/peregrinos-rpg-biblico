@@ -170,7 +170,7 @@ export function createHud(onExit) {
     for (const ch of g.chests || []) if (!ch.open) dot(ch.x / TS, ch.y / TS, '#C98A3A', 2.6);
     for (const o of g.others.values()) if ((o.sala || 'world') === g.salaAtual()) dot(o.x / TS, o.y / TS, '#5DADEC', 2.5);
     for (const e of g.enemies) if (e.kind === 'boss') dot(e.x / TS, e.y / TS, '#FF2E4A', 4);
-    if (g.guide) {
+    if (g.guide && !g.guide.deceptive) {
       // destino: estrela (ou seta na borda do minimapa)
       const gx = clamp((g.guide.x / TS - sx) * k, 6, W - 6), gy = clamp((g.guide.y / TS - sy) * k, 6, H - 6);
       x.font = '13px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('⭐', gx, gy);
@@ -208,7 +208,7 @@ export function createHud(onExit) {
         x.font = (fase ? 22 : 24) + 'px sans-serif'; x.fillText(o.icon, px, py);
       }
       for (const o of g.others.values()) { x.fillStyle = '#5DADEC'; x.beginPath(); x.arc(o.x / TS * S, o.y / TS * S, 6, 0, 7); x.fill(); }
-      if (g.guide) { x.font = '26px sans-serif'; x.fillText('⭐', g.guide.x / TS * S, g.guide.y / TS * S - 22); }
+      if (g.guide && !g.guide.deceptive) { x.font = '26px sans-serif'; x.fillText('⭐', g.guide.x / TS * S, g.guide.y / TS * S - 22); }
       x.fillStyle = '#FF5A5F'; x.strokeStyle = '#000'; x.lineWidth = 3; x.beginPath(); x.arc(g.p.x / TS * S, g.p.y / TS * S, 9, 0, 7); x.fill(); x.stroke();
       x.font = '900 16px Nunito, sans-serif'; x.fillStyle = '#fff'; x.lineWidth = 4; x.strokeText('VOCÊ', g.p.x / TS * S, g.p.y / TS * S - 20); x.fillText('VOCÊ', g.p.x / TS * S, g.p.y / TS * S - 20);
     };

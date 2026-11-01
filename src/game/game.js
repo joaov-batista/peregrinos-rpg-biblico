@@ -1,3 +1,4 @@
+import { dungeonBossGuide, canLockEnemy } from './dungeon-guide.js';
 import { canvasDpr } from './resolution.js';
 import { separateEnemies, inView } from './spatial.js';
 import { updateParrot, shoulder } from './parrot.js';
@@ -627,7 +628,7 @@ export class Game {
     if (this.lock) { this.lock = null; sfx('click'); return; }
     let best = null, bs = Infinity;
     for (const e of this.enemies) {
-      if (e.hp <= 0 || e.submerged || e.clone) continue;
+      if (e.hp <= 0 || e.submerged || !canLockEnemy(e)) continue;
       const d = Math.hypot(e.x - p.x, e.y - p.y); if (d > 380) continue;
       const score = d + Math.abs(angDiff(Math.atan2(e.y - p.y, e.x - p.x), Math.atan2(p.fy, p.fx))) * 90;
       if (score < bs) { bs = score; best = e; }
@@ -636,7 +637,7 @@ export class Game {
   }
   checkLock() {
     const e = this.lock;
-    if (e && (!this.enemies.includes(e) || e.hp <= 0 || e.submerged || Math.hypot(e.x - this.p.x, e.y - this.p.y) > 560)) this.lock = null;
+    if (e && (!canLockEnemy(e) || !this.enemies.includes(e) || e.hp <= 0 || e.submerged || Math.hypot(e.x - this.p.x, e.y - this.p.y) > 560)) this.lock = null;
   }
 
   // Postura: golpes enchem a barra; cheia, o inimigo fica atordoado e recebe dano extra (golpe de misericórdia)
@@ -1635,8 +1636,7 @@ export class Game {
       const f = this.fase; if (!f || f.done) return null;
       if (f.keys < 3) { const ch = nearest(this.chests.filter(x => !x.open)); return ch && { ...ch, label: 'Baú com quiz (' + f.keys + '/3 chaves)' }; }
       if (!f.bossSpawned) { const d = f.built.door; const x = d.reduce((s, t) => s + t.tx, 0) / d.length * TS + 16, y = d[0].ty * TS; return { x, y, label: 'Porta do chefe' }; }
-      const b = this.enemies.find(e => e.kind === 'boss' && !e.clone);
-      return b && { x: b.x, y: b.y, label: 'Derrote ' + b.d.nome };
+      return dungeonBossGuide(this);
     }
     const wp = c.data.waypoint;
     if (wp) {
@@ -1720,6 +1720,8 @@ export class Game {
   }
 
   drawGuide(g) {
+    // Revalida todo quadro: clone morto ou troca de posição não deixa uma seta antiga.
+    if (this.scene === 'fase' && this.fase?.bossSpawned) this.guide = this.fase.done ? null : dungeonBossGuide(this);
     const t = this.guide; if (!t || this.p.dead) return;
     const Z = this.Z, sx = (t.x - this.camL) * Z, sy = (t.y - this.camT) * Z, W = this.W, H = this.H, T0 = this.T;
     const m = 46;
@@ -1845,7 +1847,7 @@ export class Game {
     }
     g.globalAlpha = 1;
     // alvo travado: colchetes dourados girando em volta
-    if (this.lock) {
+    if (this.lock && canLockEnemy(this.lock)) {
       const e = this.lock, R = e.r + 12 + Math.sin(T0 * 6) * 2;
       g.save(); g.translate(e.x, e.y); g.rotate(T0 * 1.5); g.strokeStyle = '#E9E4D6'; g.lineWidth = 2; g.shadowColor = '#DDE8FF'; g.shadowBlur = 8;
       for (let i = 0; i < 4; i++) { g.rotate(Math.PI / 2); g.beginPath(); g.arc(0, 0, R, -0.35, 0.35); g.stroke(); }
