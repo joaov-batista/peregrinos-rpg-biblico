@@ -32,30 +32,33 @@ export class GameMap {
     return true;
   }
   invalidate() { this.cache.clear(); }
-  chunk(cx, cy) {
-    const key = cx + ',' + cy;
+  chunk(cx, cy, scale = 1) {
+    const tiles = scale > 1 ? 8 : CH;
+    const key = cx + ',' + cy + ',' + scale;
     let c = this.cache.get(key);
-    if (c) return c;
-    c = document.createElement('canvas'); c.width = c.height = CH * TS;
-    const g = c.getContext('2d');
-    const x0 = cx * CH, y0 = cy * CH;
-    for (let ty = y0; ty < y0 + CH; ty++) for (let tx = x0; tx < x0 + CH; tx++) drawGround(g, this, tx, ty, (tx - x0) * TS, (ty - y0) * TS);
+    if (c) { this.cache.delete(key); this.cache.set(key, c); return c; }
+    c = document.createElement('canvas'); c.width = c.height = tiles * TS * scale;
+    const g = c.getContext('2d'); g.scale(scale, scale);
+    const x0 = cx * tiles, y0 = cy * tiles;
+    for (let ty = y0; ty < y0 + tiles; ty++) for (let tx = x0; tx < x0 + tiles; tx++) drawGround(g, this, tx, ty, (tx - x0) * TS, (ty - y0) * TS);
     // objetos podem passar do tile (copas de árvore), então desenha vizinhos também
-    for (let ty = y0 - 1; ty < y0 + CH + 2; ty++) for (let tx = x0 - 1; tx < x0 + CH + 1; tx++) drawObject(g, this, tx, ty, (tx - x0) * TS, (ty - y0) * TS);
+    for (let ty = y0 - 1; ty < y0 + tiles + 2; ty++) for (let tx = x0 - 1; tx < x0 + tiles + 1; tx++) drawObject(g, this, tx, ty, (tx - x0) * TS, (ty - y0) * TS);
     for (const b of this.buildings) {
-      if (b.x + b.w < x0 - 1 || b.x > x0 + CH + 1 || b.y + b.h < y0 - 2 || b.y > y0 + CH + 1) continue;
+      if (b.x + b.w < x0 - 1 || b.x > x0 + tiles + 1 || b.y + b.h < y0 - 2 || b.y > y0 + tiles + 1) continue;
       drawBuilding(g, b, (b.x - x0) * TS, (b.y - y0) * TS, this.pal);
     }
-    if (this.cache.size > 90) this.cache.delete(this.cache.keys().next().value);
+    const limit = Math.min(90, Math.floor(64 * 1024 * 1024 / (c.width * c.height * 4)));
+    while (this.cache.size >= limit) this.cache.delete(this.cache.keys().next().value);
     this.cache.set(key, c);
     return c;
   }
-  draw(ctx, camL, camT, vw, vh) {
-    const S = CH * TS;
+  draw(ctx, camL, camT, vw, vh, scale = 1) {
+    if (this.cacheScale !== scale) { this.invalidate(); this.cacheScale = scale; }
+    const tiles = scale > 1 ? 8 : CH, S = tiles * TS;
     const cx0 = Math.floor(camL / S), cy0 = Math.floor(camT / S), cx1 = Math.floor((camL + vw) / S), cy1 = Math.floor((camT + vh) / S);
     for (let cy = cy0; cy <= cy1; cy++) for (let cx = cx0; cx <= cx1; cx++) {
-      if (cx < 0 || cy < 0 || cx * CH >= this.w || cy * CH >= this.h) continue;
-      ctx.drawImage(this.chunk(cx, cy), cx * S, cy * S);
+      if (cx < 0 || cy < 0 || cx * tiles >= this.w || cy * tiles >= this.h) continue;
+      ctx.drawImage(this.chunk(cx, cy, scale), cx * S, cy * S, S, S);
     }
   }
 }

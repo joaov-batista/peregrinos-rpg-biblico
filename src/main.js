@@ -1,6 +1,7 @@
 import './styles.css';
 import './art-direction.css';
 import './pwa.js';
+import './ui/offlineStatus.js';
 import { $ } from './util.js';
 import { initInput, input } from './input.js';
 import { initZoom } from './zoom.js';
@@ -18,18 +19,28 @@ initGamepad();
 addEventListener('pointerdown', initAudio, { once: true });
 addEventListener('keydown', initAudio, { once: true });
 
-let game = null;
+let game = null, releaseCharacter = null;
 const ui = createHud(exitToSelect);
 ui.show(false);
 
-function play(char) {
+async function play(char) {
+  // Evita duas abas editando o mesmo personagem ao mesmo tempo.
+  if (navigator.locks) {
+    const acquired = await new Promise(resolve => {
+      navigator.locks.request('peregrinos-play-' + char.id, { ifAvailable: true }, lock => {
+        if (!lock) { resolve(false); return; }
+        return new Promise(release => { releaseCharacter = release; resolve(true); });
+      }).catch(() => resolve(false));
+    });
+    if (!acquired) { ui.toast('Este personagem já está aberto em outra aba. Feche a outra partida para jogar aqui.', 6000); return; }
+  }
   hideScreens();
   ui.show(true);
   input.clear();
   const novo = !char.data.stats.playtime;
   game = new Game(canvas, char, ui);
   ui.attach(game);
-  ui.online(ONLINE ? 1 : 0);
+  ui.online(ONLINE && net.user && net.connected ? 1 : 0);
   window.__game = game; // ajuda na depuração pelo console
   const viu = (() => { try { return localStorage.getItem('peregrinos.controles') === '1'; } catch { return false; } })();
   const boasVindas = () => novo && ui.dialog({
@@ -42,7 +53,7 @@ function play(char) {
 }
 
 function exitToSelect() {
-  game?.destroy(); game = null; ui.show(false);
+  game?.destroy(); releaseCharacter?.(); releaseCharacter = null; game = null; window.__game = null; ui.show(false);
   start();
 }
 
@@ -60,3 +71,5 @@ start();
 
 // salva ao fechar a aba
 addEventListener('visibilitychange', () => { if (document.hidden) game?.save(); });
+
+addEventListener('pagehide', () => { void game?.save(); });

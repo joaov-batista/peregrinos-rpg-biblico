@@ -2,6 +2,7 @@
 import { store } from './util.js';
 
 const PADRAO = {
+  imagemNitida: true,    // usa a resolução da tela e mapa em alta definição no celular
   camCentro: true,       // câmera sempre com o personagem no meio (até na borda do mapa)
   esconderMissao: false, // esconde o cartão da missão no canto (a seta dourada continua)
   tremor: true,          // a tela treme nos golpes fortes

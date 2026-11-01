@@ -617,3 +617,11 @@ body.tiny .stats { grid-template-columns: 1fr 1fr; }
 .cine-btns .btn { background: transparent !important; border: 1px solid rgba(244,238,226,.28) !important; box-shadow: none !important; color: rgba(244,238,226,.8) !important; font-family: Alegreya, serif; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; font-size: 11px; min-height: 30px; padding: 4px 12px; border-radius: 2px; opacity: .7; }
 .cine-btns .btn:hover, .cine-btns .btn:focus-visible { opacity: 1; border-color: rgba(244,238,226,.7) !important; }
 .cine-hint { font-family: Alegreya, serif; font-style: italic; letter-spacing: .06em; color: rgba(244,238,226,.4); }
+
+/* Indicador discreto, fora dos controles de combate. */
+#offlineStatus { position:fixed; z-index:45; top:calc(env(safe-area-inset-top, 0px) + 6px); left:50%; transform:translateX(-50%); max-width:46vw; padding:4px 9px; border:1px solid #44645c; border-radius:8px; background:rgba(13,25,33,.9); color:#c8e7d6; font:600 11px system-ui,sans-serif; cursor:pointer; }
+#offlineStatus.warning { color:#ffe1a1; border-color:#aa8540; }
+.sync-conflict { padding:12px; border:1px solid #aa8540; border-radius:8px; color:#ffe1a1; }
+.sync-conflict .btn { margin:4px; }
+@media(max-width:700px) { #offlineStatus { top:auto; bottom:calc(env(safe-area-inset-bottom, 0px) + 4px); max-width:48vw; font-size:10px; } }
+@media(pointer:coarse) { #offlineStatus { top:auto; bottom:calc(env(safe-area-inset-bottom, 0px) + 4px); max-width:42vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:10px; } }

@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Peregrinos — RPG bíblico",
   "short_name": "Peregrinos",
-  "description": "RPG bíblico online. Toda semana, 5 fases novas baseadas num estudo da Bíblia.",
+  "description": "RPG bíblico online e offline. Instale, jogue sem conexão e sincronize o progresso da sua conta ao reconectar.",
   "lang": "pt-BR",
   "start_url": "/?app=1",
   "scope": "/",

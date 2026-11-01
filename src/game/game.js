@@ -1,3 +1,5 @@
+import { canvasDpr } from './resolution.js';
+import { separateEnemies, inView } from './spatial.js';
 import { updateParrot, shoulder } from './parrot.js';
 import { instalarCarona, horseSeat } from './horseRide.js';
 import { bossDamage, strikeShell } from './combatRules.js';
@@ -75,7 +77,8 @@ export class Game {
     this.resize();
     this.enterWorld(true);
     if (ONLINE) this.net = net.joinWorld({ id: char.id, name: char.name, cls: char.cls }, {
-      pos: m => this.onNetPos(m), chat: m => this.onNetChat(m), ev: m => this.onNetEv(m), leave: k => this.others.delete(k), count: n => this.ui.online(n)
+      pos: m => this.onNetPos(m), chat: m => this.onNetChat(m), ev: m => this.onNetEv(m), leave: k => this.others.delete(k), count: n => this.ui.online(n),
+      disconnected: () => { this.leaveHorseRide(); this.others.clear(); this.proxies.clear(); this._hostT = null; if (this._host === false) this.virouHost(); this._host = true; }
     });
     this.social = { clan: null, friends: new Set(), pedidos: 0 };
     this.refreshSocial();
@@ -99,8 +102,9 @@ export class Game {
     if (this.p) { this.p.hp = Math.min(this.p.hp, this.st.maxHp); this.p.fe = Math.min(this.p.fe, this.st.maxFe); } }
 
   resize() {
-    const DPR = Math.min(2, devicePixelRatio || 1);
     const { W, H, w, h } = viewSize();
+    this.mobile = matchMedia('(pointer: coarse)').matches;
+    const DPR = canvasDpr(W, H, devicePixelRatio || 1, this.mobile, config.imagemNitida);
     if (W === this.W && H === this.H && DPR === this.DPR) return;
     this.W = W; this.H = H; this.DPR = DPR;
     this.cv.width = Math.round(this.W * DPR); this.cv.height = Math.round(this.H * DPR);
@@ -891,6 +895,7 @@ export class Game {
   /* ================= Inimigos ================= */
   updateEnemies(dt) {
     if (!this.souHost()) return this.updateEnemiesCliente(dt);
+    this._missionTargets = new Set(Object.entries(this.char.data.quests).filter(([id, q]) => q.st === 'ativa' && QUESTS[id]?.tipo === 'kill').map(([id]) => QUESTS[id].alvo));
     try { for (const e of this.enemies.slice()) {
       this.p = this.eu;
       e.flash = Math.max(0, e.flash - dt); e.stun = Math.max(0, (e.stun || 0) - dt); if (e.vuln) e.vuln -= dt;
@@ -906,19 +911,14 @@ export class Game {
       this.updateEnemy(e, dt, dist);
     } } finally { this.p = this.eu; }
     // ninguém fica em cima de ninguém
-    const es = this.enemies;
-    for (let i = 0; i < es.length; i++) for (let j = i + 1; j < es.length; j++) {
-      const a = es[i], b = es[j]; if (a.submerged || b.submerged) continue;
-      const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy), min = a.r + b.r;
-      if (d > 0 && d < min) { const push = (min - d) / 2; if (a.kind !== 'boss') this.moveEnt(a, -dx / d * push, -dy / d * push); if (b.kind !== 'boss') this.moveEnt(b, dx / d * push, dy / d * push); }
-    }
+    separateEnemies(this.enemies, (e, dx, dy) => this.moveEnt(e, dx, dy));
   }
 
   updateEnemy(e, dt, dist) {
     const p = this.p, d = e.d;
     if (dist < e.r + p.r) this.damagePlayer(e.atk * 0.8, e);
     if (e.type === 'preguica' && e.aggro && dist < 210) { e.sleepCd = (e.sleepCd ?? 4) - dt; if (e.sleepCd <= 0) { e.sleepCd = 14; e.step = 0; MOVES.sono(this, e, { n: 5, raio: 95, duracao: 1.1 }, dt, { p }); e.step = 0; } }
-    const relevant = Object.entries(this.char.data.quests).some(([id, q]) => q.st === 'ativa' && QUESTS[id]?.tipo === 'kill' && [e.type, '*'].includes(QUESTS[id].alvo));
+    const relevant = this._missionTargets?.has(e.type) || this._missionTargets?.has('*');
     const pressure = relevant ? Math.min(1.8, 1 + Math.max(0, this.char.level - d.lv) * 0.08) : 1;
     if (pressure > (e.missionScale || 1)) { const ratio = pressure / (e.missionScale || 1); e.hp *= ratio; e.max *= ratio; e.atk *= ratio; e.missionScale = pressure; }
     e.cd -= dt;
@@ -1597,6 +1597,9 @@ export class Game {
   }
 
   updateHud(dt) {
+    this._hudElapsed = (this._hudElapsed || 0) + dt;
+    if (this._hudElapsed < 0.05) return;
+    dt = this._hudElapsed; this._hudElapsed = 0;
     const p = this.p, c = this.char;
     this.ui.hud({ weapon: this.st.weapon, hp: p.hp, maxHp: this.st.maxHp, fe: p.fe, maxFe: this.st.maxFe, sta: p.sta, xp: c.data.xp, xpNeed: xpNeed(c.level), level: c.level, gold: c.data.gold, score: c.score, skillCd: Math.max(0, p.skillCd) / CLASSES[c.cls].skill.cd, skillOk: p.fe >= CLASSES[c.cls].skill.custo, escudo: !!c.data.eq.escudo, lock: !!this.lock, botija: this.botija(), atalhos: this.atalhos().map(id => id && ITEMS[id] ? { id, icon: ITEMS[id].icon, nome: ITEMS[id].nome, n: count(c, id) } : null) });
     this.mmT -= dt;
@@ -1756,8 +1759,10 @@ export class Game {
     const k = this.DPR * Z;
     g.setTransform(k, 0, 0, k, -camL * k, -camT * k);
     g.imageSmoothingEnabled = true;
-    m.draw(g, camL, camT, vw, vh);
+    g.imageSmoothingQuality = 'high';
+    m.draw(g, camL, camT, vw, vh, this.mobile && config.imagemNitida ? Math.min(4, Math.ceil(k * 4) / 4) : 1);
     drawExpedition(this, g);
+    const visible = e => inView(e, camL, camT, vw, vh);
     const T0 = this.T;
     // portões animados
     if (this.scene === 'world') {
@@ -1803,6 +1808,7 @@ export class Game {
     }
     // pickups
     for (const k of this.pickups) {
+      if (!visible(k)) continue;
       const y = k.y - 4 - Math.abs(Math.sin(k.t * 6)) * 4;
       if (k.kind === 'ouro') { g.fillStyle = '#B8791A'; ell(g, k.x, y, 5.5, 5.5); g.fill(); g.fillStyle = '#FFD23F'; ell(g, k.x - 0.5, y - 0.5, 4, 4); g.fill(); }
       else if (k.kind === 'cura') { g.fillStyle = '#FF5A5F'; g.font = '14px sans-serif'; g.textAlign = 'center'; g.fillText('❤', k.x, y + 4); }
@@ -1810,19 +1816,19 @@ export class Game {
     }
     // entidades ordenadas por Y
     const list = [];
-    for (const n of this.npcs) list.push({ y: n.y, d: () => this.drawNpc(g, n) });
+    for (const n of this.npcs) if (visible(n)) list.push({ y: n.y, d: () => this.drawNpc(g, n) });
     if (this.scene === 'world') {
-      for (const a of this.altares) list.push({ y: a.y, d: () => this.drawAltar(g, a, T0) });
+      for (const a of this.altares) if (visible(a)) list.push({ y: a.y, d: () => this.drawAltar(g, a, T0) });
       if (this.char.data.sacola) list.push({ y: this.char.data.sacola.y, d: () => this.drawSacola(g, T0) });
     }
-    for (const c of this.chests) list.push({ y: c.y, d: () => drawChest(g, c, T0) });
-    for (const e of this.enemies) list.push({ y: e.y, d: () => this.drawEnt(g, e) });
-    for (const o of this.others.values()) if (this.salaAtual() && (o.sala || 'world') === this.salaAtual()) list.push({ y: o.y, d: () => this.drawOther(g, o) });
+    for (const c of this.chests) if (visible(c)) list.push({ y: c.y, d: () => drawChest(g, c, T0) });
+    for (const e of this.enemies) if (visible(e)) list.push({ y: e.y, d: () => this.drawEnt(g, e) });
+    for (const o of this.others.values()) if (visible(o) && this.salaAtual() && (o.sala || 'world') === this.salaAtual()) list.push({ y: o.y, d: () => this.drawOther(g, o) });
     if (this.sheep) list.push({ y: this.sheep.y, d: () => drawSheep(g, this.sheep.x, this.sheep.y, T0, !this.sheep.found) });
     if (this.fugidas && this.scene === 'world') for (const o of this.fugidas) list.push({ y: o.y, d: () => { drawSheep(g, o.x, o.y, o.moving ? T0 * 4 : T0, false, o.fx < 0); if (o.cansada > 0) { g.font = '12px sans-serif'; g.textAlign = 'center'; g.fillText('💦', o.x + 12, o.y - 14); } } });
     if (this.scene === 'world') {
       const dv = this.npcs.find(n => n.id === 'davi');
-      if (dv) for (let i = 0; i < 9; i++) { const sx = dv.x + 40 + Math.cos(i * 2.1) * 70 + Math.sin(T0 * 0.3 + i) * 10, sy = dv.y + Math.sin(i * 1.7) * 50; list.push({ y: sy, d: () => drawSheep(g, sx, sy, T0 + i, false) }); }
+      if (dv && visible(dv)) for (let i = 0; i < 9; i++) { const sx = dv.x + 40 + Math.cos(i * 2.1) * 70 + Math.sin(T0 * 0.3 + i) * 10, sy = dv.y + Math.sin(i * 1.7) * 50; list.push({ y: sy, d: () => drawSheep(g, sx, sy, T0 + i, false) }); }
     }
     if (this.pecado) list.push({ y: this.pecado.y, d: () => drawBoss(g, { id: 'pecado', x: this.pecado.x, y: this.pecado.y, r: 22, alpha: Math.min(1, this.pecado.t * 0.5), flash: 0 }, T0) });
     if (this.pet && this.pet.kind !== 'papagaio' && !p.mounted && !p.dead) { const a = this.pet; list.push({ y: a.y, d: () => drawAnimal(g, a.kind, a.x, a.y, { t: T0, fx: a.fx, moving: a.moving, walk: a.walk }) }); }

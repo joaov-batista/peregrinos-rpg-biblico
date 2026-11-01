@@ -775,6 +775,7 @@ export function createHud(onExit) {
   // Ajustes: interruptores salvos neste aparelho
   function tabConfig(body, render) {
     const opcoes = [
+      ['imagemNitida', '📱 Imagem nítida no celular', 'Usa a resolução da tela e cenário em alta definição. Desative para economizar bateria em aparelhos mais lentos.'],
       ['camCentro', '🎥 Câmera sempre centralizada', 'O personagem fica sempre no meio da tela, até perto das bordas do mapa.'],
       ['esconderMissao', '📜 Esconder a barra de missão', 'Tira o cartão da missão do canto da tela. A seta dourada continua mostrando o caminho.'],
       ['tremor', '💥 Tremor da tela', 'A tela treme nos golpes fortes, nos chefes e nas explosões.'],
@@ -786,7 +787,7 @@ export function createHud(onExit) {
     ];
     const list = h('div', { class: 'fase-list' });
     for (const [k, nome, desc] of opcoes) list.append(h('div', { class: 'fase-row cfg' }, h('div', {}, h('b', {}, nome), h('small', {}, desc)),
-      h('button', { class: 'toggle' + (config[k] ? ' on' : ''), role: 'switch', 'aria-checked': String(!!config[k]), 'aria-label': nome, onclick: () => { setConfig(k, !config[k]); sfx('click'); game.mmT = 0; render(); } }, h('i'))));
+      h('button', { class: 'toggle' + (config[k] ? ' on' : ''), role: 'switch', 'aria-checked': String(!!config[k]), 'aria-label': nome, onclick: () => { setConfig(k, !config[k]); sfx('click'); game.mmT = 0; game.resize(); render(); } }, h('i'))));
     list.append(h('div', { class: 'fase-row cfg' }, h('div', {}, h('b', {}, '🔊 Som'), h('small', {}, 'Música e efeitos.')),
       h('button', { class: 'toggle' + (audio.muted ? '' : ' on'), role: 'switch', 'aria-checked': String(!audio.muted), 'aria-label': 'Som', onclick: () => { initAudio(); setMuted(!audio.muted); $('bMute').replaceChildren(icon(audio.muted ? 'muted' : 'sound')); render(); } }, h('i'))));
     const faixa = (k, nome, desc) => h('div', { class: 'fase-row cfg' }, h('div', {}, h('b', {}, nome), h('small', {}, desc)),
@@ -821,7 +822,7 @@ export function createHud(onExit) {
       h('button', { class: 'btn gold', onclick: () => ui.controles() }, '🎮 Ver tela de controles'),
       pwa.available ? h('button', { class: 'btn gold', onclick: () => pwa.install(ui.toast) }, '📲 Instalar app') : '',
       h('button', { class: 'btn', onclick: () => { setMuted(!audio.muted); $('bMute').replaceChildren(icon(audio.muted ? 'muted' : 'sound')); } }, 'Som liga/desliga'),
-      h('button', { class: 'btn danger', onclick: async () => { close(); await game.save(); onExit(); } }, 'Salvar e sair')));
+      h('button', { class: 'btn danger', onclick: async () => { if (await game.save() === false) { ui.dialog({ nome: 'O progresso ainda não foi salvo', texto: 'Você pode liberar espaço e tentar novamente, ou exportar uma cópia antes de sair.', acoes: [{ label: 'Continuar no jogo' }, { label: 'Exportar cópia e sair', fn: () => { net.exportChar(game.char.id, game.char); close(); onExit(); } }] }); return; } close(); onExit(); } }, 'Salvar e sair')));
   }
 
   /* ---------- Minijogos ---------- */

@@ -43,7 +43,7 @@ export function showAuth(onDone) {
     go.disabled = false;
   } });
   if (ONLINE) form.append(tabs, h('label', {}, 'E-mail', email), h('label', {}, 'Senha', pass), go, msg,
-    h('button', { class: 'link', type: 'button', onclick: () => { net.user = null; initAudio(); onDone(); } }, 'Jogar sem conta (salva só neste aparelho, sem ranking mundial)'));
+    h('button', { class: 'link', type: 'button', onclick: () => { net.user = null; dispatchEvent(new Event('peregrinos-sync')); initAudio(); onDone(); } }, 'Jogar sem conta (salva só neste aparelho, sem ranking mundial)'));
   else form.append(h('p', { class: 'muted' }, 'Sua jornada fica salva neste navegador. Crie seu peregrino e descubra a Cidade de Refúgio.'),
     h('button', { class: 'btn gold wide', type: 'button', onclick: () => { initAudio(); onDone(); } }, 'Começar a jornada'));
   screen(logo(), h('p', { class: 'week' }, 'Estudo da semana: ', h('b', {}, SEMANA_ATUAL.titulo), ' · ' + SEMANA_ATUAL.estudo), form, installButton(msg));
@@ -71,6 +71,21 @@ export async function showSelect(onPlay, onNew, onLogout) {
   if (!chars.length) return onNew();
   const list = h('div', { class: 'char-list' });
   for (const c of chars) {
+    const conflict = net.conflict(c.id);
+    const conflictBox = h('div', { class: 'sync-conflict' });
+    if (conflict) {
+      const remote = conflict.remote;
+      const msg = h('p', { role: 'status' }, `Neste aparelho: nível ${c.level}, ${fmt(c.score)} pontos. ` +
+        (remote ? `Na nuvem: nível ${remote.level}, ${fmt(remote.score)} pontos. Escolha uma versão completa; itens e moedas não são somados.` : 'Este personagem foi apagado na nuvem. Exporte sua cópia antes de descartá-la.'));
+      const choose = async choice => {
+        try { await net.resolveConflict(c.id, choice); await showSelect(onPlay, onNew, onLogout); }
+        catch (e) { msg.textContent = e.message; }
+      };
+      conflictBox.append(msg,
+        h('button', { class: 'btn sm', onclick: () => net.exportChar(c.id) }, 'Exportar cópia'),
+        remote ? h('button', { class: 'btn sm', onclick: () => choose('local') }, 'Manter deste aparelho') : '',
+        h('button', { class: 'btn sm', onclick: () => choose('cloud') }, remote ? 'Usar progresso da nuvem' : 'Confirmar exclusão da nuvem'));
+    }
     list.append(h('div', { class: 'card char-card' },
       miniPortrait(c.look, c.cls),
       h('div', { class: 'info' }, h('b', {}, c.name), h('small', {}, icon(CLASSES[c.cls].arma, 15), ' ' + CLASSES[c.cls].nome + ' · nível ' + c.level), h('small', {}, '⭐ ' + fmt(c.score) + ' pontos')),
@@ -78,9 +93,10 @@ export async function showSelect(onPlay, onNew, onLogout) {
         h('button', { class: 'btn gold', onclick: () => { sfx('click'); onPlay(c); } }, 'Jogar'),
         h('button', { class: 'btn sm danger', onclick: async e => {
           const b = e.currentTarget;
-          if (b.dataset.sure) { await net.deleteChar(c.id); showSelect(onPlay, onNew, onLogout); }
+          if (b.dataset.sure) { try { await net.deleteChar(c.id); showSelect(onPlay, onNew, onLogout); } catch (err) { b.textContent = err.message; delete b.dataset.sure; } }
           else { b.dataset.sure = '1'; b.textContent = 'Tem certeza?'; setTimeout(() => { if (b.isConnected) { delete b.dataset.sure; b.textContent = 'Apagar'; } }, 3000); }
         } }, 'Apagar'))));
+    if (conflict) list.append(conflictBox);
   }
   screen(logo(), h('h2', { class: 'title' }, 'Escolha seu peregrino'), list,
     h('div', { class: 'btn-row' }, chars.length < 3 ? h('button', { class: 'btn', onclick: onNew }, '+ Novo personagem') : '', h('button', { class: 'btn link', onclick: onLogout }, ONLINE && net.user ? 'Sair da conta' : 'Voltar')));

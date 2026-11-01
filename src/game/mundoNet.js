@@ -17,7 +17,7 @@ export function instalarMundoNet(Game) { Object.assign(Game.prototype, metodos);
 
 const metodos = {
   // online vale no mundo e na fase do grupo (game/grupo.js); fase solo, salões e casa são locais
-  netAtivo() { return !!this.net && !!this.salaAtual(); },
+  netAtivo() { return !!this.net && this.net.connected !== false && !!this.salaAtual(); },
   meuId() { return String(this.char.id); },
 
   // Anfitrião = quem entrou no mundo primeiro (empate: menor id). Recalcula uma vez por quadro.
