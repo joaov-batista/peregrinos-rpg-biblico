@@ -36,8 +36,13 @@
         <span class="chip">⭐ <b id="hScore">0</b></span>
         <span class="chip" id="hOnline"></span>
       </div>
-      <div id="faseHud" class="side-card" hidden></div>
-      <button id="questHud" class="side-card" hidden></button>
+      <div id="missionHud">
+        <button id="bQuestToggle" aria-controls="missionDetails" aria-expanded="true" aria-label="Recolher missão">📜 Missão ▴</button>
+        <div id="missionDetails">
+          <div id="faseHud" class="side-card" hidden></div>
+          <button id="questHud" class="side-card" hidden></button>
+        </div>
+      </div>
       <div id="grupoHud" class="side-card" hidden></div>
       <div id="sheepHud" class="side-card" hidden></div>
     </div>

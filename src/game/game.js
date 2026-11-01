@@ -370,7 +370,8 @@ export class Game {
     // esquiva
     const dodgeCost = 26 * st.esquiva;
     if (input.consume('botija')) this.beberBotija();
-    if (input.consume('dodge') && p.dodgeCd <= 0 && p.sta >= dodgeCost && p.stun <= 0 && !(p.root > 0) && !(p.drink > 0)) {
+    const canDodge = p.dodgeCd <= 0 && p.sta >= dodgeCost && p.stun <= 0 && !(p.root > 0) && !(p.drink > 0);
+    if (input.consume('dodge', canDodge)) {
       let dx = mv.x, dy = mv.y; if (!dx && !dy) { dx = -p.fx; dy = -p.fy; }
       const l = Math.hypot(dx, dy) || 1; p.dvx = dx / l; p.dvy = dy / l;
       p.dodgeT = 0.34; p.dodgeCd = 0.5; p.sta -= dodgeCost; p.staT = 0.6; sfx('dodge');
@@ -378,8 +379,12 @@ export class Game {
     }
     // defesa
     const temEscudo = !!this.char.data.eq.escudo;
-    if (!temEscudo && input.consume('defend')) this.addText(p.x, p.y - 34, 'Sem escudo! Equipe um no menu', '#FFB3B3', 11);
-    const wantGuard = temEscudo && input.isHeld('defend') && p.sta > 0 && p.dodgeT <= 0 && p.stun <= 0;
+    const canGuard = p.sta > 0 && p.dodgeT <= 0 && p.stun <= 0;
+    const guardTap = input.consume('defend', !temEscudo || canGuard);
+    if (!temEscudo && guardTap) this.addText(p.x, p.y - 34, 'Sem escudo! Equipe um no menu', '#FFB3B3', 11);
+    // Toques entre dois quadros (ou durante hitstop) também levantam o escudo.
+    const wantGuard = temEscudo && (input.isHeld('defend') || guardTap) && canGuard;
+    if (wantGuard && guardTap) { p.fx = Math.cos(aim); p.fy = Math.sin(aim); }
     if (wantGuard && !p.guard) p.guardT = 0;
     p.guard = wantGuard; if (p.guard) { p.guardT += dt; p.staT = 0.4; }
     // movimento

@@ -138,7 +138,21 @@ export function createHud(onExit) {
   };
 
   /* ---------- Guia da missão atual ---------- */
+  const syncMissionVisibility = () => {
+    const hidden = !!config.esconderMissao, b = $('bQuestToggle');
+    $('missionDetails').hidden = hidden;
+    if (b.getAttribute('aria-expanded') === String(!hidden)) return;
+    b.setAttribute('aria-expanded', String(!hidden));
+    b.setAttribute('aria-label', hidden ? 'Mostrar missão' : 'Recolher missão');
+    b.textContent = hidden ? '📜 Missão ▾' : '📜 Missão ▴';
+  };
+  syncMissionVisibility();
+  $('bQuestToggle').addEventListener('click', () => {
+    setConfig('esconderMissao', !config.esconderMissao); syncMissionVisibility();
+    if (game) game.mmT = 0;
+  });
   ui.guide = (gd, q) => {
+    syncMissionVisibility();
     const el = $('questHud');
     if ((!gd && !q) || config.esconderMissao) { el.hidden = true; el._h = ''; return; }
     let html = '';

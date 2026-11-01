@@ -22,7 +22,11 @@ function usarControle() { input.touch = false; input.mouseAim = false; document.
 
 function ler() {
   const gp = [...(navigator.getGamepads?.() || [])].find(Boolean);
-  if (!gp) { input.pad = null; input.padAim = null; return; }
+  if (!gp) {
+    input.pad = null; input.padAim = null;
+    for (const [i, a] of Object.entries(ACOES)) input.release(a, 'pad:' + i, true);
+    antes = []; return;
+  }
   const b = gp.buttons.map(x => x.pressed || x.value > 0.5), ax = gp.axes;
   const borda = i => b[i] && !antes[i];
   if (b.some((x, i) => x && !antes[i]) || Math.hypot(ax[0] || 0, ax[1] || 0) > 0.5) usarControle();
@@ -30,7 +34,7 @@ function ler() {
   if (janela) {
     // menus: navegação por foco
     input.pad = null; input.padAim = null;
-    for (const a of Object.values(ACOES)) input.held.delete(a);
+    for (const [i, a] of Object.entries(ACOES)) input.release(a, 'pad:' + i, true);
     menu(gp, b, borda, janela);
   } else {
     // movimento e mira
@@ -39,8 +43,8 @@ function ler() {
     const rx = ax[2] || 0, ry = ax[3] || 0;
     input.padAim = Math.hypot(rx, ry) > 0.4 ? Math.atan2(ry, rx) : null;
     for (const [i, a] of Object.entries(ACOES)) {
-      if (b[i] && !antes[i]) input.pressed.add(a);
-      if (b[i]) input.held.add(a); else if (antes[i]) input.held.delete(a);
+      if (b[i] && !antes[i]) input.press(a, 'pad:' + i);
+      input.setHeld(a, 'pad:' + i, !!b[i]);
     }
     if (borda(9)) input.padAcoes?.menu?.();
     if (borda(8) || borda(12)) input.padAcoes?.mapa?.();
