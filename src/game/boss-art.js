@@ -1,7 +1,8 @@
 import { INK, TAU, shape, line, oval, gradient, glow, shadow, palette, eyes, mask, claw, jointLimb, coin, chain, ribbon } from './creature-primitives.js';
+import { JONAS_ART } from './jonas-art.js';
 import { creatureMotion } from './sprite-motion.js';
 
-const TOP={mamom:83,procrastinacao:72,mentira:91,imoralidade:78,satanas:119,behemote:79,golias:100,leviata:98,pecado:91,generico:82};
+const TOP={fuga:92,pavor:108,desespero:88,violencia:100,ressentimento:104,mamom:83,procrastinacao:72,mentira:91,imoralidade:78,satanas:119,behemote:79,golias:100,leviata:98,pecado:91,generico:82};
 const ACCENT={mamom:'#E7CA85',procrastinacao:'#A5CDCE',mentira:'#CAB7E3',imoralidade:'#E8A8BC',satanas:'#EE927E',behemote:'#D5BA88',golias:'#E5C58A',leviata:'#96DBE0',pecado:'#EF6981'};
 export function bossArtTop(id,r=40){return (TOP[id]||TOP.generico)*r/40+9;}
 
@@ -34,6 +35,7 @@ function featherWing(g,t,C,side,scale=1){
 }
 
 const ART={
+  ...JONAS_ART,
   mamom(g,t,C,b){
     // Vault king: segmented coffer abdomen, grasping hands and a suspended crown.
     for(let i=0;i<5;i++){const a=t*.7+i*TAU/5;if(Math.sin(a)<0)coin(g,Math.cos(a)*55,Math.sin(a)*12-7,4,a,C);}

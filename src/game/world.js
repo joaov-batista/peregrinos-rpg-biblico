@@ -71,6 +71,11 @@ const WORLD_PAL = {
   tree: '#3C7A34', tree2: '#2F6229', treeHi: '#5FA048', trunk: '#6B4A2F'
 };
 export const FASE_PAL = {
+  jope: { floor:['#B8A380','#AA9373'], floor2:['#4D8688','#477A7C'], wall:'#7D7161', wallTop:'#C4B399', wallDark:'#514D47', obst:'crate', bg:'#112C3C', accent:'#80CEC4', water:'#276783' },
+  conves: { floor:['#947252','#886749'], floor2:['#6B9B9E','#5D858C'], wall:'#544E46', wallTop:'#B59A76', wallDark:'#343C43', obst:'crate', bg:'#0C2337', accent:'#A7DDE5', water:'#204F70' },
+  ventre: { floor:['#615C7D','#595570'], floor2:['#528D94','#4C818A'], wall:'#584A70', wallTop:'#A18AB9', wallDark:'#332B49', obst:'column', bg:'#181F38', accent:'#B6DDE0', water:'#304D70' },
+  ninive: { floor:['#CAB08B','#BFA47F'], floor2:['#74A3AC','#66939F'], wall:'#9C775D', wallTop:'#DCBD91', wallDark:'#674F45', obst:'column', bg:'#302931', accent:'#DEB67C', water:'#4C92A1' },
+  sombra: { floor:['#C9AE7B','#BDA16D'], floor2:['#729071','#668368'], wall:'#937A57', wallTop:'#D4BD8C', wallDark:'#655944', obst:'tree', bg:'#302D25', accent:'#BAD18F', water:'#5A8A8F' },
   agora: { floor: ['#DCC79F', '#D3BC92'], floor2: ['#86AE5C', '#7FA654'], wall: '#E6D5B3', wallTop: '#F2E6CC', wallDark: '#B9A57E', obst: 'tree', bg: '#2A2016', accent: '#C2412D', water: '#3C8DC0' },
   oficina: { floor: ['#B07B4F', '#A87349'], floor2: ['#7E4FA0', '#74479A'], wall: '#8C6448', wallTop: '#A67C5D', wallDark: '#5F412C', obst: 'crate', bg: '#160F0A', accent: '#D2A24C', water: '#3C8DC0' },
   sinagoga: { floor: ['#CFC6B5', '#C6BCA9'], floor2: ['#9E2B2B', '#922626'], wall: '#9C8F7A', wallTop: '#B9AD98', wallDark: '#6E6352', obst: 'column', bg: '#0F0D0B', accent: '#D9A93A', water: '#3C8DC0' },

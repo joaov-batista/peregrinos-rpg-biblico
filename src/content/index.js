@@ -4,8 +4,9 @@
 import { BOSSES } from '../data/bestiary.js';
 import { validarChefe } from '../game/bossMoves.js';
 import semana01 from './semana-01.js';
+import semana02 from './semana-02.js';
 
-export const SEMANAS = [semana01];
+export const SEMANAS = [semana01, semana02];
 export const SEMANA_ATUAL = SEMANAS[SEMANAS.length - 1];
 
 for (const sem of SEMANAS) Object.assign(BOSSES, sem.chefes || {});

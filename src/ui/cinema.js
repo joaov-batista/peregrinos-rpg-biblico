@@ -33,7 +33,7 @@ export function montarCinema(panel, close, id, opts = {}) {
   // pré-carrega os mp3 de cada trecho
   for (const s of segs) {
     s.ok = null;
-    if (!vol) { s.ok = false; continue; }
+    if (!vol || def.narracao === false) { s.ok = false; continue; }
     const a = new Audio('/narracao/' + s.arquivo + '.mp3'); a.preload = 'auto'; a.volume = vol;
     a.addEventListener('loadedmetadata', () => { s.ok = isFinite(a.duration) && a.duration > 0; }, { once: true });
     a.addEventListener('error', () => { s.ok = false; }, { once: true });

@@ -6,3 +6,5 @@ import './spatial.test.js';
 import './creature-motion.test.js';
 import './dungeon-guide.test.js';
 import './input.test.js';
+
+import './jonas.test.js';

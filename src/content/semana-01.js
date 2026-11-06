@@ -227,6 +227,7 @@ export default {
       ]
     },
     {
+      epilogo: 'Essa foi só uma das faces de Satanás. Ele voltará. Permaneça vigilante e firme na Palavra.',
       n: 5, nome: 'O Tribunal de Gálio', ref: 'Atos 18:12-17', tema: 'tribunal', nivel: 9,
       objetivo: 'Ache 3 chaves e vença o Acusador com a Palavra de Deus.',
       licao: 'Levaram Paulo ao tribunal com acusações, mas Deus o protegeu como prometeu. Satanás acusa — Jesus defende. Responda às acusações com a Bíblia!',

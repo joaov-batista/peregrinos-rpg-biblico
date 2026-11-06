@@ -1,3 +1,5 @@
+import { DUNGEON_MODES, dungeonRun, scaleDungeonEntity, canEnterDungeon } from './dungeon-scaling.js';
+import { initJonas, studyReady, studyTarget, studyText, showStudy, jonasInteractions, tickJonas, drawJonas } from './jonas-dungeon.js';
 import { dungeonBossGuide, canLockEnemy } from './dungeon-guide.js';
 import { canvasDpr } from './resolution.js';
 import { separateEnemies, inView } from './spatial.js';
@@ -202,7 +204,7 @@ export class Game {
       ] },
       portal: k => {
         const fd = sem.fases[k - 1]; if (!fd) return {};
-        const open = (k === 1 || prog[k - 1]?.done) && c.level >= fd.nivel;
+        const open = canEnterDungeon(c, sem, k);
         return { fase: fd, state: prog[k]?.done ? 'feito' : open ? 'aberto' : 'fechado', tag: 'Fase ' + k, label: fd.nome, fn: () => this.gateDialog(sem, k) };
       }
     }, built, at);
@@ -210,7 +212,7 @@ export class Game {
     this.cinema(sem.id);
   }
 
-  enterFase(sem, n, run = null) {
+  enterFase(sem, n, run = null, scaling = null) {
     const fase = sem.fases[n - 1];
     const built = buildFase(fase);
     this.leaveHorseRide();
@@ -219,10 +221,12 @@ export class Game {
     this.cur = { map: built.map, lights: built.lights };
     this.hub = null;
     this.fase = { def: fase, sem, n, built, keys: 0, quiz: shuffle(fase.quiz.slice()), t0: this.T, kills: 0, ok: 0, err: 0, revived: false, bossSpawned: false, done: false, healCd: 0 };
+    this.fase.scale = dungeonRun(scaling?.level ?? this.char.level, scaling?.mode ?? this.char.data.dungeonDifficulty);
+    initJonas(this.fase);
     this.projs = []; this.tele = []; this.hazards = []; this.pickups = []; this.enemies = []; this.boss = null;
     this.chests = built.chests.map(c => ({ ...c, open: false, locked: 0 }));
     this.npcs = built.npcs.map(n2 => { const d = fase.npcs[n2.key]; return { id: 'f' + n2.key, nome: d.nome, look: d.look, falas: d.falas, x: n2.x, y: n2.y, talkT: 0 }; });
-    const lvBoost = 1 + (n - 1) * 0.24;
+    const lvBoost = 1; // O nível e o modo são normalizados por entidade, sem multiplicar a escala duas vezes.
     // tipo e id de cada vício saem da posição no mapa: iguais em todos os aparelhos (fase em grupo)
     built.enemies.forEach((e, i) => { const en = this.makeEnemy(fase.inimigos[Math.floor(hash(i, n, 91) * fase.inimigos.length)], e.x, e.y, lvBoost); en.nid = 'f' + i; this.enemies.push(en); });
     this.fase.run = run; this.worldSince = Date.now(); this._host = undefined; this.lock = null;
@@ -232,7 +236,7 @@ export class Game {
     this.ui.bossBar(null);
     this.ui.faseHud({ n, nome: fase.nome, keys: 0, objetivo: fase.objetivo });
     this.ui.minimapSource(makeMinimap(built.map));
-    this.ui.banner('FASE ' + n, fase.nome, fase.ref);
+    this.ui.banner('FASE ' + n, fase.nome, fase.ref + ' · nível ' + this.fase.scale.level + ' · ' + DUNGEON_MODES[this.fase.scale.mode].nome);
     music('fase');
   }
 
@@ -251,14 +255,15 @@ export class Game {
   makeEnemy(type, x, y, boost = 1) {
     const d = ENEMIES[type];
     const relevant = Object.entries(this.char.data.quests).some(([id, q]) => q.st === 'ativa' && QUESTS[id]?.tipo === 'kill' && [type, '*'].includes(QUESTS[id].alvo));
-    const challenge = relevant ? Math.min(1.8, 1 + Math.max(0, this.char.level - d.lv) * 0.08) : 1;
+    const challenge = relevant && this.scene !== 'fase' ? Math.min(1.8, 1 + Math.max(0, this.char.level - d.lv) * 0.08) : 1;
     const hp = Math.round(d.hp * boost * DIF.hp * challenge);
-    return {
+    const entity = {
       kind: 'enemy', missionScale: challenge, nid: 'a' + String(this.char.id).slice(0, 6) + '.' + (++this.nidSeq), boost, type, d, x, y, hx: x, hy: y, r: d.r, hp, max: hp, atk: Math.round(d.atk * boost * DIF.atk * challenge), def: d.def, spd: d.spd,
       xp: Math.round(d.xp * boost), ouro: Math.round(d.ouro * boost), lv: Math.round(d.lv * boost),
       ph: Math.random() * 10, flash: 0, kx: 0, ky: 0, cd: rand(0.5, 1.5), telegraph: 0, aggro: false, stun: 0, dash: 0, stolen: 0,
       pos: 0, posMax: Math.round(22 + d.lv * 6), broken: 0
     };
+    return this.scene === 'fase' && this.fase?.scale ? scaleDungeonEntity(entity, this.fase.scale, this.fase.n) : entity;
   }
   spawnFrom(s) {
     const e = this.makeEnemy(s.type, s.tx * TS + 16, s.ty * TS + 16);
@@ -266,11 +271,12 @@ export class Game {
   }
   makeBoss(id, x, y) {
     const d = BOSSES[id];
-    return {
+    const entity = {
       kind: 'boss', nid: 'a' + String(this.char.id).slice(0, 6) + '.' + (++this.nidSeq), id, d, x, y, hx: x, hy: y, r: d.r, hp: Math.round(d.hp * DIF_CHEFE.hp), max: Math.round(d.hp * DIF_CHEFE.hp), atk: Math.round(d.atk * DIF_CHEFE.atk), def: d.def, spd: d.spd,
       flash: 0, kx: 0, ky: 0, stun: 0, act: null, actT: 1.5, cd: 2, lastHit: 0, phase: 0, accused: 0, ph: 0, engaged: false, alpha: 1,
       pos: 0, posMax: d.postura ?? Math.round(90 + d.lv * 12), broken: 0
     };
+    return this.scene === 'fase' && this.fase?.scale ? scaleDungeonEntity(entity, this.fase.scale, this.fase.n) : entity;
   }
   spawnWorldBoss(wb) {
     const b = this.makeBoss(wb.id, wb.home.x, wb.home.y);
@@ -759,8 +765,8 @@ export class Game {
     this.ui.bossBar(null); this.shake(16); sfx('level'); music(this.scene === 'world' ? 'mundo' : 'fase');
     this.burst(b.x, b.y, 80, '#FFE38A', 380); this.burst(b.x, b.y, 50, d.cor, 300);
     c.data.stats.bosses[b.id] = (c.data.stats.bosses[b.id] || 0) + 1;
-    this.gainXp(d.xp); this.addScore(d.lv * 120);
-    c.data.gold += Math.round(d.ouro * this.st.ouro); sfx('coin');
+    this.gainXp(b.xp ?? d.xp); this.addScore((b.lv ?? d.lv) * 120);
+    c.data.gold += Math.round((b.ouro ?? d.ouro) * this.st.ouro); sfx('coin');
     this.enemies = this.enemies.filter(e => !e.clone);
     if (b.world) {
       const first = c.data.stats.bosses[b.id] === 1;
@@ -1283,15 +1289,16 @@ export class Game {
     const f = this.fase, p = this.p;
     if (!f || f.done) return;
     f.healCd -= dt;
+    tickJonas(this, dt);
     const doorRow = f.built.door.length ? f.built.door[0].ty : 0;
-    if (!f.bossSpawned && f.keys >= 3 && p.y < doorRow * TS && this.souHost()) {
+    if (!f.bossSpawned && f.keys >= 3 && studyReady(f) && p.y < doorRow * TS && this.souHost()) {
       f.bossSpawned = true;
       const bp = f.built.boss;
       const b = this.makeBoss(f.def.chefe, bp.x, bp.y); b.engaged = true;
       this.enemies.push(b); this.bossIntro(b);
     }
     for (const c of this.chests) if (c.locked > 0) c.locked = Math.max(0, c.locked - dt);
-    this.ui.faseHud({ n: f.n, nome: f.def.nome, keys: f.keys, objetivo: f.keys >= 3 ? (f.bossSpawned ? 'Derrote ' + BOSSES[f.def.chefe].nome + '!' : 'A porta do chefe está aberta — siga para o norte!') : f.def.objetivo, time: this.T - f.t0 });
+    this.ui.faseHud({ n: f.n, nome: f.def.nome, keys: f.keys, objetivo: !studyReady(f) ? studyText(f) + ' · Chaves ' + Math.min(3,f.keys) + '/3' : f.keys >= 3 ? (f.bossSpawned ? 'Derrote ' + BOSSES[f.def.chefe].nome + '!' : 'A porta do chefe está aberta — siga para o norte!') : f.def.objetivo, time: this.T - f.t0 });
   }
 
   async openChest(c) {
@@ -1342,10 +1349,17 @@ export class Game {
   }
   temItem(id) { const c = this.char; return !!c.data.inv[id] || Object.values(c.data.eq).includes(id); }
   openDoor() {
+    if (this.fase.keys < 3 || !studyReady(this.fase)) {
+      this.ui.toast('Chaves reunidas! Falta concluir o estudo: ' + studyText(this.fase), 4000);
+      return false;
+    }
+    if (this.fase.doorOpen) return true;
+    this.fase.doorOpen = true;
     const m = this.cur.map;
     for (const d of this.fase.built.door) m.set(d.tx, d.ty, T.FLOOR);
     m.invalidate(); sfx('gate'); this.shake(8);
-    this.ui.toast('As 3 chaves abriram a porta do chefe! Vá para o norte.', 4000);
+    this.ui.toast('Porta do chefe aberta! Vá para o norte.', 4000);
+    return true;
   }
 
   faseComplete() {
@@ -1370,7 +1384,7 @@ export class Game {
     let semana = null;
     const all = sem.fases.every(x => prog[x.n]?.done);
     if (all && !prog.semana) { prog.semana = true; addItem(c, sem.recompensaSemana); semana = sem.recompensaSemana; this.addScore(3000); }
-    this.questEvent('fase', f.n);
+    this.questEvent('fase', f.n, sem.id);
     this.save();
     this.ui.faseComplete({ fase: def, semPremio, secs, pts: first ? pts : Math.round(pts * 0.3), first, xp, gold, item, semana, ok: f.ok, err: f.err, kills: f.kills })
       .then(() => all ? this.cinema(sem.id + '-fim') : null).then(() => this.exitFase());
@@ -1396,6 +1410,7 @@ export class Game {
       for (const c of this.chests) if (!c.open) consider(c, Math.hypot(c.x - p.x, c.y - p.y), c.locked ? 'Trancado (' + Math.ceil(c.locked) + 's)' : this.fase.keys >= 3 ? 'Abrir baú do tesouro (quiz)' : 'Abrir baú (quiz)', () => this.openChest(c));
       for (const h of this.fase.built.heal) consider(h, Math.hypot(h.x - p.x, h.y - p.y) - 10, 'Fonte de cura', () => this.faseHeal());
     }
+    jonasInteractions(this, consider);
     expeditionInteractions(this, consider);
     if (this.rideDriver) best = { o: p, label: 'Descer do cavalo', fn: () => this.leaveHorseRide() };
     this.interactTarget = best;
@@ -1425,20 +1440,21 @@ export class Game {
   gateDialog(sem, n) {
     const f = sem.fases[n - 1], c = this.char, prog = faseProg(c, sem.id);
     if (!f) return;
-    const prevOk = n === 1 || prog[n - 1]?.done, lvlOk = c.level >= f.nivel;
+    const prevOk = canEnterDungeon(c, sem, n);
+    const scale = dungeonRun(c.level, c.data.dungeonDifficulty), mode = DUNGEON_MODES[scale.mode];
     const done = prog[n]?.done;
-    let txt = f.ref + ' — ' + f.licao + '\n\n';
+    let txt = f.ref + ' — ' + f.licao + '\n\n' + 'Dificuldade: ' + mode.nome + ' · nível ' + scale.level + '. ' + mode.dica + '\nO nível fica fixo durante esta partida. Cada semana começa independentemente da outra.\n\n';
     if (!prevOk) txt += '🔒 Complete a Fase ' + (n - 1) + ' para abrir este portão.';
-    else if (!lvlOk) txt += '🔒 Precisa do nível ' + f.nivel + ' (você está no ' + c.level + '). Vença vícios no mundo para subir.';
     else txt += done ? '✅ Fase concluída! Melhor pontuação: ' + prog[n].best + '. Pode jogar de novo.' : 'Chefe: ' + BOSSES[f.chefe].nome + '. Prêmio raro: ' + ITEMS[f.recompensa].icon + ' ' + ITEMS[f.recompensa].nome + (this.temItem(f.recompensa) ? ' (você já tem)' : ' — pode cair nos baús do tesouro (depois das 3 chaves) ou no fim da fase.');
     if (done && !this.temItem(f.recompensa)) txt += '\nO prêmio ' + ITEMS[f.recompensa].icon + ' ' + ITEMS[f.recompensa].nome + ' ainda não caiu: jogue de novo para tentar!';
     if (sem !== SEMANA_ATUAL && !done) txt += '\n\n(Semana passada: os prêmios continuam valendo!)';
-    if (prevOk && lvlOk && !done) txt += '\n\n📖 Recomendado: leia ' + f.ref + ' na Bíblia antes de entrar. As perguntas dos baús saem desse texto!';
-    const acoes = [];
+    if (prevOk && !done) txt += '\n\n📖 Recomendado: leia ' + f.ref + ' na Bíblia antes de entrar. As perguntas dos baús saem desse texto!';
+    const acoes = Object.entries(DUNGEON_MODES).map(([id, d]) => ({ label: (id === scale.mode ? '✓ ' : '') + d.nome, fn: () => { c.data.dungeonDifficulty = id; this.save(); this.gateDialog(sem, n); } }));
+    if (f.estudo) acoes.push({ label: 'Ler estudo completo', fn: async () => { await showStudy(this, f); this.gateDialog(sem, n); } });
     const entrar = async () => { sfx('gate'); await this.cinema(sem.id + '-fase-' + n); this.enterFase(sem, n); };
     const lidoKey = sem.id + ':' + n, lidos = c.data.lidos || (c.data.lidos = []);
     if (this.grupoAtivo() && this.souLider() && prevOk) acoes.push({ label: '⚔️ Entrar com o grupo (' + this.grupo.membros.length + ')', fn: () => this.entrarComGrupo(sem, n) });
-    if (prevOk && lvlOk) acoes.push({ label: done ? 'Jogar de novo' : 'Entrar no portão', fn: done || lidos.includes(lidoKey) ? entrar : () => this.readFirst(f, lidoKey, entrar) });
+    if (prevOk) acoes.push({ label: done ? 'Jogar de novo' : 'Entrar no portão', fn: done || lidos.includes(lidoKey) ? entrar : () => this.readFirst(f, lidoKey, entrar) });
     if (this.grupoAtivo() && !this.souLider()) txt += '\n\n⚔️ Você está num grupo: espere o líder entrar para lutar junto.';
     acoes.push({ label: 'Voltar' });
     this.ui.dialog({ nome: 'Fase ' + n + ': ' + f.nome, texto: txt, acoes });
@@ -1450,6 +1466,7 @@ export class Game {
       nome: '📖 Já leu ' + f.ref + '?',
       texto: 'Antes de entrar, leia ' + f.ref + ' na sua Bíblia (ou no link abaixo). Quem lê vai melhor nos baús e entende a lição da fase:\n\n"' + f.licao + '"',
       acoes: [
+        ...(f.estudo ? [{ label: 'Ler o estudo aqui', fn: async () => { await showStudy(this, f); this.readFirst(f, key, entrar); } }] : []),
         { label: 'Já li! Entrar', fn: () => { marcar(); entrar(); } },
         { label: '📖 Ler agora', fn: () => { open('https://www.biblegateway.com/passage/?search=' + encodeURIComponent(f.ref) + '&version=ARC', '_blank', 'noopener'); setTimeout(() => this.readFirst(f, key, entrar), 300); } },
         { label: 'Entrar sem ler', fn: entrar }
@@ -1506,7 +1523,9 @@ export class Game {
     this.ui.dialog({ nome: n.nome, look: n.look, texto: 'Você é ' + CLASSES[c.cls].nome + '. A unção para outra classe custa 🪙 ' + preco + ' (você tem ' + c.data.gold + ').\nSeu nível, itens e progresso continuam. Cada classe só carrega as próprias armas: as da classe atual ficam guardadas comigo e voltam se você retornar a ela.' + (Object.keys(c.data.guardadas || {}).length ? '\n\nGuardadas comigo: ' + Object.keys(c.data.guardadas).map(id => ITEMS[id].icon + ' ' + ITEMS[id].nome).join(', ') + '.' : ''), acoes });
   }
 
-  questEvent(tipo, alvo) {
+  questEvent(tipo, alvo, semanaId = SEMANA_ATUAL.id) {
+    // As missões da "semana nova" não avançam ao repetir uma semana anterior.
+    if (tipo === 'fase' && semanaId !== SEMANA_ATUAL.id) return;
     const c = this.char;
     for (const id in c.data.quests) {
       const qs = c.data.quests[id], qd = QUESTS[id];
@@ -1634,11 +1653,13 @@ export class Game {
     const nearest = (list, f = o => o) => { let best = null, bd = Infinity; for (const o of list) { const pt = f(o); const d = Math.hypot(pt.x - p.x, pt.y - p.y); if (d < bd) { bd = d; best = pt; } } return best; };
     const npcPos = id => { const n = this.npcs.find(x => x.id === id); return n && { x: n.x, y: n.y }; };
     if (this.scene === 'salao' && !this.trackedQuest()) {
-      const prog = faseProg(c, SEMANA_ATUAL.id), next = SEMANA_ATUAL.fases.find(f => !prog[f.n]?.done && (f.n === 1 || prog[f.n - 1]?.done) && c.level >= f.nivel);
-      return next ? this.dungeonTarget(SEMANA_ATUAL, next.n, 'Fase ' + next.n + ': ' + next.nome) : null;
+      const week = this.hub?.sem || SEMANA_ATUAL;
+      const prog = faseProg(c, week.id), next = week.fases.find(f => !prog[f.n]?.done && (f.n === 1 || prog[f.n - 1]?.done));
+      return next ? this.dungeonTarget(week, next.n, 'Fase ' + next.n + ': ' + next.nome) : null;
     }
     if (this.scene === 'fase') {
       const f = this.fase; if (!f || f.done) return null;
+      if (!studyReady(f)) { const e = studyTarget(f); return { x:e.x, y:e.y, label:studyText(f) }; }
       if (f.keys < 3) { const ch = nearest(this.chests.filter(x => !x.open)); return ch && { ...ch, label: 'Baú com quiz (' + f.keys + '/3 chaves)' }; }
       if (!f.bossSpawned) { const d = f.built.door; const x = d.reduce((s, t) => s + t.tx, 0) / d.length * TS + 16, y = d[0].ty * TS; return { x, y, label: 'Porta do chefe' }; }
       return dungeonBossGuide(this);
@@ -1672,7 +1693,7 @@ export class Game {
     }
     // sem missão: próximo portão liberado, senão alguém com missão nova
     const prog = faseProg(c, SEMANA_ATUAL.id);
-    const next = SEMANA_ATUAL.fases.find(f => !prog[f.n]?.done && (f.n === 1 || prog[f.n - 1]?.done) && c.level >= f.nivel);
+    const next = SEMANA_ATUAL.fases.find(f => !prog[f.n]?.done && (f.n === 1 || prog[f.n - 1]?.done));
     const giver = nearest(this.npcs.filter(n => n.missao && !c.data.quests[n.missao] && (!QUESTS[n.missao].requer || c.data.quests[QUESTS[n.missao].requer]?.st === 'feita')));
     if (giver && (!next || Math.hypot(giver.x - p.x, giver.y - p.y) < 1400)) { const n = this.npcs.find(x => x.x === giver.x && x.y === giver.y); return { x: n.x, y: n.y, label: 'Nova missão: ' + n.nome }; }
     if (next) return this.dungeonTarget(SEMANA_ATUAL, next.n, 'Fase ' + next.n + ': ' + next.nome);
@@ -1694,14 +1715,15 @@ export class Game {
     if (this.scene === 'fase') {
       const f = this.fase;
       for (const ch of this.chests) out.push({ x: ch.x, y: ch.y, icon: ch.open ? '✅' : '🎁', nome: ch.open ? 'Baú aberto' : 'Baú com quiz', tipo: 'Baús', desc: ch.open ? 'Você já ganhou esta chave.' : 'Responda o quiz para ganhar uma chave.' });
-      if (f.built.door.length) { const d = f.built.door; out.push({ x: d.reduce((s, t) => s + t.tx, 0) / d.length * TS + 16, y: d[0].ty * TS, icon: f.keys >= 3 ? '🚪' : '🔒', nome: 'Porta do chefe', tipo: 'Objetivo', desc: f.keys >= 3 ? 'Aberta! O chefe espera lá dentro.' : 'Precisa de 3 chaves (' + f.keys + '/3).' }); }
+      if (f.built.door.length) { const d = f.built.door; out.push({ x: d.reduce((s, t) => s + t.tx, 0) / d.length * TS + 16, y: d[0].ty * TS, icon: f.doorOpen ? '🚪' : '🔒', nome: 'Porta do chefe', tipo: 'Objetivo', desc: f.doorOpen ? 'Aberta! O chefe espera lá dentro.' : 'Precisa de 3 chaves (' + f.keys + '/3).' + (f.jonas ? ' ' + studyText(f) + '.' : '') }); }
+      for (const e of f.estacoes || []) out.push({ x: e.x, y: e.y, icon: f.jonas.feitas.includes(e.id) ? '✅' : '📖', nome: e.nome, tipo: 'Estudo', desc: f.jonas.feitas.includes(e.id) ? e.porque : 'Aproxime-se e interaja para refletir sobre ' + f.def.ref + '.' });
       for (const h of f.built.heal) out.push({ x: h.x, y: h.y, icon: '💧', nome: 'Fonte de cura', tipo: 'Cura', desc: 'Recupera vida e Fé (a cada 45 s).' });
       if (f.built.boss) out.push({ x: f.built.boss.x, y: f.built.boss.y, icon: '💀', nome: BOSSES[f.def.chefe].nome, tipo: 'Objetivo', desc: 'Chefe da fase. ' + BOSSES[f.def.chefe].ref });
       for (const n of this.npcs) out.push({ x: n.x, y: n.y, icon: '💬', nome: n.nome, tipo: 'Personagens', desc: n.falas[0] });
       return out;
     }
     if (this.scene === 'salao') {
-      for (const pt of this.portais) out.push({ x: pt.x, y: pt.y, icon: pt.casa ? pt.tag : pt.state === 'feito' ? '✅' : pt.state === 'fechado' ? '🔒' : '⛩️', nome: pt.tag + ': ' + pt.label, tipo: 'Portais', desc: pt.fase ? pt.fase.ref + ' · nível ' + pt.fase.nivel + ' · chefe: ' + BOSSES[pt.fase.chefe].nome : pt.sem.estudo + ' — ' + pt.sem.resumo });
+      for (const pt of this.portais) out.push({ x: pt.x, y: pt.y, icon: pt.casa ? pt.tag : pt.state === 'feito' ? '✅' : pt.state === 'fechado' ? '🔒' : '⛩️', nome: pt.tag + ': ' + pt.label, tipo: 'Portais', desc: pt.fase ? pt.fase.ref + ' · nível adaptado ao jogador' + ' · chefe: ' + BOSSES[pt.fase.chefe].nome : pt.sem.estudo + ' — ' + pt.sem.resumo });
       for (const n of this.npcs) out.push({ x: n.x, y: n.y, icon: '💬', nome: n.nome, tipo: 'Personagens', desc: n.falas[0] });
       if (this.saida) out.push({ x: this.saida.x, y: this.saida.y, icon: '🚪', nome: 'Saída', tipo: 'Portais', desc: this.hub.tipo === 'semana' ? 'Volta ao Salão das Dungeons.' : 'Volta ao mundo.' });
       return out;
@@ -1770,6 +1792,7 @@ export class Game {
     g.imageSmoothingQuality = 'high';
     m.draw(g, camL, camT, vw, vh, this.mobile && config.imagemNitida ? Math.min(4, Math.ceil(k * 4) / 4) : 1);
     drawExpedition(this, g);
+    drawJonas(this, g);
     const visible = e => inView(e, camL, camT, vw, vh);
     const T0 = this.T;
     // portões animados
@@ -1790,13 +1813,16 @@ export class Game {
         g.textAlign = 'center'; g.lineWidth = 4; g.strokeStyle = 'rgba(0,0,0,.7)';
         g.font = '700 11px Cinzel, serif'; g.fillStyle = pt.tag === 'NOVA' ? '#F6E2AA' : '#E9E4D6';
         g.strokeText(pt.tag, pt.x, pt.y - 62); g.fillText(pt.tag, pt.x, pt.y - 62);
-        g.font = '600 11px Alegreya, serif'; g.fillStyle = '#C8C4D8'; g.strokeText(pt.label, pt.x, pt.y + 50); g.fillText(pt.label, pt.x, pt.y + 50);
+        g.font = '600 11px Alegreya, serif'; g.fillStyle = '#C8C4D8';
+        const lines = wrap(g, pt.label, 112), labels = lines.slice(0, 2);
+        if (lines.length > 2) labels[1] = labels[1].replace(/\s+\S+$/, '') + '…';
+        labels.forEach((label, i) => { g.strokeText(label, pt.x, pt.y + 50 + i * 13); g.fillText(label, pt.x, pt.y + 50 + i * 13); });
         if (pt.state === 'fechado') { g.font = '16px sans-serif'; g.fillText('🔒', pt.x, pt.y); }
       }
       if (this.saida) { g.fillStyle = 'rgba(242,193,78,' + (0.25 + 0.15 * Math.sin(T0 * 3)) + ')'; ell(g, this.saida.x, this.saida.y, 18, 8); g.fill(); }
     } else if (this.fase) {
       for (const h of this.fase.built.heal) { g.fillStyle = 'rgba(160,230,255,' + (0.3 + 0.2 * Math.sin(T0 * 3)) + ')'; ell(g, h.x, h.y - 2, 10, 5); g.fill(); }
-      if (this.fase.keys < 3) for (const d of this.fase.built.door) {
+      if (!this.fase.doorOpen) for (const d of this.fase.built.door) {
         const x = d.tx * TS, y = d.ty * TS;
         g.fillStyle = '#0B0A10'; g.fillRect(x, y - 8, TS, TS + 8); g.fillStyle = '#2A2422'; g.fillRect(x + 3, y - 5, TS - 6, TS + 2);
         g.fillStyle = '#C9B48A'; ell(g, x + (d.tx % 2 ? 6 : TS - 6), y + 12, 2.5, 2.5); g.fill();

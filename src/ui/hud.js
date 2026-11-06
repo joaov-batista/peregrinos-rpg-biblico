@@ -10,7 +10,7 @@ import { ENEMIES, BOSSES } from '../data/bestiary.js';
 import { QUESTS, LOJAS } from '../data/npcs.js';
 import { montarCinema } from './cinema.js';
 import { CINEMAS } from '../content/cinematicas.js';
-import { SEMANA_ATUAL } from '../content/index.js';
+import { SEMANAS, SEMANA_ATUAL } from '../content/index.js';
 import { drawPerson } from '../game/draw.js';
 import { icon, itemIcon } from './icons.js';
 import { count, addItem, removeItem, equip, unequip, canEquip, faseProg, computeStats } from '../game/player.js';
@@ -347,7 +347,7 @@ export function createHud(onExit) {
         const ok = a === right; box.querySelectorAll('button').forEach(b => { b.disabled = true; if (b.textContent === right) b.classList.add('right'); });
         if (!ok) e.currentTarget.classList.add('wrong');
         sfx(ok ? 'right' : 'wrong');
-        p.append(h('p', { class: 'feedback ' + (ok ? 'ok' : 'no') }, ok ? 'Certo! Você ganhou uma chave.' : 'Não foi dessa vez. A resposta certa era: ' + right + '. O baú vai trancar por alguns segundos.'));
+        p.append(h('p', { class: 'feedback ' + (ok ? 'ok' : 'no') }, ok ? (q.estacao ? 'Decisão concluída! O estudo avança.' : 'Certo! Você ganhou uma chave.') : 'Não foi dessa vez. A resposta certa era: ' + right + (q.estacao ? '. Leia a explicação e tente novamente.' : '. O baú vai trancar por alguns segundos.')));
         // explicação: por que a resposta certa é a certa (fica até o jogador continuar)
         if (q.porque) {
           p.append(h('div', { class: 'porque' }, h('b', {}, '📖 Por quê?'), h('p', {}, q.porque)),
@@ -396,11 +396,12 @@ export function createHud(onExit) {
         h('div', {}, h('b', {}, mm), h('small', {}, 'tempo')), h('div', {}, h('b', {}, d.ok + '/' + (d.ok + d.err)), h('small', {}, 'quiz')),
         h('div', {}, h('b', {}, d.kills), h('small', {}, 'vícios')), h('div', {}, h('b', {}, '+' + fmt(d.pts)), h('small', {}, 'pontos'))),
       h('p', { class: 'rewards' }, '+' + d.xp + ' XP · +' + d.gold + ' denários' + (d.first ? '' : ' · (replay: 30% dos pontos)')));
+    if (d.fase.epilogo) p.append(h('p', { class: 'lesson epilogue' }, d.fase.epilogo));
     if (d.item) p.append(h('div', { class: 'loot' }, h('span', { class: 'big' }, itemIcon(ITEMS[d.item], d.item, 48)), h('div', {}, h('b', { style: 'color:' + itemCor(d.item) }, ITEMS[d.item].nome), h('small', {}, ITEMS[d.item].desc))));
     if (d.semana) p.append(h('div', { class: 'loot legendary' }, h('span', { class: 'big' }, itemIcon(ITEMS[d.semana], d.semana, 48)), h('div', {}, h('b', {}, 'SEMANA COMPLETA! ' + ITEMS[d.semana].nome), h('small', {}, ITEMS[d.semana].desc))));
     if (d.semPremio) p.append(h('p', { class: 'hint' }, 'O prêmio ' + ITEMS[d.fase.recompensa].icon + ' ' + ITEMS[d.fase.recompensa].nome + ' não caiu desta vez. Jogue de novo: ele pode sair nos baús do tesouro ou no fim da fase!'));
     if (d.item || d.semana) p.append(h('p', { class: 'hint' }, 'Equipe no menu ☰ › Personagem.'));
-    p.append(h('div', { class: 'btn-row' }, h('button', { class: 'btn gold', onclick: () => close() }, 'Voltar ao mundo')));
+    p.append(h('div', { class: 'btn-row' }, h('button', { class: 'btn gold', onclick: () => close() }, 'Voltar à sala da semana')));
   }, { dismiss: false });
 
   /* ---------- Loja ---------- */
@@ -703,7 +704,7 @@ export function createHud(onExit) {
   }
 
   function tabQuests(body, render) {
-    const c = game.char, prog = faseProg(c, SEMANA_ATUAL.id);
+    const c = game.char;
     body.append(h('h4', {}, 'Sua jornada — desafio crescente'));
     for (const [id, level, hint] of MISSION_PATH) {
       const q = QUESTS[id], state = c.data.quests[id], locked = q.requer && c.data.quests[q.requer]?.st !== 'feita';
@@ -723,13 +724,17 @@ export function createHud(onExit) {
         game.guide ? h('small', { class: 'where' }, '➤ ' + game.guide.label) : '',
         h('div', { class: 'btn-row' }, h('button', { class: 'btn sm', onclick: () => { ui.closeAll(); setTimeout(() => ui.openMap(), 200); } }, '🗺 Ver no mapa'))));
     }
-    body.append(h('h4', {}, 'Estudo da semana: ' + SEMANA_ATUAL.titulo + ' (' + SEMANA_ATUAL.estudo + ')'), h('p', { class: 'muted' }, SEMANA_ATUAL.resumo));
-    const fl = h('div', { class: 'fase-list' });
-    SEMANA_ATUAL.fases.forEach(f => {
-      const pr = prog[f.n];
-      fl.append(h('div', { class: 'fase-row' + (pr?.done ? ' done' : '') }, h('span', { class: 'num' }, f.n), h('div', {}, h('b', {}, f.nome), h('small', {}, f.ref + ' · nível ' + f.nivel + ' · chefe: ' + BOSSES[f.chefe].nome)), h('span', {}, pr?.done ? '✅ ' + fmt(pr.best) : ITEMS[f.recompensa].icon)));
-    });
-    body.append(fl, h('h4', {}, 'Missões'));
+    body.append(h('h4', {}, 'Dungeons · escolha sua semana'), h('p', {class:'muted'}, 'As semanas são independentes. A dificuldade acompanha seu nível; escolha História, Jornada ou Desafio no portão.'));
+    for (const sem of SEMANAS) {
+      body.append(h('h4', {}, sem.titulo + ' · ' + sem.estudo), h('p', {class:'muted'}, sem.resumo));
+      const fl = h('div', {class:'fase-list'}), progress = faseProg(c, sem.id);
+      for (const f of sem.fases) {
+        const pr=progress[f.n];
+        fl.append(h('div', {class:'fase-row' + (pr?.done?' done':'')}, h('span',{class:'num'},f.n), h('div',{},h('b',{},f.nome),h('small',{},f.ref + ' · nível adaptável · ' + BOSSES[f.chefe].nome)),h('span',{},pr?.done?'✅ '+fmt(pr.best):ITEMS[f.recompensa].icon)));
+      }
+      body.append(fl);
+    }
+    body.append(h('h4', {}, 'Missões'));
     const ql = h('div', { class: 'fase-list' });
     const ids = Object.keys(c.data.quests);
     if (!ids.length) ql.append(h('p', { class: 'empty' }, 'Fale com os personagens com ❗ para pegar missões.'));
@@ -748,6 +753,7 @@ export function createHud(onExit) {
   function tabBible(body) {
     const c = game.char;
     body.append(h('h4', {}, 'Versículo da semana'), h('blockquote', {}, '“' + SEMANA_ATUAL.versiculo.texto + '”', h('cite', {}, SEMANA_ATUAL.versiculo.ref)));
+    for (const sem of SEMANAS) for (const f of sem.fases) if (f.estudo) body.append(h('details', {class:'dungeon-study'}, h('summary',{},'Jonas · '+f.n+' · '+f.nome+' ('+f.ref+')'), ...f.estudo.map(t=>h('p',{},t)), h('blockquote',{},f.reflexao)));
     const rev = c.data.revisar || [];
     if (rev.length) {
       body.append(h('h4', {}, '📌 Para revisar (' + rev.length + ')'), h('p', { class: 'muted' }, 'Perguntas que você errou. Quando acertar de novo num baú, ela sai daqui.'));

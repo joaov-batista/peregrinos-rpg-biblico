@@ -11,6 +11,12 @@ export const RARIDADE = {
 };
 
 export const ITEMS = {
+  bussola_chamado: { nome:'Bússola do Chamado', icon:'🧭', slot:'reliquia', raridade:'raro', fe:12, atk:2, desc:'Uma lembrança de Jonas 1: ouvir também pede uma mudança de direção.' },
+  manto_marinheiro: { nome:'Manto do Companheiro', icon:'🧥', slot:'corpo', raridade:'raro', hp:25, def:4, desc:'Lembra os marinheiros que procuraram preservar uma vida em Jonas 1.' },
+  lamparina_abismo: { nome:'Lamparina do Clamor', icon:'🪔', slot:'reliquia', raridade:'epico', fe:24, hp:15, desc:'Do Senhor vem a salvação. Memorial da oração de Jonas 2.' },
+  sandalias_mensageiro: { nome:'Sandálias da Segunda Oportunidade', icon:'👣', slot:'pes', raridade:'raro', spd:8, def:3, desc:'A palavra veio a Jonas pela segunda vez. Um novo passo em Jonas 3.' },
+  cinto_compaixao: { nome:'Cinto da Compaixão', icon:'🌿', slot:'cinto', raridade:'epico', hp:30, fe:12, desc:'A vida do próximo vale mais que a nossa sombra. Jonas 4.' },
+  selo_misericordia: { nome:'Selo da Misericórdia', icon:'🕊️', slot:'reliquia', raridade:'epico', hp:40, fe:25, def:5, desc:'Recompensa única das cinco fases de Jonas. Um convite a estender a misericórdia recebida.' },
   selo_vigilia: { nome: 'Selo da Vigília', icon: '🔆', slot: 'reliquia', raridade: 'secreto', fe: 18, def: 3, desc: 'Revelado por três ecos. Mantém a fé acesa, mas não impede o sono.' },
   sandalias_viajante: { nome: 'Sandálias do Caminho Oculto', icon: '👣', slot: 'pes', raridade: 'secreto', spd: 10, def: 4, desc: 'Tesouro das cinco inscrições. O caminho se revela a quem observa.' },
   // ---------- Consumíveis ----------

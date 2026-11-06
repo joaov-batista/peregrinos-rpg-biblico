@@ -9,6 +9,7 @@
 // Os áudios ficam em public/narracao/<id>-<n>.mp3: cenas seguidas com a mesma voz formam um arquivo (n = 0, 1, 2…).
 // Sem o arquivo, a cutscene roda do mesmo jeito, só com a legenda.
 import semana01 from './semana-01.js';
+import { CINEMAS_JONAS } from './cinematicas-jonas.js';
 
 const F = (n, k) => semana01.fases[n - 1].npcs[k].look;
 const PAULO = F(1, 'M'), PRISCILA = F(2, 'N'), AQUILA = F(2, 'M'), SILAS = F(3, 'M'), TIMOTEO = F(3, 'O');
@@ -18,6 +19,7 @@ const ADAO = { skin: '#C68B59', hair: '#3A2314', tunic: '#ECE3CF', cape: 'none',
 const EVA = { skin: '#D9A273', hair: '#2B1A10', tunic: '#ECE3CF', cape: 'none', style: 'longo', beard: false };
 
 export const CINEMAS = {
+  ...CINEMAS_JONAS,
   /* ================= Começo do jogo ================= */
   prologo: {
     titulo: 'Prólogo',
@@ -68,13 +70,15 @@ export const CINEMAS = {
     ]
   },
   'semana-01-fim': {
+    narracao: false,
     titulo: 'O Acusador caiu',
     cenas: [
       { cena: 'luz', fx: 'clarão', titulo: 'VITÓRIA', sub: 'Apocalipse 12:11',
         texto: '[emotional] O Acusador foi lançado fora. Não pela sua força, peregrino, mas pelo sangue do Cordeiro e pela palavra do testemunho.' },
       { cena: 'corinto', fig: [{ p: PAULO, x: 0.42, y: 0.82, s: 1.5 }, { p: 'jogador', x: 0.58, y: 0.82, s: 1.5, vira: -1 }],
         texto: 'Paulo ficou em Corinto um ano e seis meses, e ali nasceu uma igreja. Deus tinha muito povo naquela cidade… e tem muito povo na sua também.' },
-      { cena: 'portais', texto: 'A Espada do Espírito agora é sua. Guarde a Palavra no coração. Na próxima semana, um novo portal vai se abrir.' }
+      { cena: 'sombras', titulo: 'ELE VOLTARÁ', texto: 'Essa foi só uma das faces de Satanás. Ele voltará. Permaneça vigilante e firme na Palavra.' },
+      { cena: 'portais', texto: 'A Espada do Espírito agora é sua. O portal de Jonas já está aberto no Salão. Cada semana tem sua própria jornada.' }
     ]
   },
 
@@ -364,16 +368,17 @@ export const CINEMAS = {
   },
   'q_daniel': {
     titulo: 'Missão · Fiel até o fim',
+    narracao: false,
     cenas: [
       { cena: 'noite', fig: [{ p: 'npc:daniel', x: 0.42, y: 0.82, s: 1.6 }, { p: 'jogador', x: 0.6, y: 0.82, s: 1.5, vira: -1 }], titulo: 'FIEL ATÉ O FIM', sub: 'Daniel 6:22',
         texto: 'Daniel orava três vezes por dia, de janela aberta, mesmo sabendo que a cova dos leões o esperava. E Deus fechou a boca dos leões.' },
-      { cena: 'trono', fx: 'brasas', texto: 'Seja fiel até a última fase da semana nova. Lá embaixo, o Acusador espera. Sê fiel até a morte, e eu te darei a coroa da vida.' }
+      { cena: 'noite', texto: 'Seja fiel até a última fase da semana nova. Leve o que aprendeu para suas atitudes. Sê fiel até a morte, e eu te darei a coroa da vida.' }
     ]
   }
 };
 
 // Qual cutscene toca quando um chefe aparece (id do bestiário → id da cutscene)
-export const CINEMA_CHEFE = { mamom: 'chefe-mamom', procrastinacao: 'chefe-procrastinacao', mentira: 'chefe-mentira', imoralidade: 'chefe-imoralidade', satanas: 'chefe-satanas', behemote: 'chefe-behemote', leviata: 'chefe-leviata', golias: 'chefe-golias' };
+export const CINEMA_CHEFE = { fuga:'chefe-fuga', pavor:'chefe-pavor', desespero:'chefe-desespero', violencia:'chefe-violencia', ressentimento:'chefe-ressentimento', mamom: 'chefe-mamom', procrastinacao: 'chefe-procrastinacao', mentira: 'chefe-mentira', imoralidade: 'chefe-imoralidade', satanas: 'chefe-satanas', behemote: 'chefe-behemote', leviata: 'chefe-leviata', golias: 'chefe-golias' };
 
 // Agrupa cenas seguidas com a mesma voz: cada grupo vira um arquivo de áudio (public/narracao/<id>-<n>.mp3)
 export function segmentos(id) {

@@ -1,5 +1,7 @@
 # Peregrinos — RPG bíblico online
 
+> **Semana 2 · Jonas:** cinco fases sobre os quatro capítulos, 50 perguntas, 15 decisões de estudo e cinco chefes com sprites animados próprios. Semanas independentes e dificuldade por nível, com modos História, Jornada e Desafio. Veja [a campanha e sua validação](docs/JONAS-E-DUNGEONS.md).
+
 > **Combate e progressão:** chefes com novos golpes, trilha de missões, expedição contra Leviatã e segredos nas fases. Veja [regras, controles e validação](docs/COMBATE-E-PROGRESSAO.md).
 
 > **Revisão visual:** personagens articulados, 10 monstros e 9 chefes redesenhados, movimentos mais fluidos, novas armas e ícones e criação em três etapas. Veja [LEIA-ME-REDESIGN.md](LEIA-ME-REDESIGN.md), as pranchas em `art/` e a prévia `art/movimento-fluido.mp4`.
@@ -31,7 +33,7 @@ Abra http://localhost:5180
 | Chefes | Mamom, Procrastinação, Mentira, Imoralidade Sexual, Satanás (batalha de versículos), Golias (Vale de Elá: só a defesa perfeita contra a lança expõe a testa), Beemote e Leviatã (chefes do mundo) |
 | Secreto | um vilão escondido aparece nos portões à noite… |
 | Dungeons | um **Portão das Dungeons** no mundo leva ao **Salão**: uma sala por semana (a nova e as passadas), cada uma com 5 fases e um guia |
-| Fases | baús com quiz → 3 chaves → porta do chefe. O prêmio da fase tem chance de cair nos baús do tesouro (depois das 3 chaves) ou no fim |
+| Fases | baús com quiz → 3 chaves → porta do chefe; em Jonas, conclua também as três decisões de estudo. O prêmio da fase tem chance de cair nos baús do tesouro (depois das 3 chaves) ou no fim |
 | Itens | lojas, armas por classe, armaduras, comida, buffs e as 6 peças da **Armadura de Deus** (Ef 6) |
 | NPCs | personagens bíblicos com falas, missões, lojas e minijogos |
 | Minijogos | A Ovelha Perdida (Lc 15), Pesca Maravilhosa (Jo 21), Colheita do Maná (Êx 16), Pares da Arca (Gn 7) e **pescaria livre** em qualquer beira de lago ou mar |
@@ -47,13 +49,13 @@ Abra http://localhost:5180
 
 ## Criar uma semana nova (5 fases)
 
-1. Copie `src/content/semana-01.js` para `src/content/semana-02.js`.
+1. Copie uma semana de `src/content/` para um arquivo com id livre, como `semana-03.js` (as semanas 1 e 2 já existem).
 2. Troque `id`, `titulo`, `estudo`, `versiculo` e as 5 `fases` (nome, referência, lição, quiz, personagens, mapa, chefe e recompensa).
    - Quiz: 10 a 15 perguntas por fase; a resposta certa é sempre a **primeira** (o jogo embaralha) e `porque` explica a resposta depois que o jogador responde. Perguntas erradas vão para "Para revisar" (menu › Bíblia).
 3. Registre em `src/content/index.js`:
    ```js
-   import semana02 from './semana-02.js';
-   export const SEMANAS = [semana01, semana02];
+   import semana03 from './semana-03.js';
+   export const SEMANAS = [semana01, semana02, semana03];
    ```
 4. Publique. Todas as semanas aparecem no Salão das Dungeons; a última da lista é a NOVA. Cada semana pode ter `sala` (piso da sala) e `guia` (nome e aparência do guia).
 

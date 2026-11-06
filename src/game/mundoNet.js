@@ -1,3 +1,4 @@
+import { receiveStation } from './jonas-dungeon.js';
 import { recordEnemyPosition, interpolateEnemy } from './enemy-interpolation.js';
 import { bossDamage, strikeShell } from './combatRules.js';
 // Mundo compartilhado: no mundo aberto, todos veem os MESMOS vícios e chefes.
@@ -100,7 +101,7 @@ const metodos = {
       if (e.engaged) s.en = 1; if (e.dash > 0) s.ds = 1;
       lista.push(s);
     }
-    this.net.ev({ t: 'snap', de: this.meuId(), sala: this.salaAtual(), e: lista });
+    this.net.ev({ t: 'snap', de: this.meuId(), sala: this.salaAtual(), e: lista, j: this.scene === 'fase' ? this.fase?.jonas?.feitas : undefined });
   },
 
   // Mensagens recebidas pelo canal
@@ -111,7 +112,7 @@ const metodos = {
     if (!this.netAtivo() || (m.sala || 'world') !== this.salaAtual()) return;
     const host = this.souHost();
     switch (m.t) {
-      case 'snap': if (!host) this.aplicarSnapshot(m.e); break;
+      case 'snap': if (!host) { this.aplicarSnapshot(m.e); for (const id of m.j || []) receiveStation(this, {id, run:this.fase?.run}); } break;
       case 'golpe': if (host) this.receberGolpe(m); break;
       case 'parry': {
         const e = host && this.porNid(m.id); if (!e) break;
@@ -137,6 +138,7 @@ const metodos = {
       case 'tele': if (!host) this.teleRede(m); break;
       case 'haz': if (!host) this.hazards.push({ ...m.h, src: this.porNid(m.h.sid), tick: 0, hit: false }); break;
       case 'bau': this.receberBau(m); break;
+      case 'jonas-estacao': receiveStation(this, m); break;
     }
   },
 

@@ -6,6 +6,7 @@
 import { uid } from '../util.js';
 import { sfx } from '../audio.js';
 import { net } from '../net.js';
+import { dungeonRun, canEnterDungeon } from './dungeon-scaling.js';
 import { SEMANAS } from '../content/index.js';
 
 export const MAX_GRUPO = 4;
@@ -71,20 +72,22 @@ const metodos = {
         if (this.souLider()) this.avisarGrupo();
         break;
       case 'g-fim': if (g && g.id === m.gid) { this.grupo = null; this.ui.grupoHud?.(null); this.ui.toast('O líder desfez o grupo.'); } break;
-      case 'g-fase': if (!g || g.id !== m.gid || this.souLider()) return;
+      case 'g-fase': if (!g || g.id !== m.gid || String(m.de) !== String(g.lider) || this.souLider()) return;
         if (this.fase?.run === m.run) return;
         { const sem = SEMANAS.find(s => s.id === m.sem), f = sem?.fases[m.n - 1]; if (!f) return;
           this.ui.dialog({ nome: '⚔️ O grupo entrou numa fase', texto: 'Fase ' + m.n + ': ' + f.nome + ' (' + f.ref + ').\n\nEntre agora para lutar junto. Os vícios, as chaves e o chefe são os mesmos para todo o grupo.',
-            acoes: [{ label: 'Ir com o grupo', fn: () => { sfx('gate'); this.enterFase(sem, m.n, m.run); } }, { label: 'Ficar aqui' }] }); }
+            acoes: [{ label: 'Ir com o grupo', fn: () => { sfx('gate'); this.enterFase(sem, m.n, m.run, m.scale); } }, { label: 'Ficar aqui' }] }); }
         break;
     }
   },
 
   // o líder entra e chama os outros para o mesmo "run" da fase
   entrarComGrupo(sem, n) {
+    if (!canEnterDungeon(this.char, sem, n)) return this.ui.toast('Conclua a fase anterior desta semana.');
+    const scale = dungeonRun(this.char.level, this.char.data.dungeonDifficulty);
     const run = this.grupo.id + ':' + sem.id + ':' + n + ':' + Date.now();
-    sfx('gate'); this.enterFase(sem, n, run);
-    this.enviarGrupo({ t: 'g-fase', gid: this.grupo.id, sem: sem.id, n, run });
+    sfx('gate'); this.enterFase(sem, n, run, scale);
+    this.enviarGrupo({ t: 'g-fase', gid: this.grupo.id, sem: sem.id, n, run, scale });
   },
 
   // baús: a chave conta para todos (chega como mensagem "bau")
