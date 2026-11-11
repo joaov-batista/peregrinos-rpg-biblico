@@ -4,6 +4,11 @@ const KEYMAP = {
   KeyJ: 'attack', KeyK: 'skill', Space: 'dodge', ShiftLeft: 'defend', ShiftRight: 'defend', KeyL: 'defend',
   KeyQ: 'item1', Digit1: 'item1', Numpad1: 'item1', Digit2: 'item2', Numpad2: 'item2', KeyR: 'mount', KeyE: 'interact', KeyF: 'interact', KeyI: 'menu', Tab: 'menu', KeyM: 'map', KeyT: 'lock', KeyH: 'botija', Enter: 'chat', Escape: 'escape'
 };
+// No Caminho, o teclado segue o padrão de Hollow Knight: setas andam, Z pula, X golpeia, C é o passo,
+// A (segurar) ora, S ergue a lâmpada, D solta o especial, seta para cima (ou E) interage, Tab abre o mapa, I o inventário.
+const KEYMAP_HK = { KeyZ: 'dodge', Space: 'dodge', KeyX: 'attack', KeyC: 'dash', KeyA: 'botija', KeyS: 'defend', ShiftLeft: 'defend', KeyD: 'skill', KeyF: 'skill',
+  ArrowUp: 'interact', KeyE: 'interact', Enter: 'interact', Tab: 'map', KeyM: 'map', KeyI: 'menu', Escape: 'escape' };
+const MOVE_HK = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
 const MOVE = { KeyW: [0, -1], ArrowUp: [0, -1], KeyS: [0, 1], ArrowDown: [0, 1], KeyA: [-1, 0], ArrowLeft: [-1, 0], KeyD: [1, 0], ArrowRight: [1, 0] };
 const BUFFERED = new Set(['dodge', 'defend', 'item1', 'item2', 'botija']);
 const BUFFER_MS = 250;
@@ -45,7 +50,8 @@ export const input = {
   isHeld(a) { return this.held.has(a); },
   move() {
     let x = 0, y = 0;
-    for (const k of this.keys) if (MOVE[k]) { x += MOVE[k][0]; y += MOVE[k][1]; }
+    const M = this.perfil === 'caminho' ? MOVE_HK : MOVE;
+    for (const k of this.keys) if (M[k]) { x += M[k][0]; y += M[k][1]; }
     if (this.stick.id != null) { x = this.stick.x; y = this.stick.y; }
     if (this.pad) { x = this.pad.x; y = this.pad.y; } // analógico do controle (gamepad.js)
     const l = Math.hypot(x, y);
@@ -64,13 +70,13 @@ function typing(e) { const t = e.target; return t && (t.tagName === 'INPUT' || t
 export function initInput(canvas) {
   addEventListener('keydown', e => {
     if (typing(e) || !document.body.classList.contains('playing')) return;
-    const a = KEYMAP[e.code];
-    if (MOVE[e.code]) { input.keys.add(e.code); input.mouseAim = false; e.preventDefault(); }
+    const hk = input.perfil === 'caminho', a = (hk ? KEYMAP_HK : KEYMAP)[e.code];
+    if ((hk ? MOVE_HK : MOVE)[e.code]) { input.keys.add(e.code); input.mouseAim = false; e.preventDefault(); }
     if (a) { if (!e.repeat) input.press(a, e.code); e.preventDefault(); }
   });
   addEventListener('keyup', e => {
     input.keys.delete(e.code);
-    const a = KEYMAP[e.code]; if (a) input.release(a, e.code);
+    for (const m of [KEYMAP, KEYMAP_HK]) if (m[e.code]) input.release(m[e.code], e.code);
   });
   addEventListener('blur', () => input.clear());
   document.addEventListener('visibilitychange', () => { if (document.hidden) input.clear(); });

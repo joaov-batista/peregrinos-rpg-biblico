@@ -31,16 +31,16 @@ import { Juntos, limparCodigo } from './juntos.js';
 
 // Primeiros passos: [toque, controle, teclado]
 const PASSOS = [
-  { id: 'andar', titulo: 'ANDAR', txt: ['Arraste o dedo no lado esquerdo da tela.', 'Use o direcional esquerdo.', 'A e D (ou as setas) para andar.'] },
-  { id: 'pular', titulo: 'SALTO DUPLO', txt: ['Toque em PULAR e, no ar, toque de novo.', 'A (✕) para pular. No ar, aperte de novo.', 'Espaço para pular. No ar, aperte de novo.'] },
-  { id: 'passo', titulo: 'PASSO PRONTO', txt: ['Toque em PASSO: você atravessa o perigo. Ele demora a voltar (as três setas no alto).', 'B (○) ou RT: atravessa o perigo, mas demora a voltar.', 'C: atravessa o perigo. Demora a voltar (as três setas no alto).'] },
-  { id: 'golpe', titulo: 'GOLPE', txt: ['Toque em GOLPE. Segurando para cima ou para baixo, o golpe muda de direção.', 'X (□) ou RB golpeia. Com o direcional para cima, para baixo ou na diagonal, o golpe muda.', 'J (ou clique) golpeia. Segure W ou S para golpear para cima e para baixo.'] },
-  { id: 'descer', titulo: 'DESCER DE PLATAFORMAS', txt: ['Sobre uma plataforma de madeira, puxe o direcional para BAIXO e ela deixa você passar.', 'Sobre uma plataforma de madeira, segure para baixo.', 'Sobre uma plataforma de madeira, segure S (ou seta para baixo).'] },
-  { id: 'rasteiro', titulo: 'PASSO RASTEIRO', txt: ['Para BAIXO + PASSO: você atravessa o adversário sem ser ferido.', 'Para baixo + passo: atravessa o adversário sem ser ferido.', 'S + C: você atravessa o adversário sem ser ferido.'] },
-  { id: 'luz', titulo: 'A LÂMPADA · LUZ', txt: ['Segure LÂMPADA: a luz cresce e revela paredes falsas e pisos escondidos.', 'Segure LB (L1): a luz revela paredes falsas e pisos escondidos.', 'Segure Shift: a luz cresce e revela paredes falsas e pisos escondidos.'] },
-  { id: 'vigilia', titulo: 'A LÂMPADA · VIGÍLIA', txt: ['É a sua única defesa. Toque em LÂMPADA no instante em que o dardo chega. Cedo ou tarde demais, não protege.', 'É a sua única defesa. Aperte LB (L1) no instante em que o dardo chega. Cedo ou tarde demais, não protege.', 'É a sua única defesa. Aperte Shift no instante em que o dardo chega. Cedo ou tarde demais, não protege.'] },
+  { id: 'andar', titulo: 'ANDAR', txt: ['Arraste o dedo no lado esquerdo da tela.', 'Use o direcional esquerdo.', 'Setas para andar.'] },
+  { id: 'pular', titulo: 'SALTO DUPLO', txt: ['Toque em PULAR e, no ar, toque de novo.', 'A (✕) para pular. No ar, aperte de novo.', 'Z para pular. No ar, aperte de novo.'] },
+  { id: 'passo', titulo: 'PASSO PRONTO', txt: ['Toque em PASSO: você atravessa o perigo. Ele demora a voltar (as três setas no alto).', 'RT (R2): atravessa o perigo, mas demora a voltar.', 'C: atravessa o perigo. Demora a voltar (as três setas no alto).'] },
+  { id: 'golpe', titulo: 'GOLPE', txt: ['Toque em GOLPE. Segurando para cima ou para baixo, o golpe muda de direção.', 'X (□) golpeia; RB (R1) solta o especial. Com o direcional para cima, para baixo ou na diagonal, o golpe muda.', 'X (ou clique) golpeia. Segure ↑ ou ↓ para golpear para cima, para baixo e nas diagonais.'] },
+  { id: 'descer', titulo: 'DESCER DE PLATAFORMAS', txt: ['Sobre uma plataforma de madeira, puxe o direcional para BAIXO e ela deixa você passar.', 'Sobre uma plataforma de madeira, segure para baixo.', 'Sobre uma plataforma de madeira, segure ↓.'] },
+  { id: 'rasteiro', titulo: 'PASSO RASTEIRO', txt: ['Para BAIXO + PASSO: você atravessa o adversário sem ser ferido.', 'Para baixo + passo: atravessa o adversário sem ser ferido.', '↓ + C: você atravessa o adversário sem ser ferido.'] },
+  { id: 'luz', titulo: 'A LÂMPADA · LUZ', txt: ['Segure LÂMPADA: a luz cresce e revela paredes falsas e pisos escondidos.', 'Segure LB (L1): a luz revela paredes falsas e pisos escondidos.', 'Segure S: a luz cresce e revela paredes falsas e pisos escondidos.'] },
+  { id: 'vigilia', titulo: 'A LÂMPADA · VIGÍLIA', txt: ['É a sua única defesa. Toque em LÂMPADA no instante em que o dardo chega. Cedo ou tarde demais, não protege.', 'É a sua única defesa. Aperte LB (L1) no instante em que o dardo chega. Cedo ou tarde demais, não protege.', 'É a sua única defesa. Aperte S no instante em que o dardo chega. Cedo ou tarde demais, não protege.'] },
   { id: 'azeite', titulo: 'O AZEITE', txt: ['O jarro no alto é o azeite da lâmpada. Cada golpe certo e cada defesa perfeita o enchem.'] },
-  { id: 'orar', titulo: 'ORAR', txt: ['Segure ORAR, parado: gasta um terço do azeite e devolve um fôlego.', 'Segure LT (L2), parado: gasta um terço do azeite e devolve um fôlego.', 'Segure H, parado: gasta um terço do azeite e devolve um fôlego.'] }
+  { id: 'orar', titulo: 'ORAR', txt: ['Segure ORAR, parado: gasta um terço do azeite e devolve um fôlego.', 'Segure B (○) ou LT (L2), parado: gasta um terço do azeite e devolve um fôlego.', 'Segure A, parado: gasta um terço do azeite e devolve um fôlego.'] }
 ];
 
 const caixa = e => ({ x: e.x - e.w / 2, y: e.y - e.h, w: e.w, h: e.h });
@@ -102,9 +102,11 @@ export class Caminho {
     this.dpr = dpr; this.vista.W = W; this.vista.H = H; this.vista.Z = clamp(H / (CH * T), 0.3, 8);
   }
 
-  async cinema(id, forcar = false) {
+  async cinema(id, forcar = false, remoto = false) {
     const vistas = this.char.data.cinemas;
     if (!CINEMAS[id] || (!forcar && (vistas.includes(id) || config.cinemas === false))) return false;
+    if (remoto && this.ui.blocking) return false;
+    if (!remoto) this.mp?.ev('cin', { id }); // juntos, a história aparece para todos de uma vez
     if (!vistas.includes(id)) vistas.push(id);
     const antes = audio.modo; music('cinema');
     await this.ui.cinema(id, { look: this.char.look });
@@ -166,7 +168,7 @@ export class Caminho {
   textoControles() {
     return input.touch
       ? 'Arraste o dedo à esquerda para andar. Botões: pular (duas vezes no ar) · passo pronto, que demora a voltar · golpear (com o direcional para cima ou para baixo) · 🛡 erguer a lâmpada (vigília) · 🫙 orar e recuperar um fôlego.\n\nA lâmpada só defende no instante certo do golpe: é a DEFESA PERFEITA. Cedo ou tarde demais, não protege.'
-      : 'A / D ou setas: andar · Espaço (ou Z): pular · J (ou X, ou clique): golpear — segure ↑ ou ↓ para golpear para cima e para baixo · Shift (ou L): erguer a lâmpada · H (ou Q): orar · K: verso da sua vocação · C: passo pronto (demora a voltar) · no ar, pule de novo para o salto duplo · E: ler e falar · Esc: menu.\n\nA lâmpada só defende no instante certo: erguê-la quando o golpe chega é a DEFESA PERFEITA (devolve dardos e quebra a postura dos chefes). Erguida cedo ou tarde demais, não protege. A luz também revela o que está escondido.';
+      : 'Setas: andar · Z: pular (duas vezes no ar) · X: golpear, com ↑ ou ↓ para mudar a direção · C: passo pronto (↓ + C atravessa o adversário) · S: erguer a lâmpada · A (segurar): orar · D: especial da vocação · ↑ ou E: ler e falar · Tab: mapa · I: inventário · Esc: menu.\n\nNo controle: A pula, X golpeia, B (segurar) ora, RT é o passo, LB ergue a lâmpada, RB solta o especial, Y interage.\n\nA lâmpada só defende no instante certo: erguê-la quando o golpe chega é a DEFESA PERFEITA. Cedo ou tarde demais, não protege. A luz também revela o que está escondido.';
   }
 
   // os vícios da área (voltam a cada descanso numa Pedra de Ebenézer)
@@ -711,6 +713,7 @@ export class Caminho {
       e.c.vencida = true; this.emb = null; this.trancar(e.c, false); sfx('gate'); sfx('right'); this.tremor(5); this.ganharOleo(22);
       const rolo = this.objs.find(o => o.tipo === 'rolo' && o.cel === e.c); if (rolo) { this.fx.anel(rolo.x, rolo.y - 30, '#FFE9A8', 120); this.efeito('pilar', rolo.x, rolo.y); }
       const eco = this.def.sem?.id === 'semana-01' ? ECOS_CORINTO[f.n]?.[rolo ? rolo.n : 0] : null; // na primeira semana, cada câmara vencida conta um pedaço de Atos 18
+      this.mp?.ev('eco', { txt: eco || 'A câmara está livre. Leia o rolo.', d: eco ? 11000 : 3500 });
       this.ui.toast(eco || 'A câmara está livre. Leia o rolo.', eco ? 11000 : 3500); return;
     }
     // próxima onda: mais vícios a cada vez, vindos do chão e do ar
@@ -742,6 +745,7 @@ export class Caminho {
     this.luta = true; this.vazioT = 0; sfx('gate'); this.tremor(8);
     const juntos = this.mp?.acompanhado();
     if (!juntos) { this.N.portaAberta = false; await this.cinema(CINEMA_CHEFE[d.chefe] || 'chefe-' + d.chefe); }
+    else { this.congela = true; await this.cinema(CINEMA_CHEFE[d.chefe] || 'chefe-' + d.chefe); this.congela = false; } // todos assistem à entrada do chefe; ele espera
     const b = novoChefe(d.chefe, A, this.dif);
     if (juntos) { b.max = b.hp = Math.round(b.hp * (1 + 0.6 * this.mp.naArea().length)); b.art.max = b.max; } // mais peregrinos, mais fôlego na sombra
     this.inimigos.push(b); this.chefe = b; music('chefe'); sfx('boss');

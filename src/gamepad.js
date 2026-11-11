@@ -8,7 +8,8 @@ import { config } from './config.js';
 
 const ACOES = { 5: 'attack', 7: 'skill', 4: 'defend', 6: 'lock', 11: 'lock', 0: 'interact', 1: 'dodge', 2: 'botija', 3: 'mount', 14: 'item1', 15: 'item2' };
 // no Caminho (plataforma): A pula, X/RB golpeia, B/RT passo pronto, Y fala/lê, LB lâmpada, LT ora, ▲ verso
-const ACOES_CAMINHO = { 0: 'dodge', 2: 'attack', 5: 'attack', 1: 'dash', 7: 'dash', 3: 'interact', 4: 'defend', 6: 'botija', 10: 'skill', 11: 'skill' };
+// como em Hollow Knight: A pula, X golpeia, B (segurar) ora, RT é o passo; LB ergue a lâmpada, RB solta o especial, Y interage; LT também ora
+const ACOES_CAMINHO = { 0: 'dodge', 2: 'attack', 1: 'botija', 7: 'dash', 5: 'skill', 3: 'interact', 4: 'defend', 6: 'botija', 10: 'skill', 11: 'skill' };
 // em tela dividida (?pad=N) cada quadro escuta só o seu controle
 const PAD_FIXO = new URLSearchParams(location.search).has('pad') ? +new URLSearchParams(location.search).get('pad') : null;
 const meuControle = () => { const l = [...(navigator.getGamepads?.() || [])].filter(Boolean); return PAD_FIXO != null ? l[PAD_FIXO] : l[0]; };

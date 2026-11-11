@@ -251,6 +251,8 @@ export class Juntos {
       case 'cc': { const b = ini(m.id) || G.chefe; if (b && !b.fora) { b.remoto = true; G.chefeCaiu(b); } break; }
       case 'qz': { const b = ini(m.b) || G.chefe; if (!b || G.ui.blocking) { this.ev('qr', { ok: null }); break; } G.perguntaDoChefe(b, m.p).then(ok => this.ev('qr', { ok })); break; }
       case 'qr': this.resp?.set(m.de, m.ok); break;
+      case 'cin': G.cinema(m.id, true, true); break;
+      case 'eco': G.ui.toast(m.txt, m.d || 4000); break;
       case 'qf': G.respostaDoGrupo(m.ok); break;
       case 'fx': {
         const f = m.f; this.mudo = true;

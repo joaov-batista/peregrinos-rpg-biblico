@@ -70,10 +70,10 @@ export function atualizarHeroi(G, dt) {
     const lado = c.mx > 0.3 ? 1 : c.mx < -0.3 ? -1 : 0;
     if (lado && paredeAoLado(N, p, lado)) { p.desliza = lado; p.vy = Math.min(p.vy, 115); p.pulos = hab.asas ? 2 : 1; p.dashAr = true; p.face = -lado; if (Math.random() < dt * 14) G.fx.po(p.x + lado * 9, p.y - 20, 1, '#C9D2C4'); }
   }
+  // descer de uma plataforma: segurar para baixo um instante (ou para baixo + pular)
+  if (c.my > 0.5 && p.chao && p.naPonte && !preso) { p.baixoT = (p.baixoT || 0) + dt; if (p.baixoT > 0.14 || p.buf > 0) { p.desce = 0.2; p.buf = 0; p.chao = false; p.baixoT = 0; } } else p.baixoT = 0;
   if (p.buf > 0 && !preso && p.orando <= 0) {
-    if (c.my > 0.5 && p.chao && p.naPonte && (c.pulo || (p.baixoT = (p.baixoT || 0) + dt) > 0.12)) { p.desce = 0.2; p.buf = 0; p.chao = false; p.baixoT = 0; c.pulo = false; }
-    if (!(c.my > 0.5)) p.baixoT = 0;
-    else if (p.coyote > 0) { p.vy = -PULO; p.coyote = 0; p.buf = 0; p.sq = 1.22; sfx('step'); G.fx.po(p.x, p.y, 5, '#C9D2C4'); p.dashT = 0; }
+    if (p.coyote > 0) { p.vy = -PULO; p.coyote = 0; p.buf = 0; p.sq = 1.22; sfx('step'); G.fx.po(p.x, p.y, 5, '#C9D2C4'); p.dashT = 0; }
     else if (hab.firmeza && (p.desliza || paredeAoLado(N, p, 1) || paredeAoLado(N, p, -1))) {
       const lado = p.desliza || (paredeAoLado(N, p, 1) ? 1 : -1);
       p.vy = -PULO * 0.95; p.vx = -lado * 300; p.travaX = 0.14; p.face = -lado; p.buf = 0; p.sq = 1.2; sfx('step'); G.fx.po(p.x + lado * 9, p.y - 16, 5, '#C9D2C4');
