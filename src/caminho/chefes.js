@@ -88,11 +88,11 @@ export const CHEFES = {
     golpes: { lanca: { tipo: 'estocada', alcance: 230, expoe: true }, pisao: { tipo: 'ondas', vezes: 2 }, dardos: { tipo: 'rajada', vezes: 3, intervalo: 0.3, cor: '#C9B48A' }, medo: { tipo: 'invocar', tipos: ['medo'], n: 2, fala: 'Tremam, servos de Saul!' }, salto: { tipo: 'salto' }, lanca2: { tipo: 'estocada', alcance: 240, expoe: true, repete: 1 }, arranco: { tipo: 'investida', vel: 500 }, pisao3: { tipo: 'ondas', vezes: 3 } },
     fases: [F(1, ['lanca', 'pisao', 'dardos']), F(0.6, ['medo', 'lanca', 'salto', 'dardos'], { grito: 'SOU EU ALGUM CÃO?' }), F(0.3, ['lanca2', 'arranco', 'pisao3'], { grito: 'GOLIAS AVANÇA!' })],
     dica: 'A armadura absorve quase tudo. Só a defesa perfeita contra a lança expõe a testa do gigante (1Sm 17:49).' },
-  behemote: { vida: 900, r: 48, arena: 'plana', mover: 'perseguir', vel: 46, regras: { casco: 0.3 },
+  behemote: { vida: 2600, dano: 2, pressa: 0.55, r: 48, arena: 'plana', mover: 'perseguir', vel: 46, regras: { casco: 0.3 },
     golpes: { investida: { tipo: 'investida', vel: 640, repete: 1, tonto: 2.6 }, terremoto: { tipo: 'ondas', vezes: 3 }, pedras: { tipo: 'chuva', n: 6, vezes: 2, cor: '#A8946E' }, investida2: { tipo: 'investida', vel: 700, repete: 2, tonto: 2.6 }, salto: { tipo: 'salto' }, pedras8: { tipo: 'chuva', n: 8, vezes: 3, cor: '#A8946E' }, urro: { tipo: 'urro', raio: 210 } },
     fases: [F(1, ['investida', 'terremoto', 'pedras']), F(0.5, ['investida2', 'salto', 'pedras8', 'urro'], { grito: 'O CHÃO TREME!' })],
     dica: 'Os ossos dele são como tubos de bronze (Jó 40:18). Faça-o bater na parede: tonto, o casco se abre.' },
-  leviata: { vida: 900, r: 44, arena: 'alta', voa: 60, mover: 'pairar', vel: 150,
+  leviata: { vida: 2400, dano: 2, pressa: 0.5, r: 44, arena: 'alta', voa: 60, mover: 'pairar', vel: 150,
     golpes: { jatos: { tipo: 'rajada', vezes: 5, intervalo: 0.26, cor: '#5ED1E8' }, cauda: { tipo: 'varredura', vezes: 1, altura: 'baixo', cor: '94,209,232' }, mergulho: { tipo: 'mergulho' }, anel: { tipo: 'anel', n: 14, cor: '#5ED1E8' }, caudas: { tipo: 'varredura', vezes: 3, altura: 'alterna', cor: '94,209,232' }, chuva: { tipo: 'chuva', n: 6, vezes: 2, cor: '#5ED1E8' }, jatos7: { tipo: 'rajada', vezes: 7, intervalo: 0.22, cor: '#5ED1E8' }, anel18: { tipo: 'anel', n: 18, cor: '#5ED1E8' } },
     fases: [F(1, ['jatos', 'cauda', 'mergulho']), F(0.6, ['mergulho', 'anel', 'caudas', 'chuva'], { grito: 'A MARÉ SE ERGUE!' }), F(0.3, ['mergulho', 'jatos7', 'anel18', 'caudas', 'mergulho'], { grito: 'O MAR FERVE!' })],
     dica: '"Poderás tirar com anzol o Leviatã?" (Jó 41:1). Ele só fica ao alcance logo depois de emergir.' }
@@ -323,7 +323,7 @@ export function atualizarChefe(G, b, dt) {
       if (b.espera <= 0) { const nome = f.golpes[b.idx++ % f.golpes.length]; b.mov = { nome, def: c.golpes[nome], t: 0, e: 0 }; }
     } else {
       const m = b.mov, fim = GOLPES[m.def.tipo](G, b, m, dt); m.t += dt;
-      if (fim) { b.mov = null; b.art.lanca = null; b.espera = (m.def.espera ?? 1.05) * G.dif.ritmo * (b.furia > 0 ? 0.7 : 1); }
+      if (fim) { b.mov = null; b.art.lanca = null; b.espera = (m.def.espera ?? 1.05) * G.dif.ritmo * (c.pressa || 1) * (b.fase ? 0.85 : 1) * (b.furia > 0 ? 0.7 : 1); }
     }
     // regras passivas
     if (c.regras?.regenera) { b.semGolpe = (b.semGolpe || 0) + dt; if (b.semGolpe > c.regras.regenera.apos && b.hp < b.max) { b.hp = Math.min(b.max, b.hp + b.max * c.regras.regenera.taxa * dt); if (Math.random() < dt * 5) G.fx.sobe(b.x + rand(-20, 20), b.y - 30, 1, '#A5CDCE'); } }

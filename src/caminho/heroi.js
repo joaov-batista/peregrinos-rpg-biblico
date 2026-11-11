@@ -8,15 +8,19 @@ import { mover, paredeAoLado, tocaEspinho } from './corpo.js';
 
 // Todo peregrino nasce com salto duplo, passo pronto (com espera longa) e a vigília, que só defende no tempo certo.
 export const VEL = 252, GRAV = 2050, PULO = 700, QUEDA = 920, OLEO_USO = 33;
+// Cada arma golpeia do seu jeito. "tiro" faz do golpe um disparo (pastor, profeta e levita lutam de longe);
+// "fx" é o efeito próprio do golpe de lado; "cor" pinta os efeitos de cima, de baixo e do impacto.
 export const ARMAS = {
-  espada: { alc: 62, alt: 46, cd: 0.34, d: 1, len: 26 },
-  adaga: { alc: 46, alt: 40, cd: 0.21, d: 0.66, len: 16 },
-  lanca: { alc: 90, alt: 30, cd: 0.44, d: 1.15, len: 34 },
-  chicote: { alc: 106, alt: 30, cd: 0.5, d: 0.95, len: 18 },
-  cajado: { alc: 68, alt: 46, cd: 0.4, d: 1.05, len: 30 },
-  trombeta: { alc: 74, alt: 62, cd: 0.46, d: 0.9, len: 20, empurra: 1.8 },
-  funda: { alc: 48, alt: 40, cd: 0.4, d: 0.7, len: 20, pedra: true }
+  espada: { alc: 62, alt: 46, cd: 0.34, d: 1, len: 26, fx: 'corte', cor: 'aco' },
+  adaga: { alc: 46, alt: 40, cd: 0.24, d: 0.5, len: 16, fx: 'corteAdaga', cor: 'roxo', duplo: true, avanco: 90 },
+  lanca: { alc: 96, alt: 28, cd: 0.46, d: 1.2, len: 34, fx: 'estocada', cor: 'bronze' },
+  chicote: { alc: 118, alt: 30, cd: 0.5, d: 0.95, len: 18, fx: null, cor: 'couro', chicote: true },
+  cajado: { alc: 54, alt: 44, cd: 0.5, d: 1.05, len: 30, fx: 'corteFogo', cor: 'fogo', tiro: { tipo: 'fogo', v: 470, r: 8, vida: 0.75 } },
+  trombeta: { alc: 54, alt: 50, cd: 0.56, d: 0.8, len: 20, fx: 'corteSom', cor: 'som', empurra: 1.8, tiro: { tipo: 'som', v: 390, r: 9, vida: 0.44, fura: true } },
+  funda: { alc: 46, alt: 40, cd: 0.42, d: 0.95, len: 20, fx: 'corteCurto', cor: 'aco', tiro: { tipo: 'pedra', v: 640, r: 5, vida: 0.8, g: 380 } }
 };
+// direção do golpe → vetor (x multiplicado pela face)
+export const DIRS = { lado: [1, 0], cima: [0, -1], baixo: [0, 1], diagC: [0.72, -0.7], diagB: [0.72, 0.7], rasteira: [1, 0] };
 const damp = (a, b, k, dt) => a + (b - a) * (1 - Math.exp(-k * dt));
 const aprox = (a, b, d) => a < b ? Math.min(b, a + d) : Math.max(b, a - d);
 
@@ -67,7 +71,8 @@ export function atualizarHeroi(G, dt) {
     if (lado && paredeAoLado(N, p, lado)) { p.desliza = lado; p.vy = Math.min(p.vy, 115); p.pulos = hab.asas ? 2 : 1; p.dashAr = true; p.face = -lado; if (Math.random() < dt * 14) G.fx.po(p.x + lado * 9, p.y - 20, 1, '#C9D2C4'); }
   }
   if (p.buf > 0 && !preso && p.orando <= 0) {
-    if (c.my > 0.5 && p.chao && p.naPonte) { p.desce = 0.2; p.buf = 0; p.chao = false; }
+    if (c.my > 0.5 && p.chao && p.naPonte && (c.pulo || (p.baixoT = (p.baixoT || 0) + dt) > 0.12)) { p.desce = 0.2; p.buf = 0; p.chao = false; p.baixoT = 0; c.pulo = false; }
+    if (!(c.my > 0.5)) p.baixoT = 0;
     else if (p.coyote > 0) { p.vy = -PULO; p.coyote = 0; p.buf = 0; p.sq = 1.22; sfx('step'); G.fx.po(p.x, p.y, 5, '#C9D2C4'); p.dashT = 0; }
     else if (hab.firmeza && (p.desliza || paredeAoLado(N, p, 1) || paredeAoLado(N, p, -1))) {
       const lado = p.desliza || (paredeAoLado(N, p, 1) ? 1 : -1);
@@ -82,7 +87,9 @@ export function atualizarHeroi(G, dt) {
   // todo peregrino tem o passo pronto, mas ele demora a voltar (os Calçados da Paz encurtam a espera)
   if (c.dash && p.dashCd <= 0 && !preso && (p.chao || p.dashAr) && p.orando <= 0) {
     p.dashT = 0.19; p.dashCd = p.dashMax = hab.calcados ? 0.6 : 1.4; p.dashDir = c.mx ? Math.sign(c.mx) : p.face; p.face = p.dashDir;
-    if (!p.chao) p.dashAr = false; p.atk = null; p.lamp = false; sfx('dodge'); G.fx.po(p.x, p.y - 4, 6, '#E8E2C8');
+    if (!p.chao) p.dashAr = false; p.atk = null; p.lamp = false; sfx('dodge');
+    // passo rasteiro (para baixo + passo): passa por baixo do golpe e atravessa o adversário sem ser ferido
+    p.rasteiro = c.my > 0.5 && p.chao; if (p.rasteiro) { p.inv = Math.max(p.inv, 0.3); p.dashT = 0.24; } G.fx.po(p.x, p.y - 4, 6, '#E8E2C8');
   }
   if (p.dashT > 0) {
     p.dashT -= dt; p.vx = p.dashDir * 600; p.vy = 0;
@@ -94,23 +101,34 @@ export function atualizarHeroi(G, dt) {
   // ---- golpes ----
   if (c.atk) p.atkBuf = 0.13;
   if (p.atkBuf > 0 && p.atkCd <= 0 && !p.lamp && !preso && !emDash && p.orando <= 0) {
-    const dir = c.my < -0.5 ? 'cima' : (c.my > 0.5 && !p.chao ? 'baixo' : 'lado');
-    p.atk = { t: 0, dur: 0.17, dir, face: p.face, hits: new Set(), n: p.combo++ };
-    p.atkCd = arma.cd; p.atkBuf = 0; sfx('swing');
-    G.efeito(dir === 'cima' ? 'corteCima' : G.tipoArma === 'lanca' ? 'estocada' : G.tipoArma === 'adaga' ? 'corteCurto' : hab.espada ? 'corteLuz' : 'corte', p.x, p.y + (dir === 'baixo' ? 22 : 0), p.face, { gruda: p, dy: dir === 'baixo' ? 22 : 0, vel: 1.25 });
-    if (arma.pedra && dir === 'lado') G.tiros.push({ x: p.x + p.face * 14, y: p.y - 24, vx: p.face * 520, vy: -40, g: 500, r: 5, dano: G.danoBase() * 0.7, amigo: true, vida: 0.55, cor: '#C9C4B2', tipo: 'pedra' });
+    // oito direções: para os lados, para cima, para baixo (no ar quica; no chão é rasteira) e as diagonais
+    const dir = c.my < -0.5 ? (c.mx ? 'diagC' : 'cima') : c.my > 0.5 ? (p.chao ? 'rasteira' : c.mx ? 'diagB' : 'baixo') : 'lado';
+    const [ux, uy] = DIRS[dir], tiro = arma.tiro && dir !== 'baixo' && dir !== 'rasteira' ? arma.tiro : null, cor = hab.espada ? 'luz' : arma.cor;
+    p.atk = { t: 0, dur: arma.duplo ? 0.24 : 0.17, dir, face: p.face, hits: new Set(), n: p.combo++, semCaixa: !!tiro };
+    p.atkCd = arma.cd; p.atkBuf = 0; sfx(tiro ? 'shoot' : 'swing');
+    const fxDe = { cima: 'cima_' + cor, diagC: 'cima_' + cor, baixo: 'baixo_' + cor, diagB: 'baixo_' + cor }[dir] || arma.fx;
+    if (fxDe) G.efeito(fxDe === 'corte' && hab.espada ? 'corteLuz' : fxDe, p.x, p.y, p.face, { gruda: p, dx: dir === 'diagC' || dir === 'diagB' ? p.face * 14 : 0, dy: dir === 'baixo' || dir === 'diagB' ? 24 : dir === 'rasteira' ? 20 : 0, vel: 1.25 });
+    if (arma.avanco && dir === 'lado' && p.chao) p.vx = p.face * arma.avanco * 3;
+    if (tiro) G.tiros.push({ x: p.x + p.face * ux * 16, y: p.y - 28 + uy * 14, vx: p.face * ux * tiro.v, vy: uy * tiro.v - (tiro.g ? 60 : 0), g: tiro.g || 0, r: tiro.r, r0: tiro.r, dano: G.danoBase() * arma.d, amigo: true, vida: tiro.vida, max: tiro.vida, cor: '#FFF1BE', tipo: tiro.tipo, fura: tiro.fura, basico: true });
   }
   if (p.atk) {
     const a = p.atk; a.t += dt;
-    if (a.t > 0.03 && a.t < a.dur) {
-      const cx = a.dir === 'lado' ? p.x + a.face * (arma.alc / 2 + 4) : p.x, cy = a.dir === 'lado' ? p.y - 28 : a.dir === 'cima' ? p.y - 50 - arma.alc / 2 : p.y + arma.alc / 2 - 6;
-      const w = a.dir === 'lado' ? arma.alc : arma.alt + 6, h = a.dir === 'lado' ? arma.alt : arma.alc;
+    if (arma.duplo && !a.segundo && a.t > 0.11) { a.segundo = true; a.hits.clear(); a.reagiu = false; sfx('swing'); if (a.dir === 'lado') G.efeito(arma.fx, p.x, p.y - 8, a.face, { gruda: p, dy: -8, vel: 1.4 }); } // a adaga fere duas vezes
+    if (a.t > 0.03 && a.t < a.dur && !a.semCaixa) {
+      const alc = arma.alc, f = a.face; let cx, cy, w, h;
+      if (a.dir === 'lado') { cx = p.x + f * (alc / 2 + 4); cy = p.y - 28; w = alc; h = arma.alt; }
+      else if (a.dir === 'rasteira') { cx = p.x + f * (alc / 2 + 4); cy = p.y - 11; w = alc * 1.1; h = 22; }
+      else if (a.dir === 'cima') { cx = p.x; cy = p.y - 50 - alc / 2; w = arma.alt + 6; h = alc; }
+      else if (a.dir === 'baixo') { cx = p.x; cy = p.y + alc / 2 - 6; w = arma.alt + 6; h = alc; }
+      else if (a.dir === 'diagC') { cx = p.x + f * alc * 0.5; cy = p.y - 54 - alc * 0.28; w = h = alc * 0.85; }
+      else { cx = p.x + f * alc * 0.48; cy = p.y + alc * 0.26; w = h = alc * 0.85; }
       const r = G.golpear({ x: cx - w / 2, y: cy - h / 2, w, h }, G.danoBase() * arma.d, a);
       if (r && !a.reagiu) {
         a.reagiu = true;
-        if (a.dir === 'baixo') { p.vy = -560; p.pogo = true; p.pulos = hab.asas ? 2 : 1; p.dashAr = true; }
-        else if (a.dir === 'lado') { p.vx -= a.face * 150; }
+        if (a.dir === 'baixo' || a.dir === 'diagB') { p.vy = -560; p.pogo = true; p.pulos = hab.asas ? 2 : 1; p.dashAr = true; if (a.dir === 'diagB') p.vx -= f * 90; }
+        else if (a.dir === 'lado' || a.dir === 'rasteira') { p.vx -= f * 150; }
         else if (p.vy < 0) p.vy *= 0.5;
+        if (arma.chicote) G.efeito('estalo', cx + f * w * 0.4 * (a.dir === 'cima' || a.dir === 'baixo' ? 0 : 1), cy, f);
       }
     }
     if (a.t >= a.dur + 0.05) p.atk = null;
@@ -141,7 +159,7 @@ export function atualizarHeroi(G, dt) {
   if (p.y > N.h * T + 200) G.ferirHeroi(1, null, { espinho: true });
 
   // ---- animação ----
-  p.passo += Math.abs(p.vx) * dt / 26 * (p.chao ? 1 : 0.25);
+  p.passo += Math.abs(p.vx) * dt / 44 * (p.chao ? 1 : 0.25);
   p.sq = damp(p.sq, 1, 12, dt);
   p.incl = damp(p.incl, clamp(p.vx / VEL, -1.4, 1.4) * (emDash ? 0.5 : 0.16), 12, dt);
   p.pisca -= dt; if (p.pisca < -0.12) p.pisca = rand(1.8, 4.5);

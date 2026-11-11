@@ -116,9 +116,9 @@ import { CHEFES } from './chefes.js';
 const arenaDe = id => CHEFES[id]?.arena || 'plana';
 
 export const DIFICULDADES = {
-  peregrino: { nome: 'Peregrino', desc: 'Para conhecer a história: dois fôlegos a mais, avisos mais longos e chefes com menos vida.', hp: 0.75, ritmo: 1.25, aviso: 1.3, vel: 0.85, vidas: 2, oleo: 1.3 },
-  provacao: { nome: 'Provação', desc: 'O jogo como foi pensado: cada golpe do chefe pede uma resposta certa.', hp: 1, ritmo: 1, aviso: 1, vel: 1, vidas: 0, oleo: 1 },
-  fornalha: { nome: 'Fornalha', desc: 'Sete vezes mais quente (Dn 3:19): chefes mais rápidos, avisos curtos e um fôlego a menos.', hp: 1.25, ritmo: 0.78, aviso: 0.8, vel: 1.15, vidas: -1, oleo: 0.9 }
+  peregrino: { nome: 'Peregrino', desc: 'Para conhecer a história: um fôlego a mais e avisos um pouco mais longos. Ainda exige atenção.', hp: 1, ritmo: 1, aviso: 1.1, vel: 1, vidas: 1, oleo: 1.2 },
+  provacao: { nome: 'Provação', desc: 'O jogo como foi pensado: chefes de fôlego longo, que não esperam você pensar.', hp: 1.45, ritmo: 0.78, aviso: 0.84, vel: 1.15, vidas: 0, oleo: 1 },
+  fornalha: { nome: 'Fornalha', desc: 'Sete vezes mais quente (Dn 3:19): chefes muito rápidos, avisos curtos e um fôlego a menos.', hp: 1.9, ritmo: 0.6, aviso: 0.68, vel: 1.3, vidas: -1, oleo: 0.9 }
 };
 
 export function novoCaminho() {

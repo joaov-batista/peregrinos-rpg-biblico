@@ -23,7 +23,7 @@ const VOADOR = new Set(['voa', 'atira', 'sombra']);
 
 export function novoVicio(type, x, y, escala = 1) {
   const v = VICIOS[type] || VICIOS.desanimo, d = ENEMIES[type] || {};
-  const hp = Math.round(v.golpes * 10 * escala);
+  const hp = Math.round(v.golpes * 13 * escala);
   const e = { kind: 'vicio', type, d, v, ai: v.ai, x, y, vx: 0, vy: 0, w: v.r * 1.5, h: v.r * 2.1, r: v.r, hp, max: hp, face: Math.random() < 0.5 ? -1 : 1,
     voa: VOADOR.has(v.ai), t: rand(0, 3), cd: rand(0.6, 1.8), flash: 0, stun: 0, tele: 0, estado: 'idle', ox: x, oy: y, vista: 1, revel: 0,
     art: { type, r: v.r, x, y, ph: rand(0, 6), spd: v.vel, flash: 0, stun: 0, telegraph: 0 } };
@@ -37,10 +37,11 @@ function anda(N, e, dir, vel) {
 }
 
 export function atualizarVicio(G, e, dt) {
-  const p = G.p, N = G.N, v = e.v;
+  const p = G.p, N = G.N, v = e.irado > 0 ? (e.vIrado || (e.vIrado = { ...e.v, vel: e.v.vel * 1.75 })) : (e.vBase || (e.vBase = { ...e.v, vel: e.v.vel * 1.3 }));
+  if (e.irado > 0) e.irado -= dt;
   e.t += dt; e.flash = Math.max(0, e.flash - dt); e.cd -= dt;
   const dx = p.x - e.x, dy = (p.y - 20) - (e.y - e.h / 2), dist = Math.hypot(dx, dy), dir = Math.sign(dx) || 1;
-  const ve = !p.morto && dist < 420 && Math.abs(dy) < 190;
+  const ve = !p.morto && dist < (e.irado > 0 ? 700 : 520) && Math.abs(dy) < 230;
   if (e.stun > 0) {
     e.stun -= dt; e.tele = 0;
     if (e.voa) { e.vx *= Math.pow(0.02, dt); e.vy *= Math.pow(0.02, dt); e.x += e.vx * dt; e.y += e.vy * dt; }
@@ -94,10 +95,10 @@ export function atualizarVicio(G, e, dt) {
       break;
     }
     case 'atira': {
-      const tx = ve ? p.x - dir * 210 : e.ox + Math.sin(e.t * 0.7) * 40, ty = ve ? p.y - 110 + Math.sin(e.t * 2) * 16 : e.oy;
+      const tx = ve ? p.x - dir * 150 : e.ox + Math.sin(e.t * 0.7) * 40, ty = ve ? p.y - 110 + Math.sin(e.t * 2) * 16 : e.oy;
       e.vx += clamp(tx - e.x, -1, 1) * 260 * dt; e.vy += clamp(ty - e.y, -1, 1) * 260 * dt;
       const s = Math.hypot(e.vx, e.vy); if (s > v.vel) { e.vx *= v.vel / s; e.vy *= v.vel / s; }
-      if (e.estado === 'prep') { e.tele -= dt; if (e.tele <= 0) { e.estado = 'idle'; e.cd = rand(2, 2.8); const a = Math.atan2(dy, dx); const n = v.leque || 1; for (let i = 0; i < n; i++) { const b = a + (i - (n - 1) / 2) * 0.26; G.tiros.push({ x: e.x, y: e.y - e.h / 2, vx: Math.cos(b) * 250, vy: Math.sin(b) * 250, r: 7, vida: 3, cor: e.d.cor || '#8B6AD6', tipo: 'bola' }); } sfx('shoot'); } }
+      if (e.estado === 'prep') { e.tele -= dt; if (e.tele <= 0) { e.estado = 'idle'; e.cd = rand(1.2, 1.9); const a = Math.atan2(dy, dx); const n = v.leque || 1; for (let i = 0; i < n; i++) { const b = a + (i - (n - 1) / 2) * 0.26; G.tiros.push({ x: e.x, y: e.y - e.h / 2, vx: Math.cos(b) * 250, vy: Math.sin(b) * 250, r: 7, vida: 3, cor: e.d.cor || '#8B6AD6', tipo: 'bola' }); } sfx('shoot'); } }
       else if (ve && e.cd <= 0 && dist < 380) { e.estado = 'prep'; e.tele = 0.55; }
       break;
     }

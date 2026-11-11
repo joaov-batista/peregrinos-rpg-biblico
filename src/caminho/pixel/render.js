@@ -173,7 +173,21 @@ export function renderPixel(G) {
   pintarTextos(G2, G, esc, cx, cy);
 }
 
+// o chicote: uma curva que se desenrola da mão até a ponta, com o estalo no fim
+function pintarChicote(g, p, X, Y, dir, face, k, alc, cor) {
+  const u = { lado: [1, 0], cima: [0, -1], baixo: [0, 1], diagC: [0.72, -0.7], diagB: [0.72, 0.7], rasteira: [1, 0.12] }[dir] || [1, 0];
+  const ox = X(p.x) + face * 6, oy = Y(p.y) - (dir === 'rasteira' ? 6 : 15), ext = Math.min(1, k * 2.2), L = alc / PX, n = 22;
+  for (let i = 0; i <= n; i++) {
+    const s = i / n; if (s > ext) break;
+    const onda = Math.sin(s * 9 - k * 16) * (1 - k) * 7 * s, x = ox + face * u[0] * L * s - u[1] * onda * face, y = oy + u[1] * L * s + u[0] * onda - Math.sin(s * Math.PI) * 5 * (1 - k) * u[0];
+    g.fillStyle = '#17121f'; g.fillRect(Math.round(x) - 1, Math.round(y) - 1, 3, 3); g.fillStyle = s > 0.8 ? '#FFF0D4' : cor; g.fillRect(Math.round(x), Math.round(y), s > 0.6 ? 1 : 2, s > 0.6 ? 1 : 2);
+    if (i === n && k > 0.35 && k < 0.8) { g.fillStyle = '#FFFFFF'; for (let a = 0; a < 6; a++) g.fillRect(Math.round(x + Math.cos(a * 1.05) * 4), Math.round(y + Math.sin(a * 1.05) * 4), 2, 1); }
+  }
+}
+
 function pintarJogador(g, p, look, cls, arma, Tm, hab, X, Y, eu) {
+  if (arma === 'chicote' && p.atk && !p.atk.semCaixa) pintarChicote(g, p, X, Y, p.atk.dir, p.atk.face, Math.min(1, p.atk.t / p.atk.dur), 118, '#C48A4E');
+  if (p.acoite) pintarChicote(g, p, X, Y, 'lado', p.acoite.face, Math.min(1, p.acoite.t / p.acoite.dur), p.acoite.alc, '#FFE08A');
   const s = quadroHeroi(p, look, cls, arma, Tm, hab);
   if (p.rastro?.length) for (let i = 0; i < p.rastro.length; i += 3) { const r = p.rastro[i]; carimbar(g, vulto(s, cor('#BFD6E8')), X(r.x), Y(r.y), AX, AY, r.face, 0.18 + r.t * 1.6); }
   if (p.inv > 0 && !p.morto && Math.floor(Tm * 20) % 2 && !(p.flashT > 0)) g.globalAlpha = 0.55;
@@ -187,6 +201,16 @@ function pintarJogador(g, p, look, cls, arma, Tm, hab, X, Y, eu) {
 function pintarTiro(g, t, x, y, Tm) {
   const r = Math.max(2, Math.round(t.r / PX));
   if (t.tipo === 'choque') { const d = Math.sign(t.vx), f = Math.floor(Tm * 12) % 2; for (let i = 0; i < 9; i++) { const h = [3, 6, 10, 13, 11, 8, 5, 3, 1][i] + (i % 2 ? f : 0); g.fillStyle = i < 4 ? '#fff' : t.cor; g.fillRect(x + d * (4 - i) , y + 6 - h, 1, h); } g.fillStyle = '#17121f'; g.fillRect(x - 5, y + 6, 10, 1); return; }
+  if (t.tipo === 'fogo') { // bola de fogo: núcleo claro e línguas que ficam para trás
+    const vx = t.vx / 60 / PX, vy = t.vy / 60 / PX, f = Math.floor(Tm * 18) % 2;
+    for (let k = 5; k >= 0; k--) { const rr = Math.max(1, r - k + (k % 2 ? f : 0)); g.fillStyle = k > 3 ? '#C9281F' : k > 1 ? '#FF8A2A' : '#FFE26B'; g.fillRect(Math.round(x - vx * k * 1.5 - rr / 2), Math.round(y - vy * k * 1.5 - rr / 2 - (k > 2 ? k - 2 : 0)), rr, rr); }
+    g.fillStyle = '#FFFFFF'; g.fillRect(x - 1, y - 1, 2, 2); return; }
+  if (t.tipo === 'som') { // onda de som: três arcos voltados para onde ela vai
+    const a = Math.atan2(t.vy, t.vx); g.fillStyle = '#BFF0F8';
+    for (let k = 0; k < 3; k++) { const rr = r + k * 3 - 2; g.globalAlpha = 1 - k * 0.3; for (let q = -5; q <= 5; q++) { const b = a + q * 0.16; g.fillRect(x + Math.round(Math.cos(b) * rr - Math.cos(a) * k * 4), y + Math.round(Math.sin(b) * rr - Math.sin(a) * k * 4), k ? 1 : 2, k ? 1 : 2); } }
+    g.globalAlpha = 1; return; }
+  if (t.tipo === 'lanca') { const d = Math.sign(t.vx); g.fillStyle = '#17121f'; g.fillRect(x - d * 16 - (d < 0 ? 0 : 0), y - 1, 22, 3); g.fillStyle = '#A0662A'; g.fillRect(Math.min(x - d * 16, x + d * 4), y, 20, 1); g.fillStyle = '#EEF6FB'; for (let k = 0; k < 6; k++) g.fillRect(x + d * (4 + k), y - Math.floor((5 - k) / 2), 1, 1 + (5 - k - ((5 - k) % 2 ? 1 : 0)));
+    for (let k = 1; k <= 5; k++) { g.globalAlpha = 0.5 - k * 0.08; g.fillStyle = '#FFE08A'; g.fillRect(x - d * (16 + k * 5), y, 4, 1); } g.globalAlpha = 1; return; }
   if (t.tipo === 'onda') { const d = Math.sign(t.vx); for (let yy = -r * 1.5; yy <= r * 1.5; yy++) { const lg = Math.round(Math.sqrt(Math.max(0, 1 - Math.pow(yy / (r * 1.5), 2))) * 5); g.fillStyle = '#FFE08A'; g.fillRect(x + d * (lg - 3), y + yy, 3, 1); g.fillStyle = '#fff'; g.fillRect(x + d * lg, y + yy, 1, 1); } return; }
   // rastro e núcleo
   const vx = t.vx / 60 / PX, vy = t.vy / 60 / PX;

@@ -31,13 +31,15 @@ import { Juntos, limparCodigo } from './juntos.js';
 // Primeiros passos: [toque, controle, teclado]
 const PASSOS = [
   { id: 'andar', titulo: 'ANDAR', txt: ['Arraste o dedo no lado esquerdo da tela.', 'Use o direcional esquerdo.', 'A e D (ou as setas) para andar.'] },
-  { id: 'pular', titulo: 'SALTO DUPLO', txt: ['Toque em PULAR e, no ar, toque de novo.', 'Pule e, no ar, pule de novo.', 'Espaço para pular. No ar, aperte de novo.'] },
-  { id: 'passo', titulo: 'PASSO PRONTO', txt: ['Toque em PASSO: você atravessa o perigo. Ele demora a voltar (as três setas no alto).', 'Use o passo pronto: atravessa o perigo, mas demora a voltar.', 'C: atravessa o perigo. Demora a voltar (as três setas no alto).'] },
-  { id: 'golpe', titulo: 'GOLPE', txt: ['Toque em GOLPE. Segurando para cima ou para baixo, o golpe muda de direção.', 'Golpeie. Com o direcional para cima ou para baixo, o golpe muda.', 'J (ou clique) golpeia. Segure W ou S para golpear para cima e para baixo.'] },
-  { id: 'luz', titulo: 'A LÂMPADA · LUZ', txt: ['Segure LÂMPADA: a luz cresce e revela paredes falsas e pisos escondidos.', 'Segure a lâmpada: a luz revela paredes falsas e pisos escondidos.', 'Segure Shift: a luz cresce e revela paredes falsas e pisos escondidos.'] },
-  { id: 'vigilia', titulo: 'A LÂMPADA · VIGÍLIA', txt: ['É a sua única defesa. Toque em LÂMPADA no instante em que o dardo chega. Cedo ou tarde demais, não protege.', 'É a sua única defesa. Erga a lâmpada no instante em que o dardo chega.', 'É a sua única defesa. Aperte Shift no instante em que o dardo chega. Cedo ou tarde demais, não protege.'] },
+  { id: 'pular', titulo: 'SALTO DUPLO', txt: ['Toque em PULAR e, no ar, toque de novo.', 'A (✕) para pular. No ar, aperte de novo.', 'Espaço para pular. No ar, aperte de novo.'] },
+  { id: 'passo', titulo: 'PASSO PRONTO', txt: ['Toque em PASSO: você atravessa o perigo. Ele demora a voltar (as três setas no alto).', 'B (○) ou RT: atravessa o perigo, mas demora a voltar.', 'C: atravessa o perigo. Demora a voltar (as três setas no alto).'] },
+  { id: 'golpe', titulo: 'GOLPE', txt: ['Toque em GOLPE. Segurando para cima ou para baixo, o golpe muda de direção.', 'X (□) ou RB golpeia. Com o direcional para cima, para baixo ou na diagonal, o golpe muda.', 'J (ou clique) golpeia. Segure W ou S para golpear para cima e para baixo.'] },
+  { id: 'descer', titulo: 'DESCER DE PLATAFORMAS', txt: ['Sobre uma plataforma de madeira, puxe o direcional para BAIXO e ela deixa você passar.', 'Sobre uma plataforma de madeira, segure para baixo.', 'Sobre uma plataforma de madeira, segure S (ou seta para baixo).'] },
+  { id: 'rasteiro', titulo: 'PASSO RASTEIRO', txt: ['Para BAIXO + PASSO: você atravessa o adversário sem ser ferido.', 'Para baixo + passo: atravessa o adversário sem ser ferido.', 'S + C: você atravessa o adversário sem ser ferido.'] },
+  { id: 'luz', titulo: 'A LÂMPADA · LUZ', txt: ['Segure LÂMPADA: a luz cresce e revela paredes falsas e pisos escondidos.', 'Segure LB (L1): a luz revela paredes falsas e pisos escondidos.', 'Segure Shift: a luz cresce e revela paredes falsas e pisos escondidos.'] },
+  { id: 'vigilia', titulo: 'A LÂMPADA · VIGÍLIA', txt: ['É a sua única defesa. Toque em LÂMPADA no instante em que o dardo chega. Cedo ou tarde demais, não protege.', 'É a sua única defesa. Aperte LB (L1) no instante em que o dardo chega. Cedo ou tarde demais, não protege.', 'É a sua única defesa. Aperte Shift no instante em que o dardo chega. Cedo ou tarde demais, não protege.'] },
   { id: 'azeite', titulo: 'O AZEITE', txt: ['O jarro no alto é o azeite da lâmpada. Cada golpe certo e cada defesa perfeita o enchem.'] },
-  { id: 'orar', titulo: 'ORAR', txt: ['Segure ORAR, parado: gasta um terço do azeite e devolve um fôlego.', 'Segure orar, parado: gasta um terço do azeite e devolve um fôlego.', 'Segure H, parado: gasta um terço do azeite e devolve um fôlego.'] }
+  { id: 'orar', titulo: 'ORAR', txt: ['Segure ORAR, parado: gasta um terço do azeite e devolve um fôlego.', 'Segure LT (L2), parado: gasta um terço do azeite e devolve um fôlego.', 'Segure H, parado: gasta um terço do azeite e devolve um fôlego.'] }
 ];
 
 const caixa = e => ({ x: e.x - e.w / 2, y: e.y - e.h, w: e.w, h: e.h });
@@ -216,6 +218,7 @@ export class Caminho {
       if (this.puxao && !p.dashT) p.x += Math.sign(this.puxao.x - p.x) * this.puxao.f * dt * (Math.abs(this.puxao.x - p.x) > 30 ? 1 : 0);
       if (this.tem('cinto_compaixao') && p.orando > 0) p.orando += dt * 0.45;
       atualizarHeroi(this, dt);
+      if (p.acoite) { p.acoite.t += dt; if (p.acoite.t > p.acoite.dur) p.acoite = null; }
       if (p.investida > 0) { p.investida -= dt; this.golpear(caixa({ ...p, w: 46 }), this.danoBase() * 2.4, this.investidaAtk); }
     }
     // a lâmpada revela
@@ -337,7 +340,7 @@ export class Caminho {
   textoEm(x, y, txt, cor = '#fff', tam = 14) { this.textos.push({ x, y, txt, cor, tam, t: 1.3 }); this.mp?.fx(['t', x, y, txt, cor, tam]); }
   fala(b, txt) { this.textos.push({ x: b.x, y: b.y - b.h - 16, txt: '“' + txt + '”', cor: '#F2E9D0', tam: 13, t: 2.4, fixo: b }); if (b.nid) this.mp?.fx(['f', b.nid, txt]); }
   grito(txt) { this.gritoTxt = { txt, t: 2.6 }; this.mp?.fx(['g', txt]); }
-  postura(b, n) { if (b.quebrado > 0) return; b.post = Math.min(100, b.post + n); b.postT = 2.2; if (b.post >= 100) { b.quebrado = 3.4; b.mov = null; this.textoEm(b.x, b.y - b.h - 20, 'QUEBRANTADO!', '#FFE9A8', 20); sfx('crit'); this.tremor(10); this.hitstop = 0.12; this.limparPerigos(); } }
+  postura(b, n) { if (b.quebrado > 0) return; b.post = Math.min(100, b.post + n); b.postT = 2.2; if (b.post >= 100) { b.quebrado = 2.5; b.mov = null; this.textoEm(b.x, b.y - b.h - 20, 'QUEBRANTADO!', '#FFE9A8', 20); sfx('crit'); this.tremor(10); this.hitstop = 0.12; this.limparPerigos(); } }
   limparPerigos() { this.tiros = this.tiros.filter(t => t.amigo); this.zonas = []; }
 
   // aplica um golpe do peregrino em tudo o que a caixa toca
@@ -383,7 +386,7 @@ export class Caminho {
       const forte = e.exposto > 0 || e.quebrado > 0 || e.tonto > 0;
       let d = danoNoChefe(e, dano, this.tipoArma) * (forte && this.tem('pedra_lisa') ? 1.4 : 1);
       if (e.c.fases[e.fase].golpes.includes('voz') && e.id === 'babilonia') d *= 0.25; // a voz do céu: não é hora de bater
-      e.hp -= d; e.flash = 0.1; e.semGolpe = 0; this.postura(e, atk.carga ? 20 : 3);
+      e.hp -= d; e.flash = 0.1; e.semGolpe = 0; this.postura(e, atk.carga ? 14 : 2);
       if (e.clones.length) { for (const cl of e.clones) this.fx.po(cl.x, cl.y - e.h / 2, 12, e.d.cor || '#C79BFF'); e.clones = []; this.postura(e, 30); this.textoEm(e.x, e.y - e.h - 12, 'A verdadeira!', '#FFE9A8'); sfx('right'); }
       this.fx.faisca(e.x - dir * e.w * 0.3, clamp(p.y - 22, e.y - e.h, e.y), forte ? 12 : 6, forte ? '#FFE9A8' : '#fff'); this.efeito(forte ? 'critico' : 'faiscaLuz', e.x - dir * e.w * 0.3, clamp(p.y - 28, e.y - e.h, e.y), dir);
       if (config.numerosDano !== false) this.textoEm(e.x + rand(-14, 14), e.y - e.h - 4, String(Math.round(d)), forte ? '#FFE9A8' : '#E6E0CF', forte ? 17 : 13);
@@ -392,9 +395,9 @@ export class Caminho {
       return true;
     }
     if (!vulneravel(e, deX)) { sfx('block'); this.fx.faisca(e.x - dir * e.r, e.y - e.h / 2, 5, '#C79BFF'); if (e.ai === 'guarda') this.textoEm(e.x, e.y - e.h - 8, 'pelas costas!', '#C79BFF', 11); return true; }
-    e.hp -= dano; e.flash = 0.12; e.stun = Math.max(e.stun, 0.2); e.estado = 'idle'; e.tele = 0;
+    e.hp -= dano; e.flash = 0.12; e.stun = Math.max(e.stun, 0.1); e.estado = 'idle'; e.tele = 0; e.irado = 4; e.cd = Math.min(e.cd, 0.3); // ferido, o vício avança
     const k = (this.arma.empurra || 1) * (e.ai === 'guarda' ? 0.35 : 1);
-    if (atk.dir === 'cima') { e.vy = -260 * k; } else if (atk.dir === 'baixo') { e.vy = 160; } else { e.vx = dir * 250 * k; if (!e.voa) e.vy = -150 * k; e.chao = false; }
+    if (atk.dir === 'cima') { e.vy = -260 * k; } else if (atk.dir === 'baixo') { e.vy = 160; } else { e.vx = dir * 110 * k; if (!e.voa) e.vy = -90 * k; e.chao = false; }
     this.fx.faisca(e.x, e.y - e.h / 2, 7, '#fff'); this.efeito('faisca', e.x, e.y - e.h / 2, dir); this.ganharOleo(atk.semOleo ? 0 : 11); sfx('hit'); this.hitstop = 0.05; this.tremor(2);
     return true;
   }
@@ -422,11 +425,12 @@ export class Caminho {
       this.fx.anel(p.x + p.face * 12, p.y - 26, '#FFE9A8', 54); this.fx.faisca(p.x + p.face * 14, p.y - 28, 12, '#FFE9A8'); this.hitstop = 0.09; this.tremor(5);
       this.textoEm(p.x, p.y - 70, 'VIGIAI!', '#FFE9A8', 15); this.efeito('vigilia', p.x + p.face * 14, p.y - 30, p.face); this.clarao = 0.08;
       if (origem?.nid && !this.souDono()) this.mp.ev('pa', { id: origem.nid, vx: Math.sign(origem.x - p.x) * 240 });
-      if (origem?.kind === 'chefe') this.postura(origem, 34);
+      if (origem?.kind === 'chefe') this.postura(origem, 26);
       else if (origem?.kind === 'vicio') { origem.stun = 1.5; origem.vx = Math.sign(origem.x - p.x) * 240; origem.aberto = 1.5; }
       o.aoDefender?.(); this.tutParry = true;
       return 'parry';
     }
+    if (this.luta && this.chefe?.c.dano) n = Math.max(n, this.chefe.c.dano); // Beemote e Leviatã ferem em dobro
     p.vida -= n; p.inv = this.tem('manto_marinheiro') ? 1.7 : 1.15; p.stunT = 0.24; p.orando = 0; p.carga = 0; p.atk = null; p.dashT = 0;
     if (!this.tem('manto_marinheiro') && !o.espinho) { const dir = origem ? Math.sign(p.x - origem.x) || 1 : -p.face; p.vx = dir * 300; p.vy = -330; p.chao = false; }
     p.flashT = 0.12; sfx('hurt'); this.ui.hurt(); vibrar(170, 0.8); this.hitstop = 0.13; this.tremor(10); this.fx.faisca(p.x, p.y - 22, 10, '#FF6B5A');
@@ -464,13 +468,29 @@ export class Caminho {
     const atk = { dir: 'lado', hits: new Set(), semOleo: true, carga: true };
     const tiro = (o) => this.tiros.push({ x: p.x + p.face * 14, y: p.y - 24, vy: 0, r: 7, amigo: true, vida: 0.8, cor: '#FFF1BE', tipo: 'pedra', ...o });
     switch (cls) {
-      case 'pastor': for (let i = -2; i <= 2; i++) tiro({ vx: p.face * 520 * Math.cos(i * 0.16), vy: 520 * Math.sin(i * 0.16) - 30, dano: base * 1.1, g: 300 }); break;
-      case 'profeta': { const x = perto && Math.abs(perto.x - p.x) < 340 ? perto.x : p.x + p.face * 150; this.zonas.push({ tipo: 'col', x, w: 70, aviso: 0.25, dur: 0.3, cor: '#FFB05A', amigo: base * 3.4, y0: p.y - 400, y1: p.y + 60 }); break; }
-      case 'levita': this.fx.anel(p.x, p.y - 22, '#CDE7ED', 150); this.golpear({ x: p.x - 140, y: p.y - 150, w: 280, h: 190 }, base * 1.7, atk); this.tiros = this.tiros.filter(t => t.amigo || Math.hypot(t.x - p.x, t.y - p.y) > 170); for (const e of this.inimigos) if (e.kind === 'vicio' && Math.abs(e.x - p.x) < 160) e.stun = 1.1; break;
-      case 'zelote': p.dashT = 0.26; p.dashDir = p.face; p.inv = Math.max(p.inv, 0.4); p.investida = 0.26; this.investidaAtk = atk; break;
-      case 'valente': tiro({ vx: p.face * 700, dano: base * 3, fura: true, r: 9, vida: 0.7, tipo: 'onda' }); break;
-      case 'juiz': this.fx.faisca(p.x + p.face * 110, p.y - 22, 14, '#FFF1BE'); this.golpear({ x: p.face > 0 ? p.x : p.x - 230, y: p.y - 44, w: 230, h: 44 }, base * 2.6, atk); break;
-      default: this.efeito('giro', p.x, p.y, p.face, { gruda: p }); this.fx.anel(p.x, p.y - 22, '#FFF1BE', 100); this.golpear({ x: p.x - 96, y: p.y - 100, w: 192, h: 120 }, base * 2.7, atk);
+      case 'pastor': // cinco pedras lisas do ribeiro, em leque, e um clarão na funda
+        this.efeito('coleta', p.x + p.face * 16, p.y - 30, p.face); this.efeito('giroRoxo', p.x, p.y - 4, p.face, { gruda: p });
+        for (let i = -2; i <= 2; i++) tiro({ vx: p.face * 600 * Math.cos(i * 0.17), vy: 600 * Math.sin(i * 0.17) - 40, dano: base * 1.2, g: 260, r: 6, vida: 0.9, tipo: 'pedra', brilho: true }); break;
+      case 'profeta': { // fogo do céu sobre o altar (1Rs 18:38): coluna, explosão e brasas
+        const x = perto && Math.abs(perto.x - p.x) < 380 ? perto.x : p.x + p.face * 150, chao = perto ? perto.y : p.y;
+        this.zonas.push({ tipo: 'col', x, w: 78, aviso: 0.22, dur: 0.34, cor: '#FFB05A', amigo: base * 3.6, y0: p.y - 420, y1: p.y + 60 });
+        this.efeito('pilar', x, chao); this.efeito('explosaoFogo', x, chao); this.clarao = 0.14; this.tremor(7);
+        for (let i = 0; i < 6; i++) tiro({ x: x + rand(-30, 30), y: chao - 20, vx: rand(-260, 260), vy: rand(-420, -220), g: 900, dano: base * 0.5, r: 5, vida: 0.8, tipo: 'fogo' }); break; }
+      case 'levita': // o toque da trombeta: três ondas de som para todos os lados
+        this.efeito('giroSom', p.x, p.y - 6, p.face, { gruda: p }); this.efeito('vigilia', p.x, p.y - 30, p.face); this.fx.anel(p.x, p.y - 22, '#BFF0F8', 170);
+        for (let k = 0; k < 10; k++) { const a = k * TAU / 10; tiro({ x: p.x, y: p.y - 26, vx: Math.cos(a) * 420, vy: Math.sin(a) * 420, dano: base * 0.9, r: 10, r0: 10, vida: 0.4, max: 0.4, tipo: 'som', fura: true }); }
+        this.golpear({ x: p.x - 150, y: p.y - 160, w: 300, h: 200 }, base * 1.2, atk); this.tiros = this.tiros.filter(t => t.amigo || Math.hypot(t.x - p.x, t.y - p.y) > 180); for (const e of this.inimigos) if (e.kind === 'vicio' && Math.abs(e.x - p.x) < 170) e.stun = 1.2; break;
+      case 'zelote': // investida de punhais: atravessa cortando três vezes
+        p.dashT = 0.28; p.dashDir = p.face; p.inv = Math.max(p.inv, 0.42); p.investida = 0.28; this.investidaAtk = atk;
+        for (let i = 0; i < 3; i++) this.efeito('corteAdaga', p.x + p.face * (30 + i * 70), p.y - (i % 2 ? 8 : -6), i % 2 ? -p.face : p.face, { vel: 1 - i * 0.18 });
+        this.efeito('giroRoxo', p.x, p.y - 4, p.face, { gruda: p }); break;
+      case 'valente': // a lança arremessada que atravessa a fileira
+        this.efeito('estocadaLonga', p.x, p.y, p.face, { gruda: p }); tiro({ vx: p.face * 780, dano: base * 3.2, fura: true, r: 9, vida: 0.75, tipo: 'lanca' }); p.vx -= p.face * 160; break;
+      case 'juiz': // a aguilhada de Sangar: um açoite longo que estala três vezes
+        p.acoite = { t: 0, dur: 0.34, face: p.face, alc: 250 };
+        for (let i = 1; i <= 3; i++) this.efeito('estalo', p.x + p.face * i * 80, p.y - 26 - (i === 2 ? 10 : 0), p.face, { vel: 1.5 - i * 0.25 });
+        this.golpear({ x: p.face > 0 ? p.x : p.x - 250, y: p.y - 52, w: 250, h: 52 }, base * 2.8, atk); break;
+      default: this.efeito('giro', p.x, p.y, p.face, { gruda: p }); this.efeito('almas', p.x, p.y, p.face); this.fx.anel(p.x, p.y - 22, '#FFF1BE', 100); this.golpear({ x: p.x - 96, y: p.y - 100, w: 192, h: 120 }, base * 2.7, atk);
     }
     this.textoEm(p.x, p.y - 58, CLASSES[cls]?.skill.nome || 'Verso', '#FFF1BE', 12);
   }
@@ -479,12 +499,13 @@ export class Caminho {
     const p = this.p, N = this.N, pc = caixa(p);
     for (const t of this.tiros) {
       t.vida -= dt; if (t.g) t.vy += t.g * dt; t.x += t.vx * dt; t.y += t.vy * dt;
+      if (t.tipo === 'som' && t.max) t.r = t.r0 + (1 - t.vida / t.max) * 16;
       if (!t.fixo && !t.fura && solido(N, Math.floor(t.x / T), Math.floor(t.y / T))) { t.vida = 0; this.fx.po(t.x, t.y, 3, t.cor); continue; }
       if (t.fixo && N.arena && (t.x < N.arena.x0 || t.x > N.arena.x1)) { t.vida = 0; continue; }
       if (t.amigo) {
         t.hits = t.hits || new Set();
         for (const e of this.inimigos) if (e.hp > 0 && !e.morrendo && !t.hits.has(e) && toca({ x: t.x - t.r, y: t.y - t.r, w: t.r * 2, h: t.r * 2 }, caixa(e))) {
-          t.hits.add(e); if (this.atingir(e, t.dano, t.x - t.vx, { dir: 'lado', carga: t.tipo === 'onda', semOleo: t.tipo !== 'pedra' }) && !t.fura) { t.vida = 0; break; }
+          t.hits.add(e); if (this.atingir(e, t.dano, t.x - t.vx, { dir: 'lado', carga: t.tipo === 'onda', semOleo: !t.basico && t.tipo !== 'pedra' }) && !t.fura) { t.vida = 0; break; }
         }
       } else if (!p.morto && toca({ x: t.x - t.r * 0.7, y: t.y - t.r * (t.tipo === 'choque' ? 1.6 : 0.7), w: t.r * 1.4, h: t.r * (t.tipo === 'choque' ? 2.2 : 1.4) }, pc)) {
         if (t.treino && !(p.vig > 0)) { t.vida = 0; this.fx.po(t.x, t.y, 5, t.cor); this.textoEm(p.x, p.y - 64, p.lamp ? 'cedo demais' : 'erga a lâmpada quando o dardo chegar', '#C9B88A', 12); continue; }
@@ -562,7 +583,7 @@ export class Caminho {
       this.tutDardo = (this.tutDardo || 1.2) - dt;
       if (this.tutDardo <= 0) { this.tutDardo = 2.4; const d = p.face || 1; this.tiros.push({ x: p.x + d * 430, y: p.y - 28, vx: -d * 300, vy: 0, r: 7, vida: 3, cor: '#E8D9A8', tipo: 'bola', treino: true, fura: true }); }
     }
-    const feito = { andar: this.tutAndou > 220, pular: !p.chao && p.pulos <= 0 && p.vy < 0, passo: p.dashT > 0, golpe: !!p.atk, luz: p.lampA > 0.8 && this.tutT > 2.5, vigilia: this.tutParry, orar: p.orando > 0.5 || this.tutT > 14, azeite: this.tutT > 8 }[s.id];
+    const feito = { andar: this.tutAndou > 220, pular: !p.chao && p.pulos <= 0 && p.vy < 0, passo: p.dashT > 0, golpe: !!p.atk, descer: p.desce > 0 || this.tutT > 9, rasteiro: (p.rasteiro && p.dashT > 0) || this.tutT > 12, luz: p.lampA > 0.8 && this.tutT > 2.5, vigilia: this.tutParry, orar: p.orando > 0.5 || this.tutT > 14, azeite: this.tutT > 8 }[s.id];
     if (feito && this.tutT > 0.8) { v.tut++; this.tutT = 0; this.tutParry = false; sfx('right'); if (v.tut >= PASSOS.length) { this.ui.toast('Você sabe caminhar. O primeiro portal leva a Corinto.', 5000); this.salvar(); } }
   }
 
@@ -652,7 +673,7 @@ export class Caminho {
     else { ok = await this.perguntaDoChefe(b, pacote); this.respostaDoGrupo(ok, true); }
     if (!this.running || b.hp <= 0) return;
     if (ok) {
-      const dano = b.max * 0.08 * (this.tem('anel_beltessazar') ? 2 : 1); b.hp = Math.max(1, b.hp - dano); b.post = 0; b.quebrado = 3.6;
+      const dano = b.max * 0.08 * (this.tem('anel_beltessazar') ? 2 : 1); b.hp = Math.max(1, b.hp - dano); b.post = 0; b.quebrado = 2.8;
       this.textoEm(b.x, b.y - b.h - 20, 'ESTÁ ESCRITO!', '#FFE9A8', 22); this.efeito('pilar', b.x, this.N.arena.chao); this.clarao = 0.25; this.fx.anel(b.x, b.y - b.h / 2, '#FFE9A8', 160); this.tremor(12); sfx('right');
     } else {
       b.hp = Math.min(b.max, b.hp + b.max * 0.06); b.furia = 10; sfx('wrong');
