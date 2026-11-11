@@ -135,7 +135,9 @@ export function renderPixel(G) {
         const vira = e.face > 0 || e.c.semVirar ? 1 : -1, luz = p.lamp ? G.raioLuz() : 0;
         // os clones da Mentira: iguais ao verdadeiro, mas tremem dentro da luz da lâmpada
         for (const cl of e.clones) { const naLuz = luz && Math.hypot(cl.x - p.x, cl.y - p.y) < luz; carimbar(g, q.s, X(cl.x), Y(cl.y), q.ax, q.ay, vira, (cl.alpha ?? 1) * (naLuz ? 0.22 + 0.12 * Math.sin(Tm * 40) : 1) * Math.min(1, cl.t * 2)); }
-        carimbar(g, q.s, X(e.x), Y(e.y), q.ax, q.ay, vira); pintarExtrasChefe(g, e, G, X, Y, Tm);
+        if (q.esc > 1) { const cv = q.s.tela(), k = q.esc; g.save(); g.translate(X(e.x), Y(e.y)); g.scale(vira * k, k); g.drawImage(cv, -q.ax, -q.ay); g.restore(); }
+        else carimbar(g, q.s, X(e.x), Y(e.y), q.ax, q.ay, vira);
+        pintarExtrasChefe(g, e, G, X, Y, Tm);
       }
       else antigo(() => desenharChefe(g, e, Tm, G));
     } else {

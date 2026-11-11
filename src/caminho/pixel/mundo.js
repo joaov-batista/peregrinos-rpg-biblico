@@ -65,8 +65,27 @@ const PECAS = {
   templo(s, x, base, h, c, r) { const w = 54 + (r * 30 | 0), n = 4 + (r * 3 | 0); for (let i = 0; i < n; i++) PECAS.coluna(s, x + 3 + i * (w - 10) / (n - 1), base, h, c, 0.2); s.ret(x - 2, base - h - 9, w + 4, 6, c[1]); s.ret(x - 2, base - h - 9, w + 4, 1, c[2]); for (let j = 0; j < 12; j++) s.ret(x - 2 + j * (w / 24), base - h - 10 - j, w + 4 - j * (w / 12), 1, j % 4 ? c[1] : c[0]); if (r > 0.5) s.ret(x + w * 0.6, base - h - 18, w * 0.5, 9, 0); },
   arco(s, x, base, h, c, r) { const w = 30 + (r * 16 | 0), g = 6; s.ret(x, base - h, g, h, c[1]); s.ret(x + w - g, base - h, g, h, c[1]); for (let a = 0; a <= 40; a++) { const an = Math.PI * a / 40, px = x + w / 2 - Math.cos(an) * (w / 2 - g / 2), py = base - h - Math.sin(an) * (w / 2 - 2); s.ret(px - g / 2, py - 2, g, 5, a % 9 === 0 ? c[0] : c[1]); } for (let y = base - h; y < base; y++) { s.px(x, y, c[0]); s.px(x + w - 1, y, c[2]); } if (r > 0.7) s.ret(x + w - g, base - h - 6, g, 8, 0); },
   torre(s, x, base, h, c, r) { const w = 22 + (r * 14 | 0); s.ret(x, base - h, w, h, c[1]); for (let y = base - h; y < base; y++) { s.px(x, y, c[0]); s.px(x + 1, y, c[0]); s.px(x + w - 1, y, c[2]); if (y % 6 === 0) for (let i = 2; i < w - 1; i += 2) s.px(x + i, y, c[0]); } for (let i = 0; i < w; i += 6) s.ret(x + i, base - h - 4, 4, 4, c[1]); for (let k = 0; k < 2 + (r * 3 | 0); k++) { const wx = x + 5 + ((k * 9) % (w - 10)), wy = base - h + 10 + k * 14; s.ret(wx, wy, 3, 5, c[3] || c[2]); s.px(wx + 1, wy - 1, c[3] || c[2]); } },
-  casa(s, x, base, h, c, r) { const w = 34 + (r * 22 | 0), hh = h * 0.55; s.ret(x, base - hh, w, hh, c[1]); for (let j = 0; j < 12; j++) s.ret(x - 3 + j * 1.5, base - hh - j, w + 6 - j * 3, 1, j % 3 ? c[0] : c[1]); for (let y = base - hh; y < base; y++) { s.px(x, y, c[0]); s.px(x + w - 1, y, c[2]); } s.ret(x + w * 0.3, base - hh * 0.6, 4, 5, c[3] || c[2]); if (r > 0.4) s.ret(x + w * 0.65, base - hh * 0.6, 4, 5, c[3] || c[2]); },
-  mastro(s, x, base, h, c, r) { h *= 1.35; s.ret(x, base - h, 2, h, c[1]); s.ret(x - 14, base - h + 8, 30, 1, c[1]); s.ret(x - 10, base - h * 0.55, 22, 1, c[1]); for (let y = 0; y < h * 0.36; y++) { const lg = 13 - Math.abs(y - h * 0.18) * 0.1; for (let i = -lg; i < lg; i++) if ((i + y) % 9) s.px(x + 1 + i, base - h + 10 + y, i > lg - 3 ? c[2] : c[1]); } for (let i = 0; i < 40; i++) s.px(x + i * 0.8, base - h + 8 + i * (h - 8) / 40, c[0]); },
+  // navio antigo de Társis: casco curvo de proa alta, mastro único, verga e vela quadrada com cordame até a amurada
+  mastro(s, x, base, h, c, r) {
+    h *= 1.25; const cw = 46 + (r * 18 | 0), mx = x + cw / 2, topo = base - h;
+    for (let i = 0; i < cw; i++) { const k = i / (cw - 1), sobe = Math.pow(Math.abs(k - 0.5) * 2, 2.4) * 12, alto = 7 + sobe; s.ret(x + i, base - alto, 1, alto, i % 7 === 0 ? c[0] : c[1]); s.px(x + i, base - alto, c[2]); }
+    s.ret(x - 2, base - 22, 3, 6, c[1]); s.ret(x + cw - 1, base - 20, 3, 5, c[1]); // proa e popa erguidas
+    s.ret(mx - 1, topo, 3, h - 7, c[1]); for (let y = topo; y < base - 7; y++) s.px(mx - 1, y, c[0]);
+    // vela: mais larga em cima, barriga de vento e barra em arco; pano claro, com costuras
+    const vw = cw * 0.66, vh = h * 0.4, vy = topo + 6; s.ret(mx - vw / 2 - 3, vy - 2, vw + 6, 2, c[0]);
+    for (let j = 0; j < vh; j++) { const k = j / vh, lg = vw * (1 - k * 0.22) / 2, fim = k > 0.8 ? Math.sin((1 - k) / 0.2 * 1.57) : 1; for (let i = -lg; i <= lg; i++) { if (Math.abs(i) > lg * (0.55 + 0.45 * fim)) continue; s.px(mx + i + Math.sin(k * 3.1) * 2, vy + j, Math.round(i + lg) % 6 === 0 ? c[1] : i > lg * 0.4 ? (c[3] || c[2]) : c[2]); } }
+    for (const sd of [-1, 1]) for (let k = 0; k <= 24; k++) s.px(mx + sd * (cw / 2 - 2) * k / 24, topo + 2 + (h - 12) * k / 24, c[0]);
+    s.ret(mx - 1, topo - 5, 6, 3, c[3] || c[2]);
+  },
+  // casa do Oriente antigo: cubo de adobe de teto plano, parapeito, escada externa e uma porta baixa
+  casa(s, x, base, h, c, r) {
+    const w = 30 + (r * 20 | 0), hh = Math.max(16, h * 0.5); s.ret(x, base - hh, w, hh, c[1]);
+    for (let y = base - hh; y < base; y++) { s.px(x, y, c[0]); s.px(x + w - 1, y, c[2]); } s.ret(x - 1, base - hh - 2, w + 2, 2, c[1]); s.ret(x - 1, base - hh - 2, w + 2, 1, c[2]);
+    for (let i = 2; i < w - 2; i += 5) s.ret(x + i, base - hh - 4, 2, 2, c[1]); // vigas do teto
+    s.ret(x + w * 0.2, base - 9, 5, 9, c[0]); s.ret(x + w * 0.65, base - hh * 0.62, 3, 4, c[3] || c[0]);
+    if (r > 0.45) { const w2 = w * 0.5, h2 = hh * 0.5; s.ret(x + w * 0.4, base - hh - h2, w2, h2, c[1]); s.ret(x + w * 0.4 - 1, base - hh - h2 - 2, w2 + 2, 2, c[2]); s.ret(x + w * 0.55, base - hh - h2 * 0.6, 3, 4, c[0]); }
+    for (let k = 0; k < 6; k++) s.ret(x + w + k * 2, base - 3 - k * 2, 2, 3 + k * 2, c[0]); // escada externa
+  },
   arvore(s, x, base, h, c, r) { s.ret(x + 8, base - h * 0.7, 4, h * 0.7, c[0]); for (let k = 0; k < 6; k++) { const cx = x + 10 + Math.sin(k * 2.4 + r * 6) * 14, cy = base - h * 0.75 - k * 5 * r - 4, rr = 10 + ((k * 5) % 7); for (let yy = -rr; yy <= rr; yy++) for (let xx = -rr; xx <= rr; xx++) { const d = xx * xx + yy * yy; if (d < rr * rr && (d < (rr - 2) * (rr - 2) || (xx + yy) % 2)) s.px(cx + xx, cy + yy * 0.75, xx + yy < -rr * 0.5 ? c[2] : c[1]); } } },
   duna(s, x, base, h, c, r) { const w = 90 + r * 70; for (let i = 0; i < w; i++) { const hh = Math.sin(i / w * Math.PI) * h * 0.35; s.ret(x + i, base - hh, 1, hh + 1, i < w * 0.45 ? c[1] : c[0]); s.px(x + i, base - hh, c[2]); } if (r > 0.6) { s.ret(x + w * 0.3, base - h * 0.75, 2, h * 0.5, c[0]); for (let k = -6; k <= 6; k++) s.px(x + w * 0.3 + k, base - h * 0.75 - 2 + Math.abs(k) * 0.6, c[1]); } },
   costela(s, x, base, h, c, r) { for (let i = 0; i < 60; i++) { const k = i / 60, px = x + k * 46, py = base - Math.sin(k * 1.5) * h * 1.6; s.ret(px, py, 4 - k * 2, 5, k < 0.5 ? c[1] : c[0]); s.px(px, py, c[2]); } },
@@ -80,7 +99,7 @@ function pintarCamada(tm, w, h, rng, nivel) {
   const c = [cor(mistura(base, '#05060c', 0.3)), cor(base), cor(mistura(base, tm.borda, nivel ? 0.2 : 0.1)), cor(mistura(base, tm.acento, nivel === 1 ? 0.7 : 0.3))];
   const chao = h * [0.66, 0.78, 0.93][nivel], lista = SKYLINE[tm.deco] || SKYLINE.casas, esc = [0.6, 0.95, 1.25][nivel];
   let x = -10;
-  while (x < w) { const r = rng(), nome = lista[Math.floor(rng() * lista.length)], alt = (26 + rng() * 60) * esc; PECAS[nome](s, x, chao, alt, c, r); x += (nome === 'templo' ? 70 : nome === 'duna' ? 80 : 26) * esc + rng() * 40 * esc; }
+  while (x < w) { const r = rng(), nome = lista[Math.floor(rng() * lista.length)], alt = (26 + rng() * 60) * esc; PECAS[nome](s, x, chao, alt, c, r); x += (nome === 'templo' ? 70 : nome === 'duna' ? 80 : nome === 'mastro' ? 74 : 26) * esc + rng() * 40 * esc; }
   // terreno da camada, com perfil irregular e um fio de luz no topo
   for (let xx = 0; xx < w; xx++) { const hh = chao - 2 - Math.round(Math.sin(xx * 0.05 + nivel) * 2 + Math.sin(xx * 0.013) * 3); s.ret(xx, hh, 1, h - hh, c[1]); s.px(xx, hh, c[2]); if (nivel === 2 && (xx * 7) % 5 === 0) s.px(xx, hh - 1 - ((xx * 3) % 3), c[1]); }
   // névoa pontilhada na base (perspectiva atmosférica)
@@ -93,8 +112,11 @@ function pintarPilar(tm) {
   const alt = (CH - 2) * TL, s = new Sprite(40, alt), c = [cor(mistura(tm.bloco, '#000', 0.1)), cor(mistura(tm.bloco, tm.meio, 0.6)), cor(mistura(tm.meio, tm.borda, 0.16))], d = tm.deco;
   if (d === 'arvores') { for (let y = 0; y < alt; y++) { const lg = 5 + Math.round(Math.sin(y * 0.05) * 1.5), x0 = 20 - lg + Math.round(Math.sin(y * 0.03) * 2); s.ret(x0, y, lg * 2, 1, c[1]); s.px(x0, y, c[0]); s.px(x0 + lg * 2 - 1, y, c[2]); if (y % 9 === 0) s.px(x0 + 3 + (y % 5), y, c[0]); } }
   else if (d === 'costelas') { for (let y = 0; y < alt; y++) { const x0 = 6 + Math.round(Math.pow(1 - y / alt, 2) * 26); s.ret(x0, y, 6, 1, c[1]); s.px(x0, y, c[2]); s.px(x0 + 5, y, c[0]); } }
-  else if (d === 'mastros' || d === 'dunas' || d === 'tendas') { s.ret(18, 0, 4, alt, c[1]); for (let y = 0; y < alt; y++) { s.px(18, y, c[0]); s.px(21, y, c[2]); if (y % 22 === 10) s.ret(16, y, 8, 2, c[0]); } }
-  else { const w = d === 'muralha' ? 16 : 10, x0 = 20 - w / 2; s.ret(x0, 0, w, alt, c[1]); for (let y = 0; y < alt; y++) { s.px(x0, y, c[0]); s.px(x0 + w - 1, y, c[2]); for (let i = 3; i < w - 2; i += 3) s.px(x0 + i, y, c[0]); if (d === 'muralha' && y % 8 === 0) s.ret(x0, y, w, 1, c[0]); } s.ret(x0 - 3, 0, w + 6, 5, c[1]); s.ret(x0 - 3, 4, w + 6, 1, c[0]); s.ret(x0 - 3, alt - 6, w + 6, 6, c[1]); s.ret(x0 - 3, alt - 6, w + 6, 1, c[2]); }
+  else if (d === 'nenhum') { // (sem uso: todos os temas usam colunas de pedra) tronco grosso de madeira, amarrado com cordas e com um pano rasgado
+    for (let y = 0; y < alt; y++) { const lg = 4 + (y > alt * 0.7 ? 1 : 0), x0 = 20 - lg; s.ret(x0, y, lg * 2, 1, c[1]); s.px(x0, y, c[0]); s.px(x0 + 1, y, c[0]); s.px(x0 + lg * 2 - 1, y, c[2]); if ((y * 7) % 13 === 0) s.px(x0 + 3 + (y % 3), y, c[0]); }
+    for (const y of [alt * 0.22, alt * 0.5, alt * 0.78]) { s.ret(14, y, 12, 3, c[0]); s.ret(14, y + 1, 12, 1, c[2]); }
+    for (let j = 0; j < 30; j++) { const lg = 9 - j * 0.28; for (let i = 0; i < lg; i++) if ((i + j) % 7) s.px(25 + i, alt * 0.22 + 4 + j, j > 22 && i % 2 ? c[0] : c[1]); } }
+  else { const w = d === 'muralha' ? 18 : 14, x0 = 20 - w / 2; s.ret(x0, 0, w, alt, c[1]); for (let y = 0; y < alt; y++) { s.px(x0, y, c[0]); s.px(x0 + w - 1, y, c[2]); for (let i = 3; i < w - 2; i += 3) s.px(x0 + i, y, c[0]); if (d === 'muralha' && y % 8 === 0) s.ret(x0, y, w, 1, c[0]); } s.ret(x0 - 3, 0, w + 6, 5, c[1]); s.ret(x0 - 3, 4, w + 6, 1, c[0]); s.ret(x0 - 3, alt - 6, w + 6, 6, c[1]); s.ret(x0 - 3, alt - 6, w + 6, 1, c[2]); }
   return s.tela();
 }
 function pintarEstandarte(tm) {

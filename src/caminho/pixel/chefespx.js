@@ -6,6 +6,8 @@ import { CHEFES_A } from './chefes-a.js';
 import { CHEFES_B } from './chefes-b.js';
 
 const PINTORES = { ...CHEFES_A, ...CHEFES_B };
+// Beemote e Leviatã são colossos: desenhados no dobro do tamanho, ocupam boa parte da arena
+const COLOSSOS = { behemote: 2, leviata: 2 };
 
 const OURO = rampa('#D9A63C'), OUROE = rampa('#8A6A2C'), OSSO = rampa('#E4DFCF'), MANTO = rampa('#3B2A4E'), ACO = rampa('#7F8C9C'), FERRO = rampa('#3A3F4C');
 const COROA = ['L.....L.....L', 'G.....G.....G', 'GG...GGG...GG', 'GGG.GGGGG.GGG', 'GgGGGGrGGGGgG', 'GGrGGGGGGGrGG', 'LLLLLLLLLLLLL', 'ggggggggggggg'];
@@ -68,5 +70,5 @@ export function quadroChefe(b, Tm, G) {
   if (b.morrendo > 0) s.dissolve(1 - b.morrendo / 1.7, 3);
   if ((b.alpha ?? 1) < 1) s.dissolve(1 - b.alpha, 2);
   s.contorno(TINTA);
-  return { s, ax: def.ax, ay: def.ay };
+  return { s, ax: def.ax, ay: def.ay, esc: COLOSSOS[b.id] || 1 };
 }

@@ -65,25 +65,57 @@ export function sfx(n) {
 
 // Música ambiente: arpejo modal de lira, troca de clima no combate com chefe.
 const SCALES = { mundo: [0, 2, 3, 5, 7, 9, 10], chefe: [0, 1, 4, 5, 7, 8, 10], fase: [0, 2, 4, 5, 7, 9, 11], cinema: [0, 2, 3, 5, 7, 8, 10] };
+// ---- trilha: piano esparso, cordas longas e muito eco (a melancolia de um reino esquecido) ----
+// Tudo é sintetizado: um "piano" de senoides com decaimento, um colchão de cordas filtradas e, nos chefes, um ostinato grave.
+let eco = null;
+function sala() { // eco de sala grande: três atrasos realimentados e filtrados
+  if (eco || !AC) return eco;
+  eco = AC.createGain(); eco.gain.value = 1;
+  for (const [t, fb] of [[0.31, 0.42], [0.47, 0.36], [0.73, 0.3]]) { const d = AC.createDelay(1.5), g = AC.createGain(), lp = AC.createBiquadFilter(); d.delayTime.value = t; g.gain.value = fb; lp.type = 'lowpass'; lp.frequency.value = 1900; eco.connect(d); d.connect(lp); lp.connect(g); g.connect(d); lp.connect(musicGain); }
+  return eco;
+}
+const nota = st => 220 * Math.pow(2, st / 12); // semitons a partir do lá
+function piano(st, vol = 0.2, delay = 0, dur = 3.2) {
+  if (!AC) return; const t = AC.currentTime + delay, g = AC.createGain(), f = nota(st);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(vol * 0.35, t + 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  for (const [m, tipo, k] of [[1, 'sine', 1], [2, 'sine', 0.3], [3, 'triangle', 0.08]]) { const o = AC.createOscillator(), og = AC.createGain(); o.type = tipo; o.frequency.value = f * m; og.gain.value = k; o.connect(og); og.connect(g); o.start(t); o.stop(t + dur + 0.05); }
+  g.connect(musicGain); g.connect(sala());
+}
+function cordas(sts, dur, vol = 0.05, delay = 0) {
+  if (!AC) return; const t = AC.currentTime + delay, g = AC.createGain(), lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700; lp.Q.value = 0.4;
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + dur * 0.35); g.gain.linearRampToValueAtTime(vol * 0.8, t + dur * 0.7); g.gain.linearRampToValueAtTime(0.0001, t + dur);
+  for (const st of sts) for (const des of [-5, 6]) { const o = AC.createOscillator(); o.type = 'sawtooth'; o.frequency.value = nota(st); o.detune.value = des; o.connect(lp); o.start(t); o.stop(t + dur + 0.05); }
+  lp.connect(g); g.connect(musicGain); g.connect(sala());
+}
+function tambor(vol = 0.3, delay = 0) { if (!AC) return; const t = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain(); o.frequency.setValueAtTime(92, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.3); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5); o.connect(g); g.connect(musicGain); o.start(t); o.stop(t + 0.55); }
+// progressões em menor (semitons a partir do lá): [baixo, acorde..., notas boas para a melodia]
+const TRILHAS = {
+  mundo: { compasso: 5.2, acordes: [[-12, [0, 3, 7], [12, 15, 19, 22]], [-16, [-4, 0, 3], [8, 12, 15, 20]], [-9, [3, 7, 10], [10, 15, 19, 22]], [-14, [-2, 2, 5], [10, 14, 17, 19]]], dens: 0.55 },
+  fase: { compasso: 4.6, acordes: [[-12, [0, 3, 7], [12, 14, 15, 19]], [-12, [0, 5, 8], [12, 17, 20, 15]], [-17, [-5, -1, 2], [7, 11, 14, 19]], [-16, [-4, 0, 3], [8, 12, 15, 19]]], dens: 0.7 },
+  chefe: { compasso: 2.6, acordes: [[-12, [0, 3, 7], [12, 15, 19]], [-12, [0, 3, 8], [12, 15, 20]], [-14, [-2, 2, 5], [10, 14, 17]], [-17, [-5, -1, 4], [7, 11, 16]]], dens: 1, luta: true }
+};
 export function music(mode) {
   audio.modo = mode || null;
   if (!AC) return;
   clearInterval(musicTimer);
   if (!mode) return;
   if (mode === 'cinema') return pad(); // fundo lento e baixo para não brigar com a narração
-  const sc = SCALES[mode] || SCALES.mundo, root = mode === 'chefe' ? 110 : 146.8;
-  let step = 0;
-  const beat = mode === 'chefe' ? 210 : 340;
-  musicTimer = setInterval(() => {
+  const T = TRILHAS[mode] || TRILHAS.mundo; let n = 0;
+  const compasso = () => {
     if (audio.muted || document.hidden) return;
-    const pat = [0, 2, 4, 2, 5, 4, 2, 1];
-    const deg = pat[step % 8] + (step % 32 >= 16 ? 2 : 0);
-    const f = root * Math.pow(2, (sc[deg % 7] + 12 * Math.floor(deg / 7)) / 12);
-    tone(f, 0, beat / 1000 * 2.2, 'triangle', 0.18, 0, musicGain);
-    if (step % 8 === 0) tone(root / 2, 0, beat / 1000 * 7, 'sine', 0.22, 0, musicGain);
-    if (mode === 'chefe' && step % 2 === 0) tone(55, 40, 0.12, 'square', 0.12, 0, musicGain);
-    step++;
-  }, beat);
+    const [baixo, acorde, mel] = T.acordes[n % T.acordes.length], c = T.compasso, frase = Math.floor(n / T.acordes.length) % 3;
+    cordas([baixo, ...acorde], c * 1.25, T.luta ? 0.06 : 0.045); piano(baixo, 0.16, 0, c);
+    if (T.luta) { // ostinato grave em colcheias, tambor e uma linha que sobe
+      for (let i = 0; i < 8; i++) { piano(baixo + (i % 2 ? 12 : 0), 0.12, i * c / 8, 0.5); if (i % 4 === 0) tambor(0.32, i * c / 8); if (i === 6) tambor(0.2, i * c / 8 + c / 16); }
+      for (let i = 0; i < 4; i++) piano(mel[(i + frase) % mel.length] + (frase === 2 ? 12 : 0), 0.15, i * c / 4 + c / 8, 1.4);
+    } else { // arpejo quebrado e, a cada duas frases, um fragmento de melodia lá em cima
+      const ordem = [0, 2, 1, 2, 0, 1];
+      for (let i = 0; i < 6; i++) if (Math.random() < T.dens || i === 0) piano(acorde[ordem[i] % acorde.length] + 12, 0.1 + Math.random() * 0.05, i * c / 6 + Math.random() * 0.04, 2.8);
+      if (frase !== 1) { const k = Math.floor(Math.random() * mel.length); piano(mel[k], 0.17, c * 0.25, 3.6); if (Math.random() < 0.7) piano(mel[(k + 1) % mel.length], 0.14, c * 0.6, 3.4); if (frase === 2 && Math.random() < 0.6) piano(mel[(k + 2) % mel.length] + 12, 0.1, c * 0.82, 3); }
+    }
+    n++;
+  };
+  compasso(); musicTimer = setInterval(compasso, T.compasso * 1000);
 }
 
 // Cutscene: acordes longos e graves (sobe e desce devagar), bem baixinho por baixo da voz
