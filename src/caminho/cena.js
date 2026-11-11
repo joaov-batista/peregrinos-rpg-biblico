@@ -92,6 +92,42 @@ export function pintarBlocos(g, G) {
   }
 }
 
+// arquitetura de fundo de cada sala: pilares, estandartes, cordas e trepadeiras conforme o tema
+export function pintarEnfeites(g, G) {
+  const N = G.N, tm = G.tm, { cam, W, Z } = G.vista, sala = CH * T, larg = CW * T;
+  const c0 = Math.max(0, Math.floor(cam.x / larg)), c1 = Math.min(N.cols - 1, Math.floor((cam.x + W / Z) / larg));
+  for (const cel of N.celulas) {
+    if (cel.cx < c0 || cel.cx > c1) continue;
+    const ox = cel.cx * larg, oy = cel.cy * sala, topo = oy + T, chao = oy + sala - T;
+    // parede do fundo: um véu mais escuro que dá profundidade ao interior
+    const gr = g.createLinearGradient(0, topo, 0, chao); gr.addColorStop(0, corA(tm.bloco, 0.5)); gr.addColorStop(0.55, corA(tm.bloco, 0.12)); gr.addColorStop(1, corA(tm.bloco, 0.42));
+    g.fillStyle = gr; g.fillRect(ox + T, topo, larg - 2 * T, chao - topo);
+    for (let k = 0; k < 3; k++) {
+      const r = hash(cel.cx * 7 + k, cel.cy * 13 + 3), r2 = hash(cel.cx * 5 + k, cel.cy * 3 + 9), x = ox + (5 + k * 10 + r * 3) * T;
+      if (k === 1 && cel.mask & 12) continue; // o poço fica livre
+      g.fillStyle = corA(tm.meio, 0.9); g.strokeStyle = corA(tm.borda, 0.12); g.lineWidth = 1;
+      switch (tm.deco) {
+        case 'costelas': g.beginPath(); g.moveTo(x - 30, chao); g.quadraticCurveTo(x - 10, topo + 60, x + 90, topo); g.lineTo(x + 112, topo); g.quadraticCurveTo(x + 14, topo + 80, x - 6, chao); g.fill(); g.stroke(); break;
+        case 'arvores': { g.beginPath(); g.moveTo(x - 13, chao); g.quadraticCurveTo(x - 4, (topo + chao) / 2, x - 16, topo); g.lineTo(x + 14, topo); g.quadraticCurveTo(x + 6, (topo + chao) / 2, x + 15, chao); g.fill(); g.stroke();
+          g.strokeStyle = corA(tm.acento, 0.28); g.lineWidth = 1.6; for (let i = 0; i < 3; i++) { const vx = x - 20 + i * 22 + r * 10, len = 60 + hash(i, cel.cx + k) * 120; g.beginPath(); g.moveTo(vx, topo); g.quadraticCurveTo(vx + Math.sin(G.T * 0.9 + i + x) * 7, topo + len * 0.6, vx + Math.sin(G.T * 0.9 + i + x) * 11, topo + len); g.stroke(); } break; }
+        case 'mastros': g.fillRect(x - 5, topo, 10, chao - topo); g.strokeStyle = corA(tm.borda, 0.25); g.lineWidth = 1.2; g.beginPath(); g.moveTo(x, topo + 30); g.lineTo(x + 150, chao); g.moveTo(x, topo + 30); g.lineTo(x - 150, chao); g.stroke(); g.fillStyle = corA(tm.meio, 0.9); g.fillRect(x - 46, topo + 60, 92, 5); break;
+        case 'dunas': g.fillRect(x - 4, chao - 150 - r * 60, 8, 150 + r * 60); g.fillRect(x - 30, chao - 150 - r * 60, 60, 6); break;
+        case 'tendas': g.fillRect(x - 4, topo, 8, chao - topo); g.fillStyle = corA(tm.acento, 0.16); g.beginPath(); g.moveTo(x, topo + 40); g.quadraticCurveTo(x + 120, topo + 90 + Math.sin(G.T + x) * 5, x + 240, topo + 50); g.lineTo(x + 240, topo + 40); g.quadraticCurveTo(x + 120, topo + 64, x, topo + 30); g.fill(); break;
+        default: { // colunas, arcos, muralha, casas
+          const w = tm.deco === 'muralha' ? 34 : 22; g.fillRect(x - w / 2, topo, w, chao - topo); g.strokeRect(x - w / 2, topo, w, chao - topo);
+          g.fillRect(x - w / 2 - 7, topo, w + 14, 12); g.fillRect(x - w / 2 - 7, chao - 12, w + 14, 12);
+          g.fillStyle = corA(tm.borda, 0.06); for (let i = -1; i <= 1; i++) g.fillRect(x + i * (w / 3) - 1, topo + 14, 2, chao - topo - 28);
+          if (r2 > 0.4) { // estandarte
+            const bx = x + 60 + r * 40, bal = Math.sin(G.T * 1.4 + bx) * 4, hgt = 70 + r2 * 50;
+            g.fillStyle = corA(tm.acento, 0.2); g.beginPath(); g.moveTo(bx - 14, topo); g.lineTo(bx + 14, topo); g.lineTo(bx + 14 + bal, topo + hgt); g.lineTo(bx + bal, topo + hgt - 14); g.lineTo(bx - 14 + bal, topo + hgt); g.closePath(); g.fill();
+            g.fillStyle = corA(tm.acento, 0.35); g.beginPath(); g.arc(bx + bal * 0.5, topo + hgt * 0.4, 5, 0, TAU); g.fill();
+          }
+        }
+      }
+    }
+  }
+}
+
 // objetos de cena: lampiões pendurados (luz) — o resto é desenhado pelo jogo
 export function pintarLampioes(g, G) {
   for (const l of G.N.luzes) {

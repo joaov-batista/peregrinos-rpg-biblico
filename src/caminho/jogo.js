@@ -20,7 +20,7 @@ import { novoHeroi, atualizarHeroi, desenharHeroi, ARMAS, OLEO_USO, damp } from 
 import { novoVicio, atualizarVicio, desenharVicio, vulneravel } from './bichos.js';
 import { CHEFES, novoChefe, atualizarChefe, desenharChefe, danoNoChefe } from './chefes.js';
 import { ARMADURA, RELIQUIAS, MUNDO, DIFICULDADES, areaDef, novoCaminho, semanaDe } from './dados.js';
-import { tema, pintarFundo, pintarBlocos, pintarLampioes, pintarLuz, corA } from './cena.js';
+import { tema, pintarFundo, pintarBlocos, pintarEnfeites, pintarLampioes, pintarLuz, corA } from './cena.js';
 import { desenharObjeto } from './objetos.js';
 import { abrirMenu, escolherFase, loja } from './menu.js';
 
@@ -45,13 +45,16 @@ export class Caminho {
     document.body.append(this.botao);
     this.padAntes = input.padAcoes; input.padAcoes = { menu: () => this.menu(), mapa: () => this.menu('mapa') };
     for (const [act, nome] of Object.entries({ dodge: 'Pular', lock: 'Passo Pronto', defend: 'Vigília', botija: 'Orar', skill: CLASSES[char.cls]?.skill.nome || 'Verso', attack: 'Golpe' })) { const b = document.querySelector(`[data-act="${act}"]`); if (b) { b.dataset.name = nome; b.title = nome; } }
+    this.icones = [];
+    for (const [act, simb] of Object.entries({ dodge: '⤒', lock: '»', defend: '🪔', botija: '🙏' })) { const b = document.querySelector(`[data-act="${act}"]`); if (b) { this.icones.push([b, [...b.childNodes], b.hidden]); b.replaceChildren(simb); b.hidden = false; } }
     this.entrar(this.cm.ebenezer?.area || 'refugio', { ebenezer: true });
     this.raf = requestAnimationFrame(t => this.loop(t));
   }
 
   destroy() {
     this.running = false; cancelAnimationFrame(this.raf); removeEventListener('resize', this.onResize);
-    document.body.classList.remove('caminho'); input.perfil = null; input.padAcoes = this.padAntes; this.botao.remove(); music(null); this.ui.bossBar(null); this.ui.setInteract(null);
+    for (const [b, filhos, oculto] of this.icones) { b.replaceChildren(...filhos); b.hidden = oculto; }
+    document.body.classList.remove('caminho', 'cm-dash'); input.perfil = null; input.padAcoes = this.padAntes; this.botao.remove(); music(null); this.ui.bossBar(null); this.ui.setInteract(null);
   }
 
   get dif() { return DIFICULDADES[this.cm.dif] || DIFICULDADES.provacao; }
@@ -176,7 +179,7 @@ export class Caminho {
     const p = this.p, N = this.N;
     this.escuro = damp(this.escuro, Math.max(this.tm.escuro, this.escuroAlvo || 0), 2, dt);
     this.lentidao = damp(this.lentidao, this.lentidaoAlvo * (1 - Math.min(0.3, this.peso * 0.06)) * (this.tem('sandalias_mensageiro') ? 1.1 : 1), 6, dt);
-    p.oleoFrac = p.oleo / this.oleoMax();
+    p.oleoFrac = p.oleo / this.oleoMax(); document.body.classList.toggle('cm-dash', !!this.hab.calcados);
     if (this.tem('orvalho_ceu') && p.oleo < OLEO_USO) p.oleo = Math.min(OLEO_USO, p.oleo + 1.6 * dt);
     if (p.morto) { this.mortoT -= dt; if (this.mortoT <= 0) this.renascer(); }
     else {
@@ -697,7 +700,7 @@ export class Caminho {
     g.save();
     const tx = this.tremorA ? rand(-1, 1) * this.tremorA * 0.5 : 0, ty = this.tremorA ? rand(-1, 1) * this.tremorA * 0.5 : 0;
     g.scale(v.Z, v.Z); g.translate(-v.cam.x + tx, -v.cam.y + ty);
-    pintarLampioes(g, this);
+    pintarEnfeites(g, this); pintarLampioes(g, this);
     for (const ob of this.objs) if (Math.abs(ob.x - p.x) < 1100) desenharObjeto(g, ob, this);
     pintarBlocos(g, this);
     this.pintarZonas(g);

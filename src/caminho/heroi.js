@@ -74,7 +74,7 @@ export function atualizarHeroi(G, dt) {
     }
     else if (p.pulos > 0) { p.pulos--; p.vy = -PULO * 0.9; p.buf = 0; p.sq = 1.25; sfx('dodge'); G.fx.asas(p.x, p.y - 22); }
   }
-  if (!c.puloSeg && p.vy < -230 && !p.pogo) p.vy = -230; // soltar o botão encurta o pulo
+  if (!c.puloSeg && p.vy < -330 && !p.pogo) p.vy = -330; // soltar o botão encurta o pulo
   if (p.vy >= 0) p.pogo = false;
 
   // ---- passo pronto (dash) ----

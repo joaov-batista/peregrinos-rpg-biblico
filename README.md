@@ -1,5 +1,7 @@
 # Peregrinos — RPG bíblico online
 
+> **O Caminho (remake):** o jogo agora é um metroidvania em vista lateral, com chefes de padrão em fases, a lâmpada como mecânica central (luz, defesa perfeita e oração num só recurso), a Armadura de Deus como progressão e a **semana 3: Daniel 4, o rei que virou fera**. Ler os rolos e responder continua abrindo a porta de cada chefe. Veja [docs/CAMINHO.md](docs/CAMINHO.md). O mundo aberto antigo continua no botão **Clássico**.
+
 > **Semana 2 · Jonas:** cinco fases sobre os quatro capítulos, 50 perguntas, 15 decisões de estudo e cinco chefes com sprites animados próprios. Semanas independentes e dificuldade por nível, com modos História, Jornada e Desafio. Veja [a campanha e sua validação](docs/JONAS-E-DUNGEONS.md).
 
 > **Combate e progressão:** chefes com novos golpes, trilha de missões, expedição contra Leviatã e segredos nas fases. Veja [regras, controles e validação](docs/COMBATE-E-PROGRESSAO.md).
@@ -145,7 +147,8 @@ Também dá para publicar pelo terminal com `npx vercel` (pede login na primeira
 ```
 src/
   main.js            início: telas de login → personagem → jogo
-  game/game.js       loop, combate, IA, chefes, fases, rede
+  caminho/           o remake em vista lateral (docs/CAMINHO.md)
+  game/game.js       modo clássico: loop, combate, IA, chefes, fases, rede
   game/world.js      geração do mapa e das fases
   game/draw.js       desenho dos personagens, inimigos e chefes
   game/player.js     atributos, inventário, equipamento

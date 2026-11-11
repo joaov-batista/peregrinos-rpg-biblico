@@ -25,7 +25,7 @@ let game = null, releaseCharacter = null;
 const ui = createHud(exitToSelect);
 ui.show(false);
 
-const CLASSICO = new URLSearchParams(location.search).has('classico');
+const CLASSICO = new URLSearchParams(location.search).has('classico') || import.meta.env.VITE_MODO === 'classico';
 async function play(char, modo) {
   // Evita duas abas editando o mesmo personagem ao mesmo tempo.
   if (navigator.locks) {
