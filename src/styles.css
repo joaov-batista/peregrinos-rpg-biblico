@@ -638,3 +638,5 @@ body.tiny .stats { grid-template-columns: 1fr 1fr; }
 .sync-conflict .btn { margin:4px; }
 @media(max-width:700px) { #offlineStatus { top:auto; bottom:calc(env(safe-area-inset-bottom, 0px) + 4px); max-width:48vw; font-size:10px; } }
 @media(pointer:coarse) { #offlineStatus { top:auto; bottom:calc(env(safe-area-inset-bottom, 0px) + 4px); max-width:42vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:10px; } }
+/* o aviso de offline/progresso não fica mais na tela: só aparece se houver falha ao salvar ou conflito de progresso */
+#offlineStatus:not(.warning) { display:none; }
