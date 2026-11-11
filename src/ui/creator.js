@@ -6,6 +6,10 @@ import { drawPerson } from '../game/character-art.js';
 import { newCharData } from '../game/player.js';
 import { net } from '../net.js';
 import { sfx } from '../audio.js';
+import { config } from '../config.js';
+import { novoHeroi } from '../caminho/heroi.js';
+import { quadroHeroi, AX, AY } from '../caminho/pixel/humano.js';
+const pxHeroi = novoHeroi(0, 0, 5);
 import { desligarCeu } from './ceu.js';
 import { icon, itemIcon } from './icons.js';
 
@@ -153,6 +157,13 @@ export function mountCreator(root, onCreated, onBack) {
     const T=reduced?0:time;g.setTransform(2,0,0,2,0,0);sanctuary(g,T);
     const since=time-attackStart,attack=motion==='attack'&&since<.66;
     if(motion==='attack'&&!attack){motion='idle';modeButtons.querySelectorAll('button').forEach((b,i)=>{b.classList.toggle('on',i===0);b.setAttribute('aria-pressed',String(i===0));});}
+    if(config.pixel!==false){ // o mesmo peregrino em pixel art que aparece no jogo
+      const anda=motion==='walk'&&!reduced; pxHeroi.chao=true; pxHeroi.vx=anda?230:0; pxHeroi.face=face===3?-1:1; if(anda)pxHeroi.passo+=230*dt/26;
+      pxHeroi.atk=attack?{t:since%.22,dur:.17,dir:face===2?'cima':'lado',face:pxHeroi.face,n:Math.floor(since/.22)}:null;
+      const q=quadroHeroi(pxHeroi,look,cls,CLASSES[cls].arma,T,{});g.imageSmoothingEnabled=false;
+      g.save();g.translate(180,338);g.scale(5*pxHeroi.face,5);g.drawImage(q.tela(),-AX,-AY);g.restore();
+      raf=requestAnimationFrame(draw);return;
+    }
     drawPerson(g,180,310,4.05,look,personMotion(motionActor,look,{t:T,fx:faces[face][0],fy:faces[face][1],moving:motion==='walk'&&!reduced,walk:time*.55,cls,weapon:CLASSES[cls].arma,weaponId:CLASSES[cls].armaInicial,shield:true,
       atkT:attack?.22-(since%.22):0,swingA:face===3?Math.PI:face===2?-Math.PI/2:0,combo:Math.floor(since/.22)+1}));
     raf=requestAnimationFrame(draw);

@@ -146,7 +146,11 @@ export function renderPixel(G) {
       if (tonto) for (let i = 0; i < 3; i++) { const a = Tm * 5 + i * 2.09; g.fillStyle = '#FFE9A8'; g.fillRect(X(e.x) + Math.round(Math.cos(a) * 7), yy - Math.round(e.h / PX) - 5 + Math.round(Math.sin(a) * 2), 1, 1); }
     }
   }
-  if (G.pecado) antigo(() => G.pintarPecado(g, true));
+  if (G.pecado) { // o vulto à porta: sombra pontilhada de olhos acesos
+    const sp = G.pecado, x = X(sp.x), y = Y(sp.y); g.fillStyle = '#0B0812';
+    for (let yy = -37; yy <= 22; yy++) { const k = (yy + 37) / 59, l = Math.round(2 + k * 13 + Math.sin(Tm * 3 + yy * 0.3) * 1.5); for (let xx = -l; xx <= l; xx++) if (yy < 16 || pontilha(x + xx, y + yy + Math.floor(Tm * 8), 1 - (yy - 16) / 7)) g.fillRect(x + xx, y + yy, 1, 1); }
+    g.fillStyle = Math.floor(Tm * 2) % 5 ? '#EF6981' : '#FFFFFF'; g.fillRect(x - 4, y - 20, 2, 3); g.fillRect(x + 3, y - 20, 2, 3);
+  }
   for (const m of G.moedas) { const x = X(m.x), y = Y(m.y), f = Math.floor(m.t * 10) % 4, lg = [3, 2, 1, 2][f]; g.fillStyle = '#17121f'; g.fillRect(x - (lg >> 1) - 1, y - 2, lg + 2, 5); g.fillStyle = m.maldita ? '#B8862B' : '#F2C14E'; g.fillRect(x - (lg >> 1), y - 1, lg, 3); g.fillStyle = '#FFF1BE'; g.fillRect(x - (lg >> 1), y - 1, 1, 1); }
   // outros peregrinos (multijogador) e o herói
   for (const o of G.outros) pintarJogador(g, o.corpo, o.look, o.cls, o.arma, Tm, o.hab, X, Y, false);
