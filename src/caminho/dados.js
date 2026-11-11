@@ -1,5 +1,6 @@
 // Dados do Caminho: a Armadura de Deus (habilidades), as relíquias, os temas das áreas e o mapa do mundo.
 import { TODAS } from '../content/index.js';
+import { DECISOES_CORINTO } from '../content/decisoes-corinto.js';
 
 // A Armadura de Deus (Ef 6:13-17) é a progressão: cada peça muda o que o peregrino consegue fazer.
 export const ARMADURA = {
@@ -106,8 +107,9 @@ export function areaDef(id) {
   const segredos = ['mana'];
   if (primeira) segredos.push('pedra');
   if (f.n === 3 || f.n === 5) segredos.push('mana');
-  return { id, sem, fase: f, nome: f.nome, sub: f.ref, tema: TEMA_FASE[f.tema] || f.tema, chefe: f.chefe, seed: id, cols: f.estacoes ? 8 : 7,
-    rolos: 3, estacoes: f.estacoes, npcs: Object.values(f.npcs || {}), inimigos: f.inimigos, segredos, arena: arenaDe(f.chefe),
+  const estacoes = f.estacoes || (primeira ? DECISOES_CORINTO[f.n] : undefined);
+  return { id, sem, fase: f, nome: f.nome, sub: f.ref, tema: TEMA_FASE[f.tema] || f.tema, chefe: f.chefe, seed: id, cols: estacoes ? 8 : 7,
+    rolos: 3, estacoes, npcs: Object.values(f.npcs || {}), inimigos: f.inimigos, segredos, arena: arenaDe(f.chefe),
     segTipos: f.n === 1 && primeira ? ['lampada'] : ['lampada', 'lampada', 'firmeza', 'asas'] };
 }
 import { CHEFES } from './chefes.js';
