@@ -695,7 +695,7 @@ export function pintarFiguras(g, c, t, T, opts) {
     if (typeof f.p === 'string' && f.p.startsWith('chefe:')) {
       const id = f.p.slice(6), S = alturaChefe(f.s);
       g.translate(x, y); if (f.vira < 0) g.scale(-1, 1);
-      if (CHEFES[id]) CHEFES[id](g, S, T, luz); else { const k = S / 110; g.scale(k, k); drawBoss(g, artes[id] || (artes[id] = { id, r: 40, x: 0, y: -37, hp: 1, max: 1 }), T); }
+      if (CHEFES[id]) CHEFES[id](g, S, T, luz); else { const k = S / 150; g.scale(k, k); drawBoss(g, artes[id] || (artes[id] = { id, r: 40, x: 0, y: -37, hp: 1, max: 1 }), T); }
     } else if (f.perfil) {
       const L = lookDe(f.p, opts) || {}, pele = L.skin ? rgb(L.skin).map(v => Math.round(v * 0.75)).join(',') : '150,95,60';
       perfil(g, x, f.y * VH, VH * 0.26 * (f.s || 1.5), { vira: f.vira || 1, barba: !!L.beard, capuz: L.style === 'veu' || L.style === 'turbante' || f.capuz, pele, fala: f.fala ? Math.abs(Math.sin(T * 9)) * 0.04 : 0 }, luz);

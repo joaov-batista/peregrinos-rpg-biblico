@@ -5,6 +5,13 @@ No ar em: https://peregrinos-pi.vercel.app
 
 ## ✅ Feito
 
+### O Caminho (remake em vista lateral)
+- O jogo principal virou um metroidvania lateral com chefes de padrão em fases; o mundo aberto antigo ficou no botão **Clássico**. Detalhes em [CAMINHO.md](CAMINHO.md).
+- Mecânica da lâmpada (luz, vigília/defesa perfeita, oração e verso com o mesmo azeite), postura dos chefes e o "Está escrito" a cada virada de fase.
+- Armadura de Deus como progressão de habilidades, 18 relíquias, segredos por área, três gigantes do mundo e o encontro da graça (Gn 4:7).
+- Semana 3: **Daniel 4** em cinco páginas, com cinco chefes novos, estudo, 50 perguntas e 15 decisões.
+- Narrações de Jonas, de Daniel e do novo prólogo geradas com o OmniVoice.
+
 ### Base do jogo (v0.1)
 - 4 classes (Guerreiro da Fé, Pastor, Profeta, Levita) com aparência personalizável, até 3 personagens por conta.
 - Combate: combo, especial por classe, esquiva com invencibilidade, defesa e defesa perfeita (atordoa e devolve projéteis).

@@ -147,18 +147,18 @@ export function atualizarHeroi(G, dt) {
 
 // capa: corrente de pontos que segue os ombros com atraso (em coordenadas do mundo)
 function atualizarCapa(p, dt) {
-  const n = 6, ax = p.x - p.face * 3, ay = p.y - 31;
+  const n = 6, ax = p.x - p.face * 3, ay = p.y - 31 + (p.orando > 0 ? 6 : 0);
   if (!p.capa) p.capa = Array.from({ length: n }, (_, i) => ({ x: ax - p.face * i * 3, y: ay + i * 6 }));
   const vento = Math.sin(performance.now() / 380) * 1.4;
   let px = ax, py = ay;
   p.capa.forEach((q, i) => {
     if (i === 0) { q.x = ax; q.y = ay; return; }
     // alvo: abaixo e atrás do ponto anterior; a velocidade empurra para trás
-    const tx = px - p.face * (2.2 + i * 0.5) - p.vx * 0.012 + vento * i * 0.25, ty = py + 6.2 - Math.max(-3, Math.min(5, p.vy * 0.006));
-    const k = 30 - i * 3.2;
+    const tx = px - p.face * (1.6 + i * 0.4) - Math.max(-4.2, Math.min(4.2, p.vx * 0.014)) + vento * i * 0.25, ty = py + 5.6 - Math.max(-2.5, Math.min(4, p.vy * 0.005));
+    const k = 34 - i * 3;
     q.x = damp(q.x, tx, k, dt); q.y = damp(q.y, ty, k, dt);
     // comprimento fixo entre os pontos
-    const dx = q.x - px, dy = q.y - py, d = Math.hypot(dx, dy) || 1, L = 6.4;
+    const dx = q.x - px, dy = q.y - py, d = Math.hypot(dx, dy) || 1, L = 5.4;
     q.x = px + dx / d * L; q.y = py + dy / d * L;
     px = q.x; py = q.y;
   });
@@ -179,12 +179,18 @@ export function desenharHeroi(g, p, look, arma, tipoArma, Tm, hab = {}) {
 
   // capa (em coordenadas do mundo)
   if (p.capa) {
-    const c = p.capa;
-    g.beginPath(); g.moveTo(c[0].x + p.face * 6, c[0].y - 1);
-    for (let i = 1; i < c.length; i++) g.lineTo(c[i].x - p.face * (1 + i * 0.9), c[i].y);
-    for (let i = c.length - 1; i >= 1; i--) g.lineTo(c[i].x + p.face * (5.5 - i * 0.5), c[i].y + (i === c.length - 1 ? 1.5 : 0));
+    // fita com largura perpendicular ao caimento: abre na barra, nunca vira um fio
+    const c = p.capa, esq = [], dir = [];
+    for (let i = 0; i < c.length; i++) {
+      const a = c[Math.max(0, i - 1)], b = c[Math.min(c.length - 1, i + 1)], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, w = 3.6 + i * 1.15;
+      esq.push([c[i].x - dy / d * w, c[i].y + dx / d * w]); dir.push([c[i].x + dy / d * w, c[i].y - dx / d * w]);
+    }
+    g.beginPath(); g.moveTo(esq[0][0], esq[0][1]);
+    for (let i = 1; i < esq.length; i++) g.lineTo(esq[i][0], esq[i][1]);
+    const u = c.length - 1; g.lineTo(c[u].x + (c[u].x - c[u - 1].x) * 0.5, c[u].y + (c[u].y - c[u - 1].y) * 0.5 + 1.5);
+    for (let i = dir.length - 1; i >= 0; i--) g.lineTo(dir[i][0], dir[i][1]);
     g.closePath(); g.fillStyle = cape; g.fill(); g.strokeStyle = INK; g.lineWidth = 1.5; g.stroke();
-    g.beginPath(); g.moveTo(c[1].x + p.face * 2, c[1].y); for (let i = 2; i < c.length; i++) g.lineTo(c[i].x + p.face * 2, c[i].y); g.strokeStyle = 'rgba(255,255,255,.13)'; g.lineWidth = 1; g.stroke();
+    g.beginPath(); g.moveTo(c[1].x, c[1].y); for (let i = 2; i < c.length; i++) g.lineTo(c[i].x, c[i].y); g.strokeStyle = 'rgba(255,255,255,.13)'; g.lineWidth = 1; g.stroke();
   }
 
   g.save();

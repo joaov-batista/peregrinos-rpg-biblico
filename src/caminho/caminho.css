@@ -24,6 +24,7 @@ body.caminho #banner b { font-family: Cinzel, serif; letter-spacing: .06em; }
 .cm-menu .cm-pre { white-space: pre-line; }
 .cm-menu details.dungeon-study p { margin: 6px 0; }
 .dialog .dlg-text { white-space: pre-line; }
-body.caminho #bossBar { top: auto; bottom: calc(var(--safe-b, 0px) + 16px); }
-body.caminho.touch #bossBar { bottom: auto; top: calc(var(--safe-t, 0px) + 8px); }
+/* a barra do chefe fica no alto: o chão precisa estar livre para ler os avisos dos golpes */
+body.caminho #bossBar { bottom: auto; top: calc(var(--safe-t, 0px) + 46px); }
+body.caminho.touch #bossBar { top: calc(var(--safe-t, 0px) + 8px); }
 body.caminho:not(.cm-dash) #aLock { display: none !important; }

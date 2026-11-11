@@ -100,11 +100,7 @@ export class Caminho {
       if (ob.tipo === 'portal' || ob.tipo === 'segredo') ob.luz = 80;
     }
     if (cm.sacola?.area === id) this.objs.push({ tipo: 'sacola', x: cm.sacola.x, y: cm.sacola.y, luz: 70 });
-    // vícios
-    if (def.inimigos) {
-      const esc = 1 + (def.fase?.nivel || 1) * 0.05;
-      N.spawns.forEach((s, i) => { const tipos = def.inimigos.filter(t => !!s.voa === ['distracao', 'duvida', 'medo', 'vaidade'].includes(t)); const tipo = (tipos.length ? tipos : def.inimigos)[i % (tipos.length || def.inimigos.length)]; this.nascer(tipo, s.x, s.y + 14, false, esc); });
-    }
+    this.povoar();
     // onde o peregrino aparece
     let pos = N.inicio;
     const eb = this.objs.find(ob => ob.tipo === 'ebenezer');
@@ -139,6 +135,14 @@ export class Caminho {
       : 'A / D ou setas: andar · Espaço (ou Z): pular · J (ou X, ou clique): golpear — segure ↑ ou ↓ para golpear para cima e para baixo · Shift (ou L): erguer a lâmpada · H (ou Q): orar · K: verso da sua vocação · C: passo pronto (quando tiver os Calçados) · E: ler e falar · Esc: menu.\n\nErguer a lâmpada no instante do golpe é a DEFESA PERFEITA: devolve dardos e quebra a postura dos chefes. A luz também revela o que está escondido.';
   }
 
+  // os vícios da área (voltam a cada descanso numa Pedra de Ebenézer)
+  povoar() {
+    const def = this.def;
+    this.inimigos = this.inimigos.filter(e => e.kind === 'chefe');
+    if (!def.inimigos) return;
+    const esc = 1 + (def.fase?.nivel || 1) * 0.05, voadores = ['distracao', 'duvida', 'medo', 'vaidade'];
+    this.N.spawns.forEach((s, i) => { const tipos = def.inimigos.filter(t => !!s.voa === voadores.includes(t)), lista = tipos.length ? tipos : def.inimigos; this.nascer(lista[i % lista.length], s.x, s.y + 14, false, esc); });
+  }
   nascer(tipo, x, y, daLuta, esc = 1) { const e = novoVicio(tipo, x, y, esc); e.daLuta = daLuta; this.inimigos.push(e); return e; }
 
   conferirPorta(quieto) {
@@ -597,7 +601,7 @@ export class Caminho {
       case 'npc': await this.falar(ob); break;
       case 'ebenezer': {
         const primeira = !cm.ebenezer;
-        cm.ebenezer = { area: this.area }; p.vida = p.vidaMax; p.oleo = Math.max(p.oleo, OLEO_USO); this.usouSelo = this.usouCepa = false; sfx('heal'); this.fx.anel(ob.x, ob.y - 30, '#FFE9A8', 120); this.salvar();
+        cm.ebenezer = { area: this.area }; if (!this.luta) this.povoar(); p.vida = p.vidaMax; p.oleo = Math.max(p.oleo, OLEO_USO); this.usouSelo = this.usouCepa = false; sfx('heal'); this.fx.anel(ob.x, ob.y - 30, '#FFE9A8', 120); this.salvar();
         if (primeira) this.ovo('ebenezer', '"Até aqui nos ajudou o Senhor" (1Sm 7:12). As Pedras de Ebenézer guardam o seu caminho.');
         const acoes = [{ label: 'Levantar' }];
         if (this.area !== 'refugio') acoes.push({ label: 'Voltar ao Refúgio', fn: () => this.entrar('refugio', { ebenezer: false }) });
