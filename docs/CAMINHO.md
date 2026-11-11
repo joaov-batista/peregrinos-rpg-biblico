@@ -16,9 +16,13 @@ O Livro não foi queimado: foi esquecido. Cada página que ninguém lê, a sombr
 | **Vigília**: erguer a lâmpada | Shift ou L | LB | 🪔 |
 | Orar (gasta azeite, recupera um fôlego) | H ou Q | LT | 🙏 |
 | Verso da vocação (gasta azeite) | K ou V | R3/L3 | ✦ |
-| Passo Pronto (com os Calçados da Paz) | C | B / RT | » |
+| Passo Pronto (todo peregrino tem; demora a voltar) | C | B / RT | » |
 | Ler, falar, entrar | E | Y | botão dourado |
 | Menu | Esc, I ou Tab | Start | ☰ |
+
+### O que todo peregrino tem
+
+Salto duplo, passo pronto (com espera de 1,4 s para voltar; as setas ao lado dos fôlegos mostram) e a vigília, que **só defende no tempo certo**: erguida cedo ou tarde demais, a lâmpada não protege.
 
 ### A mecânica própria: a lâmpada
 
@@ -42,10 +46,10 @@ Os chefes de Corinto guardam as peças de Efésios 6, e cada peça é uma habili
 | Peça | Poder |
 |---|---|
 | Cinto da Verdade | Firmeza: deslizar e escalar paredes |
-| Calçados da Paz | Passo Pronto: avanço no chão e no ar |
+| Calçados da Paz | o Passo Pronto volta em menos da metade do tempo |
 | Couraça da Justiça | dois fôlegos a mais |
 | Escudo da Fé | vigília mais larga; dardos devolvidos com o triplo da força |
-| Capacete da Salvação | segundo salto |
+| Capacete da Salvação | terceiro salto |
 | Espada do Espírito (fim da semana) | golpe carregado: onda de luz |
 
 Os chefes de Jonas, de Daniel e do mundo dão **relíquias** (três equipadas; quatro com a Coroa Restituída). Os **segredos** das áreas (maná escondido, as cinco pedras lisas) pedem a lâmpada ou peças da armadura: vale voltar às áreas antigas.

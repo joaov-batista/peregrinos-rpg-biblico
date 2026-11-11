@@ -139,8 +139,8 @@ export class Caminho {
   }
   textoControles() {
     return input.touch
-      ? 'Arraste o dedo à esquerda para andar. Botões: ⤒ pular · ⚔ golpear (com o direcional para cima ou para baixo) · 🛡 erguer a lâmpada (vigília) · 🫙 orar e recuperar um fôlego.\n\nErguer a lâmpada no instante do golpe é a DEFESA PERFEITA.'
-      : 'A / D ou setas: andar · Espaço (ou Z): pular · J (ou X, ou clique): golpear — segure ↑ ou ↓ para golpear para cima e para baixo · Shift (ou L): erguer a lâmpada · H (ou Q): orar · K: verso da sua vocação · C: passo pronto (quando tiver os Calçados) · E: ler e falar · Esc: menu.\n\nErguer a lâmpada no instante do golpe é a DEFESA PERFEITA: devolve dardos e quebra a postura dos chefes. A luz também revela o que está escondido.';
+      ? 'Arraste o dedo à esquerda para andar. Botões: pular (duas vezes no ar) · passo pronto, que demora a voltar · golpear (com o direcional para cima ou para baixo) · 🛡 erguer a lâmpada (vigília) · 🫙 orar e recuperar um fôlego.\n\nA lâmpada só defende no instante certo do golpe: é a DEFESA PERFEITA. Cedo ou tarde demais, não protege.'
+      : 'A / D ou setas: andar · Espaço (ou Z): pular · J (ou X, ou clique): golpear — segure ↑ ou ↓ para golpear para cima e para baixo · Shift (ou L): erguer a lâmpada · H (ou Q): orar · K: verso da sua vocação · C: passo pronto (demora a voltar) · no ar, pule de novo para o salto duplo · E: ler e falar · Esc: menu.\n\nA lâmpada só defende no instante certo: erguê-la quando o golpe chega é a DEFESA PERFEITA (devolve dardos e quebra a postura dos chefes). Erguida cedo ou tarde demais, não protege. A luz também revela o que está escondido.';
   }
 
   // os vícios da área (voltam a cada descanso numa Pedra de Ebenézer)
@@ -193,7 +193,7 @@ export class Caminho {
     const p = this.p, N = this.N;
     this.escuro = damp(this.escuro, Math.max(this.tm.escuro, this.escuroAlvo || 0), 2, dt);
     this.lentidao = damp(this.lentidao, this.lentidaoAlvo * (1 - Math.min(0.3, this.peso * 0.06)) * (this.tem('sandalias_mensageiro') ? 1.1 : 1), 6, dt);
-    p.oleoFrac = p.oleo / this.oleoMax(); document.body.classList.toggle('cm-dash', !!this.hab.calcados);
+    p.oleoFrac = p.oleo / this.oleoMax(); document.body.classList.add('cm-dash');
     if (this.tem('orvalho_ceu') && p.oleo < OLEO_USO) p.oleo = Math.min(OLEO_USO, p.oleo + 1.6 * dt);
     if (p.morto) { this.mortoT -= dt; if (this.mortoT <= 0) this.renascer(); }
     else {

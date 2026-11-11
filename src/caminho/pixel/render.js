@@ -63,6 +63,9 @@ function pintarHud(g, G, vw) {
   for (let yy = topo; yy <= 23; yy++) { const lg = Math.round(6.5 * Math.sqrt(Math.max(0, 1 - Math.pow((yy - 16) / 8, 2)))); for (let xx = -lg; xx <= lg; xx++) s.px(11 + xx, yy, yy === topo ? cor(pronto ? '#FFF1BE' : '#C9A85A') : cor(pronto ? (xx > 2 ? '#FFD86A' : '#F2B83C') : '#8A7436')); }
   for (let k = 1; k < Math.round(G.oleoMax() / OLEO_USO); k++) s.ret(5, Math.round(24 - k * OLEO_USO / G.oleoMax() * 15), 2, 1, TINTA);
   for (let i = 0; i < p.vidaMax; i++) s.carimbo(FOLEGO, 24 + i * 9, 4 + (i < p.vida && Math.floor(Tm * 6 + i) % 4 === 0 ? -1 : 0), i < p.vida ? y : apag);
+  // passo pronto: três setas que se acendem enquanto ele volta
+  const pronto2 = !(p.dashCd > 0), kd = pronto2 ? 1 : 1 - p.dashCd / (p.dashMax || 1.4);
+  for (let i = 0; i < 3; i++) { const c = kd >= (i + 1) / 3 ? cor(pronto2 ? '#BFE6F2' : '#6E8FA6') : PEDRA[0], x = 25 + i * 6; for (let j = 0; j < 3; j++) { s.px(x + j, 15 + j, c); s.px(x + j, 19 - j, c); } }
   s.contorno(TINTA);
   g.drawImage(s.tela(), 5, 4);
 }
@@ -206,8 +209,8 @@ function pintarTextos(g, G, esc, cx, cy) {
   for (const z of G.zonas) if (z.tipo === 'faixa' && z.aviso > 0) txt(z.baixo ? 'PULE' : 'FIQUE NO CHÃO', sx(z.x + z.w / 2), sy(z.baixo ? z.y - 14 : z.y + z.h + 30), 8 * u * 1.5, '#fff', 'center');
   // HUD
   const base = Math.max(13, Math.round(e * 6)), x0 = 30 * e;
-  txt(String(Math.floor(G.char.data.gold)), x0 + base * 0.9, 21.5 * e, base, '#FFE08A'); g.fillStyle = '#17121f'; g.beginPath(); g.arc(x0 + base * 0.3, 21.5 * e - base * 0.33, base * 0.42, 0, TAU); g.fill(); g.fillStyle = '#F2C14E'; g.beginPath(); g.arc(x0 + base * 0.3, 21.5 * e - base * 0.33, base * 0.3, 0, TAU); g.fill();
-  let lin = 22 * e;
+  const xg = 52 * e; txt(String(Math.floor(G.char.data.gold)), xg + base * 0.9, 24 * e, base, '#FFE08A'); g.fillStyle = '#17121f'; g.beginPath(); g.arc(xg + base * 0.3, 24 * e - base * 0.33, base * 0.42, 0, TAU); g.fill(); g.fillStyle = '#F2C14E'; g.beginPath(); g.arc(xg + base * 0.3, 24 * e - base * 0.33, base * 0.3, 0, TAU); g.fill();
+  let lin = 27 * e;
   if (cm.sacola) txt('sacola caída: ' + cm.sacola.gold, x0 + base * 4, lin, base * 0.8, '#C9B88A');
   if (def.fase) { lin += base * 1.25; const rol = cm.selos[G.area].length; txt('ROLOS ' + rol + '/3' + (def.estacoes ? '   DECISÕES ' + cm.est[G.area].length + '/' + def.estacoes.length : '') + (G.N.portaAberta && !G.venceu ? '   PORTA ABERTA' : ''), 7 * e, lin, base * 0.9, rol >= 3 ? '#FFE9A8' : '#E6E0CF'); }
   if (G.peso) { lin += base * 1.2; txt('PESO DE MAMOM ×' + G.peso, 7 * e, lin, base * 0.8, '#FFD23F'); }

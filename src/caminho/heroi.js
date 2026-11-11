@@ -6,6 +6,7 @@ import { drawWeapon } from '../game/character-art.js';
 import { T } from './nivel.js';
 import { mover, paredeAoLado, tocaEspinho } from './corpo.js';
 
+// Todo peregrino nasce com salto duplo, passo pronto (com espera longa) e a vigília, que só defende no tempo certo.
 export const VEL = 252, GRAV = 2050, PULO = 700, QUEDA = 920, OLEO_USO = 33;
 export const ARMAS = {
   espada: { alc: 62, alt: 46, cd: 0.34, d: 1, len: 26 },
@@ -63,7 +64,7 @@ export function atualizarHeroi(G, dt) {
   p.desliza = 0;
   if (hab.firmeza && !p.chao && !emDash && p.vy > 0) {
     const lado = c.mx > 0.3 ? 1 : c.mx < -0.3 ? -1 : 0;
-    if (lado && paredeAoLado(N, p, lado)) { p.desliza = lado; p.vy = Math.min(p.vy, 115); p.pulos = hab.asas ? 1 : 0; p.dashAr = true; p.face = -lado; if (Math.random() < dt * 14) G.fx.po(p.x + lado * 9, p.y - 20, 1, '#C9D2C4'); }
+    if (lado && paredeAoLado(N, p, lado)) { p.desliza = lado; p.vy = Math.min(p.vy, 115); p.pulos = hab.asas ? 2 : 1; p.dashAr = true; p.face = -lado; if (Math.random() < dt * 14) G.fx.po(p.x + lado * 9, p.y - 20, 1, '#C9D2C4'); }
   }
   if (p.buf > 0 && !preso && p.orando <= 0) {
     if (c.my > 0.5 && p.chao && p.naPonte) { p.desce = 0.2; p.buf = 0; p.chao = false; }
@@ -78,8 +79,9 @@ export function atualizarHeroi(G, dt) {
   if (p.vy >= 0) p.pogo = false;
 
   // ---- passo pronto (dash) ----
-  if (c.dash && hab.calcados && p.dashCd <= 0 && !preso && (p.chao || p.dashAr) && p.orando <= 0) {
-    p.dashT = 0.19; p.dashCd = 0.48; p.dashDir = c.mx ? Math.sign(c.mx) : p.face; p.face = p.dashDir;
+  // todo peregrino tem o passo pronto, mas ele demora a voltar (os Calçados da Paz encurtam a espera)
+  if (c.dash && p.dashCd <= 0 && !preso && (p.chao || p.dashAr) && p.orando <= 0) {
+    p.dashT = 0.19; p.dashCd = p.dashMax = hab.calcados ? 0.6 : 1.4; p.dashDir = c.mx ? Math.sign(c.mx) : p.face; p.face = p.dashDir;
     if (!p.chao) p.dashAr = false; p.atk = null; p.lamp = false; sfx('dodge'); G.fx.po(p.x, p.y - 4, 6, '#E8E2C8');
   }
   if (p.dashT > 0) {
@@ -106,7 +108,7 @@ export function atualizarHeroi(G, dt) {
       const r = G.golpear({ x: cx - w / 2, y: cy - h / 2, w, h }, G.danoBase() * arma.d, a);
       if (r && !a.reagiu) {
         a.reagiu = true;
-        if (a.dir === 'baixo') { p.vy = -560; p.pogo = true; p.pulos = hab.asas ? 1 : 0; p.dashAr = true; }
+        if (a.dir === 'baixo') { p.vy = -560; p.pogo = true; p.pulos = hab.asas ? 2 : 1; p.dashAr = true; }
         else if (a.dir === 'lado') { p.vx -= a.face * 150; }
         else if (p.vy < 0) p.vy *= 0.5;
       }
@@ -131,7 +133,7 @@ export function atualizarHeroi(G, dt) {
   mover(N, p, dt);
   if (p.chao) {
     if (noAr && vyAntes > 260) { p.sq = clamp(1 - vyAntes / 2600, 0.7, 0.9); G.fx.po(p.x, p.y, vyAntes > 600 ? 9 : 4, '#C9D2C4'); sfx('step'); }
-    p.pulos = hab.asas ? 1 : 0; p.dashAr = true; p.tAr = 0;
+    p.pulos = hab.asas ? 2 : 1; p.dashAr = true; p.tAr = 0;
     p.segT -= dt;
     if (p.segT <= 0 && !p.naPonte && !tocaEspinho(N, { ...p, w: p.w + 40 })) { p.segT = 0.25; p.seguro = { x: p.x, y: p.y }; }
   } else p.tAr += dt;

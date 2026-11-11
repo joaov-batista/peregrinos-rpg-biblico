@@ -7,13 +7,13 @@ export const ARMADURA = {
   cinto_verdade: { hab: 'firmeza', nome: 'Cinto da Verdade', poder: 'Firmeza', ref: 'Efésios 6:14', icone: '🎗️',
     desc: 'Cingido com a verdade, você se firma nas paredes: segure contra uma parede para deslizar e pule para escalar.' },
   calcados_paz: { hab: 'calcados', nome: 'Calçados da Paz', poder: 'Passo Pronto', ref: 'Efésios 6:15', icone: '👡',
-    desc: 'Pés calçados com a prontidão do evangelho: um avanço veloz, no chão ou no ar.' },
+    desc: 'Pés calçados com a prontidão do evangelho: o passo pronto volta em menos da metade do tempo.' },
   couraca_justica: { hab: 'couraca', nome: 'Couraça da Justiça', poder: 'Coração Guardado', ref: 'Efésios 6:14', icone: '🛡️',
     desc: 'Guarda o coração: dois fôlegos a mais.' },
   escudo_fe: { hab: 'escudo', nome: 'Escudo da Fé', poder: 'Apagar os Dardos', ref: 'Efésios 6:16', icone: '🔰',
     desc: 'A vigília fica mais larga, devolve os dardos com o triplo da força e cada defesa perfeita enche mais o azeite.' },
   capacete_salvacao: { hab: 'asas', nome: 'Capacete da Salvação', poder: 'Esperança que Eleva', ref: 'Efésios 6:17 · Isaías 40:31', icone: '⛑️',
-    desc: 'A esperança da salvação renova as forças: um segundo salto no ar.' },
+    desc: 'A esperança da salvação renova as forças: um terceiro salto no ar.' },
   espada_espirito: { hab: 'espada', nome: 'Espada do Espírito', poder: 'Está Escrito', ref: 'Efésios 6:17', icone: '🗡️',
     desc: 'Segure o golpe para carregar e solte uma onda de luz que atravessa os inimigos.' }
 };
@@ -73,7 +73,7 @@ const saul = { skin: '#C68B59', hair: '#2B1A10', tunic: '#7A2E3A', cape: '#D7B25
 export const MUNDO = {
   golias: { nome: 'Vale de Elá', chefe: 'golias', tema: 'ela', ref: '1 Samuel 17', premio: 'pedra_lisa', pede: { pedras: 5 }, porque: 'Faltam pedras lisas do ribeiro (ache as 5 escondidas nas áreas de Corinto).' },
   behemote: { nome: 'O Ermo de Beemote', chefe: 'behemote', tema: 'ermo', ref: 'Jó 40:15', premio: 'osso_bronze', pede: { hab: 'firmeza' }, porque: 'O despenhadeiro pede o Cinto da Verdade.' },
-  leviata: { nome: 'O Mar do Leviatã', chefe: 'leviata', tema: 'mar', ref: 'Jó 41', premio: 'escama_leviata', pede: { hab: 'calcados' }, porque: 'As ondas pedem os Calçados da Paz.' }
+  leviata: { nome: 'O Mar do Leviatã', chefe: 'leviata', tema: 'mar', ref: 'Jó 41', premio: 'escama_leviata', pede: { hab: 'escudo' }, porque: 'Os jatos do mar pedem o Escudo da Fé.' }
 };
 
 const REFUGIO = [
