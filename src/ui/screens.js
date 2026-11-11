@@ -48,8 +48,10 @@ export function showAuth(onDone) {
   else form.append(h('p', { class: 'muted' }, 'Sua jornada fica salva neste navegador. Crie seu peregrino e descubra a Cidade de Refúgio.'),
     h('button', { class: 'btn gold wide', type: 'button', onclick: () => { initAudio(); onDone(); } }, 'Começar a jornada'));
   const emQuadro = new URLSearchParams(location.search).has('quadro');
+  const nQuadro = +new URLSearchParams(location.search).get('quadro');
+  const quem = emQuadro ? h('p', { class: 'title' }, 'Jogador ' + (nQuadro + 1) + (ONLINE ? ': entre com a sua conta' : '')) : '';
   const juntos = emQuadro ? '' : h('div', { class: 'tela-div' }, h('span', {}, 'No mesmo aparelho, com controles:'), ...[2, 3, 4].map(n => h('button', { class: 'btn sm', type: 'button', onclick: () => { location.href = location.pathname + '?telas=' + n; } }, n + ' jogadores')));
-  screen(logo(), h('p', { class: 'week' }, 'Estudo da semana: ', h('b', {}, SEMANA_ATUAL.titulo), ' · ' + SEMANA_ATUAL.estudo), form, juntos, installButton(msg));
+  screen(logo(), quem, h('p', { class: 'week' }, 'Estudo da semana: ', h('b', {}, SEMANA_ATUAL.titulo), ' · ' + SEMANA_ATUAL.estudo), form, juntos, emQuadro ? '' : installButton(msg));
 }
 
 // Botão "Instalar app" (aparece só quando dá para instalar)

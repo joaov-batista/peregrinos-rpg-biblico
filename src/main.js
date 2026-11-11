@@ -79,7 +79,7 @@ const TELAS = Math.min(4, +new URLSearchParams(location.search).get('telas') || 
 function montarTelas(n) {
   document.body.innerHTML = ''; document.body.className = 'telas telas-' + n;
   const barra = document.createElement('div'); barra.className = 'telas-barra';
-  const info = document.createElement('span'); info.textContent = 'Jogador 1: escolha o peregrino. Os outros quadros abrem quando a sala estiver pronta.';
+  const info = document.createElement('span'); info.textContent = 'Jogador 1: escolha o peregrino. Os outros quadros abrem quando a sala estiver pronta; cada jogador entra com a própria conta.';
   const sair = document.createElement('button'); sair.textContent = 'Sair da tela dividida'; sair.onclick = () => { location.href = location.pathname; };
   barra.append(info, sair); document.body.append(barra);
   const grade = document.createElement('div'); grade.className = 'telas-grade'; document.body.append(grade);
