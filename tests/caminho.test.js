@@ -18,7 +18,7 @@ test('toda área é atravessável sem habilidades', () => {
   for (const id of areas) {
     const def = areaDef(id), N = gerarNivel(def), base = alcancaveis(N), tudo = alcancaveis(N, { lampada: true, firmeza: true, asas: true });
     for (const o of N.objs) {
-      if (o.tipo === 'vaso') continue;
+      if (o.tipo === 'vaso' || o.tipo === 'ave' || o.tipo === 'morador') continue; // enfeites
       const onde = `${id}: ${o.tipo} em ${Math.round(o.x / T)},${Math.round(o.y / T)}`;
       if (o.tipo === 'segredo') assert.ok(tudo.tem(o.x, o.y), onde + ' fora de alcance mesmo com a armadura');
       else assert.ok(base.tem(o.x, o.y), onde + ' fora de alcance');

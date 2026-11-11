@@ -63,3 +63,10 @@ body.caminho.touch #actions .act:not(#aInteract)::before { content: attr(data-na
 .inv-det p { white-space: pre-line; line-height: 1.5; margin: 8px 0 12px; font-family: var(--font-text); font-size: 16px; }
 .best-cv { width: 56px; height: 52px; flex: none; image-rendering: pixelated; }
 @media (max-width: 640px) { .inv { grid-template-columns: 1fr; } .inv-det { border-left: 0; border-top: 1px solid rgba(222, 226, 238, .16); position: static; } }
+
+/* guarda-roupa da Dorcas */
+.gr { display: grid; grid-template-columns: 200px 1fr; gap: 18px; align-items: center; }
+.gr-cv { width: 200px; height: 220px; image-rendering: pixelated; background: radial-gradient(ellipse at 50% 85%, rgba(255, 233, 168, .12), transparent 70%); }
+.gr-linha { display: grid; grid-template-columns: 1fr 40px 110px 40px; gap: 8px; align-items: center; padding: 4px 0; }
+.gr-linha span { text-align: center; font-size: 13.5px; } .gr-cor { justify-self: center; width: 46px; height: 22px; border: 1px solid rgba(222, 226, 238, .4); }
+@media (max-width: 640px) { .gr { grid-template-columns: 1fr; justify-items: center; } }

@@ -171,6 +171,14 @@ export function pintarHumano(s, ox, oy, o) {
   else { s.px(hx + 7, hy + 8, pele[1]); s.px(hx + 4, hy + 9, pele[1]); s.px(hx + 5, hy + 9, pele[1]); }
   if (o.pisca) { s.px(hx + 6, hy + 5, pele[1]); s.px(hx + 7, hy + 5, pele[1]); }
   s.carimbo(CABELOS[L.style] || CABELOS.curto, hx, hy, { H: cab[2], h: cab[1], l: cab[3], C: cap[2], c: cap[1], k: cap[3], G: OURO[3], L: pele[4] });
+  // o que vai na cabeça (Dorcas, no Refúgio): capuz, capuz pontudo, faixa ou elmo de couro
+  const ac = L.acessorio;
+  if (ac === 'capuz' || ac === 'pontudo') {
+    for (let y = -1; y <= 10; y++) for (let x = 0; x <= 9; x++) { const topoC = y < 3 && !(y === -1 && (x < 2 || x > 8)) && !(y === 0 && x < 1), tras = y >= 3 && x <= 2; if (topoC || tras) s.px(hx + x, hy + y, x === 0 || (y > 8 && tras) ? cap[1] : y <= 0 ? cap[3] : x >= 8 && y < 3 ? cap[1] : cap[2]); }
+    s.px(hx + 3, hy + 3, cap[1]); s.px(hx + 3, hy + 4, cap[0]);
+    if (ac === 'pontudo') { s.px(hx + 1, hy - 2, cap[2]); s.px(hx, hy - 2, cap[2]); s.px(hx - 1, hy - 3, cap[3]); s.px(hx, hy - 3, cap[2]); s.px(hx - 2, hy - 3, cap[1]); }
+  } else if (ac === 'faixa') { for (let x = 1; x <= 9; x++) s.px(hx + x, hy + 3, cap[x > 6 ? 3 : 2]); s.px(hx, hy + 4, cap[2]); s.px(hx - 1, hy + 5, cap[1]); s.px(hx - 1, hy + 6, cap[2]); }
+  else if (ac === 'elmo') { for (let y = -1; y <= 2; y++) for (let x = (y < 0 ? 2 : 1); x <= (y < 0 ? 8 : 9); x++) s.px(hx + x, hy + y, y === -1 ? COURO[3] : x > 7 ? COURO[1] : COURO[2]); for (let x = 1; x <= 9; x++) s.px(hx + x, hy + 3, OURO[x % 3 ? 2 : 3]); s.px(hx + 8, hy + 4, COURO[1]); s.px(hx + 8, hy + 5, COURO[1]); }
   if (hab.asas) for (let i = 2; i <= 8; i++) s.px(hx + i, hy + 3, i === 6 ? BRANCO : ACO[i % 2 ? 3 : 2]); // capacete da salvação: um aro de prata
   if (o.cls === 'zelote') for (let i = 2; i <= 8; i++) s.px(hx + i, hy + 3, cor(i % 3 ? '#B5483A' : '#8E2F2A'));
   // braço da frente e arma

@@ -141,3 +141,16 @@ os outros digitam o código, ou abrem o link `?sala=CÓDIGO`. Não há servidor 
   que só às vezes traz uma relíquia rara e cara (`raro` em `RELIQUIAS`).
 - **Trilha** (`audio.js`): piano esparso, cordas longas e eco, tudo sintetizado; ostinato e tambor nas lutas.
 - **Atualização:** o service worker se ativa sozinho e a página recarrega fora de lutas.
+
+## Refúgio maior, provas e gigantes
+
+- **Refúgio com sete salas:** praça do mercado (Jael, a armeira; Dorcas, a costureira; moradores e pombas) e pátio das provas
+  (Benaia; portais da Arena de treino e do Desafio das ondas), além de Lídia, Tubalcaim, Zaqueu e os portais.
+- **Armas por vocação** (`ARMAS_ALT`): duas por classe, compradas uma vez e trocadas à vontade; mudam alcance, ritmo, força
+  ou o tipo de disparo. **Guarda-roupa** (`guardaRoupa`): capuz, capuz pontudo, faixa, elmo de couro, capas e túnicas.
+- **Arena de treino** (`treino`, `pvp()`): com a sala aberta, os golpes de um peregrino ferem o outro (e podem ser aparados);
+  ninguém perde a sacola. **Desafio das ondas** (`desafio`): ondas sem fim, denários por onda e recorde salvo.
+- **Jonas:** nas áreas de porto e convés, lanças cruzam a sala na altura do peito.
+- **Gigantes:** Golias tem plateia dos dois exércitos, mais vida e menos pausa; o Beemote luta numa savana; o Leviatã, num
+  barco com o mar batendo. Os dois últimos são desenhados 2,5 vezes maiores. Todos os chefes ganharam vida e perderam
+  tempo de queda (`DIFICULDADES`, `danoNoChefe`).
