@@ -1,5 +1,6 @@
 // Teclado + mouse no PC, joystick virtual + botões na tela no celular.
 const KEYMAP = {
+  KeyZ: 'dodge', KeyX: 'attack', KeyC: 'dash', KeyV: 'skill', // atalhos do Caminho (plataforma)
   KeyJ: 'attack', KeyK: 'skill', Space: 'dodge', ShiftLeft: 'defend', ShiftRight: 'defend', KeyL: 'defend',
   KeyQ: 'item1', Digit1: 'item1', Numpad1: 'item1', Digit2: 'item2', Numpad2: 'item2', KeyR: 'mount', KeyE: 'interact', KeyF: 'interact', KeyI: 'menu', Tab: 'menu', KeyM: 'map', KeyT: 'lock', KeyH: 'botija', Enter: 'chat', Escape: 'escape'
 };

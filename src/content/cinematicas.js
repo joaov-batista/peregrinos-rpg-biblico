@@ -10,6 +10,7 @@
 // Sem o arquivo, a cutscene roda do mesmo jeito, só com a legenda.
 import semana01 from './semana-01.js';
 import { CINEMAS_JONAS } from './cinematicas-jonas.js';
+import { CINEMAS_DANIEL } from './cinematicas-daniel.js';
 
 const F = (n, k) => semana01.fases[n - 1].npcs[k].look;
 const PAULO = F(1, 'M'), PRISCILA = F(2, 'N'), AQUILA = F(2, 'M'), SILAS = F(3, 'M'), TIMOTEO = F(3, 'O');
@@ -20,6 +21,7 @@ const EVA = { skin: '#D9A273', hair: '#2B1A10', tunic: '#ECE3CF', cape: 'none', 
 
 export const CINEMAS = {
   ...CINEMAS_JONAS,
+  ...CINEMAS_DANIEL,
   /* ================= Começo do jogo ================= */
   prologo: {
     titulo: 'Prólogo',
@@ -378,7 +380,7 @@ export const CINEMAS = {
 };
 
 // Qual cutscene toca quando um chefe aparece (id do bestiário → id da cutscene)
-export const CINEMA_CHEFE = { fuga:'chefe-fuga', pavor:'chefe-pavor', desespero:'chefe-desespero', violencia:'chefe-violencia', ressentimento:'chefe-ressentimento', mamom: 'chefe-mamom', procrastinacao: 'chefe-procrastinacao', mentira: 'chefe-mentira', imoralidade: 'chefe-imoralidade', satanas: 'chefe-satanas', behemote: 'chefe-behemote', leviata: 'chefe-leviata', golias: 'chefe-golias' };
+export const CINEMA_CHEFE = { encantadores:'chefe-encantadores', jugo:'chefe-jugo', babilonia:'chefe-babilonia', fera:'chefe-fera', soberba:'chefe-soberba', fuga:'chefe-fuga', pavor:'chefe-pavor', desespero:'chefe-desespero', violencia:'chefe-violencia', ressentimento:'chefe-ressentimento', mamom: 'chefe-mamom', procrastinacao: 'chefe-procrastinacao', mentira: 'chefe-mentira', imoralidade: 'chefe-imoralidade', satanas: 'chefe-satanas', behemote: 'chefe-behemote', leviata: 'chefe-leviata', golias: 'chefe-golias' };
 
 // Agrupa cenas seguidas com a mesma voz: cada grupo vira um arquivo de áudio (public/narracao/<id>-<n>.mp3)
 export function segmentos(id) {

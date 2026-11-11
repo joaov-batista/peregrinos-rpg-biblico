@@ -91,6 +91,7 @@ export async function showSelect(onPlay, onNew, onLogout) {
       h('div', { class: 'info' }, h('b', {}, c.name), h('small', {}, icon(CLASSES[c.cls].arma, 15), ' ' + CLASSES[c.cls].nome + ' · nível ' + c.level), h('small', {}, '⭐ ' + fmt(c.score) + ' pontos')),
       h('div', { class: 'col' },
         h('button', { class: 'btn gold', onclick: () => { sfx('click'); onPlay(c); } }, 'Jogar'),
+        h('button', { class: 'btn sm', title: 'O mundo aberto antigo, visto de cima', onclick: () => { sfx('click'); onPlay(c, 'classico'); } }, 'Clássico'),
         h('button', { class: 'btn sm danger', onclick: async e => {
           const b = e.currentTarget;
           if (b.dataset.sure) { try { await net.deleteChar(c.id); showSelect(onPlay, onNew, onLogout); } catch (err) { b.textContent = err.message; delete b.dataset.sure; } }

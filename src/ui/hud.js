@@ -55,6 +55,7 @@ export function createHud(onExit) {
   ui.mountBtn = (tem, montado) => { const b = $('aMount'); b.hidden = !tem; b.classList.toggle('on', !!montado); b.dataset.name = montado ? 'Descer' : 'Montar'; };
   ui.closeAll = () => root.querySelectorAll('.modal').forEach(m => m._close?.());
   ui.modal = modal; // usado pelo remake (src/caminho)
+  ui.detach = () => { game = null; };
   input.padAcoes = { menu: () => { if (!modals && game) ui.openMenu(); }, mapa: () => { if (!modals && game) ui.openMap(); } };
   input.padAvisar = msg => ui.toast(msg, 4000);
   addEventListener('keydown', e => {
@@ -348,7 +349,7 @@ export function createHud(onExit) {
         const ok = a === right; box.querySelectorAll('button').forEach(b => { b.disabled = true; if (b.textContent === right) b.classList.add('right'); });
         if (!ok) e.currentTarget.classList.add('wrong');
         sfx(ok ? 'right' : 'wrong');
-        p.append(h('p', { class: 'feedback ' + (ok ? 'ok' : 'no') }, ok ? (q.estacao ? 'Decisão concluída! O estudo avança.' : 'Certo! Você ganhou uma chave.') : 'Não foi dessa vez. A resposta certa era: ' + right + (q.estacao ? '. Leia a explicação e tente novamente.' : '. O baú vai trancar por alguns segundos.')));
+        p.append(h('p', { class: 'feedback ' + (ok ? 'ok' : 'no') }, q.fb ? (ok ? q.fb[0] : 'A resposta certa era: ' + right + '. ' + q.fb[1]) : ok ? (q.estacao ? 'Decisão concluída! O estudo avança.' : 'Certo! Você ganhou uma chave.') : 'Não foi dessa vez. A resposta certa era: ' + right + (q.estacao ? '. Leia a explicação e tente novamente.' : '. O baú vai trancar por alguns segundos.')));
         // explicação: por que a resposta certa é a certa (fica até o jogador continuar)
         if (q.porque) {
           p.append(h('div', { class: 'porque' }, h('b', {}, '📖 Por quê?'), h('p', {}, q.porque)),

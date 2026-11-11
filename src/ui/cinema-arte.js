@@ -3,6 +3,7 @@
 // anjos são figuras de luz com asas de serafim; os chefes são sombras colossais com olhos acesos e fumaça;
 // os cenários são pinturas em camadas com perspectiva atmosférica, névoa e arquitetura antiga em silhueta.
 import { clamp, lerp, easeOut, hash, fbm, TAU } from '../util.js';
+import { drawBoss } from '../game/boss-art.js';
 import { WORLD_NPCS } from '../data/npcs.js';
 
 export const VW = 960, VH = 540;
@@ -680,6 +681,7 @@ export function luzDaCena(c) { const l = (CENAS[c.cena] || CENAS.noite).luz; ret
 export const alturaPessoa = s => VH * 0.2 * (s || 1.5);
 export const alturaChefe = s => VH * 0.24 * (s || 1.5);
 
+const artes = {};
 export function pintarFiguras(g, c, t, T, opts) {
   const luz = luzDaCena(c);
   for (const [i, f] of (c.fig || []).entries()) {
@@ -693,7 +695,7 @@ export function pintarFiguras(g, c, t, T, opts) {
     if (typeof f.p === 'string' && f.p.startsWith('chefe:')) {
       const id = f.p.slice(6), S = alturaChefe(f.s);
       g.translate(x, y); if (f.vira < 0) g.scale(-1, 1);
-      (CHEFES[id] || CHEFES.generico)(g, S, T, luz);
+      if (CHEFES[id]) CHEFES[id](g, S, T, luz); else { const k = S / 110; g.scale(k, k); drawBoss(g, artes[id] || (artes[id] = { id, r: 40, x: 0, y: -37, hp: 1, max: 1 }), T); }
     } else if (f.perfil) {
       const L = lookDe(f.p, opts) || {}, pele = L.skin ? rgb(L.skin).map(v => Math.round(v * 0.75)).join(',') : '150,95,60';
       perfil(g, x, f.y * VH, VH * 0.26 * (f.s || 1.5), { vira: f.vira || 1, barba: !!L.beard, capuz: L.style === 'veu' || L.style === 'turbante' || f.capuz, pele, fala: f.fala ? Math.abs(Math.sin(T * 9)) * 0.04 : 0 }, luz);

@@ -9,6 +9,8 @@ import { initAudio } from './audio.js';
 import { initGamepad } from './gamepad.js';
 import { net, ONLINE } from './net.js';
 import { Game } from './game/game.js';
+import { Caminho } from './caminho/jogo.js';
+import './caminho/caminho.css';
 import { createHud } from './ui/hud.js';
 import { showAuth, showSelect, showCreator, hideScreens } from './ui/screens.js';
 
@@ -23,7 +25,8 @@ let game = null, releaseCharacter = null;
 const ui = createHud(exitToSelect);
 ui.show(false);
 
-async function play(char) {
+const CLASSICO = new URLSearchParams(location.search).has('classico');
+async function play(char, modo) {
   // Evita duas abas editando o mesmo personagem ao mesmo tempo.
   if (navigator.locks) {
     const acquired = await new Promise(resolve => {
@@ -37,6 +40,12 @@ async function play(char) {
   hideScreens();
   ui.show(true);
   input.clear();
+  // O Caminho (remake em vista lateral) é o jogo; o mundo aberto antigo continua em "Clássico" (ou com ?classico na URL).
+  if (modo !== 'classico' && !CLASSICO) {
+    game = new Caminho(canvas, char, ui, exitToSelect);
+    window.__game = game;
+    return;
+  }
   const novo = !char.data.stats.playtime;
   game = new Game(canvas, char, ui);
   ui.attach(game);
@@ -53,7 +62,7 @@ async function play(char) {
 }
 
 function exitToSelect() {
-  game?.destroy(); releaseCharacter?.(); releaseCharacter = null; game = null; window.__game = null; ui.show(false);
+  game?.destroy(); releaseCharacter?.(); releaseCharacter = null; game = null; window.__game = null; ui.detach(); ui.show(false);
   start();
 }
 

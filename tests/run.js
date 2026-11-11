@@ -8,3 +8,4 @@ import './dungeon-guide.test.js';
 import './input.test.js';
 
 import './jonas.test.js';
+import './caminho.test.js';

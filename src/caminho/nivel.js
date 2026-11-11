@@ -23,11 +23,11 @@ const LADOS = [
   { id: 'escada', linhas: ['.....e..', '.....##.', '...####.', '.######.'] },
   { id: 'fosso', linhas: ['...==...', '........', '#......#', '#^^^^^^#'] },
   { id: 'varanda', linhas: ['..f.....', '........', '.v......', '.=====..', '........', '........', '....##..', '..e.##..'] },
-  { id: 'ruina', linhas: ['.#......', '.#..==..', '.#......', '.#......', '.##...e.'] },
+  { id: 'ruina', linhas: ['....==..', '........', '.#......', '.#......', '.##...e.'] },
   // segredos
   { id: 's-lampada', seg: 'lampada', linhas: ['.s......', '.##.....', '........', '........', '....~~..', '........', '........', '.~~.....', '........', '......e.'] },
-  { id: 's-falsa', seg: 'lampada', linhas: ['#####...', '#...%...', '#...%...', '#.s.%...'] },
-  { id: 's-firmeza', seg: 'firmeza', linhas: ['s.......', '##......', '##......', '##......', '##......', '##......', '##......', '##....e.'] },
+  { id: 's-falsa', seg: 'lampada', linhas: ['#####...', '#...%...', '#.s.%...'] },
+  { id: 's-firmeza', seg: 'firmeza', linhas: ['s.......', '##......', '##......', '##......', '##......', '##......', '##......', '##......', '........', '........', '......e.'] },
   { id: 's-asas', seg: 'asas', linhas: ['...s....', '..===...', '........', '........', '........', '........', '....e...'] }
 ];
 const PEDESTAL = ['...o....', '..###...'];
@@ -89,7 +89,7 @@ export function gerarNivel(def) {
 
   // o que cada sala precisa guardar
   const fila = [];
-  const rolos = def.rolos ?? 3;
+  const rolos = def.planta ? 0 : def.rolos ?? 3;
   let nr = 0;
   for (const c of pl.celulas) if (c.papel === 'rolo') c.itens = [{ tipo: 'rolo', n: nr++ }];
   for (; nr < rolos; nr++) fila.push({ tipo: 'rolo', n: nr });
@@ -158,8 +158,8 @@ export function gerarNivel(def) {
     }
     if (c.mask & U) for (const row of [13, 10, 8, 5, 2]) for (let x = 12; x <= 17; x++) set(ox + x, oy + row, PONTE);
     // portas sempre livres
-    if (c.mask & L) for (let y = 13; y <= 15; y++) for (let x = 1; x <= 2; x++) set(ox + x, oy + y, VAZIO);
-    if (c.mask & R) for (let y = 13; y <= 15; y++) for (let x = CW - 3; x <= CW - 2; x++) set(ox + x, oy + y, VAZIO);
+    if (c.mask & L) for (let y = 13; y <= 15; y++) set(ox + 1, oy + y, VAZIO);
+    if (c.mask & R) for (let y = 13; y <= 15; y++) set(ox + CW - 2, oy + y, VAZIO);
     // itens da sala nos pedestais
     (c.itens || []).forEach((it, i) => { const p = c._ped[i] || { x: (ox + 8 + i * 12) * T + 16, y: (oy + 16) * T }; N.objs.push({ ...it, x: p.x, y: p.y, cel: c }); });
     if (c.papel === 'ebenezer') N.objs.push({ tipo: 'ebenezer', x: c._ped[0].x, y: c._ped[0].y, cel: c });
@@ -213,10 +213,13 @@ export function alcancaveis(N, hab = {}) {
       // ponte abaixo: atravessa descendo; parede: só com firmeza sobe mais que o pulo
       if (ok) { vistos.add(k(nx, ny)); fila.push([nx, ny]); }
     }
-    if (hab.firmeza) for (const dx of [-1, 1]) for (let up = 1; up <= 9; up++) {
-      // escala uma parede vizinha
-      if (!sol(x + dx, y - up + 1) || !livre(x, y - up)) break;
-      if (pe(x + dx, y - up - 1) && livre(x, y - up - 1) && !vistos.has(k(x + dx, y - up - 1))) { vistos.add(k(x + dx, y - up - 1)); fila.push([x + dx, y - up - 1]); }
+    if (hab.firmeza) for (const dx of [-1, 1]) {
+      // escala uma parede vizinha (o pé dela pode estar até 3 tiles acima do chão)
+      let yy = y; while (yy > y - 4 && !sol(x + dx, yy)) yy--;
+      if (!sol(x + dx, yy)) continue;
+      let ok = true; for (let q = y; q >= yy; q--) if (!livre(x, q)) ok = false;
+      while (ok && sol(x + dx, yy) && livre(x, yy) && yy > 0) yy--;
+      if (ok && livre(x, yy) && pe(x + dx, yy) && !vistos.has(k(x + dx, yy))) { vistos.add(k(x + dx, yy)); fila.push([x + dx, yy]); }
     }
   }
   return { tem: (px, py) => vistos.has(k(Math.floor(px / T), Math.floor(py / T) - 1)), n: vistos.size };

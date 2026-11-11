@@ -7,6 +7,8 @@ import { input } from './input.js';
 import { config } from './config.js';
 
 const ACOES = { 5: 'attack', 7: 'skill', 4: 'defend', 6: 'lock', 11: 'lock', 0: 'interact', 1: 'dodge', 2: 'botija', 3: 'mount', 14: 'item1', 15: 'item2' };
+// no Caminho (plataforma): A pula, X/RB golpeia, B/RT passo pronto, Y fala/lê, LB lâmpada, LT ora, ▲ verso
+const ACOES_CAMINHO = { 0: 'dodge', 2: 'attack', 5: 'attack', 1: 'dash', 7: 'dash', 3: 'interact', 4: 'defend', 6: 'botija', 10: 'skill', 11: 'skill' };
 const ZONA = 0.22; // zona morta dos analógicos
 let antes = [], nav = { t: 0, dir: null };
 export const pad = { conectado: false, nome: '' };
@@ -42,7 +44,7 @@ function ler() {
     input.pad = mx || my ? { x: mx, y: my } : null;
     const rx = ax[2] || 0, ry = ax[3] || 0;
     input.padAim = Math.hypot(rx, ry) > 0.4 ? Math.atan2(ry, rx) : null;
-    for (const [i, a] of Object.entries(ACOES)) {
+    for (const [i, a] of Object.entries(input.perfil === 'caminho' ? ACOES_CAMINHO : ACOES)) {
       if (b[i] && !antes[i]) input.press(a, 'pad:' + i);
       input.setHeld(a, 'pad:' + i, !!b[i]);
     }
