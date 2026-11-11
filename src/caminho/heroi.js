@@ -7,7 +7,7 @@ import { T } from './nivel.js';
 import { mover, paredeAoLado, tocaEspinho } from './corpo.js';
 
 // Todo peregrino nasce com salto duplo, passo pronto (com espera longa) e a vigília, que só defende no tempo certo.
-export const VEL = 252, GRAV = 2050, PULO = 700, QUEDA = 920, OLEO_USO = 33;
+export const VEL = 276, GRAV = 2050, PULO = 700, QUEDA = 920, OLEO_USO = 33;
 // Cada arma golpeia do seu jeito. "tiro" faz do golpe um disparo (pastor, profeta e levita lutam de longe);
 // "fx" é o efeito próprio do golpe de lado; "cor" pinta os efeitos de cima, de baixo e do impacto.
 export const ARMAS = {
@@ -89,7 +89,7 @@ export function atualizarHeroi(G, dt) {
     p.dashT = 0.19; p.dashCd = p.dashMax = hab.calcados ? 0.6 : 1.4; p.dashDir = c.mx ? Math.sign(c.mx) : p.face; p.face = p.dashDir;
     if (!p.chao) p.dashAr = false; p.atk = null; p.lamp = false; sfx('dodge');
     // passo rasteiro (para baixo + passo): passa por baixo do golpe e atravessa o adversário sem ser ferido
-    p.rasteiro = c.my > 0.5 && p.chao; if (p.rasteiro) { p.inv = Math.max(p.inv, 0.3); p.dashT = 0.24; } G.fx.po(p.x, p.y - 4, 6, '#E8E2C8');
+    p.rasteiro = c.my > 0.35; if (p.rasteiro) { p.inv = Math.max(p.inv, 0.42); p.dashT = 0.26; G.textoEm(p.x, p.y - 62, 'passo rasteiro', '#BFD6E8', 11); } G.fx.po(p.x, p.y - 4, 6, '#E8E2C8');
   }
   if (p.dashT > 0) {
     p.dashT -= dt; p.vx = p.dashDir * 600; p.vy = 0;

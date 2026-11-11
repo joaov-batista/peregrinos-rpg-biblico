@@ -72,7 +72,29 @@ function select() {
   showSelect(play, () => showCreator(c => play(c), select), async () => { await net.signOut(); showAuth(select); });
 }
 
+// ---- Vários jogadores no mesmo aparelho: a tela se divide em quadros, um por controle ----
+// Cada quadro é o jogo inteiro, preso a um controle (?pad=N) e ligado aos outros pela mesma sala do "Caminhar juntos".
+// O quadro 1 abre a sala; o código aparece no alto para quem quiser entrar de fora (celular, outro PC), até 4 no total.
+const TELAS = Math.min(4, +new URLSearchParams(location.search).get('telas') || 0);
+function montarTelas(n) {
+  document.body.innerHTML = ''; document.body.className = 'telas telas-' + n;
+  const barra = document.createElement('div'); barra.className = 'telas-barra';
+  const info = document.createElement('span'); info.textContent = 'Jogador 1: escolha o peregrino. Os outros quadros abrem quando a sala estiver pronta.';
+  const sair = document.createElement('button'); sair.textContent = 'Sair da tela dividida'; sair.onclick = () => { location.href = location.pathname; };
+  barra.append(info, sair); document.body.append(barra);
+  const grade = document.createElement('div'); grade.className = 'telas-grade'; document.body.append(grade);
+  const quadros = [];
+  for (let i = 0; i < n; i++) { const f = document.createElement('iframe'); f.allow = 'gamepad; autoplay; fullscreen'; f.title = 'Jogador ' + (i + 1); if (i === 0) f.src = location.pathname + '?quadro=0&pad=0'; else f.srcdoc = '<body style="margin:0;display:grid;place-items:center;height:100vh;background:#05060B;color:#9096AA;font:600 15px system-ui;text-align:center">Jogador ' + (i + 1) + '<br>aguardando o jogador 1 entrar no jogo…</body>'; grade.append(f); quadros.push(f); }
+  addEventListener('message', e => {
+    if (e.origin !== location.origin || !e.data?.peregrinosSala) return;
+    const { peregrinosSala: cod, local } = e.data;
+    info.textContent = 'Sala ' + cod + (local ? ' (só neste aparelho: sem internet)' : ' · quem estiver em outro aparelho entra com este código, em Menu › Juntos') + ' · cada quadro usa um controle; o teclado vale para o quadro clicado';
+    quadros.forEach((f, i) => { if (i && !f.dataset.ok) { f.dataset.ok = 1; f.removeAttribute('srcdoc'); f.src = location.pathname + '?quadro=' + i + '&pad=' + i + '&sala=' + cod + (local ? '&redelocal' : ''); } });
+  });
+}
+
 async function start() {
+  if (TELAS >= 2) return montarTelas(TELAS);
   if (ONLINE) await net.init().catch(() => null);
   if (ONLINE && !net.user) showAuth(select);
   else if (!ONLINE && !sessionStorage.getItem('peregrinos.started')) showAuth(() => { sessionStorage.setItem('peregrinos.started', '1'); select(); });

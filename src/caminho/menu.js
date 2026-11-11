@@ -6,7 +6,7 @@ import { CINEMAS } from '../content/cinematicas.js';
 import { TODAS } from '../content/index.js';
 import { faseProg } from '../game/player.js';
 import { L, R, U, D } from './nivel.js';
-import { ARMADURA, RELIQUIAS, DIFICULDADES, FORJA, ARMAS_ALT } from './dados.js';
+import { ARMADURA, RELIQUIAS, DIFICULDADES, FORJA, ARMAS_ALT, PETS } from './dados.js';
 import { LOOK_OPTIONS } from '../data/classes.js';
 import { novoHeroi } from './heroi.js';
 import { quadroHeroi, AX, AY } from './pixel/humano.js';
@@ -247,6 +247,23 @@ export function guardaRoupa(G) {
     p.append(h('div', { class: 'p-head' }, h('h3', {}, 'Dorcas, a costureira'), h('button', { class: 'x', onclick: () => { G.salvar(); close(); }, 'aria-label': 'Fechar' }, '✕')),
       h('p', {}, 'As viúvas mostravam as túnicas e os vestidos que eu fazia (At 9:39). Escolha com calma; aqui não se paga nada.'), h('div', { class: 'gr' }, cv, ops),
       h('div', { class: 'btn-row' }, h('button', { class: 'btn gold', onclick: () => { G.salvar(); close(); } }, 'Vestir')));
+    desenha();
+  }, { wide: true });
+}
+// Noé: um companheiro para o caminho. Caro: é para quem já juntou bastante.
+export function petShop(G) {
+  const c = G.char, cm = G.cm; cm.pets = cm.pets || {};
+  return G.ui.modal((p, close) => {
+    p.classList.add('cm-menu'); const lista = h('div', {});
+    const desenha = () => {
+      lista.replaceChildren(h('p', { class: 'muted' }, 'Você tem ' + Math.floor(c.data.gold) + ' denários. Um companheiro por vez caminha com você.'));
+      lista.append(h('button', { class: 'fase-row cm-rel' + (!cm.pet ? ' on' : ''), onclick: () => { cm.pet = null; G.pet = null; G.salvar(); desenha(); } }, h('span', { class: 'cm-ico' }, '·'), h('div', {}, h('b', {}, 'Caminhar sem companheiro' + (!cm.pet ? ' (assim está)' : '')))));
+      for (const [id, a] of Object.entries(PETS)) { const tem = cm.pets[id];
+        lista.append(h('button', { class: 'fase-row cm-rel' + (cm.pet === id ? ' on' : ''), disabled: !tem && c.data.gold < a.preco, onclick: () => { if (!tem) { c.data.gold -= a.preco; cm.pets[id] = 1; sfx('level'); } cm.pet = id; G.pet = null; G.salvar(); desenha(); } },
+          h('span', { class: 'cm-ico' }, tem ? '✓' : '◆'), h('div', {}, h('b', {}, a.nome + (cm.pet === id ? ' (com você)' : tem ? ' (seu)' : ' — ' + a.preco + ' denários')), h('small', {}, a.desc + ' · ' + a.ref)))); }
+    };
+    p.append(h('div', { class: 'p-head' }, h('h3', {}, 'Noé, criador de animais'), h('button', { class: 'x', onclick: () => close(), 'aria-label': 'Fechar' }, '✕')),
+      h('p', {}, 'De tudo o que vive, dois de cada espécie entraram comigo (Gn 6:19). Estes aqui eu criei para acompanhar gente de caminho. Não são baratos: bicho bom dá trabalho.'), lista);
     desenha();
   }, { wide: true });
 }

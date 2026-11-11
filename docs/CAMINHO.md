@@ -154,3 +154,16 @@ os outros digitam o código, ou abrem o link `?sala=CÓDIGO`. Não há servidor 
 - **Gigantes:** Golias tem plateia dos dois exércitos, mais vida e menos pausa; o Beemote luta numa savana; o Leviatã, num
   barco com o mar batendo. Os dois últimos são desenhados 2,5 vezes maiores. Todos os chefes ganharam vida e perderam
   tempo de queda (`DIFICULDADES`, `danoNoChefe`).
+
+## Tela dividida, companheiros e o barco do Leviatã
+
+- **Vários jogadores no mesmo aparelho** (`?telas=2..4`, botões na tela inicial): a tela se divide em quadros, um por
+  controle (`?pad=N` em `gamepad.js`). Cada quadro é o jogo inteiro; o primeiro abre a sala do "Caminhar juntos" e os
+  outros entram nela sozinhos. O código da sala fica no alto: quem está em outro aparelho entra com ele, até 4 no total.
+  A divisão é fixa (não junta as telas quando os jogadores estão perto). Sem internet, usa a ligação local entre abas.
+- **Companheiros** (`PETS`, Noé, na praça): cão pastor (morde o vício mais próximo e late perto de segredos) e papagaio
+  (busca denários de longe e avisa o golpe do chefe). São caros de propósito.
+- **Ritmo** (`ritmo()`): vitórias em sequência rendem denários e azeite; ficar parado numa página traz o Medo.
+- **Leviatã** (`barco()`): arpões aparecem no convés; o golpe seguinte os arremessa e atravessa a couraça (golpes comuns
+  tiram menos da metade). O mar e as lanças continuam durante a luta.
+- **Passo rasteiro:** para baixo + passo, no chão ou no ar, dá 0,42 s sem ser ferido.

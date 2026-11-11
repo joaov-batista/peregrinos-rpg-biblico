@@ -29,6 +29,11 @@ export const ARMAS_ALT = {
   lanca: { dardo: { nome: 'Dardo de Joabe', ref: '2 Samuel 18:14', preco: 340, desc: 'A lança vira arremesso: voa reta e atravessa.', tiro: { tipo: 'lanca', v: 700, r: 7, vida: 0.5, fura: true }, cd: 0.6, d: 1.1 }, alabarda: { nome: 'Lança de Jasobeão', ref: '1 Crônicas 11:11', preco: 560, desc: 'Muito longa e lenta: mantém todos à distância.', alc: 130, cd: 0.6, d: 1.45 } },
   chicote: { aguilhada: { nome: 'Aguilhada de Sangar', ref: 'Juízes 3:31', preco: 330, desc: 'Mais curta e mais pesada: cada estalo dói.', alc: 86, d: 1.4, cd: 0.52 }, cordas: { nome: 'Azorrague de cordas', ref: 'João 2:15', preco: 520, desc: 'Longo e veloz, para varrer a sala.', alc: 150, d: 0.8, cd: 0.36 } }
 };
+// companheiros de caminho, vendidos caro por Noé no Refúgio
+export const PETS = {
+  cachorro: { nome: 'Cão pastor', ref: 'Jó 30:1', preco: 2400, desc: 'Morde o vício mais próximo de tempos em tempos e late quando há algo escondido por perto.' },
+  papagaio: { nome: 'Papagaio de Ofir', ref: '1 Reis 10:22', preco: 2000, desc: 'Busca denários de longe e grita "VIGIAI!" um instante antes do golpe de um chefe.' }
+};
 // melhorias da forja (Tubalcaim, "artífice de todo instrumento cortante de bronze e de ferro", Gn 4:22)
 export const FORJA = [
   { nome: 'Fio de bronze', preco: 160, desc: 'Golpes 12% mais fortes.' },
@@ -113,6 +118,7 @@ const REFUGIO = [
     { tipo: 'npc', col: 13, id: 'dorcas', nome: 'Dorcas, a costureira', look: { skin: '#E3B48C', hair: '#6B4423', tunic: '#A18C61', cape: '#C8C9BC', style: 'veu' } },
     { tipo: 'morador', col: 18, vai: 5, look: { skin: '#C68B59', hair: '#3A2314', tunic: '#874D4C', cape: 'none', style: 'turbante', beard: true } },
     { tipo: 'morador', col: 23, vai: 3, look: { skin: '#A0673E', hair: '#1C120A', tunic: '#4C665E', cape: 'none', style: 'coque' } },
+    { tipo: 'npc', col: 20, id: 'noe', nome: 'Noé, criador de animais', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#4C665E', cape: '#877451', style: 'longo', beard: true } },
     { tipo: 'vaso', col: 10 }, { tipo: 'vaso', col: 26 }, { tipo: 'ave', col: 4, lin: 12 }, { tipo: 'ave', col: 22, lin: 12 }] },
   { papel: 'vila', tiles: ['............................'], objs: TODAS.map((s, i) => ({ tipo: 'portal', col: 6 + i * 9, semana: s.id })) },
   // o pátio das provas: treino entre peregrinos e o desafio das ondas

@@ -92,7 +92,7 @@ export const CHEFES = {
     golpes: { investida: { tipo: 'investida', vel: 640, repete: 1, tonto: 2.6 }, terremoto: { tipo: 'ondas', vezes: 3 }, pedras: { tipo: 'chuva', n: 6, vezes: 2, cor: '#A8946E' }, investida2: { tipo: 'investida', vel: 700, repete: 2, tonto: 2.6 }, salto: { tipo: 'salto' }, pedras8: { tipo: 'chuva', n: 8, vezes: 3, cor: '#A8946E' }, urro: { tipo: 'urro', raio: 210 } },
     fases: [F(1, ['investida', 'terremoto', 'pedras']), F(0.5, ['investida2', 'salto', 'pedras8', 'urro'], { grito: 'O CHÃO TREME!' })],
     dica: 'Os ossos dele são como tubos de bronze (Jó 40:18). Faça-o bater na parede: tonto, o casco se abre.' },
-  leviata: { vida: 3300, dano: 2, pressa: 0.45, r: 82, arena: 'alta', voa: 60, mover: 'pairar', vel: 150,
+  leviata: { vida: 3300, dano: 2, pressa: 0.45, r: 82, regras: { armadura: 0.45 }, arena: 'alta', voa: 60, mover: 'pairar', vel: 150,
     golpes: { jatos: { tipo: 'rajada', vezes: 5, intervalo: 0.26, cor: '#5ED1E8' }, cauda: { tipo: 'varredura', vezes: 1, altura: 'baixo', cor: '94,209,232' }, mergulho: { tipo: 'mergulho' }, anel: { tipo: 'anel', n: 14, cor: '#5ED1E8' }, caudas: { tipo: 'varredura', vezes: 3, altura: 'alterna', cor: '94,209,232' }, chuva: { tipo: 'chuva', n: 6, vezes: 2, cor: '#5ED1E8' }, jatos7: { tipo: 'rajada', vezes: 7, intervalo: 0.22, cor: '#5ED1E8' }, anel18: { tipo: 'anel', n: 18, cor: '#5ED1E8' } },
     fases: [F(1, ['jatos', 'cauda', 'mergulho']), F(0.6, ['mergulho', 'anel', 'caudas', 'chuva'], { grito: 'A MARÉ SE ERGUE!' }), F(0.3, ['mergulho', 'jatos7', 'anel18', 'caudas', 'mergulho'], { grito: 'O MAR FERVE!' })],
     dica: '"Poderás tirar com anzol o Leviatã?" (Jó 41:1). Ele só fica ao alcance logo depois de emergir.' }
@@ -352,7 +352,7 @@ export function danoNoChefe(b, dano, origem) {
   const r = b.c.regras || {};
   let m = 1;
   if (b.quebrado > 0) m = 1.3;
-  else if (r.armadura != null) m = b.exposto > 0 ? 3 : r.armadura;
+  else if (r.armadura != null) m = b.exposto > 0 ? 3 : dano > 150 ? 1 : r.armadura; // arpão e golpes muito fortes atravessam a couraça
   else if (r.casco != null) m = b.tonto > 0 ? 1.5 : r.casco;
   else if (b.exposto > 0) m = 1.8;
   return dano * m * (origem === 'funda' && b.exposto > 0 ? 1.5 : 1);

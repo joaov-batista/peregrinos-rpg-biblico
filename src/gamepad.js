@@ -9,6 +9,9 @@ import { config } from './config.js';
 const ACOES = { 5: 'attack', 7: 'skill', 4: 'defend', 6: 'lock', 11: 'lock', 0: 'interact', 1: 'dodge', 2: 'botija', 3: 'mount', 14: 'item1', 15: 'item2' };
 // no Caminho (plataforma): A pula, X/RB golpeia, B/RT passo pronto, Y fala/lê, LB lâmpada, LT ora, ▲ verso
 const ACOES_CAMINHO = { 0: 'dodge', 2: 'attack', 5: 'attack', 1: 'dash', 7: 'dash', 3: 'interact', 4: 'defend', 6: 'botija', 10: 'skill', 11: 'skill' };
+// em tela dividida (?pad=N) cada quadro escuta só o seu controle
+const PAD_FIXO = new URLSearchParams(location.search).has('pad') ? +new URLSearchParams(location.search).get('pad') : null;
+const meuControle = () => { const l = [...(navigator.getGamepads?.() || [])].filter(Boolean); return PAD_FIXO != null ? l[PAD_FIXO] : l[0]; };
 const ZONA = 0.22; // zona morta dos analógicos
 let antes = [], nav = { t: 0, dir: null };
 export const pad = { conectado: false, nome: '' };
@@ -23,7 +26,7 @@ export function initGamepad() {
 function usarControle() { input.touch = false; input.mouseAim = false; document.body.classList.add('pad'); document.body.classList.remove('touch'); }
 
 function ler() {
-  const gp = [...(navigator.getGamepads?.() || [])].find(Boolean);
+  const gp = meuControle();
   if (!gp) {
     input.pad = null; input.padAim = null;
     for (const [i, a] of Object.entries(ACOES)) input.release(a, 'pad:' + i, true);
@@ -100,7 +103,7 @@ function menu(gp, b, borda, janela) {
 // tremida do controle (ou do celular) nos golpes e na defesa perfeita
 export function vibrar(ms = 120, forca = 0.6) {
   if (!config.vibrar) return;
-  const gp = [...(navigator.getGamepads?.() || [])].find(Boolean);
+  const gp = meuControle();
   if (gp?.vibrationActuator?.playEffect) { gp.vibrationActuator.playEffect('dual-rumble', { duration: ms, strongMagnitude: forca, weakMagnitude: forca * 0.6 }).catch(() => {}); return; }
   if (input.touch && navigator.vibrate) navigator.vibrate(Math.round(ms * 0.6));
 }

@@ -22,7 +22,7 @@ import { CHEFES, novoChefe, atualizarChefe, desenharChefe, danoNoChefe } from '.
 import { ARMADURA, RELIQUIAS, MUNDO, DIFICULDADES, ARMAS_ALT, areaDef, novoCaminho, semanaDe } from './dados.js';
 import { tema, pintarFundo, pintarBlocos, pintarEnfeites, pintarLampioes, pintarLuz, corA } from './cena.js';
 import { desenharObjeto } from './objetos.js';
-import { abrirMenu, escolherFase, loja, forja, mercador, armeiro, guardaRoupa } from './menu.js';
+import { abrirMenu, escolherFase, loja, forja, mercador, armeiro, guardaRoupa, petShop } from './menu.js';
 import { renderPixel } from './pixel/render.js';
 import { iconePx } from './pixel/icones.js';
 import { aquecerEfeitos, soltar, atualizarEfeitos } from './pixel/efeitos.js';
@@ -72,7 +72,11 @@ export class Caminho {
     this.entrar(this.cm.ebenezer?.area || 'refugio', { ebenezer: true });
     this.raf = requestAnimationFrame(t => this.loop(t));
     const sala = limparCodigo(new URLSearchParams(location.search).get('sala'));
-    if (sala.length === 5) this.entrarNaSala(sala).catch(e => this.ui.toast(e.message, 6000));
+    const par = new URLSearchParams(location.search);
+    if (sala.length === 5) this.entrarNaSala(sala, par.has('redelocal')).catch(e => this.ui.toast(e.message, 6000));
+    else if (par.get('quadro') === '0' && parent !== window) // tela dividida: o primeiro quadro abre a sala e avisa a página de fora
+      this.abrirSala(false).then(cod => ({ cod, local: false }), () => this.abrirSala(true).then(cod => ({ cod, local: true })))
+        .then(r => parent.postMessage({ peregrinosSala: r.cod, local: r.local }, location.origin)).catch(e => this.ui.toast(e.message, 6000));
   }
 
   destroy() {
@@ -231,6 +235,7 @@ export class Caminho {
     if (this.pecado) this.atualizarPecado(dt);
     this.clima(dt); this.gatilhos(); this.emboscadas(dt); this.interacoes(); this.tutorial(dt);
     if (this.def.pvp && this.mp) this.pvp(); if (this.def.desafio) this.desafio(dt);
+    this.companheiro(dt); this.ritmo(dt); if (this.def.mundo === 'leviata') this.barco(dt);
     // câmera
     const v = this.vista, vw = v.W / v.Z, vh = v.H / v.Z;
     v.cam.x = damp(v.cam.x, p.x + p.face * 46 - vw / 2, 6, dt); v.cam.y = damp(v.cam.y, this.camYAlvo(vh), 6, dt); this.prenderCam();
@@ -551,7 +556,7 @@ export class Caminho {
     for (const m of this.moedas) {
       m.t += dt; m.vy += 1500 * dt;
       const dist = Math.hypot(p.x - m.x, p.y - 20 - m.y);
-      if (!m.maldita && m.t > 0.35 && dist < 110 && !p.morto) { m.vx += (p.x - m.x) / dist * 2600 * dt; m.vy += (p.y - 20 - m.y) / dist * 2600 * dt; }
+      if (!m.maldita && m.t > 0.35 && dist < (this.cm.pet === 'papagaio' ? 330 : 110) && !p.morto) { m.vx += (p.x - m.x) / dist * 2600 * dt; m.vy += (p.y - 20 - m.y) / dist * 2600 * dt; }
       m.x += m.vx * dt; m.y += m.vy * dt;
       if (solido(this.N, Math.floor(m.x / T), Math.floor((m.y + 5) / T)) && m.vy > 0) { m.y = Math.floor((m.y + 5) / T) * T - 5; m.vy *= -0.4; m.vx *= 0.7; }
       if (solido(this.N, Math.floor((m.x + Math.sign(m.vx) * 5) / T), Math.floor(m.y / T))) m.vx *= -0.5;
@@ -568,9 +573,9 @@ export class Caminho {
   clima(dt) {
     const p = this.p, tipo = this.tm.perigo;
     if (this.vento) { this.vento.t -= dt; if (!p.morto && p.dashT <= 0) p.x += this.vento.f * dt * (p.chao ? 0.55 : 1) * (p.lamp ? 0.4 : 1); if (Math.random() < dt * 40) this.parts.push({ x: p.x + rand(200, 520), y: p.y - rand(0, 300), vx: this.vento.f * 4, vy: rand(-20, 20), t: 0.6, max: 0.6, r: 1.6, cor: this.tm.acento, g: 0 }); if (this.vento.t <= 0) this.vento = null; }
-    if ((!tipo && this.tm.deco !== 'mastros') || this.luta || this.venceu || p.morto || this.def.paz || this.def.extra) return;
+    if ((!tipo && this.tm.deco !== 'mastros') || (this.luta && this.def.mundo !== 'leviata') || this.venceu || p.morto || this.def.paz || this.def.extra) return; // no barco do Leviatã o mar e as lanças não param
     this.climaT = (this.climaT ?? 6) - dt; if (this.climaT > 0) return;
-    this.climaT = rand(8, 12);
+    this.climaT = this.tm.deco === 'mastros' || this.def.mundo === 'leviata' ? rand(4.5, 7) : rand(8, 12);
     const sala = CH * T, ox = Math.floor(p.x / (CW * T)) * CW * T, oy = Math.floor((p.y - 2) / sala) * sala;
     if (tipo === 'onda') { this.zonas.push({ tipo: 'faixa', x: ox + T, w: (CW - 2) * T, y: oy + sala - T - 30, h: 30, aviso: 1.3, dur: 0.35, cor: '120,210,245', baixo: true }); sfx('swing'); }
     else if (tipo === 'brasas') { for (let i = -1; i <= 1; i++) this.zonas.push({ tipo: 'col', x: p.x + i * 120 + rand(-20, 20), w: 40, aviso: 1.1 + (i + 1) * 0.25, dur: 0.22, cor: '#FF5A3C', y0: oy + T, y1: oy + sala - T }); sfx('shoot'); }
@@ -579,6 +584,38 @@ export class Caminho {
       for (let i = 0; i < 3; i++) this.tiros.push({ x: p.x - lado * (520 + i * 150), y: p.y - 30 - (i === 1 ? 44 : 0), vx: lado * 470, vy: 0, r: 7, vida: 3, cor: '#C9B48A', tipo: 'lanca', fura: true });
     }
     else if (tipo === 'vento') { this.vento = { t: 2.4, f: -150 }; this.textoEm(p.x, p.y - 70, 'vento oriental!', this.tm.acento, 12); sfx('dodge'); }
+  }
+
+  /* ================= Vida no caminho ================= */
+  // o cão ou o papagaio: segue o peregrino e ajuda do seu jeito
+  companheiro(dt) {
+    const tipo = this.cm.pet, p = this.eu; if (!tipo) { this.pet = null; return; }
+    const q = this.pet = this.pet && this.pet.tipo === tipo ? this.pet : { tipo, x: p.x - 30, y: p.y, t: 0, cd: 2, alvo: null, late: 0 };
+    q.t += dt; q.cd -= dt; q.late -= dt;
+    const voa = tipo === 'papagaio', ax = p.x - p.face * (voa ? 26 : 38), ay = voa ? p.y - 62 + Math.sin(q.t * 3) * 6 : p.y;
+    if (q.alvo && q.alvo.hp > 0 && q.mordida > 0) { q.mordida -= dt; q.x = damp(q.x, q.alvo.x, 14, dt); q.y = damp(q.y, q.alvo.y, 14, dt); if (q.mordida <= 0) { this.atingirJa(q.alvo, this.danoBase() * 0.7, q.x - 1, { semOleo: true, hits: new Set(), dir: 'lado' }); this.efeito('faisca', q.alvo.x, q.alvo.y - q.alvo.h / 2); q.alvo = null; } }
+    else { q.x = damp(q.x, ax, voa ? 5 : 7, dt); q.y = damp(q.y, ay, voa ? 5 : 12, dt); q.face = Math.abs(ax - q.x) > 4 ? Math.sign(ax - q.x) : p.face; q.anda = Math.abs(ax - q.x) > 6; }
+    if (tipo === 'cachorro') {
+      if (q.cd <= 0 && this.souDono()) { const e = this.inimigos.filter(v => v.kind === 'vicio' && v.hp > 0 && Math.hypot(v.x - p.x, v.y - p.y) < 190)[0]; if (e) { q.alvo = e; q.mordida = 0.22; q.cd = 2.6; sfx('swing'); } }
+      if (q.late <= 0) { q.late = 3.5; const N = this.N, tx = Math.floor(p.x / T), ty = Math.floor(p.y / T); for (let y = ty - 4; y <= ty + 2; y++) for (let x = tx - 6; x <= tx + 6; x++) { const t = tileEm(N, x, y); if ((t === OCULTO || t === FALSA) && !N.desfeita.has(y * N.w + x)) { this.textoEm(q.x, q.y - 26, 'au! au!', '#FFE9A8', 11); sfx('click'); x = 1e9; y = 1e9; } } }
+    } else if (this.chefe && this.chefe.tele > 0 && q.cd <= 0) { q.cd = 1.4; this.textoEm(q.x, q.y - 14, 'VIGIAI!', '#B8E6A0', 12); sfx('key'); }
+  }
+  // Nada de ficar parado: vencer em sequência rende mais; demorar-se numa página traz o Medo para perto.
+  ritmo(dt) {
+    const p = this.eu, st = this.char.data.stats;
+    if (this.seqT > 0) { this.seqT -= dt; if (this.seqT <= 0) this.seq = 0; }
+    if (st.kills !== this.killsAntes) { if (this.killsAntes != null && st.kills > this.killsAntes) { this.seq = (this.seq || 0) + 1; this.seqT = 3.2; if (this.seq >= 2) { const bonus = Math.min(8, this.seq); this.char.data.gold += bonus; this.ganharOleo(4 + this.seq); this.textoEm(p.x, p.y - 92, 'SEQUÊNCIA ×' + this.seq + '  +' + bonus, '#FFD23F', 12 + Math.min(6, this.seq)); if (this.seq === 5) sfx('level'); } } this.killsAntes = st.kills; }
+    if (!this.def.fase || this.luta || this.emb || p.morto || this.venceu) { this.paradoT = 0; return; }
+    this.paradoT = Math.abs(p.vx) > 40 || p.atk || !p.chao ? 0 : (this.paradoT || 0) + dt;
+    if (this.paradoT > 7 && this.souDono() && this.inimigos.filter(v => v.hp > 0).length < 14) { this.paradoT = 2; const lado = Math.random() < 0.5 ? -1 : 1, v = this.nascer('medo', p.x + lado * 260, p.y - 90, true, 1 + (this.def.fase.nivel || 1) * 0.05); v.irado = 99; this.efeito('sumico', v.x, v.y); this.textoEm(p.x, p.y - 80, 'quem para, a sombra alcança', '#C79BFF', 12); }
+  }
+  // O mar do Leviatã: arpões no convés. Golpes comuns mal arranham as escamas; o arpão fere de verdade.
+  barco(dt) {
+    const A = this.N.arena, p = this.eu; if (!A) return;
+    this.arpT = (this.arpT ?? 1) - dt;
+    if (this.arpT <= 0 && this.luta) { this.arpT = 7; const n = this.objs.filter(o => o.tipo === 'arpao').length; if (n < 3) { const x = A.x0 + 90 + Math.random() * (A.x1 - A.x0 - 180); this.objs.push({ tipo: 'arpao', x, y: A.chao, luz: 60 }); this.fx.anel(x, A.chao - 16, '#BFF0F8', 40); } }
+    for (const o of this.objs) if (o.tipo === 'arpao' && !p.arpao && Math.abs(o.x - p.x) < 26 && Math.abs(o.y - p.y) < 40) { o.fora = true; p.arpao = true; sfx('key'); this.textoEm(p.x, p.y - 70, 'ARPÃO! golpeie para arremessar', '#BFF0F8', 12); }
+    if (p.arpao && p.atk && p.atk.t < 0.03) { p.arpao = false; const d = { lado: [1, 0], cima: [0, -1], diagC: [0.7, -0.7], diagB: [0.7, 0.7], baixo: [0, 1], rasteira: [1, 0] }[p.atk.dir] || [1, 0]; this.tiros.push({ x: p.x, y: p.y - 30, vx: p.face * d[0] * 760, vy: d[1] * 760, r: 9, dano: this.danoBase() * 22, amigo: true, vida: 1.2, cor: '#BFF0F8', tipo: 'lanca', fura: false, basico: true }); sfx('shoot'); this.tremor(3); }
   }
 
   /* ================= Provas do Refúgio ================= */
@@ -904,6 +941,7 @@ export class Caminho {
       case 'lidia': return loja(this);
       case 'ferreiro': return forja(this);
       case 'armeiro': return armeiro(this);
+      case 'noe': return petShop(this);
       case 'dorcas': return guardaRoupa(this);
       case 'mestre': texto = 'Ferro com ferro se afia; assim o homem afia o rosto do seu amigo (Pv 27:17).\n\nA arena é para os peregrinos da mesma sala medirem forças. O desafio das ondas é para quem quer saber até onde aguenta. Melhor marca sua: ' + (cm.recorde || 0) + ' ondas.'; break;
       case 'zaqueu':

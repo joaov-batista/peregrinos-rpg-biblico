@@ -46,7 +46,9 @@ export function showAuth(onDone) {
     h('button', { class: 'link', type: 'button', onclick: () => { net.user = null; dispatchEvent(new Event('peregrinos-sync')); initAudio(); onDone(); } }, 'Jogar sem conta (salva só neste aparelho, sem ranking mundial)'));
   else form.append(h('p', { class: 'muted' }, 'Sua jornada fica salva neste navegador. Crie seu peregrino e descubra a Cidade de Refúgio.'),
     h('button', { class: 'btn gold wide', type: 'button', onclick: () => { initAudio(); onDone(); } }, 'Começar a jornada'));
-  screen(logo(), h('p', { class: 'week' }, 'Estudo da semana: ', h('b', {}, SEMANA_ATUAL.titulo), ' · ' + SEMANA_ATUAL.estudo), form, installButton(msg));
+  const emQuadro = new URLSearchParams(location.search).has('quadro');
+  const juntos = emQuadro ? '' : h('div', { class: 'tela-div' }, h('span', {}, 'No mesmo aparelho, com controles:'), ...[2, 3, 4].map(n => h('button', { class: 'btn sm', type: 'button', onclick: () => { location.href = location.pathname + '?telas=' + n; } }, n + ' jogadores')));
+  screen(logo(), h('p', { class: 'week' }, 'Estudo da semana: ', h('b', {}, SEMANA_ATUAL.titulo), ' · ' + SEMANA_ATUAL.estudo), form, juntos, installButton(msg));
 }
 
 // Botão "Instalar app" (aparece só quando dá para instalar)

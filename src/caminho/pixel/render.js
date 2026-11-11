@@ -56,6 +56,7 @@ function pintarObjeto(g, o, G, x, y, Tm) {
       const t = o.voo ? Tm - o.voo : 0, bx = x + Math.round(t * 46 * (o.x % 2 ? 1 : -1)), by = y - 2 - Math.round(t * 34 + Math.sin(t * 9) * 2), asa = o.voo ? Math.floor(Tm * 14) % 2 : 0; if (t > 4) return true;
       g.fillStyle = '#17121f'; g.fillRect(bx - 3, by - 3, 7, 4); g.fillStyle = '#D9D2C5'; g.fillRect(bx - 2, by - 2, 5, 2); g.fillStyle = '#9FB0C0'; g.fillRect(bx - 2, by - (asa ? 5 : 2), 3, asa ? 3 : 1); g.fillStyle = '#F2C14E'; g.fillRect(bx + 3, by - 2, 1, 1);
       if (!o.voo && Math.floor(Tm * 1.5 + o.x) % 4 === 0) g.fillRect(bx + 3, by - 1, 1, 1); return true; }
+    case 'arpao': { const b = Math.floor(Tm * 3) % 2; g.fillStyle = '#17121f'; g.fillRect(x - 1, y - 24 - b, 3, 24); g.fillStyle = '#A0662A'; g.fillRect(x, y - 23 - b, 1, 22); g.fillStyle = '#EEF6FB'; g.fillRect(x - 1, y - 28 - b, 3, 5); g.fillRect(x, y - 30 - b, 1, 2); g.fillStyle = '#BFF0F8'; g.fillRect(x - 3 + b * 5, y - 32, 1, 1); return true; }
     case 'arvore': { // o sicômoro de Zaqueu: tronco torto, copa em três massas, figos
       const s = sprObj('sicomoro', 96, 112, s => { const T = rampa('#6B4A2E'), F = rampa('#3F7A4A'), F2 = rampa('#2E5E44');
         s.poli([[40, 111], [44, 70], [38, 44], [46, 40], [52, 66], [58, 111]], T[2]); s.poli([[40, 111], [44, 70], [38, 44], [41, 43], [47, 72], [45, 111]], T[1]); s.linha(52, 66, 57, 110, 1, T[3]);
@@ -163,6 +164,15 @@ export function renderPixel(G) {
     g.fillStyle = Math.floor(Tm * 2) % 5 ? '#EF6981' : '#FFFFFF'; g.fillRect(x - 4, y - 20, 2, 3); g.fillRect(x + 3, y - 20, 2, 3);
   }
   for (const m of G.moedas) { const x = X(m.x), y = Y(m.y), f = Math.floor(m.t * 10) % 4, lg = [3, 2, 1, 2][f]; g.fillStyle = '#17121f'; g.fillRect(x - (lg >> 1) - 1, y - 2, lg + 2, 5); g.fillStyle = m.maldita ? '#B8862B' : '#F2C14E'; g.fillRect(x - (lg >> 1), y - 1, lg, 3); g.fillStyle = '#FFF1BE'; g.fillRect(x - (lg >> 1), y - 1, 1, 1); }
+  if (G.pet) { // o companheiro
+    const q = G.pet, x = X(q.x), y = Y(q.y), f = q.face || 1, k = Math.floor(Tm * 8) % 2;
+    if (q.tipo === 'cachorro') { const D = '#8A5A3A', L = '#C9A878', pulo = q.anda ? k : 0; g.fillStyle = '#17121f'; g.fillRect(x - 7, y - 9 - pulo, 14, 7); g.fillRect(x + f * 5 - 2, y - 13 - pulo, 6, 6); g.fillRect(x - f * 8, y - 12 - pulo, 2, 5);
+      g.fillStyle = D; g.fillRect(x - 6, y - 8 - pulo, 12, 5); g.fillRect(x + f * 5 - 1, y - 12 - pulo, 4, 4); g.fillStyle = L; g.fillRect(x - 4, y - 5 - pulo, 8, 2); g.fillRect(x + f * 7, y - 10 - pulo, 2, 2);
+      g.fillStyle = D; for (const dx of [-5, -2, 2, 5]) g.fillRect(x + dx, y - 3, 2, 3 - ((dx + k * 3) % 2 && q.anda ? 1 : 0)); g.fillRect(x - f * 8 + (f > 0 ? 0 : 1), y - 12 - pulo - k, 1, 4); g.fillStyle = '#17121f'; g.fillRect(x + f * 6, y - 11 - pulo, 1, 1); g.fillRect(x + f * 4 - 1, y - 14 - pulo, 2, 2); }
+    else { g.fillStyle = '#17121f'; g.fillRect(x - 4, y - 5, 8, 8); g.fillRect(x - f * 6 - 1, y + 1, 4, 5); g.fillStyle = '#3FA35A'; g.fillRect(x - 3, y - 4, 6, 6); g.fillStyle = '#E2463C'; g.fillRect(x - 3, y - 4, 6, 2); g.fillStyle = '#2F6FD0'; g.fillRect(x - f * 6, y + 2, 3, 3);
+      g.fillStyle = '#F2C14E'; g.fillRect(x + f * 3, y - 2, 2, 2); g.fillStyle = '#17121f'; g.fillRect(x + f * 1, y - 3, 1, 1); g.fillStyle = k ? '#2E8A4A' : '#57C274'; g.fillRect(x - 5, y - (k ? 8 : 1), 10, 3); }
+  }
+  if (p.arpao && !p.morto) { const hx = X(p.x) - p.face * 4, hy = Y(p.y) - 34; g.fillStyle = '#A0662A'; g.fillRect(hx, hy, 1, 26); g.fillStyle = '#EEF6FB'; g.fillRect(hx - 1, hy - 4, 3, 4); }
   // outros peregrinos (multijogador) e o herói
   for (const o of G.outros) pintarJogador(g, o.corpo, o.look, o.cls, o.arma, Tm, o.hab, X, Y, false);
   if (!p.morto) pintarJogador(g, p, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab, X, Y, true);
