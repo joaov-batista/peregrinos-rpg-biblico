@@ -1,3 +1,4 @@
+
 # Peregrinos — RPG bíblico online
 
 > **Arte em pixel (prova de conceito):** novo renderizador em pixel art com protagonista humano personalizável, o chefe Mamom, a arena da Ágora, cenários em paralaxe, HUD e efeitos da PixelFX. Veja [docs/ARTE-PIXEL.md](docs/ARTE-PIXEL.md).
