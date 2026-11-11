@@ -103,3 +103,23 @@ src/caminho/
 - `npm test` inclui `tests/caminho.test.js`: toda área precisa ser atravessável só com o pulo básico, todo segredo alcançável com a armadura, e todo chefe precisa de dados, cutscene e prêmio.
 - O progresso do remake fica em `char.data.caminho`; fases concluídas também entram em `char.data.fases`, como no modo clássico.
 - Os testes de navegador antigos (`tests/*-browser.cjs`) exercitam o modo clássico: rode o servidor com `VITE_MODO=classico npm run dev`.
+
+## Caminhar juntos (até 4 peregrinos, por código de sala)
+
+Menu › **Juntos**. Um peregrino abre a sala e recebe um código de cinco caracteres (o mesmo código volta nas próximas vezes);
+os outros digitam o código, ou abrem o link `?sala=CÓDIGO`. Não há servidor de jogo: os aparelhos conversam direto por WebRTC
+(biblioteca PeerJS, MIT); só o "aperto de mão" inicial passa pelo serviço público de sinalização do PeerJS.
+
+- **O progresso é de cada um.** Rolos, decisões, armadura e relíquias ficam salvos no personagem de cada jogador e continuam
+  valendo quando ele joga sozinho. Cada um precisa ler os rolos da página para abrir a porta e receber a recompensa do chefe.
+- **Quem simula o quê** (`src/caminho/juntos.js`): cada aparelho simula o próprio peregrino, então pulo, golpe e vigília não
+  têm atraso de rede. Em cada área, um aparelho (o primeiro a chegar) é o "dono": simula vícios, chefe, dardos e zonas e envia
+  retratos 15 vezes por segundo. Os outros avisam o dono dos golpes acertados; o dano em si mesmo cada um confere localmente.
+  Se o dono sai da área, outro assume com o estado que já tinha.
+- **Chefes em grupo:** a vida do chefe cresce 60% por companheiro; o alvo é o peregrino vivo mais próximo dentro da arena;
+  o "Está Escrito" vai para todos e vale a maioria (empate conta como acerto); quando alguém cai, o chefe recupera 8% e o
+  caído volta no início da área sem reiniciá-la; se a arena fica vazia por 3 s, a luta se desfaz.
+- **Com janela aberta** (rolo, menu, pergunta) o peregrino não é ferido, mas o mundo continua para os outros.
+- Jogadores podem estar em áreas diferentes; a aba Juntos mostra onde cada um está e tem o botão "Ir até lá".
+- Limite conhecido: se a aba do dono da área fica em segundo plano, o navegador pausa a simulação daquela área.
+- Teste no mesmo aparelho, sem internet: `?redelocal` troca o PeerJS por um BroadcastChannel entre abas.

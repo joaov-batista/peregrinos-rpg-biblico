@@ -9,7 +9,7 @@ import { L, R, U, D } from './nivel.js';
 import { ARMADURA, RELIQUIAS, DIFICULDADES } from './dados.js';
 import { CHEFES } from './chefes.js';
 
-const ABAS = [['jornada', '🕯 Jornada'], ['armadura', '🛡 Armadura'], ['reliquias', '✦ Relíquias'], ['mapa', '🗺 Mapa'], ['biblia', '📖 Bíblia'], ['ajustes', '⚙ Ajustes']];
+const ABAS = [['jornada', '🕯 Jornada'], ['armadura', '🛡 Armadura'], ['reliquias', '✦ Relíquias'], ['mapa', '🗺 Mapa'], ['biblia', '📖 Bíblia'], ['juntos', '👥 Juntos'], ['ajustes', '⚙ Ajustes']];
 
 export function abrirMenu(G, aba = 'jornada') {
   const cm = G.cm, c = G.char;
@@ -19,7 +19,7 @@ export function abrirMenu(G, aba = 'jornada') {
     const ir = a => { aba = a; desenha(); };
     const desenha = () => {
       abas.replaceChildren(...ABAS.map(([id, nome]) => h('button', { class: 'chip-btn' + (id === aba ? ' on' : ''), onclick: () => { sfx('click'); ir(id); } }, nome)));
-      corpo.replaceChildren(...({ jornada, armadura, reliquias, mapa, biblia, ajustes })[aba]());
+      corpo.replaceChildren(...({ jornada, armadura, reliquias, mapa, biblia, juntos, ajustes })[aba]());
     };
     const t = (txt, cls = '') => h('p', { class: cls }, txt);
 
@@ -33,6 +33,34 @@ export function abrirMenu(G, aba = 'jornada') {
       out.push(t('Pontos: ' + Math.floor(c.score) + ' · Perguntas certas: ' + (c.data.stats.quizOk || 0) + ' · Segredos da Escritura achados: ' + cm.ovos.length, 'muted'));
       out.push(h('div', { class: 'btn-row' }, h('button', { class: 'btn gold', onclick: () => close() }, 'Continuar'),
         G.area !== 'refugio' ? h('button', { class: 'btn', onclick: () => { close(); G.entrar('refugio'); } }, 'Voltar ao Refúgio') : ''));
+      return out;
+    }
+    // caminhar juntos: abrir uma sala e passar o código, ou entrar na sala de alguém
+    function juntos() {
+      const mp = G.mp, local = new URLSearchParams(location.search).has('redelocal');
+      const aviso = h('p', { class: 'muted' }, ''), ocupado = (b, txt) => { b.disabled = true; b.textContent = txt; };
+      const falha = e => { aviso.textContent = e.message || 'Não deu certo. Tente de novo.'; desenha(); corpo.append(h('p', { class: 'porque' }, e.message || 'Não deu certo. Tente de novo.')); };
+      if (!mp) {
+        const campo = h('input', { class: 'cm-codigo', maxlength: 5, placeholder: 'CÓDIGO', autocapitalize: 'characters', autocomplete: 'off', spellcheck: 'false' });
+        campo.addEventListener('keydown', e => e.stopPropagation());
+        return [h('h4', {}, 'Caminhar juntos'),
+          t('Até quatro peregrinos na mesma jornada, cada um no seu aparelho. Um abre a sala e passa o código; os outros entram com ele. Não há conta nem servidor de jogo: os aparelhos conversam direto.'),
+          t('O progresso é de cada um. Rolos lidos, peças da armadura e relíquias ficam no seu personagem e continuam valendo quando você caminhar sozinho.', 'muted'),
+          h('div', { class: 'btn-row' }, h('button', { class: 'btn gold', onclick: ev => { ocupado(ev.target, 'Abrindo…'); G.abrirSala(local).then(desenha, falha); } }, cm.sala ? 'Abrir a sala ' + cm.sala : 'Abrir uma sala')),
+          h('h4', {}, 'Entrar numa sala'),
+          h('div', { class: 'btn-row' }, campo, h('button', { class: 'btn', onclick: ev => { const cod = campo.value.trim(); if (cod.length < 5) { aviso.textContent = 'O código tem cinco letras ou números.'; return; } ocupado(ev.target, 'Entrando…'); G.entrarNaSala(cod, local).then(desenha, falha); } }, 'Entrar')),
+          aviso];
+      }
+      const link = location.origin + location.pathname + '?sala=' + mp.codigo, lista = mp.lista();
+      const out = [h('h4', {}, 'Sala ' + mp.codigo), h('div', { class: 'cm-sala' }, mp.codigo),
+        t(mp.anfitriao ? 'Passe este código aos outros peregrinos. A sala fica aberta enquanto você estiver jogando; da próxima vez, o código será o mesmo.' : 'Você está na sala de outro peregrino. Se ele sair, você segue sozinho, com tudo o que conquistou.', 'muted'),
+        h('div', { class: 'btn-row' }, h('button', { class: 'btn', onclick: ev => { navigator.clipboard?.writeText(link).then(() => { ev.target.textContent = 'Link copiado'; }, () => { ev.target.textContent = link; }); } }, 'Copiar o link da sala'))];
+      out.push(h('h4', {}, 'Peregrinos (' + (lista.length + 1) + ' de 4)'), h('div', { class: 'fase-row' }, h('span', { class: 'cm-ico' }, '🕯'), h('div', {}, h('b', {}, c.name + ' (você)'), t(G.def.nome, 'muted'))));
+      for (const o of lista) out.push(h('div', { class: 'fase-row' }, h('span', { class: 'cm-ico' }, '🕯'), h('div', {}, h('b', {}, o.nome), t(o.onde + (o.vidaMax ? ' · fôlegos ' + Math.max(0, o.vida) + '/' + o.vidaMax : ''), 'muted')),
+        o.area && o.area !== G.area ? h('button', { class: 'btn', onclick: () => { close(); G.entrar(o.area); } }, 'Ir até lá') : ''));
+      if (!lista.length) out.push(t('Ninguém entrou ainda.', 'muted'));
+      out.push(t('Na luta contra um chefe, a pergunta do "Está Escrito" vai para todos e vale a resposta da maioria. Se um peregrino cai, a sombra recupera um pouco de força; a recompensa da página é de quem leu os três rolos.', 'muted'),
+        h('div', { class: 'btn-row' }, h('button', { class: 'btn', onclick: () => { G.sairDaSala(); desenha(); } }, mp.anfitriao ? 'Fechar a sala' : 'Sair da sala')));
       return out;
     }
     function armadura() {

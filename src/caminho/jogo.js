@@ -26,6 +26,7 @@ import { abrirMenu, escolherFase, loja } from './menu.js';
 import { renderPixel } from './pixel/render.js';
 import { iconePx } from './pixel/icones.js';
 import { aquecerEfeitos, soltar, atualizarEfeitos } from './pixel/efeitos.js';
+import { Juntos, limparCodigo } from './juntos.js';
 
 const caixa = e => ({ x: e.x - e.w / 2, y: e.y - e.h, w: e.w, h: e.h });
 const toca = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -40,7 +41,7 @@ export class Caminho {
     this.T = 0; this.running = true; this.last = performance.now(); this.hitstop = 0; this.tremorA = 0; this.escuro = 0.4; this.escuroAlvo = 0;
     this.lentidao = 1; this.lentidaoAlvo = 1; this.fade = 1; this.luzCv = document.createElement('canvas');
     this.vista = { W: 0, H: 0, Z: 1, cam: { x: 0, y: 0 } };
-    this.fx = criarFx(this);
+    this.fx = criarFx(this); this.mp = null;
     // arte em pixel (padrão); a arte vetorial antiga fica em Ajustes › Arte
     this.pixel = config.pixel !== false; this.fxPx = []; this.clarao = 0; if (this.pixel) aquecerEfeitos();
     document.body.classList.toggle('cm-pixel', this.pixel);
@@ -56,10 +57,12 @@ export class Caminho {
     if (this.pixel) this.botao.replaceChildren(iconePx('menu', 22));
     this.entrar(this.cm.ebenezer?.area || 'refugio', { ebenezer: true });
     this.raf = requestAnimationFrame(t => this.loop(t));
+    const sala = limparCodigo(new URLSearchParams(location.search).get('sala'));
+    if (sala.length === 5) this.entrarNaSala(sala).catch(e => this.ui.toast(e.message, 6000));
   }
 
   destroy() {
-    this.running = false; cancelAnimationFrame(this.raf); removeEventListener('resize', this.onResize);
+    this.mp?.sair(); this.running = false; cancelAnimationFrame(this.raf); removeEventListener('resize', this.onResize);
     for (const [b, filhos, oculto] of this.icones) { b.replaceChildren(...filhos); b.hidden = oculto; }
     document.body.classList.remove('caminho', 'cm-dash', 'cm-pixel'); input.perfil = null; input.padAcoes = this.padAntes; this.botao.remove(); music(null); this.ui.bossBar(null); this.ui.setInteract(null);
   }
@@ -108,14 +111,15 @@ export class Caminho {
     }
     if (def.fase || def.mundo) this.objs.push({ tipo: 'retorno', x: N.inicio.x - 72, y: N.inicio.y, luz: 80 });
     if (cm.sacola?.area === id) this.objs.push({ tipo: 'sacola', x: cm.sacola.x, y: cm.sacola.y, luz: 70 });
-    this.povoar();
+    this.mp?.mudouArea(id);
+    if (this.souDono()) this.povoar();
     // onde o peregrino aparece
     let pos = N.inicio;
     const eb = this.objs.find(ob => ob.tipo === 'ebenezer');
     if (o.ebenezer && cm.ebenezer?.area === id && eb) pos = { x: eb.x - 40, y: eb.y };
     else if (o.portal) { const pt = this.objs.find(ob => ob.tipo === 'portal' && (ob.semana === o.portal || ob.mundo === o.portal)); if (pt) pos = { x: pt.x, y: pt.y }; }
     const antigo = this.p;
-    this.p = novoHeroi(pos.x, pos.y - 1, this.vidaMax());
+    this.p = this.eu = novoHeroi(pos.x, pos.y - 1, this.vidaMax());
     this.p.oleo = o.manter && antigo ? antigo.oleo : Math.min(this.oleoMax(), OLEO_USO);
     if (o.manter && antigo) this.p.vida = Math.min(this.p.vidaMax, antigo.vida);
     this.usouSelo = false; this.usouCepa = false;
@@ -153,18 +157,18 @@ export class Caminho {
   }
   nascer(tipo, x, y, daLuta, esc = 1) { const e = novoVicio(tipo, x, y, esc); e.daLuta = daLuta; this.inimigos.push(e); return e; }
 
+  temSelos() { const d = this.def, cm = this.cm; return !d.fase || (cm.selos[this.area].length >= (d.rolos || 3) && (d.estacoes || []).every(e => cm.est[this.area].includes(e.id))); }
   conferirPorta(quieto) {
     const d = this.def, cm = this.cm;
     if (!d.chefe) return;
-    const ok = !d.fase || (cm.selos[this.area].length >= (d.rolos || 3) && (d.estacoes || []).every(e => cm.est[this.area].includes(e.id)));
-    if (ok && !this.N.portaAberta && !this.luta) { this.N.portaAberta = true; if (!quieto) { sfx('gate'); this.ui.toast('Os três selos brilham. A porta do chefe se abriu.', 4500); this.tremor(5); } }
+    if (this.temSelos() && !this.N.portaAberta && (!this.luta || this.mp)) { this.N.portaAberta = true; if (!quieto) { sfx('gate'); this.ui.toast('Os três selos brilham. A porta do chefe se abriu.', 4500); this.tremor(5); } }
   }
 
   /* ================= Laço ================= */
   loop(now) {
     if (!this.running) return;
     const dt = Math.min(0.033, (now - this.last) / 1000); this.last = now;
-    if (!this.ui.blocking && !document.hidden) this.update(dt);
+    if (!document.hidden) { if (!this.ui.blocking) this.update(dt); else if (this.mp) this.updateAusente(dt); this.mp?.tick(dt); }
     this.render();
     this.raf = requestAnimationFrame(t => this.loop(t));
   }
@@ -205,16 +209,7 @@ export class Caminho {
     // a lâmpada revela
     if (p.lamp) this.revelar();
     for (let i = 0; i < N.revel.length; i++) if (N.revel[i] > 0) N.revel[i] -= dt;
-    // vícios e chefe
-    for (const e of this.inimigos) {
-      if (e.kind === 'chefe') atualizarChefe(this, e, dt);
-      else if (Math.abs(e.x - p.x) < 900 && Math.abs(e.y - p.y) < 560) atualizarVicio(this, e, dt);
-      if (!p.morto && e.hp > 0 && !e.morrendo && !(e.alpha < 0.5) && (e.kind !== 'vicio' || e.vista > 0.5) && toca(caixa(p), encolhe(caixa(e), e.kind === 'chefe' ? 0.72 : 0.8))) {
-        const r = this.ferirHeroi(e.kind === 'chefe' && e.perigo ? 1 : 1, e);
-        if (r === true && e.ai === 'ladrao' && !e.fugindo) { const q = Math.min(this.char.data.gold, 15); this.char.data.gold -= q; e.roubo = q; e.fugindo = 5; if (q) this.textoEm(p.x, p.y - 50, '−' + q + ' denários!', '#FFD23F'); }
-      }
-    }
-    this.inimigos = this.inimigos.filter(e => e.kind === 'chefe' ? !e.fora : e.hp > 0 || (!e.sumiu && this.matar(e), false));
+    this.simular(dt);
     this.atualizarTiros(dt); this.atualizarZonas(dt); this.atualizarMoedas(dt); this.atualizarFx(dt);
     if (this.pecado) this.atualizarPecado(dt);
     this.clima(dt); this.gatilhos(); this.interacoes();
@@ -224,6 +219,80 @@ export class Caminho {
     this.tremorA = Math.max(0, this.tremorA - dt * 34);
     if (this.chefe) this.ui.bossBar(this.chefe.d.nome, Math.max(0, this.chefe.hp / this.chefe.max), this.chefe.d.titulo, this.chefe.post / 100);
     this.salvaT = (this.salvaT || 0) + dt; if (this.salvaT > 40) { this.salvaT = 0; this.salvar(); }
+  }
+
+  // vícios e chefe. Quem simula é o dono da área; o contato com o MEU peregrino, cada aparelho confere o seu.
+  simular(dt) {
+    const p = this.eu, mp = this.mp, dono = this.souDono() && !this.congela;
+    for (const e of this.inimigos) {
+      if (dono) {
+        const alvo = this.p = mp ? mp.alvo(e, p) : p;
+        if (e.kind === 'chefe') atualizarChefe(this, e, dt);
+        else if (Math.abs(e.x - alvo.x) < 900 && Math.abs(e.y - alvo.y) < 560) atualizarVicio(this, e, dt);
+        this.p = p;
+      }
+      if (this.ausente || p.morto) continue;
+      if (e.kind === 'chefe' && !e.morrendo) {
+        if (e.c.regras?.aura) this.lentidaoAlvo = Math.hypot(p.x - e.x, p.y - e.y) < e.c.regras.aura.raio ? e.c.regras.aura.lentidao : 1;
+        if (e.raios && e.raios.aviso <= 0 && p.inv <= 0) { // raios do relógio
+          const cx = e.x, cy = e.y - e.h * 0.55, r = e.raios;
+          for (let i = 0; i < r.n; i++) { const a = r.a + i * TAU / r.n, ux = Math.cos(a), uy = Math.sin(a), px = p.x - cx, py = p.y - 19 - cy, t = clamp(px * ux + py * uy, 30, r.len); if (Math.hypot(px - ux * t, py - uy * t) < 15) { this.ferirHeroi(1, e); break; } }
+        }
+      }
+      if (e.hp > 0 && !e.morrendo && !(e.alpha < 0.5) && (e.kind !== 'vicio' || e.vista > 0.5) && toca(caixa(p), encolhe(caixa(e), e.kind === 'chefe' ? 0.72 : 0.8))) {
+        const r = this.ferirHeroi(1, e);
+        if (r === true && e.ai === 'ladrao' && !e.fugindo) { const q = Math.min(this.char.data.gold, 15); this.char.data.gold -= q; e.roubo = q; e.fugindo = 5; if (q) this.textoEm(p.x, p.y - 50, '−' + q + ' denários!', '#FFD23F'); }
+      }
+    }
+    this.inimigos = this.inimigos.filter(e => e.kind === 'chefe' ? !e.fora : e.hp > 0 || (!e.sumiu && this.matar(e), false));
+    // juntos: se ninguém vivo ficou na arena, o chefe volta a esperar
+    if (mp && dono && this.luta && this.chefe && !this.chefe.morrendo) { this.vazioT = mp.vivosNaArena(this.N.arena) ? 0 : (this.vazioT || 0) + dt; if (this.vazioT > 3) { this.inimigos = this.inimigos.filter(e => e.kind !== 'chefe' && !e.daLuta); this.lutaRemota(false); } }
+  }
+  // com uma janela aberta numa sala com outros peregrinos, o mundo não para (e quem está lendo não é ferido)
+  updateAusente(dt) {
+    atualizarEfeitos(this.fxPx, dt); this.atualizarFx(dt);
+    if (!this.souDono()) return;
+    this.T += dt; this.ausente = true; this.simular(dt); this.atualizarTiros(dt); this.atualizarZonas(dt); this.ausente = false;
+  }
+
+  /* ================= Juntos ================= */
+  souDono() { return !this.mp || this.mp.souDono; }
+  get outros() { const r = []; if (this.mp) for (const o of this.mp.naArea()) if (!o.h.morto) r.push({ corpo: o.h, look: o.look, cls: o.cls, arma: o.arma, hab: o.hab, nome: o.nome }); return r; }
+  async abrirSala(local) {
+    if (this.mp) return this.mp.codigo;
+    const { novoCodigo } = await import('./juntos.js');
+    let cod = this.cm.sala || novoCodigo(), mp;
+    try { mp = await Juntos.abrir(this, cod, local); } catch (e) { if (!/em uso/.test(e.message)) throw e; cod = novoCodigo(); mp = await Juntos.abrir(this, cod, local); }
+    this.mp = mp; this.cm.sala = cod; this.salvar(); return cod;
+  }
+  async entrarNaSala(cod, local) {
+    if (this.mp) this.mp.sair();
+    this.mp = await Juntos.entrar(this, limparCodigo(cod), local);
+    this.ui.toast('Você entrou na sala ' + this.mp.codigo + '. Seu progresso continua sendo seu.', 5000);
+  }
+  sairDaSala() { this.mp?.sair(); this.mp = null; }
+  // golpe de um companheiro, já calculado no aparelho dele
+  golpeRemoto(e, m) {
+    if (!e || e.hp <= 0 || e.morrendo) return;
+    e.hp -= m.d; e.flash = 0.1; e.semGolpe = 0;
+    if (e.kind === 'chefe') { if (m.cl) e.clones = []; if (m.po) this.postura(e, m.po); if (e.hp <= 0) this.chefeMorre(e); }
+    else { e.stun = Math.max(e.stun, 0.2); e.estado = 'idle'; e.tele = 0; if (m.vx != null) { e.vx = m.vx; e.vy = m.vy; e.chao = false; } }
+  }
+  chefeMorre(e) { e.hp = 0; e.morrendo = 1.7; e.mov = null; e.raios = null; e.clones = []; this.limparPerigos(); this.puxao = null; this.hitstop = 0.3; this.tremor(16); sfx('boss'); for (const v of this.inimigos) if (v.kind === 'vicio') v.hp = 0, v.sumiu = false; }
+  chefeSeFortalece(b, nome) { b.hp = Math.min(b.max, b.hp + b.max * 0.08); this.textoEm(b.x, b.y - b.h - 20, (nome || 'Um peregrino') + ' caiu: a sombra se fortalece', '#FF8A7A', 13); }
+  zonaDefendida(z) { if (z.expoe && z.dono) { z.dono.exposto = 3.2; this.textoEm(z.dono.x, z.dono.y - z.dono.h - 22, 'A TESTA ESTÁ EXPOSTA!', '#FFE9A8', 17); } z.dur = 0; }
+  // a luta começou ou se desfez no aparelho do dono da área
+  lutaRemota(on) {
+    this.luta = on;
+    if (on) { music('chefe'); sfx('boss'); const b = this.inimigos.find(e => e.kind === 'chefe'); if (b) { this.chefe = b; this.ui.banner(b.d.titulo || 'Chefe', b.d.nome, b.d.ref); } }
+    else { this.chefe = null; this.vazioT = 0; this.limparPerigos(); this.puxao = null; this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.ui.bossBar(null); if (!this.venceu) music(this.def.paz ? 'mundo' : 'fase'); }
+  }
+  // sem voltar a gerar a área: os outros continuam nela
+  reviver() {
+    const p = this.eu, eb = this.cm.ebenezer?.area === this.area && this.objs.find(ob => ob.tipo === 'ebenezer'), pos = eb ? { x: eb.x - 40, y: eb.y } : this.N.inicio;
+    Object.assign(p, novoHeroi(pos.x, pos.y - 1, this.vidaMax())); p.oleo = Math.min(this.oleoMax(), OLEO_USO); p.inv = 2; this.fade = 1; this.usouSelo = this.usouCepa = false;
+    this.vista.cam.x = pos.x - this.vista.W / this.vista.Z / 2; this.vista.cam.y = this.camYAlvo(this.vista.H / this.vista.Z); this.prenderCam();
+    this.ui.toast('"O justo cai sete vezes e se levanta" (Pv 24:16). Seus companheiros seguem na luta.', 5000);
   }
 
   // a câmera se alinha à sala (cada sala tem a altura da tela) e só desliza nos poços
@@ -251,11 +320,11 @@ export class Caminho {
   }
 
   /* ================= Combate ================= */
-  efeito(nome, x, y, vira = 1, o) { if (this.pixel) soltar(this.fxPx, nome, x, y, vira, o); }
+  efeito(nome, x, y, vira = 1, o) { if (this.pixel) soltar(this.fxPx, nome, x, y, vira, o); this.mp?.fx(['e', nome, x, y, vira]); }
   tremor(a) { if (config.tremor !== false) this.tremorA = Math.max(this.tremorA, a); }
-  textoEm(x, y, txt, cor = '#fff', tam = 14) { this.textos.push({ x, y, txt, cor, tam, t: 1.3 }); }
-  fala(b, txt) { this.textos.push({ x: b.x, y: b.y - b.h - 16, txt: '“' + txt + '”', cor: '#F2E9D0', tam: 13, t: 2.4, fixo: b }); }
-  grito(txt) { this.gritoTxt = { txt, t: 2.6 }; }
+  textoEm(x, y, txt, cor = '#fff', tam = 14) { this.textos.push({ x, y, txt, cor, tam, t: 1.3 }); this.mp?.fx(['t', x, y, txt, cor, tam]); }
+  fala(b, txt) { this.textos.push({ x: b.x, y: b.y - b.h - 16, txt: '“' + txt + '”', cor: '#F2E9D0', tam: 13, t: 2.4, fixo: b }); if (b.nid) this.mp?.fx(['f', b.nid, txt]); }
+  grito(txt) { this.gritoTxt = { txt, t: 2.6 }; this.mp?.fx(['g', txt]); }
   postura(b, n) { if (b.quebrado > 0) return; b.post = Math.min(100, b.post + n); b.postT = 2.2; if (b.post >= 100) { b.quebrado = 3.4; b.mov = null; this.textoEm(b.x, b.y - b.h - 20, 'QUEBRANTADO!', '#FFE9A8', 20); sfx('crit'); this.tremor(10); this.hitstop = 0.12; this.limparPerigos(); } }
   limparPerigos() { this.tiros = this.tiros.filter(t => t.amigo); this.zonas = []; }
 
@@ -288,6 +357,14 @@ export class Caminho {
   }
 
   atingir(e, dano, deX, atk = {}) {
+    if (this.souDono()) return this.atingirJa(e, dano, deX, atk);
+    // numa área simulada por outro aparelho: sinto o golpe aqui e aviso o dono
+    const hp0 = e.hp, po0 = e.post || 0, q0 = e.quebrado > 0, cl0 = e.clones?.length;
+    const r = this.atingirJa(e, dano, deX, atk);
+    if (e.nid && (hp0 !== e.hp || cl0)) this.mp.ev('g', { id: e.nid, d: Math.round((hp0 - e.hp) * 100) / 100, po: e.kind === 'chefe' ? (e.quebrado > 0 && !q0 ? 100 : Math.max(0, e.post - po0)) : 0, cl: cl0 ? 1 : 0, vx: e.kind === 'vicio' ? Math.round(e.vx) : null, vy: Math.round(e.vy || 0) });
+    return r;
+  }
+  atingirJa(e, dano, deX, atk = {}) {
     const p = this.p, dir = Math.sign(e.x - deX) || 1;
     if (e.kind === 'chefe') {
       if (e.semDano > 0 || e.alpha < 0.5) return false;
@@ -299,7 +376,7 @@ export class Caminho {
       this.fx.faisca(e.x - dir * e.w * 0.3, clamp(p.y - 22, e.y - e.h, e.y), forte ? 12 : 6, forte ? '#FFE9A8' : '#fff'); this.efeito(forte ? 'critico' : 'faiscaLuz', e.x - dir * e.w * 0.3, clamp(p.y - 28, e.y - e.h, e.y), dir);
       if (config.numerosDano !== false) this.textoEm(e.x + rand(-14, 14), e.y - e.h - 4, String(Math.round(d)), forte ? '#FFE9A8' : '#E6E0CF', forte ? 17 : 13);
       this.ganharOleo(atk.semOleo ? 0 : 11); sfx(forte ? 'crit' : 'hit'); this.hitstop = forte ? 0.07 : 0.04; this.tremor(forte ? 6 : 2.5);
-      if (e.hp <= 0) { e.hp = 0; e.morrendo = 1.7; e.mov = null; e.raios = null; e.clones = []; this.limparPerigos(); this.puxao = null; this.hitstop = 0.3; this.tremor(16); sfx('boss'); for (const v of this.inimigos) if (v.kind === 'vicio') v.hp = 0, v.sumiu = false; }
+      if (e.hp <= 0) this.chefeMorre(e);
       return true;
     }
     if (!vulneravel(e, deX)) { sfx('block'); this.fx.faisca(e.x - dir * e.r, e.y - e.h / 2, 5, '#C79BFF'); if (e.ai === 'guarda') this.textoEm(e.x, e.y - e.h - 8, 'pelas costas!', '#C79BFF', 11); return true; }
@@ -314,7 +391,7 @@ export class Caminho {
 
   matar(e) {
     const c = this.char, d = e.d;
-    e.sumiu = true; sfx('kill'); this.efeito('sumico', e.x, e.y); this.fx.po(e.x, e.y - e.h / 2, 16, d.cor || '#8E98BE'); this.fx.anel(e.x, e.y - e.h / 2, d.cor || '#fff', 44);
+    e.sumiu = true; if (this.mp && e.nid) { this.mp.mortos.add(e.nid); if (this.mp.souDono) this.mp.ev('mo', { id: e.nid }); } sfx('kill'); this.efeito('sumico', e.x, e.y); this.fx.po(e.x, e.y - e.h / 2, 16, d.cor || '#8E98BE'); this.fx.anel(e.x, e.y - e.h / 2, d.cor || '#fff', 44);
     if (e.daLuta) return;
     this.soltarMoedas(e.x, e.y - e.h / 2, Math.max(1, Math.round((d.ouro || 4) / 3)) + (e.roubo || 0));
     c.data.stats.kills++; c.data.kills[e.type] = (c.data.kills[e.type] || 0) + 1; this.xp(d.xp || 8); this.pontos(10);
@@ -327,11 +404,12 @@ export class Caminho {
 
   ferirHeroi(n, origem, o = {}) {
     const p = this.p;
-    if (p.morto || p.inv > 0 || this.fade > 0.5) return false;
+    if (this.ausente || p !== this.eu || p.morto || p.inv > 0 || this.fade > 0.5) return false;
     if (p.vig > 0 && !o.espinho && !o.semDefesa) {
       p.inv = 0.4; this.ganharOleo(this.hab.escudo ? 30 : 20); sfx('parry'); vibrar(90, 0.5);
       this.fx.anel(p.x + p.face * 12, p.y - 26, '#FFE9A8', 54); this.fx.faisca(p.x + p.face * 14, p.y - 28, 12, '#FFE9A8'); this.hitstop = 0.09; this.tremor(5);
       this.textoEm(p.x, p.y - 70, 'VIGIAI!', '#FFE9A8', 15); this.efeito('vigilia', p.x + p.face * 14, p.y - 30, p.face); this.clarao = 0.08;
+      if (origem?.nid && !this.souDono()) this.mp.ev('pa', { id: origem.nid, vx: Math.sign(origem.x - p.x) * 240 });
       if (origem?.kind === 'chefe') this.postura(origem, 34);
       else if (origem?.kind === 'vicio') { origem.stun = 1.5; origem.vx = Math.sign(origem.x - p.x) * 240; origem.aberto = 1.5; }
       o.aoDefender?.();
@@ -353,11 +431,13 @@ export class Caminho {
     const p = this.p, c = this.char, cm = this.cm;
     p.morto = true; p.vida = 0; this.mortoT = 1.9; c.data.stats.deaths++; cm.mortes++; this.mortosAqui++;
     sfx('boss'); this.fx.po(p.x, p.y - 20, 30, '#E6E0CF'); this.tremor(14);
+    if (this.mp && this.luta && this.chefe) { if (this.souDono()) { if (this.mp.acompanhado()) this.chefeSeFortalece(this.chefe, this.char.name); } else this.mp.ev('tb'); }
     // a sacola de talentos fica onde você caiu; cair de novo antes de buscá-la a perde
     if (c.data.gold > 0) { cm.sacola = { area: this.area, x: p.seguro.x, y: p.seguro.y, gold: c.data.gold }; c.data.gold = 0; } else if (cm.sacola) cm.sacola = null;
     this.ui.bossBar(null);
   }
   renascer() {
+    if (this.mp?.acompanhado()) return this.reviver();
     const eb = this.cm.ebenezer;
     this.entrar(this.area, { ebenezer: eb?.area === this.area, quieto: true });
     const dica = this.def.chefe && this.mortosAqui >= 2 ? CHEFES[this.def.chefe]?.dica : null;
@@ -396,6 +476,7 @@ export class Caminho {
         }
       } else if (!p.morto && toca({ x: t.x - t.r * 0.7, y: t.y - t.r * (t.tipo === 'choque' ? 1.6 : 0.7), w: t.r * 1.4, h: t.r * (t.tipo === 'choque' ? 2.2 : 1.4) }, pc)) {
         const r = this.ferirHeroi(1, { x: t.x - t.vx * 0.1, y: t.y });
+        if (r && t.nid && this.mp) { this.mp.gasta(t, t.tipo !== 'choque'); if (r === 'parry' && t.tipo !== 'choque') t.nid = 0; }
         if (r === 'parry' && t.tipo !== 'choque') { t.amigo = true; t.vx *= -1.5; t.vy *= -1.5; t.dano = this.danoBase() * (this.hab.escudo ? 3 : 1.5); t.vida = 2; t.cor = '#FFF1BE'; t.g = 0; }
         else if (r) t.vida = t.tipo === 'choque' ? t.vida : 0;
       }
@@ -417,7 +498,7 @@ export class Caminho {
         if (z.efeito === 'sono') { if (p.stunT <= 0 && !z.fez) { z.fez = true; p.stunT = 1.25; p.vx = 0; this.textoEm(p.x, p.y - 56, 'zzz… "Até quando ficarás deitado?" (Pv 6:9)', '#A5CDCE', 12); sfx('wrong'); } }
         else {
           const res = this.ferirHeroi(1, z.dono || { x: z.tipo === 'circ' ? z.x : p.x - p.face, y: p.y }, { semDefesa: z.tipo === 'poca' });
-          if (res === 'parry' && z.lanca && z.dono) { if (z.expoe) { z.dono.exposto = 3.2; this.textoEm(z.dono.x, z.dono.y - z.dono.h - 22, 'A TESTA ESTÁ EXPOSTA!', '#FFE9A8', 17); } z.dur = 0; }
+          if (res === 'parry' && z.lanca && z.dono) { if (z.nid && !this.souDono()) { this.mp.ev('zp', { id: z.nid }); z.dur = 0; } else this.zonaDefendida(z); }
           if (res === true && z.efeito === 'empurra') { p.vx = Math.sign(p.x - z.x) * 520; p.vy = -380; }
         }
       }
@@ -459,15 +540,17 @@ export class Caminho {
   /* ================= Encontros ================= */
   gatilhos() {
     const p = this.p, N = this.N, A = N.arena, d = this.def;
-    if (A && d.chefe && !this.luta && !this.chefe && !this.venceu && !p.morto && p.x > A.x0 + 76) this.iniciarLuta();
+    if (A && d.chefe && !this.luta && !this.chefe && !this.venceu && !p.morto && p.x > A.x0 + 76 && this.T > (this.semLutaAte || 0)) { if (this.souDono()) this.iniciarLuta(); else if (this.T > (this.pedeT || 0)) { this.pedeT = this.T + 1; this.mp.ev('lu'); } }
     if (!A || this.luta) return;
   }
 
   async iniciarLuta() {
     const d = this.def, A = this.N.arena;
-    this.luta = true; this.N.portaAberta = false; sfx('gate'); this.tremor(8);
-    await this.cinema(CINEMA_CHEFE[d.chefe] || 'chefe-' + d.chefe);
+    this.luta = true; this.vazioT = 0; sfx('gate'); this.tremor(8);
+    const juntos = this.mp?.acompanhado();
+    if (!juntos) { this.N.portaAberta = false; await this.cinema(CINEMA_CHEFE[d.chefe] || 'chefe-' + d.chefe); }
     const b = novoChefe(d.chefe, A, this.dif);
+    if (juntos) { b.max = b.hp = Math.round(b.hp * (1 + 0.6 * this.mp.naArea().length)); b.art.max = b.max; } // mais peregrinos, mais fôlego na sombra
     this.inimigos.push(b); this.chefe = b; music('chefe'); sfx('boss');
     this.ui.banner(b.d.titulo || 'Chefe', b.d.nome, b.d.ref);
     if (b.d.intro) this.fala(b, b.d.intro.replace(/\*/g, ''));
@@ -475,26 +558,30 @@ export class Caminho {
 
   // "Está escrito": a luta para e o chefe acusa. A resposta certa o quebranta; a errada o fortalece.
   async estaEscrito(b) {
-    const f = this.def.fase, st = this.char.data.stats;
+    this.p = this.eu;
+    const f = this.def.fase;
+    const pacote = b.c.acusacoes || !f ? { acc: pick(ACUSACOES), falsas: shuffle(FALSAS.slice()).slice(0, 2) } : { q: this.sortearPergunta(f) };
     let ok;
-    if (b.c.acusacoes || !f) {
-      const acc = pick(ACUSACOES); ok = await this.ui.verseBattle(acc, shuffle(FALSAS.slice()).slice(0, 2));
-      if (ok && !this.char.data.verses.includes(acc.ref)) this.char.data.verses.push(acc.ref);
-    } else {
-      const q = this.sortearPergunta(f);
-      ok = await this.ui.quiz({ ...q, fb: ['Está escrito! O chefe está quebrantado.', 'O chefe se fortalece com o seu engano.'] }, 'ESTÁ ESCRITO · ' + b.d.nome);
-      this.revisao(q, ok);
-    }
+    if (this.mp?.acompanhado()) { this.congela = true; ok = await this.mp.quizJunto(pacote, b); this.congela = false; }
+    else { ok = await this.perguntaDoChefe(b, pacote); this.respostaDoGrupo(ok, true); }
     if (!this.running || b.hp <= 0) return;
     if (ok) {
-      st.quizOk++; this.ok++; this.pontos(150);
       const dano = b.max * 0.08 * (this.tem('anel_beltessazar') ? 2 : 1); b.hp = Math.max(1, b.hp - dano); b.post = 0; b.quebrado = 3.6;
-      this.p.oleo = this.oleoMax(); this.textoEm(b.x, b.y - b.h - 20, 'ESTÁ ESCRITO!', '#FFE9A8', 22); this.efeito('pilar', b.x, this.N.arena.chao); this.clarao = 0.25; this.fx.anel(b.x, b.y - b.h / 2, '#FFE9A8', 160); this.tremor(12); sfx('right');
+      this.textoEm(b.x, b.y - b.h - 20, 'ESTÁ ESCRITO!', '#FFE9A8', 22); this.efeito('pilar', b.x, this.N.arena.chao); this.clarao = 0.25; this.fx.anel(b.x, b.y - b.h / 2, '#FFE9A8', 160); this.tremor(12); sfx('right');
     } else {
-      st.quizErr++; this.err++; b.hp = Math.min(b.max, b.hp + b.max * 0.06); b.furia = 10; sfx('wrong');
+      b.hp = Math.min(b.max, b.hp + b.max * 0.06); b.furia = 10; sfx('wrong');
       this.textoEm(b.x, b.y - b.h - 20, 'O engano o fortalece', '#FF8A7A', 16);
     }
   }
+  // cada peregrino responde no próprio aparelho; os acertos e a revisão são de cada um
+  async perguntaDoChefe(b, pacote) {
+    const st = this.char.data.stats; let ok;
+    if (pacote.acc) { ok = await this.ui.verseBattle(pacote.acc, pacote.falsas); if (ok && !this.char.data.verses.includes(pacote.acc.ref)) this.char.data.verses.push(pacote.acc.ref); }
+    else { ok = await this.ui.quiz({ ...pacote.q, fb: ['Está escrito! O chefe está quebrantado.', 'O chefe se fortalece com o seu engano.'] }, 'ESTÁ ESCRITO · ' + b.d.nome); this.revisao(pacote.q, ok); }
+    if (ok) { st.quizOk++; this.ok++; this.pontos(150); } else { st.quizErr++; this.err++; }
+    return ok;
+  }
+  respostaDoGrupo(ok, so) { if (ok) this.eu.oleo = this.oleoMax(); if (!so) this.ui.toast(ok ? 'A maioria respondeu certo: o chefe está quebrantado.' : 'A maioria errou: o engano fortalece o chefe.', 4000); }
   sortearPergunta(f) {
     const k = f.n, u = this.usados[k] = this.usados[k] || [];
     let op = f.quiz.filter(q => !u.includes(q.q)); if (!op.length) { u.length = 0; op = f.quiz; }
@@ -508,8 +595,13 @@ export class Caminho {
 
   async chefeCaiu(b) {
     const d = this.def, cm = this.cm, c = this.char;
-    b.fora = true; this.chefe = null; this.luta = false; this.venceu = true; this.N.portaAberta = true; this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.peso = 0;
+    this.p = this.eu;
+    if (this.mp && !b.remoto && b.nid) this.mp.ev('cc', { id: b.nid });
+    b.fora = true; this.chefe = null; this.luta = false; this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.peso = 0; this.puxao = null;
     this.ui.bossBar(null); music('fase'); sfx('level');
+    // juntos, a vitória só conta para quem leu os rolos desta página
+    if (this.mp && !this.temSelos()) { this.ui.toast(b.d.nome + ' caiu, mas a recompensa é de quem leu os três rolos desta página. Leia-os e enfrente-o de novo.', 8000); this.semLutaAte = this.T + 8; return; }
+    this.venceu = true; this.N.portaAberta = true;
     this.fx.anel(b.x, b.y - b.h / 2, '#FFE9A8', 260); this.soltarMoedas(b.x, b.y - b.h / 2, 18);
     cm.chefes[b.id] = (cm.chefes[b.id] || 0) + 1; c.data.stats.bosses = c.data.stats.bosses || {}; c.data.stats.bosses[b.id] = (c.data.stats.bosses[b.id] || 0) + 1;
     this.p.vida = this.p.vidaMax;
@@ -626,7 +718,7 @@ export class Caminho {
       case 'npc': await this.falar(ob); break;
       case 'ebenezer': {
         const primeira = !cm.ebenezer;
-        cm.ebenezer = { area: this.area }; if (!this.luta) this.povoar(); p.vida = p.vidaMax; p.oleo = Math.max(p.oleo, OLEO_USO); this.usouSelo = this.usouCepa = false; sfx('heal'); this.fx.anel(ob.x, ob.y - 30, '#FFE9A8', 120); this.salvar();
+        cm.ebenezer = { area: this.area }; if (!this.luta && this.souDono()) this.povoar(); p.vida = p.vidaMax; p.oleo = Math.max(p.oleo, OLEO_USO); this.usouSelo = this.usouCepa = false; sfx('heal'); this.fx.anel(ob.x, ob.y - 30, '#FFE9A8', 120); this.salvar();
         if (primeira) this.ovo('ebenezer', '"Até aqui nos ajudou o Senhor" (1Sm 7:12). As Pedras de Ebenézer guardam o seu caminho.');
         const acoes = [{ label: 'Levantar' }];
         if (this.area !== 'refugio') acoes.push({ label: 'Voltar ao Refúgio', fn: () => this.entrar('refugio', { ebenezer: false }) });
@@ -854,9 +946,9 @@ function criarFx(G) {
   const add = o => { if (G.parts.length < 420) G.parts.push({ max: o.t, ...o }); };
   return {
     po(x, y, n, cor) { for (let i = 0; i < n; i++) add({ x: x + rand(-6, 6), y: y + rand(-4, 2), vx: rand(-90, 90), vy: rand(-110, -10), t: rand(0.25, 0.6), r: rand(1.5, 3.4), cor, g: 240 }); },
-    faisca(x, y, n, cor) { for (let i = 0; i < n; i++) { const a = rand(0, TAU), s = rand(120, 380); add({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: rand(0.12, 0.3), r: rand(1.2, 2.6), cor, g: 0 }); } },
+    faisca(x, y, n, cor) { G.mp?.fx(['p', 'faisca', x, y, n, cor]); for (let i = 0; i < n; i++) { const a = rand(0, TAU), s = rand(120, 380); add({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: rand(0.12, 0.3), r: rand(1.2, 2.6), cor, g: 0 }); } },
     sobe(x, y, n, cor) { for (let i = 0; i < n; i++) add({ x: x + rand(-14, 14), y: y - rand(0, 30), vx: rand(-12, 12), vy: rand(-90, -40), t: rand(0.5, 1), r: rand(1.4, 2.6), cor, g: -30 }); },
-    anel(x, y, cor, r) { add({ x, y, vx: 0, vy: 0, t: 0.42, r, cor, anel: true, g: 0 }); },
+    anel(x, y, cor, r) { add({ x, y, vx: 0, vy: 0, t: 0.42, r, cor, anel: true, g: 0 }); G.mp?.fx(['p', 'anel', x, y, cor, r]); },
     asas(x, y) { for (const s of [-1, 1]) for (let i = 0; i < 5; i++) add({ x: x + s * (6 + i * 4), y: y + i * 2, vx: s * rand(40, 120), vy: rand(20, 90), t: rand(0.25, 0.5), r: rand(2, 3.5), cor: '#F2F0E4', g: 200 }); }
   };
 }

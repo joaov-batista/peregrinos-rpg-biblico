@@ -328,12 +328,6 @@ export function atualizarChefe(G, b, dt) {
     // regras passivas
     if (c.regras?.regenera) { b.semGolpe = (b.semGolpe || 0) + dt; if (b.semGolpe > c.regras.regenera.apos && b.hp < b.max) { b.hp = Math.min(b.max, b.hp + b.max * c.regras.regenera.taxa * dt); if (Math.random() < dt * 5) G.fx.sobe(b.x + rand(-20, 20), b.y - 30, 1, '#A5CDCE'); } }
   }
-  if (c.regras?.aura) G.lentidaoAlvo = Math.hypot(p.x - b.x, p.y - b.y) < c.regras.aura.raio ? c.regras.aura.lentidao : 1;
-  // raios do relógio
-  if (b.raios && b.raios.aviso <= 0 && p.inv <= 0) {
-    const cx = b.x, cy = b.y - b.h * 0.55, r = b.raios;
-    for (let i = 0; i < r.n; i++) { const a = r.a + i * TAU / r.n, ux = Math.cos(a), uy = Math.sin(a), px = p.x - cx, py = p.y - 19 - cy, t = clamp(px * ux + py * uy, 30, r.len), dd = Math.hypot(px - ux * t, py - uy * t); if (dd < 15) { G.ferirHeroi(1, b); break; } }
-  }
   // física
   if (b.voa || b.mov?.def.tipo === 'mergulho') { b.x = clamp(b.x + b.vx * dt, A.x0 + b.w / 2, A.x1 - b.w / 2); }
   else { b.vy = Math.min(1100, b.vy + 2050 * dt); mover(G.N, b, dt); b.x = clamp(b.x, A.x0 + b.w / 2, A.x1 - b.w / 2); if (b.x <= A.x0 + b.w / 2 + 1) b.parede = -1; else if (b.x >= A.x1 - b.w / 2 - 1) b.parede = 1; }

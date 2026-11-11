@@ -30,3 +30,8 @@ body.caminho.touch #bossBar { top: calc(var(--safe-t, 0px) + 8px); }
 body.caminho:not(.cm-dash) #aLock { display: none !important; }
 body.cm-pixel #bossBar { display: none !important; }
 body.cm-pixel #banner b, body.cm-pixel #banner small, body.cm-pixel #banner i { font-family: 'Pixelify Sans', Cinzel, serif; }
+
+/* caminhar juntos */
+.cm-codigo { width: 7.5em; padding: .55em .7em; font: 700 1.15rem/1 'Pixelify Sans', monospace; letter-spacing: .28em; text-transform: uppercase; text-align: center; color: #F2E9D0; background: #17121f; border: 2px solid #5b4a6e; border-radius: 6px; }
+.cm-codigo:focus { outline: 2px solid #FFE9A8; outline-offset: 1px; }
+.cm-sala { font: 700 2.2rem/1.2 'Pixelify Sans', monospace; letter-spacing: .3em; text-align: center; color: #FFE9A8; padding: .3em 0 .2em; user-select: all; }
