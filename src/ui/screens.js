@@ -15,7 +15,7 @@ function screen(...kids) {
   const s = scr(); s.classList.remove('creating'); s.innerHTML = ''; s.hidden = false; ligarCeu();
   s.append(h('div', { class: 'screen' }, ...kids));
 }
-const logo = () => h('div', { class: 'logo' }, h('span', { class: 'cross' }, '✝'), h('h1', {}, 'PEREGRINOS'), h('p', {}, 'RPG bíblico online'));
+const logo = () => h('div', { class: 'logo' }, h('span', { class: 'cross' }, '✝'), h('h1', {}, 'PEREGRINOS'), h('p', {}, document.documentElement.classList.contains('remake') ? 'O Caminho' : 'RPG bíblico online'));
 
 export function showAuth(onDone) {
   let mode = 'entrar';

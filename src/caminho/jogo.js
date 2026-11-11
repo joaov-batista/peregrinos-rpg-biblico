@@ -14,7 +14,7 @@ import { CINEMAS, CINEMA_CHEFE } from '../content/cinematicas.js';
 import { TODAS } from '../content/index.js';
 import { xpNeed, MAX_LEVEL, faseProg } from '../game/player.js';
 import { drawPerson } from '../game/character-art.js';
-import { T, CW, CH, gerarNivel, tileEm, ESPINHO, OCULTO, FALSA } from './nivel.js';
+import { T, CW, CH, gerarNivel, tileEm, ESPINHO, OCULTO, FALSA, VAZIO, TRANCA, SOLIDO, PONTE } from './nivel.js';
 import { solido } from './corpo.js';
 import { novoHeroi, atualizarHeroi, desenharHeroi, ARMAS, OLEO_USO, damp } from './heroi.js';
 import { novoVicio, atualizarVicio, desenharVicio, vulneravel } from './bichos.js';
@@ -27,6 +27,18 @@ import { renderPixel } from './pixel/render.js';
 import { iconePx } from './pixel/icones.js';
 import { aquecerEfeitos, soltar, atualizarEfeitos } from './pixel/efeitos.js';
 import { Juntos, limparCodigo } from './juntos.js';
+
+// Primeiros passos: [toque, controle, teclado]
+const PASSOS = [
+  { id: 'andar', titulo: 'ANDAR', txt: ['Arraste o dedo no lado esquerdo da tela.', 'Use o direcional esquerdo.', 'A e D (ou as setas) para andar.'] },
+  { id: 'pular', titulo: 'SALTO DUPLO', txt: ['Toque em PULAR e, no ar, toque de novo.', 'Pule e, no ar, pule de novo.', 'Espaço para pular. No ar, aperte de novo.'] },
+  { id: 'passo', titulo: 'PASSO PRONTO', txt: ['Toque em PASSO: você atravessa o perigo. Ele demora a voltar (as três setas no alto).', 'Use o passo pronto: atravessa o perigo, mas demora a voltar.', 'C: atravessa o perigo. Demora a voltar (as três setas no alto).'] },
+  { id: 'golpe', titulo: 'GOLPE', txt: ['Toque em GOLPE. Segurando para cima ou para baixo, o golpe muda de direção.', 'Golpeie. Com o direcional para cima ou para baixo, o golpe muda.', 'J (ou clique) golpeia. Segure W ou S para golpear para cima e para baixo.'] },
+  { id: 'luz', titulo: 'A LÂMPADA · LUZ', txt: ['Segure LÂMPADA: a luz cresce e revela paredes falsas e pisos escondidos.', 'Segure a lâmpada: a luz revela paredes falsas e pisos escondidos.', 'Segure Shift: a luz cresce e revela paredes falsas e pisos escondidos.'] },
+  { id: 'vigilia', titulo: 'A LÂMPADA · VIGÍLIA', txt: ['É a sua única defesa. Toque em LÂMPADA no instante em que o dardo chega. Cedo ou tarde demais, não protege.', 'É a sua única defesa. Erga a lâmpada no instante em que o dardo chega.', 'É a sua única defesa. Aperte Shift no instante em que o dardo chega. Cedo ou tarde demais, não protege.'] },
+  { id: 'azeite', titulo: 'O AZEITE', txt: ['O jarro no alto é o azeite da lâmpada. Cada golpe certo e cada defesa perfeita o enchem.'] },
+  { id: 'orar', titulo: 'ORAR', txt: ['Segure ORAR, parado: gasta um terço do azeite e devolve um fôlego.', 'Segure orar, parado: gasta um terço do azeite e devolve um fôlego.', 'Segure H, parado: gasta um terço do azeite e devolve um fôlego.'] }
+];
 
 const caixa = e => ({ x: e.x - e.w / 2, y: e.y - e.h, w: e.w, h: e.h });
 const toca = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -51,7 +63,7 @@ export class Caminho {
     this.botao = h('button', { id: 'cmMenu', 'aria-label': 'Menu', title: 'Menu (Esc)', onclick: () => this.menu() }, '☰');
     document.body.append(this.botao);
     this.padAntes = input.padAcoes; input.padAcoes = { menu: () => this.menu(), mapa: () => this.menu('mapa') };
-    for (const [act, nome] of Object.entries({ dodge: 'Pular', lock: 'Passo Pronto', defend: 'Vigília', botija: 'Orar', skill: CLASSES[char.cls]?.skill.nome || 'Verso', attack: 'Golpe' })) { const b = document.querySelector(`[data-act="${act}"]`); if (b) { b.dataset.name = nome; b.title = nome; } }
+    for (const [act, nome] of Object.entries({ dodge: 'Pular', lock: 'Passo', defend: 'Lâmpada', botija: 'Orar', skill: CLASSES[char.cls]?.skill.nome || 'Verso', attack: 'Golpe' })) { const b = document.querySelector(`[data-act="${act}"]`); if (b) { b.dataset.name = nome; b.title = nome; } }
     this.icones = [];
     for (const [act, simb] of Object.entries({ dodge: '⤒', lock: '»', defend: '🪔', botija: '🙏' })) { const b = document.querySelector(`[data-act="${act}"]`); if (b) { this.icones.push([b, [...b.childNodes], b.hidden]); b.replaceChildren(this.pixel ? iconePx({ dodge: 'pular', lock: 'passo', defend: 'lampada', botija: 'orar' }[act]) : simb); b.hidden = false; } }
     if (this.pixel) this.botao.replaceChildren(iconePx('menu', 22));
@@ -98,7 +110,7 @@ export class Caminho {
     const N = this.N = gerarNivel(def);
     N.revel = new Float32Array(N.w * N.h); N.desfeita = new Set(); N.portaAberta = false;
     this.inimigos = []; this.tiros = []; this.zonas = []; this.moedas = []; this.parts = []; this.textos = []; this.chefe = null; this.puxao = null; this.pecado = null;
-    this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.peso = 0; this.luta = false; this.venceu = false; this.vento = null; this.climaT = 6; this.usados = {}; this.perto = null;
+    this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.peso = 0; this.luta = false; this.venceu = false; this.vento = null; this.climaT = 6; this.usados = {}; this.perto = null; this.emb = null;
     cm.selos[id] = cm.selos[id] || []; cm.est[id] = cm.est[id] || []; cm.seg[id] = cm.seg[id] || [];
     // objetos da área
     this.objs = N.objs.filter(ob => !(ob.tipo === 'segredo' && cm.seg[id].includes(ob.n)));
@@ -138,7 +150,7 @@ export class Caminho {
     else if (def.id === 'refugio' && !this.cm.visto.intro) {
       this.cm.visto.intro = 1;
       await this.cinema('caminho-prologo');
-      await this.ui.dialog({ nome: 'Como caminhar', texto: this.textoControles(), acoes: [{ label: 'Entendi' }] });
+      this.cm.visto.tut = 0; // os primeiros passos são ensinados fazendo (ver tutorial())
     }
   }
   textoControles() {
@@ -153,7 +165,7 @@ export class Caminho {
     this.inimigos = this.inimigos.filter(e => e.kind === 'chefe');
     if (!def.inimigos) return;
     const esc = 1 + (def.fase?.nivel || 1) * 0.05, voadores = ['distracao', 'duvida', 'medo', 'vaidade'];
-    this.N.spawns.forEach((s, i) => { const tipos = def.inimigos.filter(t => !!s.voa === voadores.includes(t)), lista = tipos.length ? tipos : def.inimigos; this.nascer(lista[i % lista.length], s.x, s.y + 14, false, esc); });
+    this.N.spawns.forEach((s, i) => { const tipos = def.inimigos.filter(t => !!s.voa === voadores.includes(t)), lista = tipos.length ? tipos : def.inimigos; this.nascer(lista[i % lista.length], s.x, s.y + 14, false, esc).cel = s.cel; });
   }
   nascer(tipo, x, y, daLuta, esc = 1) { const e = novoVicio(tipo, x, y, esc); e.daLuta = daLuta; this.inimigos.push(e); return e; }
 
@@ -212,7 +224,7 @@ export class Caminho {
     this.simular(dt);
     this.atualizarTiros(dt); this.atualizarZonas(dt); this.atualizarMoedas(dt); this.atualizarFx(dt);
     if (this.pecado) this.atualizarPecado(dt);
-    this.clima(dt); this.gatilhos(); this.interacoes();
+    this.clima(dt); this.gatilhos(); this.emboscadas(dt); this.interacoes(); this.tutorial(dt);
     // câmera
     const v = this.vista, vw = v.W / v.Z, vh = v.H / v.Z;
     v.cam.x = damp(v.cam.x, p.x + p.face * 46 - vw / 2, 6, dt); v.cam.y = damp(v.cam.y, this.camYAlvo(vh), 6, dt); this.prenderCam();
@@ -412,7 +424,7 @@ export class Caminho {
       if (origem?.nid && !this.souDono()) this.mp.ev('pa', { id: origem.nid, vx: Math.sign(origem.x - p.x) * 240 });
       if (origem?.kind === 'chefe') this.postura(origem, 34);
       else if (origem?.kind === 'vicio') { origem.stun = 1.5; origem.vx = Math.sign(origem.x - p.x) * 240; origem.aberto = 1.5; }
-      o.aoDefender?.();
+      o.aoDefender?.(); this.tutParry = true;
       return 'parry';
     }
     p.vida -= n; p.inv = this.tem('manto_marinheiro') ? 1.7 : 1.15; p.stunT = 0.24; p.orando = 0; p.carga = 0; p.atk = null; p.dashT = 0;
@@ -475,6 +487,7 @@ export class Caminho {
           t.hits.add(e); if (this.atingir(e, t.dano, t.x - t.vx, { dir: 'lado', carga: t.tipo === 'onda', semOleo: t.tipo !== 'pedra' }) && !t.fura) { t.vida = 0; break; }
         }
       } else if (!p.morto && toca({ x: t.x - t.r * 0.7, y: t.y - t.r * (t.tipo === 'choque' ? 1.6 : 0.7), w: t.r * 1.4, h: t.r * (t.tipo === 'choque' ? 2.2 : 1.4) }, pc)) {
+        if (t.treino && !(p.vig > 0)) { t.vida = 0; this.fx.po(t.x, t.y, 5, t.cor); this.textoEm(p.x, p.y - 64, p.lamp ? 'cedo demais' : 'erga a lâmpada quando o dardo chegar', '#C9B88A', 12); continue; }
         const r = this.ferirHeroi(1, { x: t.x - t.vx * 0.1, y: t.y });
         if (r && t.nid && this.mp) { this.mp.gasta(t, t.tipo !== 'choque'); if (r === 'parry' && t.tipo !== 'choque') t.nid = 0; }
         if (r === 'parry' && t.tipo !== 'choque') { t.amigo = true; t.vx *= -1.5; t.vy *= -1.5; t.dano = this.danoBase() * (this.hab.escudo ? 3 : 1.5); t.vida = 2; t.cor = '#FFF1BE'; t.g = 0; }
@@ -535,6 +548,79 @@ export class Caminho {
     if (tipo === 'onda') { this.zonas.push({ tipo: 'faixa', x: ox + T, w: (CW - 2) * T, y: oy + sala - T - 30, h: 30, aviso: 1.3, dur: 0.35, cor: '120,210,245', baixo: true }); sfx('swing'); }
     else if (tipo === 'brasas') { for (let i = -1; i <= 1; i++) this.zonas.push({ tipo: 'col', x: p.x + i * 120 + rand(-20, 20), w: 40, aviso: 1.1 + (i + 1) * 0.25, dur: 0.22, cor: '#FF5A3C', y0: oy + T, y1: oy + sala - T }); sfx('shoot'); }
     else if (tipo === 'vento') { this.vento = { t: 2.4, f: -150 }; this.textoEm(p.x, p.y - 70, 'vento oriental!', this.tm.acento, 12); sfx('dodge'); }
+  }
+
+  /* ================= Primeiros passos ================= */
+  // Uma dica por vez, no rodapé; cada uma some quando o jogador FAZ o que ela ensina.
+  tutorial(dt) {
+    const v = this.cm.visto, p = this.eu;
+    if (v.tut == null || v.tut >= PASSOS.length) { this.dicaTxt = null; return; }
+    const s = PASSOS[v.tut], modo = input.touch ? 0 : document.body.classList.contains('pad') ? 1 : 2;
+    this.tutT = (this.tutT || 0) + dt; this.dicaTxt = { titulo: s.titulo, txt: s.txt[modo] || s.txt[0], n: v.tut + 1, de: PASSOS.length };
+    if (s.id === 'andar') this.tutAndou = (this.tutAndou || 0) + Math.abs(p.vx) * dt;
+    if (s.id === 'vigilia' && this.area === 'refugio' && !p.morto) { // dardos de treino: não ferem, só ensinam o tempo
+      this.tutDardo = (this.tutDardo || 1.2) - dt;
+      if (this.tutDardo <= 0) { this.tutDardo = 2.4; const d = p.face || 1; this.tiros.push({ x: p.x + d * 430, y: p.y - 28, vx: -d * 300, vy: 0, r: 7, vida: 3, cor: '#E8D9A8', tipo: 'bola', treino: true, fura: true }); }
+    }
+    const feito = { andar: this.tutAndou > 220, pular: !p.chao && p.pulos <= 0 && p.vy < 0, passo: p.dashT > 0, golpe: !!p.atk, luz: p.lampA > 0.8 && this.tutT > 2.5, vigilia: this.tutParry, orar: p.orando > 0.5 || this.tutT > 14, azeite: this.tutT > 8 }[s.id];
+    if (feito && this.tutT > 0.8) { v.tut++; this.tutT = 0; this.tutParry = false; sfx('right'); if (v.tut >= PASSOS.length) { this.ui.toast('Você sabe caminhar. O primeiro portal leva a Corinto.', 5000); this.salvar(); } }
+  }
+
+  /* ================= Emboscadas ================= */
+  // Cada rolo é guardado: ao entrar na câmara as grades descem e os vícios vêm em ondas. Vencidos, o rolo pode ser lido.
+  camaraDe(ob) { const c = ob.cel; return c && c.papel === 'corredor' && this.def.fase ? c : null; }
+  roloLivre(ob) {
+    const c = this.camaraDe(ob); if (!c || c.vencida) return true;
+    if (this.souDono()) return false;
+    const x0 = c.cx * CW * T, y0 = c.cy * CH * T; // em sala de outro aparelho: livre quando não há grade nem vício na câmara
+    return !this.emb && !this.inimigos.some(e => e.hp > 0 && e.x > x0 && e.x < x0 + CW * T && e.y > y0 && e.y < y0 + CH * T);
+  }
+  trancar(c, fecha) {
+    const N = this.N, ox = c.cx * CW, oy = c.cy * CH;
+    for (const x of [ox, ox + CW - 1]) for (let y = 13; y <= 15; y++) { const i = (oy + y) * N.w + x; if (fecha ? N.tiles[i] === VAZIO : N.tiles[i] === TRANCA) N.tiles[i] = fecha ? TRANCA : VAZIO; }
+  }
+  emboscadas(dt) {
+    const N = this.N, p = this.eu, f = this.def.fase;
+    if (!f || this.luta) return;
+    if (!this.souDono()) { // a grade acompanha o que o dono da área manda
+      const c = this.embRemota != null ? N.celulas[this.embRemota] : null;
+      if (c !== this.embLocal) { if (this.embLocal) this.trancar(this.embLocal, false); if (c) { this.trancar(c, true); sfx('gate'); } this.embLocal = c; }
+      return;
+    }
+    const e = this.emb;
+    if (!e) {
+      if (p.morto) return;
+      const cx = Math.floor(p.x / (CW * T)), cy = Math.floor((p.y - 2) / (CH * T)), c = N.celulas.find(q => q.cx === cx && q.cy === cy);
+      if (!c || c.papel !== 'corredor' || c.vencida) return;
+      const rolo = this.objs.find(o => o.tipo === 'rolo' && o.cel === c);
+      if (!rolo || rolo.feito) { c.vencida = true; return; }
+      const lx = p.x - cx * CW * T; if (lx < 4 * T || lx > (CW - 4) * T) return;
+      this.emb = { c, onda: 0, total: (f.n >= 4 ? 3 : 2) + (this.cm.dif === 'fornalha' ? 1 : 0), t: 0.9 };
+      this.trancar(c, true); sfx('gate'); this.tremor(7); this.grito('Os vícios guardam o rolo');
+      return;
+    }
+    const vivos = this.inimigos.some(v => v.cel === e.c && v.hp > 0);
+    if (vivos) return;
+    e.t -= dt; if (e.t > 0) return;
+    if (e.onda >= e.total) {
+      e.c.vencida = true; this.emb = null; this.trancar(e.c, false); sfx('gate'); sfx('right'); this.tremor(5); this.ganharOleo(22);
+      const rolo = this.objs.find(o => o.tipo === 'rolo' && o.cel === e.c); if (rolo) { this.fx.anel(rolo.x, rolo.y - 30, '#FFE9A8', 120); this.efeito('pilar', rolo.x, rolo.y); }
+      this.ui.toast('A câmara está livre. Leia o rolo.', 3500); return;
+    }
+    // próxima onda: mais vícios a cada vez, vindos do chão e do ar
+    const tipos = this.def.inimigos || ['desanimo'], voadores = ['distracao', 'duvida', 'medo', 'vaidade'], n = 3 + e.onda + (this.mp ? this.mp.naArea().length : 0), ox = e.c.cx * CW, oy = e.c.cy * CH, esc = 1 + (f.nivel || 1) * 0.05;
+    const vazio = (tx, ty) => tileEm(N, tx, ty) === VAZIO, chao = (tx, ty) => { const t = tileEm(N, tx, ty); return t === SOLIDO || t === PONTE; };
+    for (let i = 0, feitos = 0, tent = 0; feitos < n && tent < 60; tent++) {
+      const tipo = tipos[(e.onda * 2 + i) % tipos.length], voa = voadores.includes(tipo), tx = ox + 3 + Math.floor(rand(0, CW - 6));
+      if (Math.abs(tx * T + 16 - p.x) < 130) continue;
+      let ty = -1;
+      if (voa) { const y = oy + 5 + Math.floor(rand(0, 5)); if (vazio(tx, y) && vazio(tx, y - 1)) ty = y; }
+      else for (let y = oy + 15; y > oy + 4; y--) if (vazio(tx, y) && vazio(tx, y - 1) && chao(tx, y + 1)) { ty = y; break; }
+      if (ty < 0) continue;
+      const v = this.nascer(tipo, tx * T + 16, (ty + 1) * T - (voa ? 16 : 1), false, esc); v.cel = e.c; v.stun = 0.5; v.flash = 0.3;
+      this.efeito('sumico', v.x, v.y - v.h / 2); this.fx.anel(v.x, v.y - v.h / 2, v.d.cor || '#C79BFF', 40); i++; feitos++;
+    }
+    e.onda++; e.t = 0.7; sfx('boss'); this.textoEm(p.x, p.y - 74, 'ONDA ' + e.onda + ' DE ' + e.total, '#FF8A7A', 13);
   }
 
   /* ================= Encontros ================= */
@@ -680,7 +766,7 @@ export class Caminho {
   }
   rotulo(ob) {
     switch (ob.tipo) {
-      case 'rolo': return ob.feito ? 'Reler o rolo' : ob.trava > this.T ? null : 'Ler o rolo';
+      case 'rolo': return ob.feito ? 'Reler o rolo' : ob.trava > this.T || !this.roloLivre(ob) ? null : 'Ler o rolo';
       case 'estacao': return ob.feito ? null : ob.dados.nome;
       case 'npc': return 'Falar';
       case 'ebenezer': return 'Descansar';

@@ -1,7 +1,7 @@
 // Cenário do Caminho: céu em camadas, silhuetas em paralaxe, blocos de tinta com borda iluminada,
 // e a escuridão que só a lâmpada (e as luzes do lugar) afasta.
 import { hash, TAU, clamp } from '../util.js';
-import { T, CW, CH, SOLIDO, PONTE, ESPINHO, OCULTO, FALSA, PORTAO, tileEm } from './nivel.js';
+import { T, CW, CH, SOLIDO, PONTE, ESPINHO, OCULTO, FALSA, PORTAO, TRANCA, tileEm } from './nivel.js';
 import { TEMAS } from './dados.js';
 
 export function tema(id) { return TEMAS[id] || TEMAS.refugio; }
@@ -86,7 +86,7 @@ export function pintarBlocos(g, G) {
       const v = N.revel[i] || 0;
       if (v > 0) { g.globalAlpha = Math.min(1, v); g.fillStyle = corA(tm.acento, 0.85); g.fillRect(x, y, T, 7); g.fillStyle = '#fff'; g.fillRect(x, y, T, 1.5); g.globalAlpha = 1; }
       else if (hash(tx, ty, Math.floor(G.T * 1.5)) > 0.92) { g.fillStyle = corA(tm.acento, 0.5); g.fillRect(x + hash(tx, ty, 7) * 28, y + 2, 2, 2); } // um brilho que denuncia
-    } else if (t === PORTAO && !N.portaAberta) {
+    } else if ((t === PORTAO && !N.portaAberta) || t === TRANCA) {
       g.fillStyle = '#0A0F18'; g.fillRect(x + 4, y, T - 8, T); g.fillStyle = corA(tm.acento, 0.7); g.fillRect(x + 6, y, 2, T); g.fillRect(x + T - 8, y, 2, T); g.fillRect(x + 4, y + 14, T - 8, 2);
     }
   }

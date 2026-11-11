@@ -1,0 +1,102 @@
+/* Tema do remake: noite, tinta e osso. Painéis quase pretos de borda fina, títulos espaçados, um floreio no lugar da moldura
+   de madeira. Vale para todas as telas (início, criação, menus, diálogos, loja, perguntas) quando o jogo não está no modo Clássico. */
+html.remake {
+  --night: #05060B; --wood-0: #04050A; --wood-1: #0B0D15; --wood-2: #11141F; --wood-3: #181C2A; --wood-4: #232839;
+  --line: rgba(222, 226, 238, .2); --paper: #E9E6DC; --muted: #9096AA;
+  --gold: #E4DDC8; --gold-hi: #FFFFFF; --gold-deep: #4B5066;
+  --parch: #10131D; --parch-2: #0B0D15; --ink: #E9E6DC;
+  --wood-tex: none; --studs: none; --frame: 0 0 0 1px rgba(222, 226, 238, .28), 0 0 0 5px rgba(4, 5, 10, .85), 0 0 0 6px rgba(222, 226, 238, .1);
+  --flor: linear-gradient(90deg, transparent, rgba(233, 230, 220, .75) 22%, rgba(233, 230, 220, .75) 78%, transparent);
+}
+html.remake body { background: #05060B; }
+
+/* painéis */
+html.remake .card, html.remake .panel, html.remake .creator { background: linear-gradient(180deg, rgba(17, 20, 31, .97), rgba(7, 8, 14, .98)); border-radius: 2px; box-shadow: var(--frame), 0 24px 70px rgba(0, 0, 0, .8); }
+html.remake .panel { padding: 22px 26px 20px; position: relative; scrollbar-color: #4B5066 #04050A; }
+html.remake .modal { background: radial-gradient(ellipse at center, rgba(5, 6, 11, .55), rgba(2, 3, 6, .9)); }
+html.remake .panel h3 { font-family: var(--font-title); font-weight: 600; letter-spacing: .14em; text-transform: uppercase; font-size: 16px; color: #F4F1E6; text-shadow: none; }
+html.remake .panel h4, html.remake h4 { font-family: var(--font-title); font-weight: 600; letter-spacing: .16em; text-transform: uppercase; font-size: 12.5px; color: #C9C3AE; margin-top: 14px; }
+html.remake .p-head::after { height: 1px; background: var(--flor); opacity: 1; }
+html.remake .p-head::before { content: ""; position: absolute; left: 50%; bottom: -3px; width: 7px; height: 7px; transform: translateX(-50%) rotate(45deg); background: #05060B; border: 1px solid rgba(233, 230, 220, .8); z-index: 1; }
+html.remake .x { border-radius: 2px; background: none; color: #C9C3AE; box-shadow: 0 0 0 1px rgba(222, 226, 238, .28); font-weight: 400; }
+html.remake .x:hover { color: #fff; box-shadow: 0 0 0 1px #fff; filter: none; }
+html.remake .muted { color: var(--muted); font-weight: 500; }
+html.remake .eyebrow { font-family: var(--font-title); letter-spacing: .22em; color: #9096AA; }
+
+/* botões: texto espaçado, borda fina; o principal ganha os dois losangos */
+html.remake .btn { background: rgba(255, 255, 255, .03); border: 1px solid rgba(222, 226, 238, .3); border-radius: 2px; box-shadow: none; color: #E9E6DC; font-family: var(--font-title); font-weight: 600; letter-spacing: .12em; text-transform: uppercase; font-size: 12.5px; text-shadow: none; transition: background .15s, border-color .15s, color .15s; }
+html.remake .btn:hover:not(:disabled) { filter: none; background: rgba(255, 255, 255, .09); border-color: #fff; color: #fff; }
+html.remake .btn:active:not(:disabled) { transform: none; background: rgba(255, 255, 255, .16); box-shadow: none; }
+html.remake .btn.gold { background: rgba(233, 230, 220, .1); border-color: rgba(233, 230, 220, .8); color: #fff; box-shadow: none; position: relative; }
+html.remake .btn.gold::before, html.remake .btn.gold::after { content: ""; width: 5px; height: 5px; transform: rotate(45deg); background: #E9E6DC; flex: none; margin: 0 10px; opacity: .85; }
+html.remake .btn.danger { background: rgba(160, 50, 50, .14); border-color: rgba(230, 120, 110, .6); color: #F2B8AE; }
+html.remake .btn.on { border-color: #fff; color: #fff; background: rgba(255, 255, 255, .1); }
+html.remake .btn.link, html.remake button.link { border: 0; background: none; letter-spacing: .04em; text-transform: none; font-family: var(--font-ui); color: var(--muted); }
+html.remake .btn.install { background: none; border-color: rgba(222, 226, 238, .25); color: var(--muted); }
+html.remake .chip-btn { border-radius: 2px; background: none; border: 1px solid transparent; box-shadow: none; color: #9096AA; font-family: var(--font-title); letter-spacing: .14em; text-transform: uppercase; font-size: 11.5px; padding: 7px 12px; }
+html.remake .chip-btn:hover { color: #E9E6DC; }
+html.remake .chip-btn.on { background: none; border-color: transparent; border-bottom-color: #E9E6DC; color: #fff; }
+html.remake .cm-menu .cm-abas { border-bottom: 1px solid rgba(222, 226, 238, .14); gap: 2px; padding-bottom: 0; }
+
+/* linhas de lista (fases, relíquias, loja, peregrinos) */
+html.remake .fase-row { background: rgba(255, 255, 255, .025); border-radius: 2px; box-shadow: inset 0 0 0 1px rgba(222, 226, 238, .1); color: #E9E6DC; }
+html.remake button.fase-row:hover:not(:disabled) { background: rgba(255, 255, 255, .07); box-shadow: inset 0 0 0 1px rgba(233, 230, 220, .6); }
+html.remake .fase-row.done, html.remake .fase-row.on { box-shadow: inset 2px 0 0 #E9E6DC, inset 0 0 0 1px rgba(222, 226, 238, .16); }
+html.remake .fase-row:disabled { opacity: .5; }
+html.remake .fase-row b { font-weight: 700; letter-spacing: .02em; }
+html.remake .fase-row small { color: var(--muted); }
+html.remake .cm-ico { filter: grayscale(1) brightness(1.5); opacity: .85; }
+html.remake .porque { background: rgba(255, 255, 255, .035); border-radius: 0; box-shadow: inset 2px 0 0 rgba(233, 230, 220, .7); color: #E9E6DC; }
+html.remake .porque b { color: #C9C3AE; letter-spacing: .14em; text-transform: uppercase; font-size: 11.5px; }
+
+/* conversas: a caixa fica embaixo, larga, com o nome sobre um fio */
+html.remake .modal:has(> .panel > .dlg-text) { place-items: end center; padding-bottom: max(26px, var(--safe-b)); background: linear-gradient(180deg, transparent 30%, rgba(2, 3, 6, .82)); }
+html.remake .panel:has(> .dlg-text) { width: min(780px, calc(100% - 24px)); max-height: 78%; text-align: center; padding: 20px 34px 18px; }
+html.remake .dlg-head { justify-content: center; margin-bottom: 12px; padding-bottom: 12px; position: relative; }
+html.remake .dlg-head::after { content: ""; position: absolute; left: 12%; right: 12%; bottom: 0; height: 1px; background: var(--flor); }
+html.remake .dlg-head h3 { background: none; box-shadow: none; padding: 0; color: #F4F1E6; font-size: 15px; letter-spacing: .2em; }
+html.remake .dlg-text { font-size: 17.5px; line-height: 1.6; color: #E9E6DC; text-align: center; }
+html.remake .portrait { border-radius: 2px; background: #05060B; box-shadow: 0 0 0 1px rgba(222, 226, 238, .3); image-rendering: pixelated; width: 56px; height: 56px; }
+
+/* perguntas */
+html.remake .panel:has(> .answers) { width: min(640px, calc(100% - 20px)); text-align: center; }
+html.remake .panel:has(> .answers) h3 { text-transform: none; letter-spacing: .01em; font-family: var(--font-text); font-size: 20px; font-weight: 600; line-height: 1.4; margin-top: 8px; }
+html.remake .answer { font-family: var(--font-text); text-transform: none; letter-spacing: 0; font-size: 16.5px; font-weight: 500; min-height: 50px; padding: 10px 16px; }
+html.remake .answer.right { background: rgba(120, 200, 150, .16); border-color: #9BE0B4; color: #D8F5E2; }
+html.remake .answer.wrong { background: rgba(210, 90, 80, .16); border-color: #F0A093; color: #F8D5CF; }
+html.remake .feedback.ok { color: #9BE0B4; } html.remake .feedback.no { color: #F0A093; }
+html.remake .lie { color: #F0A093 !important; font-style: italic; }
+
+/* avisos e faixa de área */
+html.remake .toast { background: rgba(7, 8, 14, .92); color: #E9E6DC; border-radius: 0; box-shadow: none; border-top: 1px solid rgba(233, 230, 220, .55); border-bottom: 1px solid rgba(233, 230, 220, .55); font-weight: 500; padding: 9px 26px; }
+html.remake .toast::before, html.remake .toast::after { display: none; }
+html.remake #aInteract { background: rgba(7, 8, 14, .9); color: #F4F1E6; border: 1px solid rgba(233, 230, 220, .7); border-radius: 2px; font-family: var(--font-title); letter-spacing: .1em; text-transform: uppercase; font-size: 12px; box-shadow: none; }
+
+/* campos */
+html.remake input, html.remake select, html.remake textarea { background: #05060B; color: #E9E6DC; border: 1px solid rgba(222, 226, 238, .28); border-radius: 2px; box-shadow: none; }
+html.remake input:focus, html.remake select:focus { outline: 1px solid #fff; outline-offset: 1px; }
+html.remake .tabs .tab { background: none; border: 0; border-bottom: 1px solid transparent; border-radius: 0; color: var(--muted); font-family: var(--font-title); letter-spacing: .14em; text-transform: uppercase; font-size: 12px; box-shadow: none; }
+html.remake .tabs .tab.on { color: #fff; border-bottom-color: #E9E6DC; background: none; }
+
+/* botões de toque: discos escuros de borda clara */
+html.remake body.caminho.touch #actions .act:not(#aInteract) { background: rgba(7, 8, 14, .62); border: 1.5px solid rgba(233, 230, 220, .6); box-shadow: none; color: #E9E6DC; }
+html.remake body.caminho.touch #actions .act.down { background: rgba(233, 230, 220, .28); transform: scale(.94); }
+html.remake body.caminho.touch #actions .act.lg { background: rgba(233, 230, 220, .14); border-color: #F4F1E6; color: #fff; }
+html.remake body.caminho #cmMenu { border-radius: 2px; border: 1px solid rgba(233, 230, 220, .6); background: rgba(7, 8, 14, .7); }
+html.remake .cm-sala { color: #fff; }
+
+/* ---------- tela inicial ---------- */
+html.remake #screens { background: radial-gradient(ellipse 70% 45% at 50% 108%, rgba(120, 140, 190, .22), transparent 70%), radial-gradient(ellipse 40% 30% at 50% 30%, rgba(255, 233, 168, .07), transparent 70%), linear-gradient(180deg, #04050A 0%, #080A14 55%, #0D1120 100%); }
+html.remake #screens::before { opacity: .5; }
+html.remake .screen { gap: 18px; z-index: 1; }
+html.remake .logo .cross { display: block; width: 14px; height: 22px; margin: 0 auto 14px; font-size: 0; border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%; background: radial-gradient(ellipse at 50% 70%, #fff 0 22%, #FFE9A8 45%, #FF9A3C 100%); box-shadow: 0 0 26px 8px rgba(255, 200, 110, .35), 0 0 80px 30px rgba(255, 200, 110, .12); text-shadow: none; animation: chamaTitulo 2.6s ease-in-out infinite; }
+@keyframes chamaTitulo { 0%, 100% { transform: scale(1) translateY(0); opacity: 1; } 50% { transform: scale(1.08, .94) translateY(1px); opacity: .88; } }
+html.remake .logo h1 { font-weight: 500; letter-spacing: .34em; padding-left: .34em; font-size: clamp(30px, 6.4vw, 62px); color: #F4F1E6; text-shadow: 0 0 34px rgba(233, 230, 220, .28), 0 2px 14px rgba(0, 0, 0, .9); }
+html.remake .logo h1::after { content: ""; display: block; height: 1px; width: min(360px, 60vw); margin: 16px auto 0; background: var(--flor); }
+html.remake .logo p { color: #9096AA; letter-spacing: .5em; font-size: 11px; margin-top: 14px; }
+html.remake .week { color: #9096AA; font-family: var(--font-text); font-style: italic; font-size: 15px; }
+html.remake .week b { color: #E9E6DC; font-style: normal; }
+html.remake .card.auth { background: none; box-shadow: none; width: min(380px, 92vw); text-align: center; }
+html.remake .card.auth .btn.wide { min-height: 50px; font-size: 13.5px; }
+html.remake .title { color: #F4F1E6; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; font-size: 17px; text-shadow: none; }
+@media (prefers-reduced-motion: reduce) { html.remake .logo .cross { animation: none; } }

@@ -1,5 +1,5 @@
 // Corpo contra o mapa de tiles. x = centro, y = pés. Cada eixo é resolvido separado.
-import { T, VAZIO, SOLIDO, PONTE, ESPINHO, OCULTO, FALSA, PORTAO, tileEm } from './nivel.js';
+import { T, VAZIO, SOLIDO, PONTE, ESPINHO, OCULTO, FALSA, PORTAO, TRANCA, tileEm } from './nivel.js';
 
 export function solido(N, tx, ty) {
   const t = tileEm(N, tx, ty);
@@ -9,6 +9,7 @@ export function solido(N, tx, ty) {
   if (t === OCULTO) return (N.revel?.[i] || 0) > 0;
   if (t === FALSA) return !N.desfeita?.has(i);
   if (t === PORTAO) return !N.portaAberta;
+  if (t === TRANCA) return true;
   return false;
 }
 

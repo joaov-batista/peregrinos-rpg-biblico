@@ -269,6 +269,15 @@ function pintarTextos(g, G, esc, cx, cy) {
   if (def.fase) { lin += base * 1.25; const rol = cm.selos[G.area].length; txt('ROLOS ' + rol + '/3' + (def.estacoes ? '   DECISÕES ' + cm.est[G.area].length + '/' + def.estacoes.length : '') + (G.N.portaAberta && !G.venceu ? '   PORTA ABERTA' : ''), 7 * e, lin, base * 0.9, rol >= 3 ? '#FFE9A8' : '#E6E0CF'); }
   if (G.peso) { lin += base * 1.2; txt('PESO DE MAMOM ×' + G.peso, 7 * e, lin, base * 0.8, '#FFD23F'); }
   if (G.chefe) { const b = G.chefe; txt(b.d.nome.toUpperCase(), v.W * d / 2, 15 * e, base * 0.95, '#F4D9A0', 'center'); }
+  if (G.dicaTxt && !G.luta) { // primeiros passos: uma faixa no rodapé
+    const q = G.dicaTxt, W = v.W * d, H = v.H * d, tam = Math.max(12, Math.round(base * 0.82)), larg = Math.min(W * (input.touch ? 0.42 : 0.6), 560 * d), x = input.touch ? W * 0.5 - larg * 0.5 - W * 0.04 : W / 2 - larg / 2;
+    g.font = `600 ${tam}px ${FONTE}`; const pal = q.txt.split(' '), linhas = []; let ln = '';
+    for (const w of pal) { if (g.measureText(ln + ' ' + w).width > larg - tam * 2 && ln) { linhas.push(ln); ln = w; } else ln = ln ? ln + ' ' + w : w; } linhas.push(ln);
+    const alt = tam * 1.35 * (linhas.length + 1) + tam * 1.2, y = H - alt - (input.touch ? 14 : 30) * d;
+    g.fillStyle = 'rgba(10,9,18,.86)'; g.fillRect(x, y, larg, alt); g.fillStyle = '#C9B88A'; g.fillRect(x, y, larg, Math.max(1, d)); g.fillRect(x, y + alt - Math.max(1, d), larg, Math.max(1, d));
+    txt(q.titulo + '   ' + q.n + '/' + q.de, x + larg / 2, y + tam * 1.5, tam * 0.9, '#FFE9A8', 'center');
+    linhas.forEach((l, i) => txt(l, x + larg / 2, y + tam * 1.5 + tam * 1.35 * (i + 1), tam, '#F2E9D0', 'center'));
+  }
   if (G.gritoTxt) { const a = Math.min(1, G.gritoTxt.t, (2.6 - G.gritoTxt.t) * 4); g.globalAlpha = a; txt(G.gritoTxt.txt, v.W * d / 2, v.H * d * 0.3, Math.min(base * 2.2, v.W * d / 26), '#F4D9A0', 'center'); g.globalAlpha = 1; }
   if (G.pecado) { const s = G.pecado, w = 240 * d, x = v.W * d / 2 - w / 2, y = (v.H - 70) * d; g.fillStyle = '#17121f'; g.fillRect(x - 3 * d, y - 3 * d, w + 6 * d, 16 * d); g.fillStyle = '#FFE9A8'; g.fillRect(x, y, w * Math.min(1, s.graca / 4), 10 * d); txt('GRAÇA', v.W * d / 2, y - 8 * d, base, '#F2E9D0', 'center'); }
   const f = Math.max(G.fade, p.morto ? clamp(1.2 - G.mortoT, 0, 1) : 0);

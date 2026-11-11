@@ -49,3 +49,5 @@ body.caminho.touch .act[data-act="skill"] { right: 190px; bottom: 4px; width: 60
 body.caminho.touch .act[data-act="botija"] { right: 172px; bottom: 84px; width: 58px; height: 58px; }
 body.caminho.touch .act[data-act="item1"], body.caminho.touch .act[data-act="item2"], body.caminho.touch .act[data-act="mount"] { display: none; }
 body.caminho.touch #aInteract { right: 0; bottom: 188px; }
+/* cada botão de toque diz o que faz */
+body.caminho.touch #actions .act:not(#aInteract)::before { content: attr(data-name) !important; position: absolute; left: 50%; top: -13px; transform: translateX(-50%); font: 600 10px/1 'Pixelify Sans', monospace; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; color: #F2E9D0; text-shadow: 0 1px 0 #17121f, 0 0 4px #17121f, 1px 0 0 #17121f, -1px 0 0 #17121f; }

@@ -180,7 +180,7 @@ export class Juntos {
   mundo() {
     const G = this.G, id = o => { o.nid = o.nid || ++this.seq; return o; };
     return { t: 'w', a: G.area, i: G.inimigos.map(e => copia(id(e))), ti: G.tiros.filter(t => !t.amigo).map(t => copia(id(t))), z: G.zonas.filter(z => !z.amigo).map(z => copia(id(z))),
-      g: { luta: !!G.luta, puxao: G.puxao, ea: G.escuroAlvo || 0, vento: G.vento, congela: !!G.congela } };
+      g: { luta: !!G.luta, puxao: G.puxao, ea: G.escuroAlvo || 0, vento: G.vento, congela: !!G.congela, emb: G.emb ? G.N.celulas.indexOf(G.emb.c) : null } };
   }
   aplicarMundo(m) {
     const G = this.G, porId = new Map(); for (const e of G.inimigos) if (e.nid) porId.set(e.nid, e);
@@ -196,7 +196,7 @@ export class Juntos {
     G.tiros = G.tiros.filter(t => !t.nid).concat(m.ti.filter(s => !this.gastos.has(s.nid)));
     const zs = new Map(); for (const z of G.zonas) if (z.nid) zs.set(z.nid, z);
     G.zonas = G.zonas.filter(z => !z.nid).concat(m.z.map(s => { const z = zs.get(s.nid) || {}, fez = z.fez; Object.assign(z, s); z.fez = fez; if (!('aviso' in s)) z.aviso = 0; z.dono = s.dn ? G.inimigos.find(e => e.nid === s.dn) : null; return z; }));
-    const g = m.g; G.puxao = g.puxao || null; G.escuroAlvo = g.ea; G.vento = g.vento || null; G.congela = g.congela;
+    const g = m.g; G.puxao = g.puxao || null; G.escuroAlvo = g.ea; G.vento = g.vento || null; G.congela = g.congela; G.embRemota = g.emb;
     if (g.luta !== !!G.luta) G.lutaRemota(g.luta);
     if (G.luta) G.chefe = G.inimigos.find(e => e.kind === 'chefe') || null;
   }

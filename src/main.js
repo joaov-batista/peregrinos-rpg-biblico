@@ -11,6 +11,7 @@ import { net, ONLINE } from './net.js';
 import { Game } from './game/game.js';
 import { Caminho } from './caminho/jogo.js';
 import './caminho/caminho.css';
+import './remake.css';
 import { createHud } from './ui/hud.js';
 import { showAuth, showSelect, showCreator, hideScreens } from './ui/screens.js';
 
@@ -26,6 +27,7 @@ const ui = createHud(exitToSelect);
 ui.show(false);
 
 const CLASSICO = new URLSearchParams(location.search).has('classico') || import.meta.env.VITE_MODO === 'classico';
+document.documentElement.classList.toggle('remake', !CLASSICO);
 async function play(char, modo) {
   // Evita duas abas editando o mesmo personagem ao mesmo tempo.
   if (navigator.locks) {

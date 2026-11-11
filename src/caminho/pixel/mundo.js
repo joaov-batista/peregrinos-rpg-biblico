@@ -2,7 +2,7 @@
 // com capa iluminada, arquitetura no fundo das salas e a escuridão em degraus de luz.
 // Tudo é pintado uma vez por área em telas pequenas e depois só copiado (rápido no celular).
 import { hash, clamp } from '../../util.js';
-import { T, CW, CH, SOLIDO, PONTE, ESPINHO, OCULTO, FALSA, PORTAO, tileEm, semente } from '../nivel.js';
+import { T, CW, CH, SOLIDO, PONTE, ESPINHO, OCULTO, FALSA, PORTAO, TRANCA, tileEm, semente } from '../nivel.js';
 import { Sprite, rampa, cor, TINTA, PX } from './raster.js';
 
 const TL = T / PX; // 16
@@ -155,7 +155,7 @@ export function pintarBlocosPixel(g, G, C, vw, vh, cx, cy) {
       if (t === FALSA && G.p.lamp && (tx + ty + Math.floor(G.T * 8)) % 3 === 0) { g.fillStyle = G.tm.acento; g.globalAlpha = 0.35; g.fillRect(x + ((tx * 5) % 12), y + ((ty * 7) % 12), 2, 2); g.globalAlpha = 1; }
     } else if (t === PONTE) g.drawImage(C.extras, ((tx & 1)) * TL, 0, TL, 8, x, y, TL, 8);
     else if (t === ESPINHO) g.drawImage(C.extras, 2 * TL, 0, TL, TL, x, y, TL, TL);
-    else if (t === PORTAO && !N.portaAberta) g.drawImage(C.extras, 3 * TL, 0, TL, TL, x, y, TL, TL);
+    else if ((t === PORTAO && !N.portaAberta) || t === TRANCA) g.drawImage(C.extras, 3 * TL, 0, TL, TL, x, y, TL, TL);
     else if (t === OCULTO) {
       if ((N.revel[i] || 0) > 0) { g.globalAlpha = Math.min(1, N.revel[i]) > 0.5 || Math.floor(G.T * 12) % 2 ? 1 : 0.4; g.drawImage(C.extras, 4 * TL, 0, TL, 5, x, y, TL, 5); g.globalAlpha = 1; }
       else if (hash(tx, ty, Math.floor(G.T * 1.5)) > 0.9) { g.fillStyle = G.tm.acento; g.fillRect(x + Math.floor(hash(tx, ty, 7) * 14), y + 1, 1, 1); }

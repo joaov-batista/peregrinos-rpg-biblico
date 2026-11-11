@@ -12,6 +12,7 @@ import { montarCinema } from './cinema.js';
 import { CINEMAS } from '../content/cinematicas.js';
 import { SEMANAS, SEMANA_ATUAL } from '../content/index.js';
 import { drawPerson } from '../game/draw.js';
+import { quadroPessoa } from '../caminho/pixel/humano.js';
 import { icon, itemIcon } from './icons.js';
 import { count, addItem, removeItem, equip, unequip, canEquip, faseProg, computeStats } from '../game/player.js';
 import { playMinigame } from './minigames.js';
@@ -64,7 +65,10 @@ export function createHud(onExit) {
 
   function portrait(look, size = 64) {
     const c = h('canvas', { class: 'portrait', width: size * 2, height: size * 2 });
-    if (look) { const g = c.getContext('2d'); g.scale(2, 2); drawPerson(g, size / 2, size * 1.9, size / 28, look, { t: 0, fx: 0, fy: 1, semLuz: true }); }
+    if (look && document.documentElement.classList.contains('remake')) { // busto em pixel art, igual ao do jogo
+      const g = c.getContext('2d'), s = quadroPessoa({ ...look, cls: null }, 0, 'retrato' + JSON.stringify(look).length), k = size * 2 / 22; g.imageSmoothingEnabled = false;
+      g.drawImage(s.tela(), 13, 6, 22, 22, 0, 0, 22 * k, 22 * k);
+    } else if (look) { const g = c.getContext('2d'); g.scale(2, 2); drawPerson(g, size / 2, size * 1.9, size / 28, look, { t: 0, fx: 0, fy: 1, semLuz: true }); }
     else { const g = c.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, size * 2, size * 2); g.fillStyle = '#FF2E4A'; g.fillRect(size * 0.8, size * 0.9, 10, 5); g.fillRect(size * 1.1, size * 0.9, 10, 5); }
     return c;
   }

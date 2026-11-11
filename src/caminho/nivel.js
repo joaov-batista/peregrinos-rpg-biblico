@@ -2,7 +2,7 @@
 // A planta é sorteada com semente fixa (igual para todos) a partir de pedaços desenhados à mão; a travessia básica
 // nunca exige habilidade: só os segredos pedem a Lâmpada, a Firmeza (escalar) ou as Asas (salto duplo).
 export const T = 32, CW = 30, CH = 17;
-export const VAZIO = 0, SOLIDO = 1, PONTE = 2, ESPINHO = 3, OCULTO = 4, FALSA = 5, PORTAO = 6;
+export const VAZIO = 0, SOLIDO = 1, PONTE = 2, ESPINHO = 3, OCULTO = 4, FALSA = 5, PORTAO = 6, TRANCA = 7;
 export const L = 1, R = 2, U = 4, D = 8;
 
 export function semente(str) {
@@ -43,38 +43,19 @@ const ARENAS = {
 
 const espelha = s => s.split('').reverse().join('');
 
-// Planta: caminho principal da esquerda para a direita, com subidas e descidas, e ramos sem saída para os rolos.
+// Planta: uma linha reta. Início → três câmaras (cada uma guarda um rolo, e os vícios guardam a câmara) → Pedra de Ebenézer → chefe.
+// Sem ramos para procurar: o caminho é combate e leitura. Só o tesouro fica num desvio curto, logo acima ou abaixo do início.
 function planta(def, rng) {
-  const cols = def.cols || 7, rows = 3, g = new Map(), key = (x, y) => x + ',' + y;
+  const camaras = Math.max(1, def.rolos ?? 3), cols = camaras + 3, rows = 3, g = new Map(), key = (x, y) => x + ',' + y;
   const cel = (x, y, papel) => { const c = { cx: x, cy: y, mask: 0, papel }; g.set(key(x, y), c); return c; };
   const liga = (a, b) => {
     if (b.cx > a.cx) { a.mask |= R; b.mask |= L; } else if (b.cx < a.cx) { a.mask |= L; b.mask |= R; }
     else if (b.cy < a.cy) { a.mask |= U; b.mask |= D; } else { a.mask |= D; b.mask |= U; }
   };
-  let x = 0, y = 1, cur = cel(0, 1, 'inicio'), vert = true;
-  const caminho = [cur];
-  while (x < cols - 1) {
-    const podeV = !vert && x > 0 && x < cols - 2;
-    const dirs = [-1, 1].filter(d => y + d >= 0 && y + d < rows && !g.has(key(x, y + d)));
-    if (podeV && dirs.length && rng() < 0.5) { y += dirs[Math.floor(rng() * dirs.length)]; vert = true; }
-    else { x++; vert = false; }
-    const n = cel(x, y, x === cols - 1 ? 'arena' : x === cols - 2 ? 'ebenezer' : 'corredor');
-    liga(cur, n); cur = n; caminho.push(n);
-  }
-  // ramos: rolos (e um tesouro) em salas sem saída acima ou abaixo do caminho
-  const ramos = [];
-  const livres = caminho.filter(c => c.papel === 'corredor' || c.papel === 'inicio');
-  const quer = (def.rolos ?? 3) + (def.tesouro === false ? 0 : 1);
-  for (let i = 0; i < quer; i++) {
-    const ordem = livres.slice().sort((a, b) => Math.abs(a.cx - (i + 0.5) * cols / quer) - Math.abs(b.cx - (i + 0.5) * cols / quer));
-    for (const c of ordem) {
-      if (c.papel === 'inicio' && c.mask & (U | D)) continue;
-      const dirs = [-1, 1].filter(d => c.cy + d >= 0 && c.cy + d < rows && !g.has(key(c.cx, c.cy + d)));
-      if (!dirs.length) continue;
-      const n = cel(c.cx, c.cy + dirs[Math.floor(rng() * dirs.length)], i < (def.rolos ?? 3) ? 'rolo' : 'tesouro');
-      liga(c, n); ramos.push(n); break;
-    }
-  }
+  let cur = cel(0, 1, 'inicio');
+  const caminho = [cur], ramos = [];
+  for (let x = 1; x < cols; x++) { const n = cel(x, 1, x === cols - 1 ? 'arena' : x === cols - 2 ? 'ebenezer' : 'corredor'); liga(cur, n); cur = n; caminho.push(n); }
+  if (def.tesouro !== false) { const n = cel(0, rng() < 0.5 ? 0 : 2, 'tesouro'); liga(caminho[0], n); ramos.push(n); }
   return { cols, rows, celulas: [...g.values()], caminho, ramos };
 }
 
@@ -144,8 +125,8 @@ export function gerarNivel(def) {
       const itens = (c.itens || []).slice();
       for (const lado of [0, 1]) {
         let linhas;
-        if (itens.length > lado || (c.papel === 'rolo' && lado === 1 && !c._ped.length && itens.length)) linhas = PEDESTAL;
-        else if (c.papel === 'inicio') linhas = ['........'];
+        if (c.papel === 'inicio') linhas = lado === 1 && itens.length ? PEDESTAL : ['........']; // o início fica livre à esquerda, onde o peregrino aparece
+        else if (itens.length > lado || (c.papel === 'rolo' && lado === 1 && !c._ped.length && itens.length)) linhas = PEDESTAL;
         else {
           let op = LADOS.filter(f => !f.seg);
           const querSeg = c.papel === 'tesouro' || (segredos.length > N.objs.filter(o => o.tipo === 'segredo').length && rng() < 0.55);
@@ -161,7 +142,7 @@ export function gerarNivel(def) {
     if (c.mask & L) for (let y = 13; y <= 15; y++) set(ox + 1, oy + y, VAZIO);
     if (c.mask & R) for (let y = 13; y <= 15; y++) set(ox + CW - 2, oy + y, VAZIO);
     // itens da sala nos pedestais
-    (c.itens || []).forEach((it, i) => { const p = c._ped[i] || { x: (ox + 8 + i * 12) * T + 16, y: (oy + 16) * T }; N.objs.push({ ...it, x: p.x, y: p.y, cel: c }); });
+    (c.itens || []).forEach((it, i) => { const p = c._ped[i] || { x: (ox + (c.papel === 'inicio' ? 9 + i * 3 : 8 + i * 12)) * T + 16, y: (oy + 16) * T }; N.objs.push({ ...it, x: p.x, y: p.y, cel: c }); });
     if (c.papel === 'ebenezer') N.objs.push({ tipo: 'ebenezer', x: c._ped[0].x, y: c._ped[0].y, cel: c });
     for (const o of c.objs || []) N.objs.push({ ...o, x: (ox + o.col) * T + 16, y: (oy + (o.lin ?? 16)) * T, cel: c });
     N.luzes.push({ x: (ox + 6) * T, y: (oy + 9) * T, r: 150 }, { x: (ox + 24) * T, y: (oy + 9) * T, r: 150 });
@@ -189,7 +170,7 @@ export const tileEm = (N, tx, ty) => tx < 0 || ty < 0 || tx >= N.w || ty >= N.h 
 // Verificação de travessia (usada nos testes): BFS em posições "de pé" com um modelo simples do pulo.
 // hab: { lampada, firmeza, asas }. Devolve o conjunto de posições alcançáveis a partir do início.
 export function alcancaveis(N, hab = {}) {
-  const sol = (x, y) => { const t = tileEm(N, x, y); return t === SOLIDO || t === PORTAO || (t === FALSA && !hab.lampada) || (t === OCULTO && hab.lampada); };
+  const sol = (x, y) => { const t = tileEm(N, x, y); return t === SOLIDO || t === PORTAO || t === TRANCA || (t === FALSA && !hab.lampada) || (t === OCULTO && hab.lampada); };
   const chao = (x, y) => { const t = tileEm(N, x, y); return sol(x, y) || t === PONTE; };
   const livre = (x, y) => !sol(x, y) && tileEm(N, x, y) !== ESPINHO;
   const pe = (x, y) => livre(x, y) && livre(x, y - 1) && chao(x, y + 1);

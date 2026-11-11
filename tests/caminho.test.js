@@ -28,7 +28,7 @@ test('toda área é atravessável sem habilidades', () => {
       assert.equal(N.objs.filter(o => o.tipo === 'rolo').length, 3, id + ': faltam rolos');
       assert.equal(N.objs.filter(o => o.tipo === 'estacao').length, (def.estacoes || []).length, id + ': faltam estações');
       assert.ok(N.objs.some(o => o.tipo === 'ebenezer'), id + ': sem Ebenézer');
-      assert.ok(N.spawns.length >= 4, id + ': poucos vícios');
+      assert.ok(N.spawns.length >= 2, id + ': poucos vícios'); // as ondas das emboscadas completam o combate
     }
     for (const s of N.spawns) assert.equal(tileEm(N, Math.floor(s.x / T), Math.floor(s.y / T)), VAZIO, id + ': vício dentro da parede');
   }
