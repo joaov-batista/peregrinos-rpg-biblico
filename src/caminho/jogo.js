@@ -88,7 +88,7 @@ export class Caminho {
     const N = this.N = gerarNivel(def);
     N.revel = new Float32Array(N.w * N.h); N.desfeita = new Set(); N.portaAberta = false;
     this.inimigos = []; this.tiros = []; this.zonas = []; this.moedas = []; this.parts = []; this.textos = []; this.chefe = null; this.puxao = null; this.pecado = null;
-    this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.peso = 0; this.luta = false; this.venceu = false; this.usados = {}; this.perto = null;
+    this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.peso = 0; this.luta = false; this.venceu = false; this.vento = null; this.climaT = 6; this.usados = {}; this.perto = null;
     cm.selos[id] = cm.selos[id] || []; cm.est[id] = cm.est[id] || []; cm.seg[id] = cm.seg[id] || [];
     // objetos da área
     this.objs = N.objs.filter(ob => !(ob.tipo === 'segredo' && cm.seg[id].includes(ob.n)));
@@ -99,6 +99,7 @@ export class Caminho {
       if (ob.tipo === 'ebenezer') ob.luz = 150;
       if (ob.tipo === 'portal' || ob.tipo === 'segredo') ob.luz = 80;
     }
+    if (def.fase || def.mundo) this.objs.push({ tipo: 'retorno', x: N.inicio.x - 72, y: N.inicio.y, luz: 80 });
     if (cm.sacola?.area === id) this.objs.push({ tipo: 'sacola', x: cm.sacola.x, y: cm.sacola.y, luz: 70 });
     this.povoar();
     // onde o peregrino aparece
@@ -207,7 +208,7 @@ export class Caminho {
     this.inimigos = this.inimigos.filter(e => e.kind === 'chefe' ? !e.fora : e.hp > 0 || (!e.sumiu && this.matar(e), false));
     this.atualizarTiros(dt); this.atualizarZonas(dt); this.atualizarMoedas(dt); this.atualizarFx(dt);
     if (this.pecado) this.atualizarPecado(dt);
-    this.gatilhos(); this.interacoes();
+    this.clima(dt); this.gatilhos(); this.interacoes();
     // câmera
     const v = this.vista, vw = v.W / v.Z, vh = v.H / v.Z;
     v.cam.x = damp(v.cam.x, p.x + p.face * 46 - vw / 2, 6, dt); v.cam.y = damp(v.cam.y, this.camYAlvo(vh), 6, dt); this.prenderCam();
@@ -432,6 +433,19 @@ export class Caminho {
     this.moedas = this.moedas.filter(m => !m.pego);
   }
 
+  // o clima da área também joga: ondas no convés (Jn 1:4), brasas no tribunal, o vento oriental (Jn 4:8)
+  clima(dt) {
+    const p = this.p, tipo = this.tm.perigo;
+    if (this.vento) { this.vento.t -= dt; if (!p.morto && p.dashT <= 0) p.x += this.vento.f * dt * (p.chao ? 0.55 : 1) * (p.lamp ? 0.4 : 1); if (Math.random() < dt * 40) this.parts.push({ x: p.x + rand(200, 520), y: p.y - rand(0, 300), vx: this.vento.f * 4, vy: rand(-20, 20), t: 0.6, max: 0.6, r: 1.6, cor: this.tm.acento, g: 0 }); if (this.vento.t <= 0) this.vento = null; }
+    if (!tipo || this.luta || this.venceu || p.morto || this.def.paz) return;
+    this.climaT = (this.climaT ?? 6) - dt; if (this.climaT > 0) return;
+    this.climaT = rand(8, 12);
+    const sala = CH * T, ox = Math.floor(p.x / (CW * T)) * CW * T, oy = Math.floor((p.y - 2) / sala) * sala;
+    if (tipo === 'onda') { this.zonas.push({ tipo: 'faixa', x: ox + T, w: (CW - 2) * T, y: oy + sala - T - 30, h: 30, aviso: 1.3, dur: 0.35, cor: '120,210,245', baixo: true }); sfx('swing'); }
+    else if (tipo === 'brasas') { for (let i = -1; i <= 1; i++) this.zonas.push({ tipo: 'col', x: p.x + i * 120 + rand(-20, 20), w: 40, aviso: 1.1 + (i + 1) * 0.25, dur: 0.22, cor: '#FF5A3C', y0: oy + T, y1: oy + sala - T }); sfx('shoot'); }
+    else if (tipo === 'vento') { this.vento = { t: 2.4, f: -150 }; this.textoEm(p.x, p.y - 70, 'vento oriental!', this.tm.acento, 12); sfx('dodge'); }
+  }
+
   /* ================= Encontros ================= */
   gatilhos() {
     const p = this.p, N = this.N, A = N.arena, d = this.def;
@@ -570,6 +584,7 @@ export class Caminho {
       case 'ebenezer': return 'Descansar';
       case 'portal': return 'Entrar';
       case 'saida': return 'Seguir caminho';
+      case 'retorno': return 'Voltar ao Refúgio';
       case 'querubim': case 'porta-pecado': return 'Olhar';
     }
     return null;
@@ -622,6 +637,7 @@ export class Caminho {
         else this.entrar('refugio', { portal: d.mundo });
         break;
       }
+      case 'retorno': this.entrar('refugio', { portal: d.sem?.id || d.mundo }); break;
       case 'querubim': this.ovo('querubim', 'Um querubim e uma espada flamejante guardam o caminho da árvore da vida (Gn 3:24). Por aqui não se volta: o caminho de volta é outro.'); await this.ui.dialog({ nome: 'A leste do jardim', texto: 'A espada de fogo se revolve sem ruído. Atrás dela, um verde que você nunca viu e de que, estranhamente, sente saudade.\n\n"E pôs querubins ao oriente do jardim do Éden" (Gn 3:24).', acoes: [{ label: 'Recuar' }] }); break;
       case 'porta-pecado': await this.portaDoPecado(ob); break;
     }
@@ -751,7 +767,7 @@ export class Caminho {
         g.globalAlpha = z.tipo === 'poca' && ativa ? 0.6 + 0.15 * Math.sin(Tm * 8) : a; g.fillStyle = cor;
         if (z.tipo === 'col' && ativa) { const gr = g.createLinearGradient(x, 0, x + z.w, 0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, '#fff'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillRect(x, y0, z.w, y1 - y0); g.fillStyle = gr; }
         if (z.tipo !== 'ret' || ativa) g.fillRect(x, y0, z.w, y1 - y0);
-        if (!ativa) { g.globalAlpha = 0.8; g.strokeStyle = cor; g.lineWidth = 1.5; g.setLineDash([6, 6]); g.strokeRect(x, y0, z.w, y1 - y0); if (z.tipo === 'faixa') { g.setLineDash([]); g.font = '800 13px Alegreya Sans, sans-serif'; g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText(z.baixo ? '▲ PULE ▲' : '▼ FIQUE NO CHÃO ▼', (A ? A.cx : p.x), z.baixo ? y0 - 8 : y1 + 16); } }
+        if (!ativa) { g.globalAlpha = 0.8; g.strokeStyle = cor; g.lineWidth = 1.5; g.setLineDash([6, 6]); g.strokeRect(x, y0, z.w, y1 - y0); if (z.tipo === 'faixa') { g.setLineDash([]); g.font = '800 13px Alegreya Sans, sans-serif'; g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText(z.baixo ? '▲ PULE ▲' : '▼ FIQUE NO CHÃO ▼', z.x + z.w / 2, z.baixo ? y0 - 8 : y1 + 16); } }
       }
       g.restore();
     }

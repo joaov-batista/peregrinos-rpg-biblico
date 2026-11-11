@@ -50,15 +50,15 @@ export function desenharObjeto(g, o, G) {
       if (aceso) { g.fillStyle = '#FFE9A8'; g.beginPath(); g.ellipse(x - 2, y - 66 + Math.sin(Tm * 6) * 1.5, 3, 5.5, 0, 0, TAU); g.fill(); }
       break;
     }
-    case 'portal': case 'saida': {
+    case 'portal': case 'saida': case 'retorno': {
       const sem = o.semana ? TODAS.find(s => s.id === o.semana) : null, m = o.mundo ? MUNDO[o.mundo] : null;
-      const cor = o.tipo === 'saida' ? '#FFE9A8' : m ? '#E58A6A' : ['#FFD23F', '#79D9CD', '#F1C96A', '#C79BFF'][TODAS.indexOf(sem) % 4];
+      const cor = o.tipo === 'saida' ? '#FFE9A8' : o.tipo === 'retorno' ? '#9DB9C7' : m ? '#E58A6A' : ['#FFD23F', '#79D9CD', '#F1C96A', '#C79BFF'][TODAS.indexOf(sem) % 4];
       brilho(g, x, y - 46, 100, cor, 0.26 + 0.06 * Math.sin(Tm * 2));
       g.fillStyle = '#131B26'; g.strokeStyle = INK; g.lineWidth = 2; g.beginPath(); g.moveTo(x - 30, y); g.lineTo(x - 30, y - 56); g.arc(x, y - 56, 30, Math.PI, 0); g.lineTo(x + 30, y); g.closePath(); g.fill(); g.stroke();
       const gr = g.createLinearGradient(0, y - 80, 0, y); gr.addColorStop(0, corA(cor, 0.85)); gr.addColorStop(1, corA(cor, 0.12));
       g.fillStyle = gr; g.beginPath(); g.moveTo(x - 21, y); g.lineTo(x - 21, y - 54); g.arc(x, y - 54, 21, Math.PI, 0); g.lineTo(x + 21, y); g.closePath(); g.fill();
       for (let i = 0; i < 5; i++) { const yy = y - ((Tm * 26 + i * 17) % 78); g.fillStyle = 'rgba(255,255,255,.5)'; g.fillRect(x - 14 + (i * 37 % 28), yy, 1.6, 5); }
-      const nome = o.tipo === 'saida' ? 'Seguir' : sem ? sem.estudo : m.nome;
+      const nome = o.tipo === 'saida' ? 'Seguir' : o.tipo === 'retorno' ? 'Refúgio' : sem ? sem.estudo : m.nome;
       g.font = '800 12px Cinzel, serif'; g.textAlign = 'center'; g.lineWidth = 3; g.strokeStyle = 'rgba(8,15,25,.9)'; g.strokeText(nome, x, y - 96); g.fillStyle = cor; g.fillText(nome, x, y - 96);
       if (sem) { const feitas = sem.fases.filter(f => G.cm.feitas[sem.id + ':' + f.n]).length; g.font = '700 10px Alegreya Sans, sans-serif'; g.fillStyle = '#C9D2C4'; g.strokeText(feitas + '/5 páginas', x, y - 108); g.fillText(feitas + '/5 páginas', x, y - 108); }
       break;
