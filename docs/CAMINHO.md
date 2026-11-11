@@ -167,3 +167,12 @@ os outros digitam o código, ou abrem o link `?sala=CÓDIGO`. Não há servidor 
 - **Leviatã** (`barco()`): arpões aparecem no convés; o golpe seguinte os arremessa e atravessa a couraça (golpes comuns
   tiram menos da metade). O mar e as lanças continuam durante a luta.
 - **Passo rasteiro:** para baixo + passo, no chão ou no ar, dá 0,42 s sem ser ferido.
+
+## Travessia, primeira semana e abertura
+
+- **Jonas, fase do convés** (`fazerBarco`): o chão tem vãos por onde o mar entra (cair fere e devolve ao chão firme), o
+  navio sobe e desce (`balanco`), aderna com o vento para os dois lados, e lanças e ondas vêm com mais frequência.
+- **Primeira semana:** cinco salas novas no sorteio (`CENTROS`), a última onda de cada câmara traz um **capitão** (maior,
+  com 2,6 vezes a vida, coroado) e cada câmara vencida conta um trecho de Atos 18 (`content/ecos-corinto.js`).
+- **Abertura** (`ui/ceu.js`): cena em pixel art com ruínas em três planos e o peregrino de lâmpada acesa. A escolha de
+  personagem usa retratos em pixel, o botão Jogar em destaque e o aviso de progresso diferente explicado.

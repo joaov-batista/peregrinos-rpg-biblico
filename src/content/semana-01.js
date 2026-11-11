@@ -27,7 +27,7 @@ export default {
       versiculo: { texto: 'Depois disto, Paulo saiu de Atenas e foi para Corinto.', ref: 'Atos 18:1' },
       npcs: {
         N: { nome: 'Mercador', look: { skin: '#D9A273', hair: '#3A2314', tunic: '#C0392B', cape: 'none', style: 'turbante', beard: true }, falas: ['Bem-vindo à Ágora! Aqui se vende de tudo… até ídolos de prata.', 'Ouvi dizer que um tal Paulo chegou de Atenas. Fala de um Deus que não se compra.'] },
-        M: { nome: 'Paulo', look: { skin: '#C68B59', hair: '#6A5A4A', tunic: '#B9875A', cape: 'none', style: 'careca', beard: true }, falas: ['Acabei de chegar de Atenas. Esta cidade precisa conhecer Jesus.', 'Cuidado com Mamom, o espírito da ganância. Ele guarda o salão no norte. Ache as 3 chaves!'] }
+        M: { nome: 'Paulo', look: { skin: '#C68B59', hair: '#6A5A4A', tunic: '#B9875A', cape: 'none', style: 'careca', beard: true }, falas: ['Acabei de chegar de Atenas. Esta cidade precisa conhecer Jesus.', 'Cuidado com Mamom, o espírito da ganância. Cada câmara guarda um rolo, e os vícios guardam a câmara. Leia os três e a porta dele se abre.'] }
       },
       quiz: [
         { q: 'De qual cidade Paulo veio antes de chegar a Corinto? (At 18:1)', a: ['Atenas', 'Roma', 'Jerusalém'], porque: 'Atos 18:1 diz que Paulo saiu de Atenas e foi para Corinto. Em Atenas ele tinha falado no Areópago (At 17:22).' },

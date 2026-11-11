@@ -125,7 +125,7 @@ export function renderPixel(G) {
   if (baixa.width !== vw || baixa.height !== vh) { baixa.width = vw; baixa.height = vh; }
   const g = bg; g.imageSmoothingEnabled = false; g.setTransform(1, 0, 0, 1, 0, 0);
   const tr = G.tremorA ? Math.round((Math.random() - 0.5) * Math.min(4, G.tremorA * 0.35)) : 0, tr2 = G.tremorA ? Math.round((Math.random() - 0.5) * Math.min(4, G.tremorA * 0.35)) : 0;
-  const cx = Math.round(v.cam.x / PX) + tr, cy = Math.round(v.cam.y / PX) + tr2, C = cenaPixel(G.tm, G.def.tema);
+  const cx = Math.round(v.cam.x / PX) + tr, cy = Math.round((v.cam.y + (G.balanco || 0)) / PX) + tr2, C = cenaPixel(G.tm, G.def.tema);
   const X = wx => Math.round(wx / PX - cx), Y = wy => Math.round(wy / PX - cy);
   const antigo = fn => { g.save(); g.scale(1 / PX, 1 / PX); g.translate(-cx * PX, -cy * PX); fn(); g.restore(); };
 
@@ -154,7 +154,8 @@ export function renderPixel(G) {
       const q = quadroVicio(e, Tm);
       if (!q) { antigo(() => desenharVicio(g, e, Tm)); continue; }
       const tonto = e.stun > 0.25, yy = Y(e.y) + (e.voa ? Math.round(Math.sin(Tm * 3 + (e.art?.ph || 0)) * 2) : 0);
-      carimbar(g, q.s, X(e.x), yy, q.ax, q.ay, e.face >= 0 ? 1 : -1, e.vista ?? 1);
+      if (e.elite) { const cv = q.s.tela(); g.save(); g.translate(X(e.x), yy); g.scale((e.face >= 0 ? 1 : -1) * 1.35, 1.35); g.drawImage(cv, -q.ax, -q.ay); g.restore(); const cy2 = yy - Math.round(e.h / PX) - 4; g.fillStyle = '#F2C14E'; g.fillRect(X(e.x) - 4, cy2, 9, 2); for (const dx of [-4, 0, 4]) g.fillRect(X(e.x) + dx, cy2 - 2, 1, 2); }
+      else carimbar(g, q.s, X(e.x), yy, q.ax, q.ay, e.face >= 0 ? 1 : -1, e.vista ?? 1);
       if (tonto) for (let i = 0; i < 3; i++) { const a = Tm * 5 + i * 2.09; g.fillStyle = '#FFE9A8'; g.fillRect(X(e.x) + Math.round(Math.cos(a) * 7), yy - Math.round(e.h / PX) - 5 + Math.round(Math.sin(a) * 2), 1, 1); }
     }
   }
@@ -181,6 +182,7 @@ export function renderPixel(G) {
   for (const t of G.tiros) pintarTiro(g, t, X(t.x), Y(t.y), Tm);
   for (const o of G.outros) if (o.corpo.ts) for (const t of o.corpo.ts) pintarTiro(g, { x: t[0], y: t[1], vx: t[2], vy: t[3], r: t[4], tipo: t[5], cor: t[6], amigo: true }, X(t[0]), Y(t[1]), Tm);
   for (const q of G.parts) { const k = q.t / q.max, x = X(q.x), y = Y(q.y); g.fillStyle = q.cor; if (q.anel) { const r = Math.round(q.r / PX * (1 - k)); g.globalAlpha = k > 0.5 ? 1 : 0.6; for (let a = 0; a < 24; a++) if ((a + Math.floor(Tm * 20)) % 3) g.fillRect(x + Math.round(Math.cos(a / 24 * TAU) * r), y + Math.round(Math.sin(a / 24 * TAU) * r), k > 0.6 ? 2 : 1, k > 0.6 ? 2 : 1); g.globalAlpha = 1; } else { const lg = k > 0.5 && q.r > 2 ? 2 : 1; g.fillRect(x, y, lg, lg); } }
+  if (G.N.pocos) for (const o of G.N.pocos) { const x = X(o.x), y = Y(o.y) + 3; if (x < -20 || x > vw + 4) continue; for (let i = 0; i < 16; i++) { const h1 = Math.round(Math.sin((o.x + i) * 0.4 + Tm * 3) * 1.5); g.fillStyle = '#123847'; g.fillRect(x + i, y + h1, 1, 40); g.fillStyle = (i + Math.floor(Tm * 6)) % 5 < 2 ? '#BFF0F8' : '#3A9AB0'; g.fillRect(x + i, y + h1, 1, 1); } }
   if (G.def.mundo === 'leviata' && G.N.arena) { // o mar bate no costado: ondas na frente de tudo
     const yy = Y(G.N.arena.chao) + 4; for (let xx = 0; xx < vw; xx++) { const h1 = Math.round(Math.sin((xx + cx) * 0.09 + Tm * 2.2) * 2 + Math.sin((xx + cx) * 0.031 - Tm * 1.3) * 3); g.fillStyle = '#123847'; g.fillRect(xx, yy + h1, 1, vh - yy); g.fillStyle = (xx + Math.floor(Tm * 6)) % 9 < 3 ? '#BFF0F8' : '#3A9AB0'; g.fillRect(xx, yy + h1, 1, 1); if ((xx * 7 + Math.floor(Tm * 3)) % 23 === 0) { g.fillStyle = '#1C5A6E'; g.fillRect(xx, yy + h1 + 5, 4, 1); } }
   }

@@ -14,7 +14,46 @@ export function ligarCeu() {
 }
 export function desligarCeu() { cancelAnimationFrame(raf); cv?.remove(); cv = null; }
 
+// Remake: a abertura é uma cena em pixel art — a noite sobre as ruínas, e um peregrino parado com a lâmpada acesa.
+let baixa = null;
+const dith = (x, y, f) => f >= 1 || (f > 0 && [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5][(y & 3) * 4 + (x & 3)] / 16 < f);
+function desenharPixel(c, T) {
+  const dpr = Math.min(2, devicePixelRatio || 1), W = innerWidth, H = innerHeight;
+  if (c.width !== Math.round(W * dpr) || c.height !== Math.round(H * dpr)) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
+  const h = 200, w = Math.ceil(h * W / H); if (!baixa) baixa = document.createElement('canvas'); if (baixa.width !== w || baixa.height !== h) { baixa.width = w; baixa.height = h; }
+  const g = baixa.getContext('2d'), chao = h - 34;
+  // céu em faixas pontilhadas
+  const faixas = ['#0A0D1A', '#10152A', '#18203C', '#232C50', '#33365E', '#4A4068', '#6A4E6A'];
+  for (let i = 0; i < faixas.length; i++) { g.fillStyle = faixas[i]; g.fillRect(0, Math.round(i * chao / faixas.length), w, Math.ceil(chao / faixas.length) + 1); }
+  for (let i = 1; i < faixas.length; i++) { const y0 = Math.round(i * chao / faixas.length); g.fillStyle = faixas[i]; for (let y = y0 - 6; y < y0; y++) for (let x = 0; x < w; x++) if (dith(x, y, (y - y0 + 6) / 6 * 0.9)) g.fillRect(x, y, 1, 1); }
+  // estrelas que piscam e uma lua baixa
+  for (let i = 0; i < 90; i++) { const x = (i * 7919) % w, y = (i * 104729) % (chao - 30), pisca = Math.sin(T * (0.6 + (i % 5) * 0.3) + i) > 0.2; if (!pisca && i % 3) continue; g.fillStyle = i % 11 === 0 ? '#FFE9A8' : '#C9D2E8'; g.fillRect(x, y, 1, 1); if (i % 17 === 0 && pisca) { g.fillRect(x - 1, y, 3, 1); g.fillRect(x, y - 1, 1, 3); } }
+  const lx = Math.round(w * 0.78), ly = 46; for (let y = -13; y <= 13; y++) for (let x = -13; x <= 13; x++) { const d = x * x + y * y; if (d <= 169) { g.fillStyle = (x + 5) * (x + 5) + (y + 3) * (y + 3) < 150 ? '#E9E6DC' : '#B9B4C4'; g.fillRect(lx + x, ly + y, 1, 1); } else if (d < 420 && dith(lx + x, ly + y, 0.22)) { g.fillStyle = '#4A4868'; g.fillRect(lx + x, ly + y, 1, 1); } }
+  // três planos de ruínas: colunas, arcos e muros, cada um mais escuro e mais perto
+  const planos = [['#333A60', 0.5, 38, 0.2], ['#202542', 0.75, 30, 0.45], ['#10121F', 1, 22, 1]];
+  planos.forEach(([cor, esc, passo, vel], k) => {
+    g.fillStyle = cor; const des = (T * vel * 1.2) % (passo * 4), base = chao - (2 - k) * 9;
+    for (let i = -1; i < w / passo + 5; i++) { const x = Math.round(i * passo - des), r = ((i + 1000 + Math.floor((T * vel * 1.2) / (passo * 4)) * 4) * 2654435761 >>> 0) % 100, alt = Math.round((18 + r % 34) * esc);
+      if (r % 4 === 0) { g.fillRect(x, base - alt, Math.round(5 * esc) + 2, alt); g.fillRect(x - 2, base - alt - 2, Math.round(5 * esc) + 6, 3); }
+      else if (r % 4 === 1) { const l = Math.round(22 * esc); g.fillRect(x, base - alt, 4, alt); g.fillRect(x + l, base - alt, 4, alt); for (let a = 0; a <= 20; a++) g.fillRect(Math.round(x + 2 + l / 2 - Math.cos(a / 20 * Math.PI) * l / 2), Math.round(base - alt - Math.sin(a / 20 * Math.PI) * l / 2.4), 4, 3); }
+      else if (r % 4 === 2) { const l = Math.round(26 * esc); g.fillRect(x, base - alt * 0.5, l, alt * 0.5); for (let j = 0; j < l; j += 5) g.fillRect(x + j, base - alt * 0.5 - 3, 3, 3); }
+      else { g.fillRect(x, base - alt * 0.7, Math.round(4 * esc) + 2, alt * 0.7); g.fillRect(x + 1, base - alt * 0.7 - 3, 2, 3); } }
+    g.fillRect(0, base, w, h - base);
+    if (k < 2) { g.fillStyle = faixas[5]; for (let y = base - 10; y < base + 8; y++) for (let x = 0; x < w; x++) if (dith(x + Math.floor(T * 3), y, 0.16 + (y - base + 10) / 18 * 0.2)) g.fillRect(x, y, 1, 1); }
+  });
+  // o caminho e o peregrino com a lâmpada: a única luz quente da cena
+  g.fillStyle = '#0B0D18'; g.fillRect(0, chao, w, h - chao); g.fillStyle = '#2A2E48'; g.fillRect(0, chao, w, 1);
+  const px = Math.round(w * 0.24), py = chao, resp = Math.floor(T * 1.6) % 2, chama = Math.floor(T * 9) % 3, luz = 44 + chama;
+  for (let y = -luz; y <= 6; y++) for (let x = -luz; x <= luz; x++) { const d = Math.hypot(x, y * 1.2) / luz; if (d < 1 && dith(px + 9 + x, py - 14 + y, (1 - d) * (1 - d) * 0.55)) { g.fillStyle = d < 0.35 ? '#FFD28A' : d < 0.65 ? '#C98A4A' : '#6A4A3A'; g.fillRect(px + 9 + x, py - 14 + y, 1, 1); } }
+  g.fillStyle = '#05060B'; g.fillRect(px - 3, py - 22 + resp, 7, 14); g.fillRect(px - 2, py - 29 + resp, 6, 7); g.fillRect(px - 5, py - 20 + resp, 3, 14); g.fillRect(px - 2, py - 8, 2, 8); g.fillRect(px + 2, py - 8, 2, 8); g.fillRect(px + 3, py - 19 + resp, 6, 2); g.fillRect(px - 7, py - 15 + resp, 3, 11);
+  g.fillStyle = '#C9A45C'; g.fillRect(px + 8, py - 17 + resp, 3, 4); g.fillStyle = ['#FFFBE6', '#FFE08A', '#FFD86A'][chama]; g.fillRect(px + 9, py - 16 + resp, 1, 2); g.fillStyle = '#5A3A2A'; g.fillRect(px + 3, py - 27 + resp, 2, 1);
+  for (let i = 0; i < 26; i++) { const k = (T * 0.05 + i / 26) % 1, x = (i * 9973) % w, y = chao - k * chao * 0.8; g.fillStyle = i % 4 ? '#3A3F5C' : '#FFD28A'; if ((i + Math.floor(T * 2)) % 3) g.fillRect(Math.round(x + Math.sin(T * 0.7 + i) * 6), Math.round(y), 1, 1); }
+  const G2 = c.getContext('2d'); G2.imageSmoothingEnabled = false; G2.drawImage(baixa, 0, 0, w, h, 0, 0, c.width, c.height);
+  // escurece o centro para o título ler bem
+  const grad = G2.createRadialGradient(c.width / 2, c.height * 0.42, 0, c.width / 2, c.height * 0.42, c.height * 0.6); grad.addColorStop(0, 'rgba(5,6,11,.28)'); grad.addColorStop(1, 'rgba(5,6,11,0)'); G2.fillStyle = grad; G2.fillRect(0, 0, c.width, c.height);
+}
 function desenhar(c, T) {
+  if (document.documentElement.classList.contains('remake')) return desenharPixel(c, T);
   const dpr = Math.min(2, devicePixelRatio || 1), W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr);
   if (!W || !H) return; // janela ainda sem tamanho (aba escondida)
   if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }

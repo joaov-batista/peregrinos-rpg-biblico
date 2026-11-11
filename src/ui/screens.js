@@ -9,6 +9,7 @@ import { icon } from './icons.js';
 import { SEMANA_ATUAL } from '../content/index.js';
 import { pwa } from '../pwa.js';
 import { ligarCeu, desligarCeu } from './ceu.js';
+import { quadroPessoa } from '../caminho/pixel/humano.js';
 
 const scr = () => $('screens');
 function screen(...kids) {
@@ -61,7 +62,9 @@ function installButton(msg) {
 
 function miniPortrait(look, cls, size = 80) {
   const c = h('canvas', { width: size * 2, height: size * 2, class: 'portrait' });
-  const g = c.getContext('2d'); g.scale(2, 2);
+  const g = c.getContext('2d');
+  if (document.documentElement.classList.contains('remake')) { const q = quadroPessoa({ ...look, cls: null }, 0, 'sel' + JSON.stringify(look || {}).length), k = size * 2 / 24; g.imageSmoothingEnabled = false; g.drawImage(q.tela(), 12, 5, 24, 24, 0, 0, 24 * k, 24 * k); return c; }
+  g.scale(2, 2);
   drawPerson(g, size / 2, size * 1.9, size / 28, look, { t: 0, fx: 0.2, fy: 1, semLuz: true }); // busto: cabeça e ombros
   return c;
 }
@@ -78,12 +81,12 @@ export async function showSelect(onPlay, onNew, onLogout) {
     if (conflict) {
       const remote = conflict.remote;
       const msg = h('p', { role: 'status' }, `Neste aparelho: nível ${c.level}, ${fmt(c.score)} pontos. ` +
-        (remote ? `Na nuvem: nível ${remote.level}, ${fmt(remote.score)} pontos. Escolha uma versão completa; itens e moedas não são somados.` : 'Este personagem foi apagado na nuvem. Exporte sua cópia antes de descartá-la.'));
+        (remote ? `Na nuvem: nível ${remote.level}, ${fmt(remote.score)} pontos${remote.score > c.score ? ' (a mais avançada)' : remote.score < c.score ? '' : ''}. Fica valendo uma das duas inteira; itens e moedas não são somados.` : 'Este personagem foi apagado na nuvem. Exporte sua cópia antes de descartá-la.'));
       const choose = async choice => {
         try { await net.resolveConflict(c.id, choice); await showSelect(onPlay, onNew, onLogout); }
         catch (e) { msg.textContent = e.message; }
       };
-      conflictBox.append(msg,
+      conflictBox.append(h('b', {}, 'Dois progressos diferentes'), msg,
         h('button', { class: 'btn sm', onclick: () => net.exportChar(c.id) }, 'Exportar cópia'),
         remote ? h('button', { class: 'btn sm', onclick: () => choose('local') }, 'Manter deste aparelho') : '',
         h('button', { class: 'btn sm', onclick: () => choose('cloud') }, remote ? 'Usar progresso da nuvem' : 'Confirmar exclusão da nuvem'));

@@ -24,6 +24,7 @@ import { tema, pintarFundo, pintarBlocos, pintarEnfeites, pintarLampioes, pintar
 import { desenharObjeto } from './objetos.js';
 import { abrirMenu, escolherFase, loja, forja, mercador, armeiro, guardaRoupa, petShop } from './menu.js';
 import { renderPixel } from './pixel/render.js';
+import { ECOS_CORINTO } from '../content/ecos-corinto.js';
 import { iconePx } from './pixel/icones.js';
 import { aquecerEfeitos, soltar, atualizarEfeitos } from './pixel/efeitos.js';
 import { Juntos, limparCodigo } from './juntos.js';
@@ -116,6 +117,7 @@ export class Caminho {
     const def = areaDef(id), cm = this.cm;
     this.area = id; this.def = def; this.tm = tema(def.tema);
     const N = this.N = gerarNivel(def);
+    if (def.fase?.tema === 'conves') this.fazerBarco(N); // a travessia para Társis: o convés tem vãos por onde o mar entra
     N.revel = new Float32Array(N.w * N.h); N.desfeita = new Set(); N.portaAberta = false;
     this.inimigos = []; this.tiros = []; this.zonas = []; this.moedas = []; this.parts = []; this.textos = []; this.chefe = null; this.puxao = null; this.pecado = null;
     this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.peso = 0; this.luta = false; this.venceu = false; this.vento = null; this.climaT = 6; this.usados = {}; this.perto = null; this.emb = null;
@@ -238,6 +240,7 @@ export class Caminho {
     this.companheiro(dt); this.ritmo(dt); if (this.def.mundo === 'leviata') this.barco(dt);
     // câmera
     const v = this.vista, vw = v.W / v.Z, vh = v.H / v.Z;
+    if (this.N.barco) this.balanco = Math.sin(this.T * 0.9) * 7 + Math.sin(this.T * 2.3) * 2; else this.balanco = 0; // o navio sobe e desce na tempestade
     v.cam.x = damp(v.cam.x, p.x + p.face * 46 - vw / 2, 6, dt); v.cam.y = damp(v.cam.y, this.camYAlvo(vh), 6, dt); this.prenderCam();
     this.tremorA = Math.max(0, this.tremorA - dt * 34);
     if (this.chefe) this.ui.bossBar(this.chefe.d.nome, Math.max(0, this.chefe.hp / this.chefe.max), this.chefe.d.titulo, this.chefe.post / 100);
@@ -416,7 +419,7 @@ export class Caminho {
     const c = this.char, d = e.d;
     e.sumiu = true; if (this.mp && e.nid) { this.mp.mortos.add(e.nid); if (this.mp.souDono) this.mp.ev('mo', { id: e.nid }); } sfx('kill'); this.efeito('sumico', e.x, e.y); this.fx.po(e.x, e.y - e.h / 2, 16, d.cor || '#8E98BE'); this.fx.anel(e.x, e.y - e.h / 2, d.cor || '#fff', 44);
     if (e.daLuta) return;
-    this.soltarMoedas(e.x, e.y - e.h / 2, Math.max(1, Math.round((d.ouro || 4) / 3)) + (e.roubo || 0));
+    this.soltarMoedas(e.x, e.y - e.h / 2, Math.max(1, Math.round((d.ouro || 4) / 3)) + (e.roubo || 0) + (e.elite ? 12 : 0));
     c.data.stats.kills++; c.data.kills[e.type] = (c.data.kills[e.type] || 0) + 1; this.xp(d.xp || 8); this.pontos(10);
     if (c.data.kills[e.type] === 1 && d.licao) this.ui.toast(d.nome + ' vencida pela primeira vez: ' + d.licao, 5200);
   }
@@ -581,9 +584,17 @@ export class Caminho {
     else if (tipo === 'brasas') { for (let i = -1; i <= 1; i++) this.zonas.push({ tipo: 'col', x: p.x + i * 120 + rand(-20, 20), w: 40, aviso: 1.1 + (i + 1) * 0.25, dur: 0.22, cor: '#FF5A3C', y0: oy + T, y1: oy + sala - T }); sfx('shoot'); }
     if (this.tm.deco === 'mastros' && this.def.fase && !p.morto) { // no mar de Jonas, lanças e arpões cruzam o convés na altura do peito: pule, abaixe-se com o passo rasteiro ou apare
       const lado = Math.random() < 0.5 ? -1 : 1; this.textoEm(p.x, p.y - 84, 'lanças!', '#FF8A7A', 12); sfx('swing');
+      if (this.N.barco && Math.random() < 0.6) { this.vento = { t: 2.6, f: (Math.random() < 0.5 ? -1 : 1) * 135 }; this.textoEm(p.x, p.y - 100, 'o navio aderna!', this.tm.acento, 12); }
       for (let i = 0; i < 3; i++) this.tiros.push({ x: p.x - lado * (520 + i * 150), y: p.y - 30 - (i === 1 ? 44 : 0), vx: lado * 470, vy: 0, r: 7, vida: 3, cor: '#C9B48A', tipo: 'lanca', fura: true });
     }
     else if (tipo === 'vento') { this.vento = { t: 2.4, f: -150 }; this.textoEm(p.x, p.y - 70, 'vento oriental!', this.tm.acento, 12); sfx('dodge'); }
+  }
+
+  // Jonas no navio: abre vãos no convés (cair no mar fere e devolve ao último chão firme) e marca a área como travessia.
+  fazerBarco(N) {
+    N.barco = true; N.pocos = [];
+    for (const c of N.celulas) { if (c.papel !== 'corredor') continue; const ox = c.cx * CW, oy = c.cy * CH;
+      for (const col of [9, 10, 19, 20]) { const x = ox + col, i = (oy + 16) * N.w + x; if (N.tiles[i] !== SOLIDO || N.tiles[i - N.w] !== VAZIO) continue; N.tiles[i] = VAZIO; if (oy + 17 < N.h) N.tiles[i + N.w] = ESPINHO; N.pocos.push({ x: x * T, y: (oy + 16) * T }); } }
   }
 
   /* ================= Vida no caminho ================= */
@@ -699,7 +710,8 @@ export class Caminho {
     if (e.onda >= e.total) {
       e.c.vencida = true; this.emb = null; this.trancar(e.c, false); sfx('gate'); sfx('right'); this.tremor(5); this.ganharOleo(22);
       const rolo = this.objs.find(o => o.tipo === 'rolo' && o.cel === e.c); if (rolo) { this.fx.anel(rolo.x, rolo.y - 30, '#FFE9A8', 120); this.efeito('pilar', rolo.x, rolo.y); }
-      this.ui.toast('A câmara está livre. Leia o rolo.', 3500); return;
+      const eco = this.def.sem?.id === 'semana-01' ? ECOS_CORINTO[f.n]?.[rolo ? rolo.n : 0] : null; // na primeira semana, cada câmara vencida conta um pedaço de Atos 18
+      this.ui.toast(eco || 'A câmara está livre. Leia o rolo.', eco ? 11000 : 3500); return;
     }
     // próxima onda: mais vícios a cada vez, vindos do chão e do ar
     const tipos = this.def.inimigos || ['desanimo'], voadores = ['distracao', 'duvida', 'medo', 'vaidade'], n = 3 + e.onda + (this.mp ? this.mp.naArea().length : 0), ox = e.c.cx * CW, oy = e.c.cy * CH, esc = 1 + (f.nivel || 1) * 0.05;
@@ -714,6 +726,7 @@ export class Caminho {
       const v = this.nascer(tipo, tx * T + 16, (ty + 1) * T - (voa ? 16 : 1), false, esc); v.cel = e.c; v.stun = 0.5; v.flash = 0.3;
       this.efeito('sumico', v.x, v.y - v.h / 2); this.fx.anel(v.x, v.y - v.h / 2, v.d.cor || '#C79BFF', 40); i++; feitos++;
     }
+    if (e.onda === e.total - 1) { const cap = this.inimigos.filter(v => v.cel === e.c && v.hp > 0 && !v.voa)[0] || this.inimigos.filter(v => v.cel === e.c && v.hp > 0)[0]; if (cap) { cap.elite = true; cap.hp = cap.max = Math.round(cap.hp * 2.6); cap.r *= 1.35; cap.w *= 1.35; cap.h *= 1.35; cap.irado = 99; this.textoEm(cap.x, cap.y - cap.h - 10, 'CAPITÃO', '#FF8A7A', 12); } } // a última onda vem com um capitão
     e.onda++; e.t = 0.7; sfx('boss'); this.textoEm(p.x, p.y - 74, 'ONDA ' + e.onda + ' DE ' + e.total, '#FF8A7A', 13);
   }
 
