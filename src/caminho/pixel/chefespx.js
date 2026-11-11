@@ -2,6 +2,10 @@
 // (rampas de cor, luz de cima e da frente, contorno de tinta). Mamom é o primeiro: o rei-cofre de Corinto.
 // Um chefe sem desenho aqui continua com a arte antiga até ser redesenhado (ver docs/ARTE-PIXEL.md).
 import { Sprite, rampa, cor, TINTA, BRANCO } from './raster.js';
+import { CHEFES_A } from './chefes-a.js';
+import { CHEFES_B } from './chefes-b.js';
+
+const PINTORES = { ...CHEFES_A, ...CHEFES_B };
 
 const OURO = rampa('#D9A63C'), OUROE = rampa('#8A6A2C'), OSSO = rampa('#E4DFCF'), MANTO = rampa('#3B2A4E'), ACO = rampa('#7F8C9C'), FERRO = rampa('#3A3F4C');
 const COROA = ['L.....L.....L', 'G.....G.....G', 'GG...GGG...GG', 'GGG.GGGGG.GGG', 'GgGGGGrGGGGgG', 'GGrGGGGGGGrGG', 'LLLLLLLLLLLLL', 'ggggggggggggg'];
@@ -58,7 +62,7 @@ export const CHEFES_PX = {
 
 // Quadro pronto de um chefe (ou null se ainda não foi redesenhado)
 export function quadroChefe(b, Tm, G) {
-  const def = CHEFES_PX[b.id]; if (!def) return null;
+  const def = CHEFES_PX[b.id] || (PINTORES[b.id] && { ax: 60, ay: 104, pinta: PINTORES[b.id] }); if (!def) return null;
   const s = quadro.limpa(); def.pinta(s, b, Tm, G);
   if (b.flash > 0) s.tinge(BRANCO);
   if (b.morrendo > 0) s.dissolve(1 - b.morrendo / 1.7, 3);

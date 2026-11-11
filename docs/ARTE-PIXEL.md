@@ -9,7 +9,7 @@ Capturas da prova de conceito em `art/pixel-poc-*.png`.
 | Parte | Como era desenhada | Destino |
 |---|---|---|
 | Protagonista | vetorial procedural (`caminho/heroi.js`), curvas suavizadas, rosto dentro de um capuz | **redesenhado** (`pixel/humano.js`) |
-| Vícios e chefes | vetorial procedural (`game/enemy-art.js`, `boss-art.js`, `jonas-art.js`, `daniel-art.js`) | redesenhar um a um; **Mamom pronto** |
+| Vícios e chefes | vetorial procedural (`game/enemy-art.js`, `boss-art.js`, `jonas-art.js`, `daniel-art.js`) | **redesenhados: 18 chefes e 10 vícios** |
 | Cenário | retângulos, degradês e silhuetas vetoriais (`caminho/cena.js`) | **redesenhado** (`pixel/mundo.js`), vale para todas as áreas |
 | Objetos | vetorial (`caminho/objetos.js`) | rolo, estação, Ebenézer, portais, vaso, segredo, sacola e NPCs **prontos**; faltam 4 peças do Refúgio |
 | Efeitos | partículas circulares e arcos em degradê | **PixelFX** + partículas de 1–2 px |
@@ -60,13 +60,22 @@ Também: hitstop, tremor moderado (no máximo 2 px de arte), clarão branco no a
 
 Arena do chefe, com 12 efeitos simultâneos. O modo novo desenha menos pixels e copia telas prontas.
 
-## O que falta (ordem proposta)
+## Estado (direção validada)
 
-1. **Validação da prova de conceito** — direção, proporções do peregrino, paleta.
-2. Redesenhar os **10 vícios** e os **17 chefes restantes** no mesmo rasterizador (hoje aparecem com a arte antiga reduzida).
-3. Peças do Refúgio: sicômoro, querubim, a porta e a jumenta.
-4. Menus, tela de criação com prévia em pixel, cutscenes.
-5. **Multijogador local por código, até 4** (WebRTC ponto a ponto, o anfitrião guarda o mundo): ainda não começou.
+A prova de conceito foi aprovada e a conversão seguiu:
+
+- **18 chefes** redesenhados (`chefespx.js`, `chefes-a.js`, `chefes-b.js`), cada um com pose de espera, aviso, golpe e
+  quebrantado, lidos do estado da luta por `est()` em `kit.js`. Ex.: a Procrastinação dorme com a ampulheta do "depois"
+  nas costas; o Ressentimento é o verme que secou a planta de Jonas; o Jugo é o toco cingido de ferro e bronze (Dn 4:15);
+  a Fera ainda leva a coroa torta até a segunda fase; Golias tem a testa descoberta; o Leviatã solta fumaça pelas narinas.
+- **10 vícios** redesenhados (`viciospx.js`), pensados para serem reconhecidos pela silhueta em 16–24 pixels.
+- `kit.js` reúne as peças reaproveitadas: mantos, braços, asas, caudas, fiapos (fogo, algas, penas) e a leitura do estado.
+- Clones da Mentira, raios do relógio e os anéis do encanto agora também são pintados em pixel.
+
+## O que falta
+
+1. Peças do Refúgio: sicômoro, querubim, a porta e a jumenta.
+2. Menus (ainda com emojis), tela de criação com prévia em pixel, cutscenes.
 
 A arte antiga continua em *menu › Ajustes › Arte*.
 
@@ -76,7 +85,11 @@ A arte antiga continua em *menu › Ajustes › Arte*.
 src/caminho/pixel/
   raster.js    buffer de pixels, rampas de cor, carimbos, contorno
   humano.js    o peregrino e os NPCs (poses, cabelos, trajes, armas)
-  chefespx.js  chefes redesenhados (Mamom)
+  kit.js       peças reaproveitáveis de chefes e vícios (estado, mantos, braços, asas, caudas)
+  chefespx.js  Mamom e o quadro pronto de qualquer chefe
+  chefes-a.js  chefes de Corinto e de Jonas
+  chefes-b.js  chefes de Daniel 4, Golias, Beemote e Leviatã
+  viciospx.js  os dez vícios
   mundo.js     blocos, céu, camadas de ruínas, pilares, luz
   efeitos.js   folhas de sprites da PixelFX
   render.js    o quadro: mundo, HUD, ampliação e textos

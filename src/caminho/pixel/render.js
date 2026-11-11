@@ -6,6 +6,7 @@ import { input } from '../../input.js';
 import { TODAS } from '../../content/index.js';
 import { T, CH } from '../nivel.js';
 import { desenharVicio } from '../bichos.js';
+import { quadroVicio } from './viciospx.js';
 import { desenharChefe } from '../chefes.js';
 import { desenharObjeto } from '../objetos.js';
 import { MUNDO } from '../dados.js';
@@ -47,7 +48,37 @@ function pintarObjeto(g, o, G, x, y, Tm) {
       carimbar(g, s, x, y, 19, 47); void R; return true; }
     case 'segredo': { const f = Math.round(Math.sin(Tm * 3 + o.x) * 2), tipo = o.item === 'pedra' ? 'p' : o.item === 'mana' ? 'm' : 'b', s = sprObj('seg' + tipo, 12, 12, s => { if (tipo === 'p') s.bola(6, 6, 4.5, 3.5, rampa('#B9B4A2')); else if (tipo === 'm') { s.bola(6, 6, 3.5, 3.5, rampa('#F4E6BC')); s.px(5, 4, BRANCO); } else { s.bola(6, 7, 4, 3.5, MADEIRA); s.ret(4, 2, 4, 2, OURO[3]); } }); carimbar(g, s, x, y - 8 + f, 6, 6); if (Math.floor(Tm * 4 + o.x) % 3 === 0) { g.fillStyle = '#fff'; g.fillRect(x + 5, y - 15 + f, 1, 1); g.fillRect(x - 6, y - 5 + f, 1, 1); } return true; }
     case 'sacola': { const s = sprObj('sacola', 12, 13, s => { s.bola(6, 8, 4.5, 4, MADEIRA); s.ret(4, 2, 4, 2, OURO[3]); s.px(6, 8, OURO[4]); }); carimbar(g, s, x, y, 6, 12); if (Math.floor(Tm * 5) % 2) { g.fillStyle = '#FFD23F'; g.fillRect(x - 6, y - 16, 1, 1); g.fillRect(x + 5, y - 13, 1, 1); } return true; }
-    case 'npc': if (o.bicho) return false; carimbar(g, quadroPessoa({ ...o.look, cls: null }, Tm, (o.id || o.nome) + ''), x, y, 24, 40, G.p.x < o.x ? -1 : 1); return true;
+    case 'arvore': { // o sicômoro de Zaqueu: tronco torto, copa em três massas, figos
+      const s = sprObj('sicomoro', 96, 112, s => { const T = rampa('#6B4A2E'), F = rampa('#3F7A4A'), F2 = rampa('#2E5E44');
+        s.poli([[40, 111], [44, 70], [38, 44], [46, 40], [52, 66], [58, 111]], T[2]); s.poli([[40, 111], [44, 70], [38, 44], [41, 43], [47, 72], [45, 111]], T[1]); s.linha(52, 66, 57, 110, 1, T[3]);
+        s.linha(44, 62, 22, 40, 4, T[2]); s.linha(50, 58, 74, 34, 4, T[2]); s.linha(45, 46, 48, 22, 3, T[1]); for (let y = 76; y < 110; y += 5) s.ret(46 + (y % 2), y, 3, 1, T[0]);
+        for (const [x, y, rx, ry, R2] of [[22, 34, 20, 15, F2], [74, 30, 19, 15, F2], [48, 20, 26, 18, F], [30, 22, 14, 11, F], [66, 18, 14, 11, F]]) s.bola(x, y, rx, ry, R2, 0.4, -0.75);
+        for (let i = 0; i < 46; i++) { const x = 8 + (i * 37) % 80, y = 6 + (i * 23) % 40; if (s.le(x, y)) { s.px(x, y, F[4]); s.px(x + 1, y + 1, F2[0]); } }
+        for (const [x, y] of [[20, 44], [34, 36], [58, 38], [72, 44], [46, 34], [82, 34]]) if (s.le(x, y - 3)) s.bola(x, y, 1.6, 2, rampa('#8E3B5E'));
+        s.contorno(TINTA); }); carimbar(g, s, x, y, 48, 111); return true; }
+    case 'querubim': { // a leste do jardim: o querubim e a espada de fogo que se revolve
+      const s = sprObj('querubim', 56, 60, s => { const A = rampa('#E8E2D0'), M = rampa('#C9A63C');
+        for (const sd of [-1, 1]) for (let i = 0; i < 5; i++) { s.poli([[28 + sd * 4, 22], [28 + sd * (10 + i * 4), 4 + i * 5], [28 + sd * (8 + i * 3), 30 + i * 3]], A[i % 2 ? 2 : 3]); s.linha(28 + sd * 4, 22, 28 + sd * (10 + i * 4), 4 + i * 5, 1, A[4]); }
+        s.poli([[22, 24], [34, 24], [38, 58], [18, 58]], A[2]); s.poli([[22, 24], [26, 24], [22, 58], [18, 58]], A[1]); s.ret(22, 34, 12, 2, M[2]); for (let xx = 19; xx < 38; xx += 3) s.ret(xx, 58, 2, 2, A[1]);
+        s.bola(28, 18, 5, 5.5, rampa('#C9B8A0')); s.ret(26, 17, 5, 1, BRANCO); for (let a = 0; a < 10; a++) s.px(28 + Math.cos(a * 0.628) * 8, 16 + Math.sin(a * 0.628) * 8, M[4]); s.contorno(TINTA); });
+      carimbar(g, s, x, y - 6 + Math.round(Math.sin(Tm * 1.5) * 2), 28, 59);
+      const a = Tm * 2.2, ex = x + 22, ey = y - 34; for (let d = 0; d < 20; d++) { const px = ex + Math.round(Math.cos(a) * d), py = ey + Math.round(Math.sin(a) * d * 0.9); g.fillStyle = d < 4 ? '#C9A63C' : d % 3 ? '#FF9A3C' : '#FFF1BE'; g.fillRect(px, py, d < 4 ? 2 : 1 + (d % 2), d < 4 ? 2 : 1 + (d % 2)); if (d > 5 && d % 4 === 0) chama(g, px, py - 2, Tm, d); }
+      return true; }
+    case 'porta-pecado': { // a porta sem trinco
+      const aberta = G.cm.ovos.includes('graca'), s = sprObj('portap' + (aberta ? 'a' : ''), 34, 52, s => { const P = rampa('#4A4658');
+        s.ret(2, 6, 30, 46, P[2]); s.bola(17, 8, 15, 8, P); s.ret(2, 6, 2, 46, P[3]); s.ret(30, 6, 2, 46, P[0]); for (let yy = 12; yy < 52; yy += 7) { s.ret(3, yy, 4, 1, P[0]); s.ret(27, yy + 3, 4, 1, P[0]); }
+        const dentro = aberta ? rampa('#FFE9A8') : rampa('#17121f'); s.ret(7, 12, 20, 40, dentro[aberta ? 3 : 2]); s.bola(17, 13, 10, 6, dentro);
+        if (aberta) for (let yy = 12; yy < 52; yy += 2) s.ret(9 + (yy % 4), yy, 14, 1, dentro[4]); s.contorno(TINTA); }); carimbar(g, s, x, y, 17, 51);
+      if (!aberta) { const r = Math.floor(Tm * 1.5) % 2; g.fillStyle = '#EF6981'; g.fillRect(x - 4, y - 30 + r, 2, 1); g.fillRect(x + 3, y - 30 + r, 2, 1); for (let i = 0; i < 4; i++) { const k = (Tm * 0.4 + i / 4) % 1; g.fillStyle = '#2A2238'; g.fillRect(x - 8 + i * 5 + Math.round(Math.sin(k * 6 + i) * 2), y - 2 - Math.round(k * 12), 2, 2); } }
+      else chama(g, x, y - 56, Tm, 2);
+      return true; }
+    case 'npc': if (o.bicho) { // a jumenta de Balaão
+        const s = sprObj('jumenta', 40, 30, s => { const J = rampa('#8E8474'), V = rampa('#D9D2C0');
+          for (const [dx, k] of [[9, 1], [13, 0], [25, 1], [29, 0]]) { s.ret(dx, 18, 3, 11, J[k ? 2 : 1]); s.ret(dx, 28, 3, 2, TINTA); }
+          s.bola(19, 15, 12, 6, J, 0.4, -0.7); s.bola(19, 18, 9, 3, V, 0.2, -0.4); s.poli([[27, 12], [33, 4], [37, 6], [32, 16]], J[2]); s.bola(35, 7, 4, 4, J, 0.5, -0.7); s.poli([[36, 8], [40, 10], [36, 13]], V[2]);
+          s.linha(33, 4, 31, 0, 2, J[1]); s.linha(36, 4, 36, 0, 2, J[3]); s.px(36, 6, TINTA); for (let xx = 28; xx < 33; xx++) s.px(xx, 11 - (xx - 28), TINTA); s.linha(7, 13, 4, 22, 1, J[0]); s.ret(3, 22, 2, 3, TINTA); s.ret(15, 9, 8, 2, rampa('#8E2B45')[2]); s.contorno(TINTA); });
+        carimbar(g, s, x, y, 20, 29, G.p.x < o.x ? -1 : 1); return true; }
+      carimbar(g, quadroPessoa({ ...o.look, cls: null }, Tm, (o.id || o.nome) + ''), x, y, 24, 40, G.p.x < o.x ? -1 : 1); return true;
   }
   return false;
 }
@@ -100,9 +131,20 @@ export function renderPixel(G) {
     if (Math.abs(e.x - p.x) > 1200) continue;
     if (e.kind === 'chefe') {
       const q = quadroChefe(e, Tm, G);
-      if (q) { carimbar(g, q.s, X(e.x), Y(e.y), q.ax, q.ay, e.face > 0 ? 1 : -1); pintarExtrasChefe(g, e, G, X, Y, Tm); }
+      if (q) {
+        const vira = e.face > 0 || e.c.semVirar ? 1 : -1, luz = p.lamp ? G.raioLuz() : 0;
+        // os clones da Mentira: iguais ao verdadeiro, mas tremem dentro da luz da lâmpada
+        for (const cl of e.clones) { const naLuz = luz && Math.hypot(cl.x - p.x, cl.y - p.y) < luz; carimbar(g, q.s, X(cl.x), Y(cl.y), q.ax, q.ay, vira, (cl.alpha ?? 1) * (naLuz ? 0.22 + 0.12 * Math.sin(Tm * 40) : 1) * Math.min(1, cl.t * 2)); }
+        carimbar(g, q.s, X(e.x), Y(e.y), q.ax, q.ay, vira); pintarExtrasChefe(g, e, G, X, Y, Tm);
+      }
       else antigo(() => desenharChefe(g, e, Tm, G));
-    } else antigo(() => desenharVicio(g, e, Tm));
+    } else {
+      const q = quadroVicio(e, Tm);
+      if (!q) { antigo(() => desenharVicio(g, e, Tm)); continue; }
+      const tonto = e.stun > 0.25, yy = Y(e.y) + (e.voa ? Math.round(Math.sin(Tm * 3 + (e.art?.ph || 0)) * 2) : 0);
+      carimbar(g, q.s, X(e.x), yy, q.ax, q.ay, e.face >= 0 ? 1 : -1, e.vista ?? 1);
+      if (tonto) for (let i = 0; i < 3; i++) { const a = Tm * 5 + i * 2.09; g.fillStyle = '#FFE9A8'; g.fillRect(X(e.x) + Math.round(Math.cos(a) * 7), yy - Math.round(e.h / PX) - 5 + Math.round(Math.sin(a) * 2), 1, 1); }
+    }
   }
   if (G.pecado) antigo(() => G.pintarPecado(g, true));
   for (const m of G.moedas) { const x = X(m.x), y = Y(m.y), f = Math.floor(m.t * 10) % 4, lg = [3, 2, 1, 2][f]; g.fillStyle = '#17121f'; g.fillRect(x - (lg >> 1) - 1, y - 2, lg + 2, 5); g.fillStyle = m.maldita ? '#B8862B' : '#F2C14E'; g.fillRect(x - (lg >> 1), y - 1, lg, 3); g.fillStyle = '#FFF1BE'; g.fillRect(x - (lg >> 1), y - 1, 1, 1); }
@@ -174,6 +216,12 @@ function pintarZona(g, G, z, X, Y, vw, vh, Tm) {
 
 function pintarExtrasChefe(g, b, G, X, Y, Tm) {
   const x = X(b.x), y = Y(b.y), h = Math.round(b.h / PX);
+  if (b.raios) { // os raios do relógio: pontilhados no aviso, cheios quando ferem
+    const r = b.raios, cy = y - Math.round(h * 0.55), aviso = r.aviso > 0; g.fillStyle = aviso ? '#FFE9A8' : b.d.cor || '#FFB05A';
+    for (let i = 0; i < r.n; i++) { const a = r.a + i * TAU / r.n, ux = Math.cos(a), uy = Math.sin(a); for (let d = 15; d < r.len / PX; d += aviso ? 4 : 1) { g.fillRect(x + Math.round(ux * d), cy + Math.round(uy * d), aviso ? 1 : 2, aviso ? 1 : 2); } }
+    if (!aviso) { g.fillStyle = '#FFFFFF'; for (let i = 0; i < r.n; i++) { const a = r.a + i * TAU / r.n; for (let d = 15; d < r.len / PX; d += 3) g.fillRect(x + Math.round(Math.cos(a) * d), cy + Math.round(Math.sin(a) * d), 1, 1); } }
+  }
+  if (b.encanta) { g.fillStyle = '#FF8FB8'; for (let i = 0; i < 3; i++) { const rr = (340 - ((Tm * 150 + i * 110) % 330)) / PX; for (let a = 0; a < 40; a++) if ((a + i) % 2) g.fillRect(x + Math.round(Math.cos(a * 0.157) * rr), y - (h >> 1) + Math.round(Math.sin(a * 0.157) * rr), 1, 1); } }
   if (b.quebrado > 0 || b.tonto > 0) for (let i = 0; i < 3; i++) { const a = Tm * 4 + i * 2.09; g.fillStyle = '#FFE9A8'; const sx = x + Math.round(Math.cos(a) * 13), sy = y - h - 8 + Math.round(Math.sin(a) * 3); g.fillRect(sx - 1, sy, 3, 1); g.fillRect(sx, sy - 1, 1, 3); }
   if (b.exposto > 0 && Math.floor(Tm * 10) % 2) { g.fillStyle = '#FFE9A8'; for (let a = 0; a < 12; a++) g.fillRect(x + Math.round(Math.cos(a * 0.52) * 8), y - Math.round(h * 0.86) + Math.round(Math.sin(a * 0.52) * 8), 1, 1); }
 }

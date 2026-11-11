@@ -1,0 +1,106 @@
+// Os dez vícios em pixel art. São pequenos (16 a 24 pixels): cada um precisa ser reconhecido pela silhueta.
+import { Sprite, BRANCO } from './raster.js';
+import { R, C, cauda, TINTA } from './kit.js';
+
+const quadro = new Sprite(56, 52), ox = 28, oy = 46;
+const OSSO = R('#E4DFCF'), FERRO = R('#3A3F4C'), ACO = R('#8A93A8'), OURO = R('#D9A63C');
+const BR = C('#FFFFFF'), AMBAR = C('#FFD23F'), RUBI = C('#FF4A5A');
+
+const PINTA = {
+  // Preguiça: uma lesma com um travesseiro por casa
+  preguica(s, e, Tm, E) {
+    const est = Math.round(Math.sin(Tm * 2) * 2), V = R('#7FB069');
+    s.bola(ox - 1, oy - 4, 11 + est, 4, V, 0.4, -0.7); s.bola(ox + 8 + est, oy - 8, 4, 5, V);
+    s.bola(ox - 3, oy - 10, 8, 6, R('#C9B8D6'), 0.4, -0.7); s.ret(ox - 8, oy - 10, 11, 1, R('#C9B8D6')[1]); s.px(ox - 3, oy - 13, R('#C9B8D6')[4]);
+    for (const dx of [7, 10]) { s.linha(ox + dx + est, oy - 12, ox + dx + est + 1, oy - 16, 1, V[1]); s.px(ox + dx + est + 1, oy - 17, E.prep ? BR : TINTA); }
+    if (!E.tonto) s.ret(ox + 9 + est, oy - 8, 2, 1, TINTA);
+  },
+  // Distração: uma mariposa de olhos enormes, sempre fora do lugar
+  distracao(s, e, Tm, E) {
+    const V = R('#F06FB4'), bat = Math.floor(Tm * 16) % 2, y = oy - 14;
+    for (const sd of [-1, 1]) { s.poli([[ox, y], [ox + sd * 11, y - (bat ? 9 : 3)], [ox + sd * 9, y + (bat ? 1 : 6)]], V[bat ? 3 : 2]); s.px(ox + sd * 7, y - (bat ? 4 : 0), BR); }
+    s.bola(ox, y + 1, 4, 5, R('#5A3A6E')); for (const sd of [-1, 1]) { s.bola(ox + sd * 2 + 1, y - 2, 2, 2, OSSO); s.px(ox + sd * 2 + 1 + Math.round(Math.sin(Tm * 9 + sd)), y - 2, E.prep ? RUBI : TINTA); }
+    s.linha(ox - 1, y - 5, ox - 3, y - 9, 1, V[1]); s.linha(ox + 2, y - 5, ox + 4, y - 9, 1, V[1]);
+    for (let i = 0; i < 3; i++) s.px(ox - 8 + i * 8 + Math.sin(Tm * 5 + i) * 2, y + 8 + ((Tm * 12 + i * 3) % 6), AMBAR);
+  },
+  // Desânimo: um vulto murcho debaixo da própria nuvem; encolhe antes do bote
+  desanimo(s, e, Tm, E) {
+    const V = R('#8E98BE'), agacha = E.prep ? 4 : 0, bote = e.estado === 'bote';
+    s.bola(ox + (bote ? 3 : 0), oy - 8 + agacha / 2, 8 + (bote ? 3 : 0), 8 - agacha / 2, V, 0.4, -0.7);
+    for (let x = -6; x <= 6; x += 3) s.ret(ox + x, oy - 2, 2, 2 + (x % 2 ? 1 : 0), V[1]);
+    if (E.tonto) s.ret(ox + 1, oy - 9, 5, 1, TINTA); else { s.ret(ox + 1, oy - 10 + agacha / 2, 2, 3, TINTA); s.ret(ox + 5, oy - 10 + agacha / 2, 2, 3, TINTA); if (E.prep) { s.px(ox + 1, oy - 9 + agacha / 2, RUBI); s.px(ox + 5, oy - 9 + agacha / 2, RUBI); } }
+    s.linha(ox, oy - 4 + agacha / 2, ox + 6, oy - 5 + agacha / 2, 1, TINTA);
+    if (!bote) { s.bola(ox - 3, oy - 22, 5, 3, R('#5C6784')); s.bola(ox + 3, oy - 23, 5, 3, R('#5C6784')); for (let i = 0; i < 3; i++) s.px(ox - 5 + i * 4, oy - 18 + ((Tm * 10 + i * 2) % 5), C('#8FB6D6')); }
+  },
+  // Inveja: um sapo de um olho só, que só olha para o que é dos outros
+  inveja(s, e, Tm, E) {
+    const V = R('#6CCB5F'), ar = e.estado === 'ar', ag = E.prep ? 3 : 0;
+    for (const sd of [-1, 1]) { s.membro(ox + sd * 6, oy - 5 + ag, ox + sd * (ar ? 12 : 10), oy - (ar ? 0 : 1), 3, V); s.ret(ox + sd * (ar ? 12 : 10) - 2, oy - (ar ? 1 : 2), 5, 2, V[1]); }
+    s.bola(ox, oy - 8 + ag, 9, 7 - ag / 2, V, 0.4, -0.7); s.bola(ox, oy - 4 + ag, 6, 3, R('#D9E8A8'));
+    s.bola(ox + 2, oy - 15 + ag, 5, 5, V); s.bola(ox + 3, oy - 15 + ag, 3.5, 3.5, OSSO); s.ret(ox + 4, oy - 16 + ag, 2, 3, E.prep ? RUBI : TINTA);
+    s.linha(ox - 4, oy - 6 + ag, ox + 7, oy - 6 + ag, 1, V[0]);
+  },
+  // Ganância: um rato corcunda com o saco às costas; depois de roubar, corre com ele cheio
+  ganancia(s, e, Tm, E) {
+    const V = R('#7A6A52'), corre = Math.abs(e.vx) > 60, p = corre ? Math.floor(Tm * 12) % 2 : 0, cheio = e.fugindo > 0 ? 2 : 0;
+    cauda(s, ox - 7, oy - 4, 5, -1, Tm, 2, R('#C99A8A'), 2, 6);
+    for (const [dx, a] of [[-3, p ? 3 : -2], [4, p ? -2 : 3]]) s.membro(ox + dx, oy - 6, ox + dx + a, oy - 1, 2, V);
+    s.bola(ox - 5, oy - 14, 6 + cheio, 6 + cheio, OURO, 0.4, -0.7); s.ret(ox - 6, oy - 20 - cheio, 3, 2, OURO[1]); s.px(ox - 5, oy - 14, OURO[4]);
+    s.bola(ox + 1, oy - 9, 6, 5, V, 0.4, -0.7); s.bola(ox + 7, oy - 12, 4, 4, V); s.poli([[ox + 9, oy - 13], [ox + 15, oy - 10], [ox + 9, oy - 9]], V[3]); s.px(ox + 15, oy - 10, C('#FF8FB8'));
+    s.bola(ox + 5, oy - 16, 2.5, 2.5, R('#C99A8A')); s.px(ox + 9, oy - 13, E.prep ? RUBI : AMBAR);
+  },
+  // Dúvida: uma chama fria em forma de pergunta, com um olho que nunca se decide
+  duvida(s, e, Tm, E) {
+    const V = R('#8B6AD6'), y = oy - 14, bal = Math.round(Math.sin(Tm * 3) * 1.5);
+    s.bola(ox + bal, y - 3, 7, 7, V, 0.4, -0.7); s.bola(ox + bal, y - 3, 3.5, 3.5, OSSO); s.px(ox + bal + Math.round(Math.sin(Tm * 6) * 2), y - 3, E.prep ? RUBI : TINTA);
+    s.linha(ox + bal, y + 4, ox - 2, y + 9, 3, V[2]); s.linha(ox - 2, y + 9, ox + 1 - bal, y + 13, 2, V[1]); s.bola(ox + 1 - bal, y + 17, 1.6, 1.6, V);
+    s.linha(ox + 4 + bal, y - 9, ox + 7 + bal, y - 14, 2, V[3]); s.px(ox + 8 + bal, y - 15, V[4]);
+    if (E.prep) for (let a = 0; a < 6; a++) s.px(ox + bal + Math.cos(a + Tm * 8) * 10, y - 3 + Math.sin(a + Tm * 8) * 10, C('#C79BFF'));
+  },
+  // Ira: um javali de brasa; abaixa a cabeça e solta fumaça antes de investir
+  ira(s, e, Tm, E) {
+    const V = R('#B03A2E'), carga = e.estado === 'carga' || Math.abs(e.vx) > 150, p = Math.floor(Tm * (carga ? 14 : 6)) % 2, b = E.prep ? 2 : 0;
+    for (const [dx, a] of [[-7, p ? 2 : -2], [-2, p ? -2 : 2], [5, p ? 2 : -2], [9, p ? -2 : 2]]) s.ret(ox + dx + (carga ? a : 0), oy - 5, 3, 5, V[0]);
+    s.bola(ox - 1, oy - 10, 11, 7, V, 0.4, -0.7); s.bola(ox + 8, oy - 9 + b, 6, 6, V, 0.5, -0.7);
+    for (let i = 0; i < 5; i++) { const x = ox - 8 + i * 4; s.linha(x, oy - 16, x - 2 - (carga ? 2 : 0), oy - 20 - (i % 2) * 2 - Math.floor(Tm * 10 + i) % 2, 2, C(i % 2 ? '#FF7A3C' : '#FFD23F')); }
+    s.poli([[ox + 12, oy - 7 + b], [ox + 17, oy - 9 + b], [ox + 13, oy - 4 + b]], OSSO[3]); s.ret(ox + 9, oy - 11 + b, 2, 2, E.prep || carga ? BR : AMBAR);
+    if (E.prep) for (let i = 0; i < 3; i++) s.ret(ox + 15 + i * 2, oy - 12 - i * 3 - Math.floor(Tm * 8) % 2, 2, 2, C('#C9C2B8'));
+  },
+  // Medo: só os olhos são certos; o resto é sombra que se desfaz
+  medo(s, e, Tm, E) {
+    const V = R('#3A3D5C'), y = oy - 14;
+    for (let i = -2; i <= 2; i++) cauda(s, ox + i * 3, y + 6, 4, i < 0 ? -1 : 1, Tm + i, 2, V, 2, 4, 1.2);
+    s.bola(ox, y, 9, 10, V, 0.3, -0.7); s.poli([[ox - 8, y - 4], [ox - 12, y - 14], [ox - 3, y - 8]], V[1]); s.poli([[ox + 8, y - 4], [ox + 12, y - 14], [ox + 3, y - 8]], V[1]);
+    for (const dx of [-5, 2]) { s.ret(ox + dx, y - 3, 4, E.prep ? 4 : 2, BR); s.px(ox + dx + 2, y - 2, TINTA); }
+    if (E.prep) s.poli([[ox - 4, y + 4], [ox + 4, y + 4], [ox, y + 9]], TINTA);
+  },
+  // Orgulho: o cavaleirinho de penacho alto atrás de um escudo maior que ele; só cai pelas costas
+  orgulho(s, e, Tm, E) {
+    const V = R('#8A6FC2'), p = Math.abs(e.vx) > 5 ? Math.floor(Tm * 6) % 2 : 0, aberto = e.aberto > 0 || E.tonto;
+    for (const [dx, a] of [[-4, p ? -2 : 0], [4, p ? 0 : -2]]) { s.ret(ox + dx - 2, oy - 8, 4, 6 + a, ACO[1]); s.ret(ox + dx - 2, oy - 2 + a, 6, 2, FERRO[2]); }
+    s.bola(ox, oy - 15, 8, 9, ACO, 0.5, -0.7); s.ret(ox - 7, oy - 12, 14, 2, V[2]); s.poli([[ox - 8, oy - 20], [ox - 14, oy - 6], [ox - 6, oy - 8]], V[1]);
+    s.bola(ox + 1, oy - 26, 6, 6, ACO, 0.5, -0.7); s.ret(ox + 1, oy - 27, 6, 2, TINTA); s.px(ox + 4, oy - 27, E.prep ? RUBI : AMBAR);
+    for (let i = 0; i < 5; i++) s.ret(ox - 3 + i, oy - 34 - (i < 3 ? i : 4 - i) * 2, 2, 4 + (i < 3 ? i : 4 - i) * 2, V[i % 2 ? 3 : 2]);
+    if (aberto) { s.bola(ox - 8, oy - 6, 6, 3, FERRO); } // escudo no chão
+    else { s.bola(ox + 10, oy - 14, 6, 12, V, 0.5, -0.7); s.bola(ox + 10, oy - 14, 4, 9, FERRO, 0.5, -0.7); s.ret(ox + 9, oy - 21, 2, 14, OURO[3]); s.ret(ox + 6, oy - 15, 8, 2, OURO[3]); }
+  },
+  // Vaidade: um espelho de mão que voa admirando o próprio reflexo
+  vaidade(s, e, Tm, E) {
+    const V = R('#9FE6F0'), y = oy - 18, bal = Math.round(Math.sin(Tm * 3) * 1.5);
+    for (const sd of [-1, 1]) for (let i = 0; i < 3; i++) s.poli([[ox + sd * 6, y + bal], [ox + sd * (13 + i * 2), y + bal - 8 + i * 6 - Math.floor(Tm * 8) % 2 * 2], [ox + sd * 8, y + bal + 3]], R('#2F8A6A')[i % 2 ? 2 : 3]);
+    s.ret(ox - 1, y + 7 + bal, 3, 10, OURO[2]); s.ret(ox - 2, y + 15 + bal, 5, 2, OURO[1]);
+    s.bola(ox, y + bal, 8, 9, OURO, 0.5, -0.7); s.bola(ox, y + bal, 6, 7, V, 0.6, -0.6); s.linha(ox - 3, y + bal + 3, ox + 1, y + bal - 4, 1, BR);
+    if (E.tonto) s.ret(ox - 2, y + bal, 5, 1, TINTA); else { s.ret(ox - 3, y + bal - 1, 2, 2, E.prep ? RUBI : TINTA); s.ret(ox + 2, y + bal - 1, 2, 2, E.prep ? RUBI : TINTA); s.linha(ox - 2, y + bal + 3, ox + 2, y + bal + 3, 1, TINTA); s.px(ox + 3, y + bal + 2, TINTA); }
+    for (let a = 0; a < 3; a++) s.px(ox + Math.cos(Tm * 2 + a * 2.1) * 11, y + bal + Math.sin(Tm * 2 + a * 2.1) * 12, BR);
+  }
+};
+
+// Quadro pronto de um vício (ou null se o tipo não tem desenho)
+export function quadroVicio(e, Tm) {
+  const p = PINTA[e.type]; if (!p) return null;
+  const s = quadro.limpa(), E = { prep: e.tele > 0 || e.estado === 'prep', tonto: e.stun > 0.25 };
+  p(s, e, Tm + (e.art?.ph || 0), E);
+  if (e.flash > 0) s.tinge(BRANCO);
+  s.contorno(TINTA);
+  return { s, ax: ox, ay: oy };
+}
