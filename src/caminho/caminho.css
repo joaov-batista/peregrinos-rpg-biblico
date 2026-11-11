@@ -28,3 +28,5 @@ body.caminho #banner b { font-family: Cinzel, serif; letter-spacing: .06em; }
 body.caminho #bossBar { bottom: auto; top: calc(var(--safe-t, 0px) + 46px); }
 body.caminho.touch #bossBar { top: calc(var(--safe-t, 0px) + 8px); }
 body.caminho:not(.cm-dash) #aLock { display: none !important; }
+body.cm-pixel #bossBar { display: none !important; }
+body.cm-pixel #banner b, body.cm-pixel #banner small, body.cm-pixel #banner i { font-family: 'Pixelify Sans', Cinzel, serif; }

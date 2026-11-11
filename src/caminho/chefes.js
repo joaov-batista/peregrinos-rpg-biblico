@@ -284,13 +284,13 @@ const GOLPES = {
 function choque(G, b) {
   const y = G.N.arena.chao;
   for (const s of [-1, 1]) G.tiros.push({ x: b.x + s * b.w / 2, y: y - 13, vx: s * 330 * G.dif.vel, vy: 0, r: 13, vida: 2.4, cor: b.d.cor || '#C9D2C4', tipo: 'choque', fixo: true });
-  G.tremor(7); sfx('block'); G.fx.po(b.x, y, 14, '#C9D2C4');
+  G.tremor(7); sfx('block'); G.fx.po(b.x, y, 14, '#C9D2C4'); b.pousou = 0.2; G.efeito('baque', b.x, y);
 }
 
 export function atualizarChefe(G, b, dt) {
   const c = b.c, A = G.N.arena, p = G.p;
   b.t += dt; b.flash = Math.max(0, b.flash - dt); b.semDano = Math.max(0, b.semDano - dt); b.exposto = Math.max(0, b.exposto - dt); b.furia = Math.max(0, b.furia - dt);
-  b.tele = 0; b.art.step = 0; b.perigo = false;
+  b.tele = 0; b.art.step = 0; b.perigo = false; if (b.pousou > 0) b.pousou -= dt;
   for (const cl of b.clones) cl.t -= dt;
   b.clones = b.clones.filter(cl => cl.t > 0);
   if (b.morrendo) { b.morrendo -= dt; b.vx = 0; if (Math.random() < dt * 22) G.fx.po(b.x + rand(-b.w, b.w) / 2, b.y - rand(0, b.h), 3, b.d.cor || '#fff'); if (b.morrendo <= 0) G.chefeCaiu(b); return; }

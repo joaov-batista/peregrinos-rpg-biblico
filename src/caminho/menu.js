@@ -86,6 +86,8 @@ export function abrirMenu(G, aba = 'jornada') {
       const out = [h('h4', {}, 'Dificuldade')];
       for (const [id, d] of Object.entries(DIFICULDADES)) out.push(h('button', { class: 'fase-row cm-rel' + (cm.dif === id ? ' on' : ''), onclick: () => { cm.dif = id; sfx('click'); G.p.vidaMax = G.vidaMax(); G.p.vida = Math.min(G.p.vida, G.p.vidaMax); G.salvar(); desenha(); } }, h('div', {}, h('b', {}, d.nome + (cm.dif === id ? ' ✓' : '')), h('small', {}, d.desc))));
       const alterna = (k, nome) => h('button', { class: 'chip-btn' + (config[k] !== false ? ' on' : ''), onclick: () => { setConfig(k, config[k] === false); desenha(); } }, nome + ': ' + (config[k] !== false ? 'ligado' : 'desligado'));
+      out.push(h('h4', {}, 'Arte'), h('div', { class: 'cfg-opts' }, h('button', { class: 'chip-btn' + (config.pixel !== false ? ' on' : ''), onclick: () => { setConfig('pixel', config.pixel === false); G.pixel = config.pixel !== false; document.body.classList.toggle('cm-pixel', G.pixel); desenha(); } }, config.pixel !== false ? 'Pixel art (nova)' : 'Vetorial (antiga)')),
+        t('A arte em pixel é a nova direção do jogo. Chefes e vícios ainda não redesenhados aparecem com a arte antiga reduzida.', 'muted'));
       out.push(h('h4', {}, 'Jogo'), h('div', { class: 'cfg-opts' }, alterna('cinemas', '🎬 Cutscenes'), alterna('tremor', '📳 Tremor da tela'), alterna('numerosDano', '🔢 Números de dano'),
         h('button', { class: 'chip-btn' + (audio.muted ? '' : ' on'), onclick: () => { setMuted(!audio.muted); desenha(); } }, '🔊 Som: ' + (audio.muted ? 'desligado' : 'ligado'))));
       const vistas = (c.data.cinemas || []).filter(id => CINEMAS[id]);

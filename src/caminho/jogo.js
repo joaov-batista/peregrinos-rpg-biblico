@@ -23,6 +23,9 @@ import { ARMADURA, RELIQUIAS, MUNDO, DIFICULDADES, areaDef, novoCaminho, semanaD
 import { tema, pintarFundo, pintarBlocos, pintarEnfeites, pintarLampioes, pintarLuz, corA } from './cena.js';
 import { desenharObjeto } from './objetos.js';
 import { abrirMenu, escolherFase, loja } from './menu.js';
+import { renderPixel } from './pixel/render.js';
+import { iconePx } from './pixel/icones.js';
+import { aquecerEfeitos, soltar, atualizarEfeitos } from './pixel/efeitos.js';
 
 const caixa = e => ({ x: e.x - e.w / 2, y: e.y - e.h, w: e.w, h: e.h });
 const toca = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -38,6 +41,9 @@ export class Caminho {
     this.lentidao = 1; this.lentidaoAlvo = 1; this.fade = 1; this.luzCv = document.createElement('canvas');
     this.vista = { W: 0, H: 0, Z: 1, cam: { x: 0, y: 0 } };
     this.fx = criarFx(this);
+    // arte em pixel (padrão); a arte vetorial antiga fica em Ajustes › Arte
+    this.pixel = config.pixel !== false; this.fxPx = []; this.clarao = 0; if (this.pixel) aquecerEfeitos();
+    document.body.classList.toggle('cm-pixel', this.pixel);
     this.tipoArma = CLASSES[char.cls]?.arma || 'espada'; this.arma = ARMAS[this.tipoArma] || ARMAS.espada;
     this.onResize = () => this.resize(); addEventListener('resize', this.onResize); this.resize();
     document.body.classList.add('caminho'); input.perfil = 'caminho';
@@ -46,7 +52,8 @@ export class Caminho {
     this.padAntes = input.padAcoes; input.padAcoes = { menu: () => this.menu(), mapa: () => this.menu('mapa') };
     for (const [act, nome] of Object.entries({ dodge: 'Pular', lock: 'Passo Pronto', defend: 'Vigília', botija: 'Orar', skill: CLASSES[char.cls]?.skill.nome || 'Verso', attack: 'Golpe' })) { const b = document.querySelector(`[data-act="${act}"]`); if (b) { b.dataset.name = nome; b.title = nome; } }
     this.icones = [];
-    for (const [act, simb] of Object.entries({ dodge: '⤒', lock: '»', defend: '🪔', botija: '🙏' })) { const b = document.querySelector(`[data-act="${act}"]`); if (b) { this.icones.push([b, [...b.childNodes], b.hidden]); b.replaceChildren(simb); b.hidden = false; } }
+    for (const [act, simb] of Object.entries({ dodge: '⤒', lock: '»', defend: '🪔', botija: '🙏' })) { const b = document.querySelector(`[data-act="${act}"]`); if (b) { this.icones.push([b, [...b.childNodes], b.hidden]); b.replaceChildren(this.pixel ? iconePx({ dodge: 'pular', lock: 'passo', defend: 'lampada', botija: 'orar' }[act]) : simb); b.hidden = false; } }
+    if (this.pixel) this.botao.replaceChildren(iconePx('menu', 22));
     this.entrar(this.cm.ebenezer?.area || 'refugio', { ebenezer: true });
     this.raf = requestAnimationFrame(t => this.loop(t));
   }
@@ -54,7 +61,7 @@ export class Caminho {
   destroy() {
     this.running = false; cancelAnimationFrame(this.raf); removeEventListener('resize', this.onResize);
     for (const [b, filhos, oculto] of this.icones) { b.replaceChildren(...filhos); b.hidden = oculto; }
-    document.body.classList.remove('caminho', 'cm-dash'); input.perfil = null; input.padAcoes = this.padAntes; this.botao.remove(); music(null); this.ui.bossBar(null); this.ui.setInteract(null);
+    document.body.classList.remove('caminho', 'cm-dash', 'cm-pixel'); input.perfil = null; input.padAcoes = this.padAntes; this.botao.remove(); music(null); this.ui.bossBar(null); this.ui.setInteract(null);
   }
 
   get dif() { return DIFICULDADES[this.cm.dif] || DIFICULDADES.provacao; }
@@ -68,7 +75,7 @@ export class Caminho {
   resize() {
     const { W, H } = viewSize(), dpr = Math.min(2, devicePixelRatio || 1);
     this.cv.width = Math.round(W * dpr); this.cv.height = Math.round(H * dpr); this.cv.style.width = W + 'px'; this.cv.style.height = H + 'px';
-    this.dpr = dpr; this.vista.W = W; this.vista.H = H; this.vista.Z = clamp(H / (CH * T), 0.5, 2.6);
+    this.dpr = dpr; this.vista.W = W; this.vista.H = H; this.vista.Z = clamp(H / (CH * T), 0.3, 8);
   }
 
   async cinema(id, forcar = false) {
@@ -179,7 +186,9 @@ export class Caminho {
   update(dt) {
     this.lerControles();
     this.fade = Math.max(0, this.fade - dt * 1.6);
-    if (this.hitstop > 0) { this.hitstop -= dt; this.atualizarFx(dt * 0.2); return; }
+    if (this.clarao > 0) this.clarao -= dt; if (this.p.flashT > 0) this.p.flashT -= dt;
+    if (this.hitstop > 0) { this.hitstop -= dt; this.atualizarFx(dt * 0.2); atualizarEfeitos(this.fxPx, dt * 0.25); return; }
+    atualizarEfeitos(this.fxPx, dt);
     this.T += dt; this.char.data.stats.playtime = (this.char.data.stats.playtime || 0) + dt;
     const p = this.p, N = this.N;
     this.escuro = damp(this.escuro, Math.max(this.tm.escuro, this.escuroAlvo || 0), 2, dt);
@@ -242,6 +251,7 @@ export class Caminho {
   }
 
   /* ================= Combate ================= */
+  efeito(nome, x, y, vira = 1, o) { if (this.pixel) soltar(this.fxPx, nome, x, y, vira, o); }
   tremor(a) { if (config.tremor !== false) this.tremorA = Math.max(this.tremorA, a); }
   textoEm(x, y, txt, cor = '#fff', tam = 14) { this.textos.push({ x, y, txt, cor, tam, t: 1.3 }); }
   fala(b, txt) { this.textos.push({ x: b.x, y: b.y - b.h - 16, txt: '“' + txt + '”', cor: '#F2E9D0', tam: 13, t: 2.4, fixo: b }); }
@@ -286,7 +296,7 @@ export class Caminho {
       if (e.c.fases[e.fase].golpes.includes('voz') && e.id === 'babilonia') d *= 0.25; // a voz do céu: não é hora de bater
       e.hp -= d; e.flash = 0.1; e.semGolpe = 0; this.postura(e, atk.carga ? 20 : 3);
       if (e.clones.length) { for (const cl of e.clones) this.fx.po(cl.x, cl.y - e.h / 2, 12, e.d.cor || '#C79BFF'); e.clones = []; this.postura(e, 30); this.textoEm(e.x, e.y - e.h - 12, 'A verdadeira!', '#FFE9A8'); sfx('right'); }
-      this.fx.faisca(e.x - dir * e.w * 0.3, clamp(p.y - 22, e.y - e.h, e.y), forte ? 12 : 6, forte ? '#FFE9A8' : '#fff');
+      this.fx.faisca(e.x - dir * e.w * 0.3, clamp(p.y - 22, e.y - e.h, e.y), forte ? 12 : 6, forte ? '#FFE9A8' : '#fff'); this.efeito(forte ? 'critico' : 'faiscaLuz', e.x - dir * e.w * 0.3, clamp(p.y - 28, e.y - e.h, e.y), dir);
       if (config.numerosDano !== false) this.textoEm(e.x + rand(-14, 14), e.y - e.h - 4, String(Math.round(d)), forte ? '#FFE9A8' : '#E6E0CF', forte ? 17 : 13);
       this.ganharOleo(atk.semOleo ? 0 : 11); sfx(forte ? 'crit' : 'hit'); this.hitstop = forte ? 0.07 : 0.04; this.tremor(forte ? 6 : 2.5);
       if (e.hp <= 0) { e.hp = 0; e.morrendo = 1.7; e.mov = null; e.raios = null; e.clones = []; this.limparPerigos(); this.puxao = null; this.hitstop = 0.3; this.tremor(16); sfx('boss'); for (const v of this.inimigos) if (v.kind === 'vicio') v.hp = 0, v.sumiu = false; }
@@ -296,7 +306,7 @@ export class Caminho {
     e.hp -= dano; e.flash = 0.12; e.stun = Math.max(e.stun, 0.2); e.estado = 'idle'; e.tele = 0;
     const k = (this.arma.empurra || 1) * (e.ai === 'guarda' ? 0.35 : 1);
     if (atk.dir === 'cima') { e.vy = -260 * k; } else if (atk.dir === 'baixo') { e.vy = 160; } else { e.vx = dir * 250 * k; if (!e.voa) e.vy = -150 * k; e.chao = false; }
-    this.fx.faisca(e.x, e.y - e.h / 2, 7, '#fff'); this.ganharOleo(atk.semOleo ? 0 : 11); sfx('hit'); this.hitstop = 0.035; this.tremor(2);
+    this.fx.faisca(e.x, e.y - e.h / 2, 7, '#fff'); this.efeito('faisca', e.x, e.y - e.h / 2, dir); this.ganharOleo(atk.semOleo ? 0 : 11); sfx('hit'); this.hitstop = 0.05; this.tremor(2);
     return true;
   }
 
@@ -304,7 +314,7 @@ export class Caminho {
 
   matar(e) {
     const c = this.char, d = e.d;
-    e.sumiu = true; sfx('kill'); this.fx.po(e.x, e.y - e.h / 2, 16, d.cor || '#8E98BE'); this.fx.anel(e.x, e.y - e.h / 2, d.cor || '#fff', 44);
+    e.sumiu = true; sfx('kill'); this.efeito('sumico', e.x, e.y); this.fx.po(e.x, e.y - e.h / 2, 16, d.cor || '#8E98BE'); this.fx.anel(e.x, e.y - e.h / 2, d.cor || '#fff', 44);
     if (e.daLuta) return;
     this.soltarMoedas(e.x, e.y - e.h / 2, Math.max(1, Math.round((d.ouro || 4) / 3)) + (e.roubo || 0));
     c.data.stats.kills++; c.data.kills[e.type] = (c.data.kills[e.type] || 0) + 1; this.xp(d.xp || 8); this.pontos(10);
@@ -321,7 +331,7 @@ export class Caminho {
     if (p.vig > 0 && !o.espinho && !o.semDefesa) {
       p.inv = 0.4; this.ganharOleo(this.hab.escudo ? 30 : 20); sfx('parry'); vibrar(90, 0.5);
       this.fx.anel(p.x + p.face * 12, p.y - 26, '#FFE9A8', 54); this.fx.faisca(p.x + p.face * 14, p.y - 28, 12, '#FFE9A8'); this.hitstop = 0.09; this.tremor(5);
-      this.textoEm(p.x, p.y - 56, 'VIGIAI!', '#FFE9A8', 15);
+      this.textoEm(p.x, p.y - 70, 'VIGIAI!', '#FFE9A8', 15); this.efeito('vigilia', p.x + p.face * 14, p.y - 30, p.face); this.clarao = 0.08;
       if (origem?.kind === 'chefe') this.postura(origem, 34);
       else if (origem?.kind === 'vicio') { origem.stun = 1.5; origem.vx = Math.sign(origem.x - p.x) * 240; origem.aberto = 1.5; }
       o.aoDefender?.();
@@ -329,7 +339,7 @@ export class Caminho {
     }
     p.vida -= n; p.inv = this.tem('manto_marinheiro') ? 1.7 : 1.15; p.stunT = 0.24; p.orando = 0; p.carga = 0; p.atk = null; p.dashT = 0;
     if (!this.tem('manto_marinheiro') && !o.espinho) { const dir = origem ? Math.sign(p.x - origem.x) || 1 : -p.face; p.vx = dir * 300; p.vy = -330; p.chao = false; }
-    sfx('hurt'); this.ui.hurt(); vibrar(170, 0.8); this.hitstop = 0.13; this.tremor(10); this.fx.faisca(p.x, p.y - 22, 10, '#FF6B5A');
+    p.flashT = 0.12; sfx('hurt'); this.ui.hurt(); vibrar(170, 0.8); this.hitstop = 0.13; this.tremor(10); this.fx.faisca(p.x, p.y - 22, 10, '#FF6B5A');
     if (o.espinho && p.vida > 0) { p.x = p.seguro.x; p.y = p.seguro.y; p.vx = p.vy = 0; this.fade = 0.7; }
     if (p.vida === 1 && this.tem('cepa_raizes') && !this.usouCepa) { this.usouCepa = true; p.oleo = Math.max(p.oleo, OLEO_USO); this.textoEm(p.x, p.y - 60, 'A cepa ficou na terra', '#B8E6A0'); }
     if (p.vida <= 0) {
@@ -368,7 +378,7 @@ export class Caminho {
       case 'zelote': p.dashT = 0.26; p.dashDir = p.face; p.inv = Math.max(p.inv, 0.4); p.investida = 0.26; this.investidaAtk = atk; break;
       case 'valente': tiro({ vx: p.face * 700, dano: base * 3, fura: true, r: 9, vida: 0.7, tipo: 'onda' }); break;
       case 'juiz': this.fx.faisca(p.x + p.face * 110, p.y - 22, 14, '#FFF1BE'); this.golpear({ x: p.face > 0 ? p.x : p.x - 230, y: p.y - 44, w: 230, h: 44 }, base * 2.6, atk); break;
-      default: this.fx.anel(p.x, p.y - 22, '#FFF1BE', 100); this.golpear({ x: p.x - 96, y: p.y - 100, w: 192, h: 120 }, base * 2.7, atk);
+      default: this.efeito('giro', p.x, p.y, p.face, { gruda: p }); this.fx.anel(p.x, p.y - 22, '#FFF1BE', 100); this.golpear({ x: p.x - 96, y: p.y - 100, w: 192, h: 120 }, base * 2.7, atk);
     }
     this.textoEm(p.x, p.y - 58, CLASSES[cls]?.skill.nome || 'Verso', '#FFF1BE', 12);
   }
@@ -479,7 +489,7 @@ export class Caminho {
     if (ok) {
       st.quizOk++; this.ok++; this.pontos(150);
       const dano = b.max * 0.08 * (this.tem('anel_beltessazar') ? 2 : 1); b.hp = Math.max(1, b.hp - dano); b.post = 0; b.quebrado = 3.6;
-      this.p.oleo = this.oleoMax(); this.textoEm(b.x, b.y - b.h - 20, 'ESTÁ ESCRITO!', '#FFE9A8', 22); this.fx.anel(b.x, b.y - b.h / 2, '#FFE9A8', 160); this.tremor(12); sfx('right');
+      this.p.oleo = this.oleoMax(); this.textoEm(b.x, b.y - b.h - 20, 'ESTÁ ESCRITO!', '#FFE9A8', 22); this.efeito('pilar', b.x, this.N.arena.chao); this.clarao = 0.25; this.fx.anel(b.x, b.y - b.h / 2, '#FFE9A8', 160); this.tremor(12); sfx('right');
     } else {
       st.quizErr++; this.err++; b.hp = Math.min(b.max, b.hp + b.max * 0.06); b.furia = 10; sfx('wrong');
       this.textoEm(b.x, b.y - b.h - 20, 'O engano o fortalece', '#FF8A7A', 16);
@@ -567,7 +577,7 @@ export class Caminho {
     if (p.morto) { this.ui.setInteract(null); return; }
     for (const ob of this.objs) {
       const dd = Math.hypot(ob.x - p.x, ob.y - 20 - (p.y - 20));
-      if (ob.tipo === 'segredo' && dd < 30) { ob.fora = true; this.cm.seg[this.area].push(ob.n); this.ganhar(ob.item); continue; }
+      if (ob.tipo === 'segredo' && dd < 30) { ob.fora = true; this.efeito('coleta', ob.x, ob.y - 10); this.cm.seg[this.area].push(ob.n); this.ganhar(ob.item); continue; }
       if (ob.tipo === 'sacola' && dd < 30) { ob.fora = true; const s = this.cm.sacola; if (s) { this.char.data.gold += s.gold; this.textoEm(p.x, p.y - 56, '+' + s.gold + ' denários recuperados', '#FFD23F'); sfx('coin'); this.cm.sacola = null; } continue; }
       const rot = this.rotulo(ob); if (rot && dd < pd) { pd = dd; perto = ob; perto.rot = rot; }
     }
@@ -714,6 +724,7 @@ export class Caminho {
 
   /* ================= Desenho ================= */
   render() {
+    if (this.pixel) return renderPixel(this);
     const g = this.g, v = this.vista, p = this.p, Tm = this.T;
     g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     pintarFundo(g, this);
@@ -773,7 +784,7 @@ export class Caminho {
     }
   }
 
-  pintarPecado(g) {
+  pintarPecado(g, soVulto) {
     const s = this.pecado, Tm = this.T;
     g.save(); g.translate(s.x, s.y);
     g.fillStyle = 'rgba(5,4,10,.92)'; g.beginPath(); g.moveTo(-26, 40); g.quadraticCurveTo(-34, -30, 0, -74); g.quadraticCurveTo(34, -30, 26, 40);
@@ -781,6 +792,7 @@ export class Caminho {
     g.fill();
     g.fillStyle = '#EF6981'; g.beginPath(); g.ellipse(-7, -38, 2.4, 3.6, 0, 0, TAU); g.ellipse(7, -38, 2.4, 3.6, 0, 0, TAU); g.fill();
     g.restore();
+    if (soVulto) return;
     const v = this.vista; g.save(); g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     const w = 240, x = v.W / 2 - w / 2, y = v.H - 70; g.fillStyle = 'rgba(8,15,25,.8)'; g.fillRect(x - 3, y - 3, w + 6, 16); g.fillStyle = '#FFE9A8'; g.fillRect(x, y, w * Math.min(1, s.graca / 4), 10);
     g.font = '800 12px Alegreya Sans, sans-serif'; g.textAlign = 'center'; g.fillStyle = '#F2E9D0'; g.fillText('Graça', v.W / 2, y - 8); g.restore();

@@ -21,7 +21,7 @@ const aprox = (a, b, d) => a < b ? Math.min(b, a + d) : Math.max(b, a - d);
 
 export function novoHeroi(x, y, vidaMax) {
   return {
-    x, y, vx: 0, vy: 0, w: 18, h: 38, face: 1, chao: false, parede: 0, coyote: 0, buf: 0, pulos: 0, dashT: 0, dashCd: 0, dashAr: true,
+    x, y, vx: 0, vy: 0, w: 18, h: 54, face: 1, chao: false, parede: 0, coyote: 0, buf: 0, pulos: 0, dashT: 0, dashCd: 0, dashAr: true,
     atk: null, atkCd: 0, atkBuf: 0, carga: 0, combo: 0, lamp: false, lampA: 0, vig: 0, vigCd: 0, inv: 0, stunT: 0, travaX: 0, desce: 0,
     vida: vidaMax, vidaMax, oleo: 0, orando: 0, seguro: { x, y }, segT: 0, morto: false, desliza: 0,
     // animação
@@ -47,7 +47,7 @@ export function atualizarHeroi(G, dt) {
   // ---- Oração: gasta azeite para recuperar um fôlego; fica parado e vulnerável ----
   if (c.orar && p.chao && !preso && !emDash && !p.lamp && p.oleo >= OLEO_USO && p.vida < p.vidaMax) {
     p.orando += dt; if (p.orando < dt * 1.5) sfx('magic');
-    if (p.orando >= 0.95) { p.orando = 0; p.oleo -= OLEO_USO; p.vida++; sfx('heal'); G.fx.anel(p.x, p.y - 20, '#FFE9A8', 60); G.fx.sobe(p.x, p.y - 10, 14, '#FFE9A8'); }
+    if (p.orando >= 0.95) { p.orando = 0; p.oleo -= OLEO_USO; p.vida++; sfx('heal'); G.efeito('cura', p.x, p.y, 1, { gruda: p }); G.fx.anel(p.x, p.y - 20, '#FFE9A8', 60); G.fx.sobe(p.x, p.y - 10, 14, '#FFE9A8'); }
   } else p.orando = 0;
 
   // ---- correr ----
@@ -95,12 +95,13 @@ export function atualizarHeroi(G, dt) {
     const dir = c.my < -0.5 ? 'cima' : (c.my > 0.5 && !p.chao ? 'baixo' : 'lado');
     p.atk = { t: 0, dur: 0.17, dir, face: p.face, hits: new Set(), n: p.combo++ };
     p.atkCd = arma.cd; p.atkBuf = 0; sfx('swing');
+    G.efeito(dir === 'cima' ? 'corteCima' : G.tipoArma === 'lanca' ? 'estocada' : G.tipoArma === 'adaga' ? 'corteCurto' : hab.espada ? 'corteLuz' : 'corte', p.x, p.y + (dir === 'baixo' ? 22 : 0), p.face, { gruda: p, dy: dir === 'baixo' ? 22 : 0, vel: 1.25 });
     if (arma.pedra && dir === 'lado') G.tiros.push({ x: p.x + p.face * 14, y: p.y - 24, vx: p.face * 520, vy: -40, g: 500, r: 5, dano: G.danoBase() * 0.7, amigo: true, vida: 0.55, cor: '#C9C4B2', tipo: 'pedra' });
   }
   if (p.atk) {
     const a = p.atk; a.t += dt;
     if (a.t > 0.03 && a.t < a.dur) {
-      const cx = a.dir === 'lado' ? p.x + a.face * (arma.alc / 2 + 4) : p.x, cy = a.dir === 'lado' ? p.y - 22 : a.dir === 'cima' ? p.y - 38 - arma.alc / 2 : p.y + arma.alc / 2 - 6;
+      const cx = a.dir === 'lado' ? p.x + a.face * (arma.alc / 2 + 4) : p.x, cy = a.dir === 'lado' ? p.y - 28 : a.dir === 'cima' ? p.y - 50 - arma.alc / 2 : p.y + arma.alc / 2 - 6;
       const w = a.dir === 'lado' ? arma.alc : arma.alt + 6, h = a.dir === 'lado' ? arma.alt : arma.alc;
       const r = G.golpear({ x: cx - w / 2, y: cy - h / 2, w, h }, G.danoBase() * arma.d, a);
       if (r && !a.reagiu) {
@@ -147,7 +148,7 @@ export function atualizarHeroi(G, dt) {
 
 // capa: corrente de pontos que segue os ombros com atraso (em coordenadas do mundo)
 function atualizarCapa(p, dt) {
-  const n = 6, ax = p.x - p.face * 3, ay = p.y - 31 + (p.orando > 0 ? 6 : 0);
+  const n = 6, ax = p.x - p.face * 4, ay = p.y - 40 + (p.orando > 0 ? 8 : 0);
   if (!p.capa) p.capa = Array.from({ length: n }, (_, i) => ({ x: ax - p.face * i * 3, y: ay + i * 6 }));
   const vento = Math.sin(performance.now() / 380) * 1.4;
   let px = ax, py = ay;
