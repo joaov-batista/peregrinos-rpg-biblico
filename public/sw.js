@@ -11,6 +11,7 @@ self.addEventListener('install', event => {
     }));
     const failed = results.find(r => r.status === 'rejected');
     if (failed) { await caches.delete(CACHE); throw failed.reason; }
+    await self.skipWaiting(); // a versão nova assume assim que termina de baixar; a página salva e recarrega
   })());
 });
 self.addEventListener('message', event => {

@@ -28,7 +28,7 @@ export const pwa = {
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; notify(); });
 addEventListener('appinstalled', () => { deferred = null; notify(); });
 
-// A instalação inicial baixa o jogo inteiro. Atualizações aguardam o jogador salvar.
+// A instalação inicial baixa o jogo inteiro. Atualizações entram sozinhas.
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   let registration;
   let controlled = !!navigator.serviceWorker.controller;
@@ -40,32 +40,26 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     channel.port1.onmessage = e => finish(e.data?.ready === true);
     worker.postMessage('OFFLINE_STATUS', [channel.port2]);
   });
-  const showUpdate = () => {
-    if (!registration?.waiting || document.getElementById('novaVersao')) return;
-    const b = document.createElement('button');
-    b.id = 'novaVersao'; b.textContent = '🔄 Nova versão pronta. Salvar e atualizar';
-    b.onclick = async () => {
-      b.disabled = true;
-      const saved = await window.__game?.save();
-      if (saved === false) { b.disabled = false; b.textContent = 'Falha ao salvar. Libere espaço antes de atualizar.'; return; }
-      registration.waiting?.postMessage('ACTIVATE');
-    };
-    document.body.append(b);
+  // A versão nova entra sozinha (o service worker se ativa ao terminar de baixar). A página salva e recarrega;
+  // no meio de uma luta contra um chefe, espera a luta acabar.
+  const recarregar = async () => {
+    for (let i = 0; i < 240 && window.__game?.running && window.__game.luta; i++) await new Promise(r => setTimeout(r, 1000));
+    try { await Promise.race([window.__game?.save?.(), new Promise(r => setTimeout(r, 3000))]); } catch { /* recarrega mesmo assim: o jogo salva sozinho a cada 40 s */ }
+    location.reload();
   };
   navigator.serviceWorker.addEventListener('controllerchange', async () => {
     pwa.offlineReady = await isReady(navigator.serviceWorker.controller); notify();
-    if (controlled) {
-      if (await window.__game?.save() !== false) location.reload();
-    } else controlled = true;
+    if (controlled) void recarregar(); else controlled = true;
   });
   const register = async () => {
     try {
       registration = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
-      pwa.offlineReady = await isReady(registration.active); notify(); showUpdate();
+      pwa.offlineReady = await isReady(registration.active); notify();
+      registration.waiting?.postMessage('ACTIVATE'); // versão antiga que ficou esperando
       registration.addEventListener('updatefound', () => {
         const worker = registration.installing;
         worker?.addEventListener('statechange', () => {
-          if (worker.state === 'installed') { pwa.offlineError = ''; showUpdate(); notify(); }
+          if (worker.state === 'installed') { pwa.offlineError = ''; notify(); }
           if (worker.state === 'redundant') { pwa.offlineError = 'Download interrompido. Reconecte para tentar novamente.'; notify(); }
         });
       });
