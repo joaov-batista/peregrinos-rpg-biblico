@@ -6,12 +6,17 @@ import { CINEMAS } from '../content/cinematicas.js';
 import { TODAS } from '../content/index.js';
 import { faseProg } from '../game/player.js';
 import { L, R, U, D } from './nivel.js';
-import { ARMADURA, RELIQUIAS, DIFICULDADES } from './dados.js';
+import { ARMADURA, RELIQUIAS, DIFICULDADES, FORJA } from './dados.js';
+import { CLASSES } from '../data/classes.js';
+import { ENEMIES, BOSSES } from '../data/bestiary.js';
+import { VICIOS } from './bichos.js';
+import { quadroVicio } from './pixel/viciospx.js';
+import { quadroChefe } from './pixel/chefespx.js';
 import { CHEFES } from './chefes.js';
 
-const ABAS = [['jornada', 'Jornada'], ['armadura', 'Armadura'], ['reliquias', 'Relíquias'], ['mapa', 'Mapa'], ['biblia', 'Bíblia'], ['juntos', 'Juntos'], ['ajustes', 'Ajustes']];
+const ABAS = [['inventario', 'Inventário'], ['jornada', 'Jornada'], ['bestiario', 'Bestiário'], ['mapa', 'Mapa'], ['biblia', 'Bíblia'], ['juntos', 'Juntos'], ['ajustes', 'Ajustes']];
 
-export function abrirMenu(G, aba = 'jornada') {
+export function abrirMenu(G, aba = 'inventario') {
   const cm = G.cm, c = G.char;
   return G.ui.modal((p, close) => {
     p.classList.add('cm-menu');
@@ -19,7 +24,7 @@ export function abrirMenu(G, aba = 'jornada') {
     const ir = a => { aba = a; desenha(); };
     const desenha = () => {
       abas.replaceChildren(...ABAS.map(([id, nome]) => h('button', { class: 'chip-btn' + (id === aba ? ' on' : ''), onclick: () => { sfx('click'); ir(id); } }, nome)));
-      corpo.replaceChildren(...({ jornada, armadura, reliquias, mapa, biblia, juntos, ajustes })[aba]());
+      corpo.replaceChildren(...({ inventario, jornada, bestiario, armadura: inventario, reliquias: inventario, mapa, biblia, juntos, ajustes })[aba]());
     };
     const t = (txt, cls = '') => h('p', { class: cls }, txt);
 
@@ -61,6 +66,44 @@ export function abrirMenu(G, aba = 'jornada') {
       if (!lista.length) out.push(t('Ninguém entrou ainda.', 'muted'));
       out.push(t('Na luta contra um chefe, a pergunta do "Está Escrito" vai para todos e vale a resposta da maioria. Se um peregrino cai, a sombra recupera um pouco de força; a recompensa da página é de quem leu os três rolos.', 'muted'),
         h('div', { class: 'btn-row' }, h('button', { class: 'btn', onclick: () => { G.sairDaSala(); desenha(); } }, mp.anfitriao ? 'Fechar a sala' : 'Sair da sala')));
+      return out;
+    }
+    // Inventário: tudo o que o peregrino carrega, em quadros; à direita, o que é o quadro escolhido.
+    function inventario() {
+      const det = h('div', { class: 'inv-det' }), grade = h('div', { class: 'inv-grade' }), cls = CLASSES[c.cls] || {};
+      const mostra = (nome, sub, desc, acao) => det.replaceChildren(h('h4', {}, nome), h('small', { class: 'muted' }, sub || ''), h('p', {}, desc || ''), acao || '');
+      const quadro = (ico, tem, on, aoVer, aoUsar) => { const b = h('button', { class: 'inv-q' + (tem ? '' : ' falta') + (on ? ' on' : ''), onclick: () => { sfx('click'); grade.querySelectorAll('.inv-q').forEach(x => x.classList.remove('sel')); b.classList.add('sel'); aoVer(); }, ondblclick: aoUsar || null }, h('span', {}, tem ? ico : '·')); return b; };
+      const sec = (titulo, itens) => grade.append(h('h4', {}, titulo), h('div', { class: 'inv-linha' }, ...itens));
+      const fio = cm.fio || 0;
+      sec('Arma e bolsa', [
+        quadro('⚔', true, true, () => mostra((cls.nome || 'Peregrino') + ' · ' + (cls.arma || 'espada'), fio ? FORJA[fio - 1].nome : 'Fio comum', (fio ? FORJA[fio - 1].desc : 'Tubalcaim, no Refúgio, pode melhorar o fio da sua arma.') + '\n\nEspecial: ' + (cls.skill?.nome || 'Verso') + '.')),
+        quadro('◉', true, false, () => mostra('Denários', Math.floor(c.data.gold) + ' na bolsa', 'Caem dos vícios e dos vasos. Se você cair, a sacola fica no chão até você buscá-la.')),
+        quadro('✦', cm.mana > 0, false, () => mostra('Maná escondido', cm.mana + ' porções', 'A cada três porções, um fôlego a mais (Ap 2:17).')),
+        quadro('●', cm.pedras > 0, false, () => mostra('Pedras lisas do ribeiro', cm.pedras + ' de 5', 'Com as cinco, o Vale de Elá se abre (1Sm 17:40).'))]);
+      sec('Armadura de Deus · ' + Object.keys(cm.hab).length + ' de 6', Object.values(ARMADURA).map(a => quadro(a.icone, cm.hab[a.hab], cm.hab[a.hab], () => mostra(a.nome, a.ref, cm.hab[a.hab] ? a.poder + '\n\n' + a.desc : 'Ainda não é sua. Um chefe de Corinto a guarda.'))));
+      const usar = id => { const R = RELIQUIAS[id], on = cm.eq.includes(id); if (R.passiva) return; if (on) cm.eq.splice(cm.eq.indexOf(id), 1); else if (cm.eq.length < G.espacos()) cm.eq.push(id); else return G.ui.toast('Sem espaço: guarde outra relíquia primeiro.'); G.p.vidaMax = G.vidaMax(); G.p.vida = Math.min(G.p.vida, G.p.vidaMax); G.salvar(); desenha(); };
+      sec('Relíquias · ' + cm.eq.length + ' de ' + G.espacos() + ' vestidas', cm.reliquias.length ? cm.reliquias.map(id => { const R = RELIQUIAS[id], on = cm.eq.includes(id) || R.passiva; return quadro(R.icone, true, on, () => mostra(R.nome, R.ref + (R.passiva ? ' · sempre ativa' : on ? ' · vestida' : ' · guardada'), R.desc, R.passiva ? '' : h('button', { class: 'btn', onclick: () => usar(id) }, cm.eq.includes(id) ? 'Guardar' : 'Vestir')), () => usar(id)); }) : [h('p', { class: 'muted' }, 'Nenhuma ainda. Vêm dos chefes de Jonas e de Daniel, dos gigantes, da Lídia e, às vezes, do Mercador.')]);
+      mostra(c.name + ' · nível ' + c.level, 'Fôlegos ' + G.p.vida + '/' + G.p.vidaMax + ' · azeite ' + Math.round(G.p.oleo) + '/' + G.oleoMax(), 'Escolha um quadro para ver o que ele faz. Toque duas vezes numa relíquia para vestir ou guardar.');
+      return [h('div', { class: 'inv' }, grade, det)];
+    }
+    // Bestiário: cada vício e cada chefe vencido, com o que ele ensina; marcos de vitórias rendem prêmios.
+    function bestiario() {
+      const kills = c.data.kills || {}, bb = cm.bestiario = cm.bestiario || {}, out = [t('Vença para conhecer. Cada marco alcançado tem um prêmio para buscar aqui.', 'muted'), h('h4', {}, 'Vícios')];
+      const retrato = q => { const cv = h('canvas', { width: 56, height: 52, class: 'best-cv' }); if (q) cv.getContext('2d').drawImage(q.s.tela(), 0, 0, q.s.w, q.s.h, 0, 0, 56, 52); return cv; };
+      for (const tipo of Object.keys(VICIOS)) {
+        const d = ENEMIES[tipo] || {}, n = kills[tipo] || 0, feito = bb[tipo] || 0, marcos = [[10, 60], [30, 180], [80, 400]], prox = marcos[feito];
+        const e = { type: tipo, tele: 0, stun: 0, flash: 0, vx: 0, estado: 'idle', art: { ph: 0 } };
+        const premio = prox && n >= prox[0] ? h('button', { class: 'btn gold', onclick: () => { bb[tipo] = feito + 1; c.data.gold += prox[1]; if (feito === 2) cm.mana++; sfx('coin'); G.salvar(); desenha(); } }, 'Prêmio: ' + prox[1] + (feito === 2 ? ' + maná' : '')) : '';
+        out.push(h('div', { class: 'fase-row' + (n ? '' : ' cm-falta') }, n ? retrato(quadroVicio(e, 1)) : h('span', { class: 'cm-ico' }, '?'), h('div', {}, h('b', {}, n ? d.nome || tipo : '???'), h('small', {}, n ? (d.licao || '') + ' · vencido ' + n + ' vez(es)' + (prox ? ' · próximo marco: ' + prox[0] : ' · todos os marcos') : 'Ainda não vencido.')), premio));
+      }
+      out.push(h('h4', {}, 'Sombras'));
+      for (const id of Object.keys(CHEFES)) {
+        const d = BOSSES[id] || {}, n = cm.chefes[id] || 0, pago = bb['c:' + id], C = CHEFES[id];
+        const b = { id, c: C, hp: 1, max: 1, vx: 0, chao: true, tele: 0, quebrado: 0, tonto: 0, mov: null, art: {}, flash: 0, alpha: 1, clones: [], pousou: 0, exposto: 0, voa: !!C.voa };
+        const cv = h('canvas', { width: 60, height: 56, class: 'best-cv' }); if (n) { const q = quadroChefe(b, 1, G); if (q) cv.getContext('2d').drawImage(q.s.tela(), 0, 0, 120, 112, 0, 0, 60, 56); }
+        const premio = n && !pago ? h('button', { class: 'btn gold', onclick: () => { bb['c:' + id] = 1; c.data.gold += 150; sfx('coin'); G.salvar(); desenha(); } }, 'Prêmio: 150') : '';
+        out.push(h('div', { class: 'fase-row' + (n ? '' : ' cm-falta') }, n ? cv : h('span', { class: 'cm-ico' }, '?'), h('div', {}, h('b', {}, n ? d.nome || id : '???'), h('small', {}, n ? (d.ref || '') + ' · vencido ' + n + ' vez(es). ' + (C.dica || '') : 'Uma página ainda coberta de sombra.')), premio));
+      }
       return out;
     }
     function armadura() {
@@ -166,5 +209,28 @@ export function loja(G) {
       h('p', {}, '"O Senhor lhe abriu o coração" (At 16:14). Minha casa é sua casa, peregrino. O que posso lhe oferecer para o caminho?'), lista);
     desenha();
   }, { wide: true });
+}
+// Tubalcaim: o fio da arma, um degrau por vez
+export function forja(G) {
+  const c = G.char, cm = G.cm;
+  return G.ui.modal((p, close) => {
+    p.classList.add('cm-menu'); const lista = h('div', {});
+    const desenha = () => {
+      const fio = cm.fio || 0; lista.replaceChildren(h('p', { class: 'muted' }, 'Você tem ' + Math.floor(c.data.gold) + ' denários. Fio atual: ' + (fio ? FORJA[fio - 1].nome : 'comum') + '.'));
+      FORJA.forEach((f, i) => lista.append(h('button', { class: 'fase-row cm-rel' + (i < fio ? ' on' : ''), disabled: i !== fio || c.data.gold < f.preco, onclick: () => { c.data.gold -= f.preco; cm.fio = i + 1; sfx('level'); G.salvar(); desenha(); } },
+        h('span', { class: 'cm-ico' }, i < fio ? '✓' : String(i + 1)), h('div', {}, h('b', {}, f.nome + (i < fio ? '' : ' — ' + f.preco + ' denários')), h('small', {}, f.desc + (i > fio ? ' (forje o anterior primeiro)' : ''))))));
+    };
+    p.append(h('div', { class: 'p-head' }, h('h3', {}, 'Tubalcaim, o ferreiro'), h('button', { class: 'x', onclick: () => close(), 'aria-label': 'Fechar' }, '✕')),
+      h('p', {}, 'Bronze e ferro eu conheço desde antes do dilúvio (Gn 4:22). A mão é sua; o fio, eu melhoro. Vale para qualquer arma: espada, funda, cajado, o que você carrega.'), lista);
+    desenha();
+  }, { wide: true });
+}
+// O Mercador da primeira página: às vezes traz uma raridade; quase sempre, não.
+export function mercador(G, ob) {
+  const c = G.char, cm = G.cm, id = G.mercadorTem, R = id && !cm.reliquias.includes(id) ? RELIQUIAS[id] : null;
+  if (!R) return G.ui.dialog({ nome: 'Mercador', look: ob.look, texto: 'Hoje não tenho nada que valha o seu caminho, peregrino. Só ídolos de prata, e esses eu não lhe vendo.\n\nVolte outra hora. Às vezes chega um navio de Társis com coisa rara.', acoes: [{ label: 'Voltar depois' }] });
+  const pode = c.data.gold >= R.raro;
+  return G.ui.dialog({ nome: 'Mercador', look: ob.look, texto: 'Chegou um navio de Társis. Tenho UMA coisa, e não sei quando volto a ter.\n\n' + R.nome.toUpperCase() + ' · ' + R.ref + '\n' + R.desc + '\n\nPreço: ' + R.raro + ' denários. Você tem ' + Math.floor(c.data.gold) + '.',
+    acoes: [pode ? { label: 'Comprar', fn: () => { c.data.gold -= R.raro; G.mercadorTem = null; G.ganhar(id); G.salvar(); } } : { label: 'Não tenho o bastante' }, { label: 'Agora não' }] });
 }
 export const _ = { L, R, U, D };

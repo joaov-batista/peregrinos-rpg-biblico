@@ -327,7 +327,12 @@ export function createHud(onExit) {
   ui.dialog = ({ nome, look, texto, acoes }) => modal((p, close) => {
     p.classList.add('dialog');
     const head = h('div', { class: 'dlg-head' }, look !== undefined ? portrait(look) : '', h('h3', {}, nome));
-    p.append(head, h('p', { class: 'dlg-text' }, texto));
+    const fala = h('p', { class: 'dlg-text' }, texto); p.append(head, fala);
+    if (document.documentElement.classList.contains('remake') && texto && texto.length > 30 && !matchMedia('(prefers-reduced-motion: reduce)').matches) { // a fala se escreve; um toque mostra tudo
+      let i = 0; fala.style.minHeight = '3em'; const escrita = document.createTextNode(''), resto = h('span', { style: 'visibility:hidden' }, texto); fala.replaceChildren(escrita, resto);
+      const tudo = () => { clearInterval(tk); fala.textContent = texto; }, tk = setInterval(() => { if (!fala.isConnected) return clearInterval(tk); i = Math.min(texto.length, i + 3); escrita.data = texto.slice(0, i); resto.textContent = texto.slice(i); if (i >= texto.length) tudo(); }, 16);
+      fala.addEventListener('pointerdown', tudo, { once: true });
+    }
     const row = h('div', { class: 'btn-row' });
     (acoes && acoes.length ? acoes : [{ label: 'Ok' }]).forEach((a, i) => row.append(h('button', { class: 'btn' + (i === 0 ? ' gold' : ''), onclick: () => { sfx('click'); close(a.label); a.fn && setTimeout(a.fn, 30); } }, a.label)));
     p.append(row);

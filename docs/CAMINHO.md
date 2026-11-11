@@ -123,3 +123,21 @@ os outros digitam o código, ou abrem o link `?sala=CÓDIGO`. Não há servidor 
 - Jogadores podem estar em áreas diferentes; a aba Juntos mostra onde cada um está e tem o botão "Ir até lá".
 - Limite conhecido: se a aba do dono da área fica em segundo plano, o navegador pausa a simulação daquela área.
 - Teste no mesmo aparelho, sem internet: `?redelocal` troca o PeerJS por um BroadcastChannel entre abas.
+
+## Revisão de combate, fases e interface
+
+- **Fases em linha reta:** início → três câmaras → Pedra de Ebenézer → chefe. Cada câmara guarda um rolo: ao entrar, as grades
+  descem e os vícios vêm em ondas (`emboscadas()` em `jogo.js`); vencidas, o rolo pode ser lido. O tesouro é o único desvio.
+- **Dificuldade:** vícios mais rápidos, com mais vida, que ficam irados quando feridos; chefes com mais vida e menos pausa
+  (`DIFICULDADES`); Beemote e Leviatã ferem em dobro, quase não param e são desenhados no dobro do tamanho.
+- **Golpes em oito direções** (`DIRS` em `heroi.js`): lados, cima, baixo (no ar quica), rasteira e diagonais. Cada arma tem
+  golpe, efeito e especial próprios (`ARMAS`); pastor (funda), profeta (cajado) e levita (trombeta) disparam.
+- **Passo rasteiro:** para baixo + passo atravessa o adversário sem ser ferido. Descer de plataforma: segurar para baixo.
+- **Primeiros passos** (`PASSOS`/`tutorial()`): uma dica por vez, que some quando o jogador faz a ação; a vigília é treinada
+  com dardos que não ferem.
+- **Interface** (`src/remake.css`): tema escuro para todas as telas; conversas na base da tela, com busto em pixel e texto
+  que se escreve. Menu com Inventário em quadros e Bestiário com prêmios por marcos de vitórias.
+- **Comércio:** Lídia (relíquias e maná), Tubalcaim (quatro degraus de fio da arma, `FORJA`) e o Mercador da primeira página,
+  que só às vezes traz uma relíquia rara e cara (`raro` em `RELIQUIAS`).
+- **Trilha** (`audio.js`): piano esparso, cordas longas e eco, tudo sintetizado; ostinato e tambor nas lutas.
+- **Atualização:** o service worker se ativa sozinho e a página recarrega fora de lutas.

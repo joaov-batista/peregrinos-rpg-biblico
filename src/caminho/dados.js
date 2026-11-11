@@ -19,7 +19,18 @@ export const ARMADURA = {
 };
 
 // Relíquias: até 3 equipadas (4 com a Coroa Restituída). Vêm dos chefes, dos segredos e da Lídia.
+// melhorias da forja (Tubalcaim, "artífice de todo instrumento cortante de bronze e de ferro", Gn 4:22)
+export const FORJA = [
+  { nome: 'Fio de bronze', preco: 160, desc: 'Golpes 12% mais fortes.' },
+  { nome: 'Fio de ferro', preco: 340, desc: 'Golpes 24% mais fortes.' },
+  { nome: 'Fio temperado', preco: 620, desc: 'Golpes 36% mais fortes.' },
+  { nome: 'Fio de dois gumes', preco: 980, desc: 'Golpes 50% mais fortes. "Mais cortante que qualquer espada de dois gumes" (Hb 4:12).' }
+];
 export const RELIQUIAS = {
+  // raras: só o Mercador da primeira página as tem, e nem sempre
+  perola_preco: { nome: 'Pérola de Grande Preço', icone: '⚪', ref: 'Mateus 13:46', desc: 'Um espaço a mais para relíquias.', raro: 1400, passiva: true },
+  talento_multiplicado: { nome: 'Talento Multiplicado', icone: '🪙', ref: 'Mateus 25:20', desc: 'Todo denário apanhado vale o dobro.', raro: 1100 },
+  tunica_sem_costura: { nome: 'Túnica sem Costura', icone: '👘', ref: 'João 19:23', desc: 'O primeiro golpe que você levaria em cada área não fere.', raro: 1250 },
   bussola_chamado: { nome: 'Bússola do Chamado', icone: '🧭', ref: 'Jonas 1:2', desc: 'Uma seta aponta para o rolo que ainda falta ler.' },
   manto_marinheiro: { nome: 'Manto do Marinheiro', icone: '🧥', ref: 'Jonas 1:13', desc: 'Depois de ferido, você fica a salvo por mais tempo e não é empurrado.' },
   lamparina_abismo: { nome: 'Lamparina do Abismo', icone: '🪔', ref: 'Jonas 2:7', desc: 'A luz alcança mais longe, mesmo com pouco azeite.' },
@@ -83,6 +94,7 @@ const REFUGIO = [
     { tipo: 'npc', col: 24, id: 'jumenta', nome: 'Uma jumenta', bicho: 'jumenta' }] },
   { papel: 'vila', tiles: ['.....................=====..', '............................', '............................', '..................=====.....', '............................', '............................'], objs: [
     { tipo: 'npc', col: 8, id: 'lidia', nome: 'Lídia, vendedora de púrpura', look: lidia },
+    { tipo: 'npc', col: 14, id: 'ferreiro', nome: 'Tubalcaim, o ferreiro', look: { skin: '#8A5A3A', hair: '#1E1612', tunic: '#5A4636', cape: 'none', style: 'curto', beard: true, body: 'forte' } },
     { tipo: 'arvore', col: 23 }, { tipo: 'npc', col: 24, lin: 10, id: 'zaqueu', nome: 'Zaqueu', look: zaqueu }] },
   { papel: 'vila', tiles: ['............................'], objs: TODAS.map((s, i) => ({ tipo: 'portal', col: 6 + i * 9, semana: s.id })) },
   { papel: 'vila', tiles: ['............................'], objs: [

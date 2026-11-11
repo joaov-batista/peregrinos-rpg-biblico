@@ -22,7 +22,7 @@ import { CHEFES, novoChefe, atualizarChefe, desenharChefe, danoNoChefe } from '.
 import { ARMADURA, RELIQUIAS, MUNDO, DIFICULDADES, areaDef, novoCaminho, semanaDe } from './dados.js';
 import { tema, pintarFundo, pintarBlocos, pintarEnfeites, pintarLampioes, pintarLuz, corA } from './cena.js';
 import { desenharObjeto } from './objetos.js';
-import { abrirMenu, escolherFase, loja } from './menu.js';
+import { abrirMenu, escolherFase, loja, forja, mercador } from './menu.js';
 import { renderPixel } from './pixel/render.js';
 import { iconePx } from './pixel/icones.js';
 import { aquecerEfeitos, soltar, atualizarEfeitos } from './pixel/efeitos.js';
@@ -85,8 +85,8 @@ export class Caminho {
   tem(rel) { return this.cm.eq.includes(rel) || (RELIQUIAS[rel]?.passiva && this.cm.reliquias.includes(rel)); }
   vidaMax() { return Math.max(3, 5 + (this.hab.couraca ? 2 : 0) + Math.floor(this.cm.mana / 3) + (this.tem('osso_bronze') ? 1 : 0) + this.dif.vidas); }
   oleoMax() { return this.tem('odre_novo') ? 132 : 99; }
-  espacos() { return this.cm.reliquias.includes('coroa_restituida') ? 4 : 3; }
-  danoBase() { return 10 * (1 + Math.min(0.6, (this.char.level - 1) * 0.03)); }
+  espacos() { return 3 + (this.cm.reliquias.includes('coroa_restituida') ? 1 : 0) + (this.cm.reliquias.includes('perola_preco') ? 1 : 0); }
+  danoBase() { return 10 * (1 + Math.min(0.6, (this.char.level - 1) * 0.03)) * (1 + [0, 0.12, 0.24, 0.36, 0.5][this.cm.fio || 0]); }
   raioLuz() { const o = this.p.oleo / this.oleoMax(), b = (this.tem('lamparina_abismo') ? 150 : 105) + o * 95; return b * (1 + this.p.lampA * 0.6); }
 
   resize() {
@@ -136,7 +136,7 @@ export class Caminho {
     this.p = this.eu = novoHeroi(pos.x, pos.y - 1, this.vidaMax());
     this.p.oleo = o.manter && antigo ? antigo.oleo : Math.min(this.oleoMax(), OLEO_USO);
     if (o.manter && antigo) this.p.vida = Math.min(this.p.vidaMax, antigo.vida);
-    this.usouSelo = false; this.usouCepa = false;
+    this.usouSelo = false; this.usouCepa = false; this.usouTunica = false; this.mercadorTem = Math.random() < 0.3 ? Object.keys(RELIQUIAS).filter(k => RELIQUIAS[k].raro && !cm.reliquias.includes(k))[Math.floor(Math.random() * 3)] || null : null;
     this.vista.cam.x = pos.x - this.vista.W / this.vista.Z / 2; this.vista.cam.y = this.camYAlvo(this.vista.H / this.vista.Z); this.prenderCam();
     this.conferirPorta(true);
     this.fade = 1; this.t0 = this.T; this.ok = 0; this.err = 0; this.mortosAqui = 0;
@@ -430,6 +430,7 @@ export class Caminho {
       o.aoDefender?.(); this.tutParry = true;
       return 'parry';
     }
+    if (this.tem('tunica_sem_costura') && !this.usouTunica && !o.espinho) { this.usouTunica = true; p.inv = 1; this.fx.anel(p.x, p.y - 24, '#F4F1E6', 70); this.textoEm(p.x, p.y - 64, 'A túnica não se rasgou', '#F4F1E6', 12); sfx('block'); return false; }
     if (this.luta && this.chefe?.c.dano) n = Math.max(n, this.chefe.c.dano); // Beemote e Leviatã ferem em dobro
     p.vida -= n; p.inv = this.tem('manto_marinheiro') ? 1.7 : 1.15; p.stunT = 0.24; p.orando = 0; p.carga = 0; p.atk = null; p.dashT = 0;
     if (!this.tem('manto_marinheiro') && !o.espinho) { const dir = origem ? Math.sign(p.x - origem.x) || 1 : -p.face; p.vx = dir * 300; p.vy = -330; p.chao = false; }
@@ -550,7 +551,7 @@ export class Caminho {
       if (solido(this.N, Math.floor(m.x / T), Math.floor((m.y + 5) / T)) && m.vy > 0) { m.y = Math.floor((m.y + 5) / T) * T - 5; m.vy *= -0.4; m.vx *= 0.7; }
       if (solido(this.N, Math.floor((m.x + Math.sign(m.vx) * 5) / T), Math.floor(m.y / T))) m.vx *= -0.5;
       if (dist < 20 && m.t > 0.3 && !p.morto) {
-        m.pego = true; const v = Math.round(m.v * (this.tem('tijolo_humilde') ? 1.3 : 1)) || 1; d.gold += v; sfx('coin');
+        m.pego = true; const v = Math.round(m.v * (this.tem('tijolo_humilde') ? 1.3 : 1) * (this.tem('talento_multiplicado') ? 2 : 1)) || 1; d.gold += v; sfx('coin');
         if (m.maldita) { this.peso++; this.textoEm(p.x, p.y - 54, '+' + v + ' denários… e um peso a mais', '#FFD23F', 12); }
       }
       if (m.t > (m.maldita ? 9 : 14)) m.pego = true;
@@ -865,6 +866,7 @@ export class Caminho {
         break;
       }
       case 'lidia': return loja(this);
+      case 'ferreiro': return forja(this);
       case 'zaqueu':
         if (this.ovo('zaqueu', 'Zaqueu subiu num sicômoro para ver Jesus — e desceu depressa (Lc 19:4-6).')) { c.data.gold += 60; texto = 'Você subiu até aqui só para me ver? Eu subi para ver outro.\n\n"Zaqueu, desce depressa, pois me convém ficar hoje em tua casa."\n\nTome: metade do que tenho dou aos pobres. (+60 denários)'; }
         else texto = 'Se defraudei alguém, restituo quatro vezes mais. Hoje houve salvação nesta casa (Lc 19:8-9).';
@@ -875,7 +877,7 @@ export class Caminho {
         else texto = 'Nem todo mundo que fala vê. Nem todo mundo que vê fala.';
         break;
       case 'saul': texto = cm.chefes.golias ? 'Saul feriu os seus milhares… e você, o gigante. (1Sm 18:7)' : 'O filisteu desafia as fileiras há quarenta dias (1Sm 17:16). Ninguém desce ao vale.\n\nUm pastor uma vez escolheu cinco pedras lisas do ribeiro. Você tem ' + cm.pedras + ' de 5: procure-as nos cantos escondidos de Corinto — a lâmpada mostra onde.'; break;
-      default: texto = ob.falas ? ob.falas[(n - 1) % ob.falas.length] : '…';
+      default: if (ob.nome === 'Mercador') return mercador(this, ob); texto = ob.falas ? ob.falas[(n - 1) % ob.falas.length] : '…';
     }
     await this.ui.dialog({ nome: ob.nome, look: ob.look, texto, acoes: [{ label: 'Continuar' }] });
   }
