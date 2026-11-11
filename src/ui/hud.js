@@ -54,6 +54,7 @@ export function createHud(onExit) {
   // botão de montar: só aparece com burrinho/cavalo equipado
   ui.mountBtn = (tem, montado) => { const b = $('aMount'); b.hidden = !tem; b.classList.toggle('on', !!montado); b.dataset.name = montado ? 'Descer' : 'Montar'; };
   ui.closeAll = () => root.querySelectorAll('.modal').forEach(m => m._close?.());
+  ui.modal = modal; // usado pelo remake (src/caminho)
   input.padAcoes = { menu: () => { if (!modals && game) ui.openMenu(); }, mapa: () => { if (!modals && game) ui.openMap(); } };
   input.padAvisar = msg => ui.toast(msg, 4000);
   addEventListener('keydown', e => {
