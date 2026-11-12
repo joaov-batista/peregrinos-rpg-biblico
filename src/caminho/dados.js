@@ -29,6 +29,15 @@ export const ARMAS_ALT = {
   lanca: { dardo: { nome: 'Dardo de Joabe', ref: '2 Samuel 18:14', preco: 340, desc: 'A lança vira arremesso: voa reta e atravessa.', tiro: { tipo: 'lanca', v: 700, r: 7, vida: 0.5, fura: true }, cd: 0.6, d: 1.1 }, alabarda: { nome: 'Lança de Jasobeão', ref: '1 Crônicas 11:11', preco: 560, desc: 'Muito longa e lenta: mantém todos à distância.', alc: 130, cd: 0.6, d: 1.45 } },
   chicote: { aguilhada: { nome: 'Aguilhada de Sangar', ref: 'Juízes 3:31', preco: 330, desc: 'Mais curta e mais pesada: cada estalo dói.', alc: 86, d: 1.4, cd: 0.52 }, cordas: { nome: 'Azorrague de cordas', ref: 'João 2:15', preco: 520, desc: 'Longo e veloz, para varrer a sala.', alc: 150, d: 0.8, cd: 0.36 } }
 };
+// Dons: sinais que a Escritura conta, raríssimos. Vêm da pesca (muito raramente) e dos marcos do Desafio das ondas.
+// Usar um dom gasta dois terços do azeite e ele demora a voltar. O último exige todos os outros e a Língua de Fogo.
+export const DONS = {
+  tornado: { nome: 'Redemoinho de fogo', ref: '2 Reis 2:11', desc: 'Um redemoinho de fogo avança à sua frente e queima o que encontra.' },
+  raios: { nome: 'Voz do Sinai', ref: 'Êxodo 19:16', desc: 'Raios caem do céu sobre os adversários mais próximos.' },
+  enchente: { nome: 'Águas do dilúvio', ref: 'Gênesis 7:11', desc: 'As águas cobrem o chão da sala, ferem e arrastam.' },
+  vento: { nome: 'Vento impetuoso', ref: 'Atos 2:2', desc: 'Um estrondo empurra tudo em volta e, por alguns instantes, você voa (segure o pulo). Precisa das duas metades.', partes: 2 },
+  espirito: { nome: 'Fogo do Espírito', ref: 'Atos 2:3-4', desc: 'Por doze segundos: voo, espada de fogo, passos seguidos que atravessam e ferem, chuva de fogo e a terra que treme. Exige os quatro dons e a Língua de Fogo.', exige: ['tornado', 'raios', 'enchente', 'vento'] }
+};
 // companheiros de caminho, vendidos caro por Noé no Refúgio
 export const PETS = {
   cachorro: { nome: 'Cão pastor', ref: 'Jó 30:1', preco: 2400, desc: 'Morde o vício mais próximo de tempos em tempos e late quando há algo escondido por perto.' },
@@ -107,6 +116,7 @@ const REFUGIO = [
     { tipo: 'ebenezer', col: 6 },
     { tipo: 'npc', col: 13, id: 'velho', nome: 'Velho Peregrino', look: velho },
     { tipo: 'npc', col: 24, id: 'jumenta', nome: 'Uma jumenta', bicho: 'jumenta' },
+    { tipo: 'npc', col: 10, id: 'pedro', nome: 'Simão, o pescador', look: { skin: '#A0673E', hair: '#3A2314', tunic: '#497A80', cape: 'none', style: 'cacheado', beard: true, body: 'forte' } },
     { tipo: 'morador', col: 18, vai: 3, look: { skin: '#C68B59', hair: '#6B4423', tunic: '#497A80', cape: 'none', style: 'rabo' } }, { tipo: 'ave', col: 9, lin: 16 }, { tipo: 'ave', col: 21, lin: 16 }] },
   { papel: 'vila', tiles: ['.....................=====..', '............................', '............................', '..................=====.....', '............................', '............................'], objs: [
     { tipo: 'npc', col: 8, id: 'lidia', nome: 'Lídia, vendedora de púrpura', look: lidia },
@@ -123,6 +133,7 @@ const REFUGIO = [
   { papel: 'vila', tiles: ['............................'], objs: TODAS.map((s, i) => ({ tipo: 'portal', col: 6 + i * 9, semana: s.id })) },
   // o pátio das provas: treino entre peregrinos e o desafio das ondas
   { papel: 'vila', tiles: ['..........======............', '............................', '............................'], objs: [
+    { tipo: 'npc', col: 27, id: 'samuel', nome: 'Samuel, o que unge', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#D2CFBB', cape: '#55516D', style: 'longo', beard: true } },
     { tipo: 'npc', col: 4, id: 'mestre', nome: 'Benaia, mestre das provas', look: { skin: '#8A5A3A', hair: '#D9D2C5', tunic: '#343F51', cape: '#877451', style: 'curto', beard: true, body: 'forte' } },
     { tipo: 'portal', col: 11, area: 'treino', rotulo: 'Arena de treino' }, { tipo: 'portal', col: 20, area: 'desafio', rotulo: 'Desafio das ondas' },
     { tipo: 'morador', col: 25, vai: 2, look: { skin: '#E3B48C', hair: '#B8863B', tunic: '#686078', cape: '#394F62', style: 'longo' } }, { tipo: 'ave', col: 14, lin: 13 }] },

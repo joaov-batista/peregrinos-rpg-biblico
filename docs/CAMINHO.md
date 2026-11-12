@@ -176,3 +176,16 @@ os outros digitam o código, ou abrem o link `?sala=CÓDIGO`. Não há servidor 
   com 2,6 vezes a vida, coroado) e cada câmara vencida conta um trecho de Atos 18 (`content/ecos-corinto.js`).
 - **Abertura** (`ui/ceu.js`): cena em pixel art com ruínas em três planos e o peregrino de lâmpada acesa. A escolha de
   personagem usa retratos em pixel, o botão Jogar em destaque e o aviso de progresso diferente explicado.
+
+## Correções de coop, teclas, dons e pesca
+
+- **Teclas** (`KEYMAP_HK` em `input.js`): ↑ pula, Z e X golpeiam, C passo, A ora, D lâmpada, S especial, Q dom, E interage.
+  Podem ser trocadas em Menu › Ajustes › Teclas (`config.teclas`). Pulo e deslize na parede valem para todos.
+- **Coop:** o caído volta dentro da câmara ou da arena enquanto alguém está de pé; se todos caem, `resetarEncontro()`.
+  Perguntas de rolo e de estação são por votação (`votar()`); empate pede novo voto. Envio de retratos é descartado quando
+  a fila enche; erros num quadro ou numa mensagem não param o jogo.
+- **Dons** (`DONS`, `dons()`): redemoinho de fogo, raios, enchente, vento impetuoso (duas metades; permite voar) e o Fogo do
+  Espírito (exige os quatro e a Língua de Fogo). Vêm das ondas 10/15/20/25 do Desafio e, raramente, da pesca.
+- **Pesca** (`pesca()`, Simão no Refúgio): lançar, fisgar no puxão e recolher mantendo a marca na faixa.
+- **Vocação** (`trocarVocacao()`, Samuel no pátio das provas).
+- **Trailer:** `art/trailer-peregrinos.mp4`, gravado por `scripts/trailer-gravar.cjs` com a trilha de `scripts/trailer-trilha.cjs`.

@@ -19,10 +19,10 @@ import { solido } from './corpo.js';
 import { novoHeroi, atualizarHeroi, desenharHeroi, ARMAS, OLEO_USO, damp } from './heroi.js';
 import { novoVicio, atualizarVicio, desenharVicio, vulneravel } from './bichos.js';
 import { CHEFES, novoChefe, atualizarChefe, desenharChefe, danoNoChefe } from './chefes.js';
-import { ARMADURA, RELIQUIAS, MUNDO, DIFICULDADES, ARMAS_ALT, areaDef, novoCaminho, semanaDe } from './dados.js';
+import { ARMADURA, RELIQUIAS, MUNDO, DIFICULDADES, ARMAS_ALT, DONS, areaDef, novoCaminho, semanaDe } from './dados.js';
 import { tema, pintarFundo, pintarBlocos, pintarEnfeites, pintarLampioes, pintarLuz, corA } from './cena.js';
 import { desenharObjeto } from './objetos.js';
-import { abrirMenu, escolherFase, loja, forja, mercador, armeiro, guardaRoupa, petShop } from './menu.js';
+import { abrirMenu, escolherFase, loja, forja, mercador, armeiro, guardaRoupa, petShop, pesca, trocarVocacao } from './menu.js';
 import { renderPixel } from './pixel/render.js';
 import { ECOS_CORINTO } from '../content/ecos-corinto.js';
 import { iconePx } from './pixel/icones.js';
@@ -93,7 +93,8 @@ export class Caminho {
   vidaMax() { return Math.max(3, 5 + (this.hab.couraca ? 2 : 0) + Math.floor(this.cm.mana / 3) + (this.tem('osso_bronze') ? 1 : 0) + this.dif.vidas); }
   oleoMax() { return this.tem('odre_novo') ? 132 : 99; }
   espacos() { return 3 + (this.cm.reliquias.includes('coroa_restituida') ? 1 : 0) + (this.cm.reliquias.includes('perola_preco') ? 1 : 0); }
-  danoBase() { return 10 * (1 + Math.min(0.6, (this.char.level - 1) * 0.03)) * (1 + [0, 0.12, 0.24, 0.36, 0.5][this.cm.fio || 0]); }
+  temDom(id) { const d = DONS[id], ds = this.cm.dons || {}; if (!d) return false; return d.exige ? d.exige.every(x => this.temDom(x)) && !!ds.lingua : (ds[id] || 0) >= (d.partes || 1); }
+  danoBase() { return (this.esp > 0 ? 2 : 1) * 10 * (1 + Math.min(0.6, (this.char.level - 1) * 0.03)) * (1 + [0, 0.12, 0.24, 0.36, 0.5][this.cm.fio || 0]); }
   raioLuz() { const o = this.p.oleo / this.oleoMax(), b = (this.tem('lamparina_abismo') ? 150 : 105) + o * 95; return b * (1 + this.p.lampA * 0.6); }
 
   resize() {
@@ -209,7 +210,7 @@ export class Caminho {
     c.verso = input.consume('skill'); c.interagir = input.consume('interact');
     if (input.consume('menu') || input.consume('escape')) this.menu();
     if (input.consume('map')) this.menu('mapa');
-    for (const a of ['item2', 'mount', 'chat']) input.consume(a);
+    c.dom = input.consume('item2'); for (const a of ['mount', 'chat']) input.consume(a);
   }
 
   update(dt) {
@@ -229,6 +230,7 @@ export class Caminho {
       if (this.puxao && !p.dashT) p.x += Math.sign(this.puxao.x - p.x) * this.puxao.f * dt * (Math.abs(this.puxao.x - p.x) > 30 ? 1 : 0);
       if (this.tem('cinto_compaixao') && p.orando > 0) p.orando += dt * 0.45;
       atualizarHeroi(this, dt);
+      this.dons(dt);
       if (p.acoite) { p.acoite.t += dt; if (p.acoite.t > p.acoite.dur) p.acoite = null; }
       if (p.investida > 0) { p.investida -= dt; this.golpear(caixa({ ...p, w: 46 }), this.danoBase() * 2.4, this.investidaAtk); }
     }
@@ -618,6 +620,32 @@ export class Caminho {
       for (const col of [9, 10, 19, 20]) { const x = ox + col, i = (oy + 16) * N.w + x; if (N.tiles[i] !== SOLIDO || N.tiles[i - N.w] !== VAZIO) continue; N.tiles[i] = VAZIO; if (oy + 17 < N.h) N.tiles[i + N.w] = ESPINHO; N.pocos.push({ x: x * T, y: (oy + 16) * T }); } }
   }
 
+  /* ================= Dons ================= */
+  // Q (ou R) usa o dom escolhido no inventário. Gasta dois terços do azeite e demora a voltar.
+  dons(dt) {
+    const p = this.eu, c = this.ctl, base = this.danoBase(), cm = this.cm;
+    if (this.domCd > 0) this.domCd -= dt;
+    if (p.voo > 0) { p.voo -= dt; p.pulos = 1; if (c.puloSeg && !p.chao) p.vy = Math.min(p.vy, -250); if (Math.random() < dt * 20) this.fx.sobe(p.x + rand(-10, 10), p.y - 10, 1, '#BFF0F8'); }
+    if (this.esp > 0) { // o Fogo do Espírito
+      this.esp -= dt; p.dashCd = 0; p.voo = Math.max(p.voo || 0, 0.2); p.oleo = this.oleoMax();
+      if (p.dashT > 0) { if (!this.espAtk || this.espDash !== p.dashCd + '' + Math.floor(this.T * 4)) { this.espAtk = { dir: 'lado', hits: new Set(), semOleo: true, carga: true }; this.espDash = p.dashCd + '' + Math.floor(this.T * 4); } p.inv = Math.max(p.inv, 0.2); this.golpear(caixa({ ...p, w: 50 }), base * 0.9, this.espAtk); }
+      this.espT = (this.espT || 0) - dt; if (this.espT <= 0) { this.espT = 0.32; const alvo = this.inimigos.filter(e => e.hp > 0)[Math.floor(Math.random() * 4)], x = alvo ? alvo.x + rand(-60, 60) : p.x + rand(-300, 300); this.tiros.push({ x: x - 120, y: p.y - 420, vx: 190, vy: 640, r: 10, dano: base * 1.2, amigo: true, vida: 1.1, cor: '#FF8A2A', tipo: 'fogo', fura: false }); }
+      this.espQ = (this.espQ || 2) - dt; if (this.espQ <= 0) { this.espQ = 2.6; this.tremor(12); sfx('boss'); this.efeito('baque', p.x, p.y); for (const e of this.inimigos) if (e.hp > 0 && !e.voa && Math.abs(e.x - p.x) < 520) this.atingir(e, base * 1.4, e.x - 1, { dir: 'cima', hits: new Set(), semOleo: true, carga: true }); }
+      if (this.esp <= 0) { this.textoEm(p.x, p.y - 80, 'o fogo repousa', '#FFE9A8', 12); p.voo = 1; }
+    }
+    if (!c.dom || p.morto) return;
+    const id = cm.dom; if (!id || !this.temDom(id)) return this.ui.toast('Nenhum dom com você. São raríssimos: a pesca e o Desafio das ondas às vezes os dão.', 4500);
+    if (this.domCd > 0) return this.textoEm(p.x, p.y - 70, 'o dom ainda não voltou (' + Math.ceil(this.domCd) + ' s)', '#C9B88A', 11);
+    if (p.oleo < 66) return this.textoEm(p.x, p.y - 70, 'falta azeite', '#C9B88A', 11);
+    p.oleo -= 66; this.domCd = id === 'espirito' ? 90 : 20; sfx('magic'); this.grito(DONS[id].nome.toUpperCase()); this.clarao = 0.18; this.tremor(8);
+    const sala = Math.floor(p.x / (CW * T)) * CW * T, atk = () => ({ dir: 'lado', hits: new Set(), semOleo: true, carga: true });
+    if (id === 'tornado') for (let k = 0; k < (this.esp > 0 ? 12 : 7); k++) { const x = p.x + p.face * (70 + k * 64); this.zonas.push({ tipo: 'col', x, w: 64, aviso: 0.12 + k * 0.16, dur: 0.34, cor: '#FF8A2A', amigo: base * 3.4, y0: p.y - 300, y1: p.y + 30 }); setTimeout(() => { if (this.running) { this.efeito('explosaoFogo', x, p.y); for (let i = 0; i < 4; i++) this.tiros.push({ x, y: p.y - 20 - i * 50, vx: Math.cos(i * 1.6 + k) * 160, vy: -260, g: 500, r: 6, dano: base * 0.4, amigo: true, vida: 0.7, cor: '#FF8A2A', tipo: 'fogo' }); } }, (0.12 + k * 0.16) * 1000); }
+    else if (id === 'raios') { const alvos = this.inimigos.filter(e => e.hp > 0).sort((a, b) => Math.abs(a.x - p.x) - Math.abs(b.x - p.x)).slice(0, 6); for (let k = 0; k < 6; k++) { const e = alvos[k], x = e ? e.x : p.x + (k - 2.5) * 110; this.zonas.push({ tipo: 'col', x, w: 44, aviso: 0.2 + k * 0.09, dur: 0.22, cor: '#EAFBFF', amigo: base * 4.2, y0: p.y - 460, y1: (e ? e.y : p.y) + 40 }); this.efeito('pilar', x, e ? e.y : p.y); } }
+    else if (id === 'enchente') { this.zonas.push({ tipo: 'faixa', x: sala + T, w: (CW - 2) * T, y: p.y - 70, h: 84, aviso: 0.35, dur: 0.9, cor: '120,210,245', amigo: base * 3.2 }); for (const e of this.inimigos) if (e.kind === 'vicio' && Math.abs(e.x - p.x) < CW * T) { e.stun = 1.6; e.vx = Math.sign(e.x - p.x) * 320; } p.vy = -520; }
+    else if (id === 'vento') { this.fx.anel(p.x, p.y - 24, '#BFF0F8', 260); this.efeito('giroSom', p.x, p.y - 6, p.face, { gruda: p }); this.golpear({ x: p.x - 240, y: p.y - 220, w: 480, h: 280 }, base * 2.4, atk()); for (const e of this.inimigos) if (e.kind === 'vicio' && Math.hypot(e.x - p.x, e.y - p.y) < 300) { e.vx = Math.sign(e.x - p.x) * 520; e.vy = -300; e.stun = 1.4; e.chao = false; } this.tiros = this.tiros.filter(t => t.amigo); p.voo = 6; p.vy = -560; }
+    else if (id === 'espirito') { this.esp = 12; this.espT = 0; this.espQ = 0.6; this.efeito('pilar', p.x, p.y); this.efeito('almas', p.x, p.y); this.fx.anel(p.x, p.y - 24, '#FFE9A8', 400); }
+  }
+
   /* ================= Vida no caminho ================= */
   // o cão ou o papagaio: segue o peregrino e ajuda do seu jeito
   companheiro(dt) {
@@ -670,6 +698,7 @@ export class Caminho {
     const d = this.des = this.des || { onda: 0, t: 2.5 };
     if (this.inimigos.some(v => v.hp > 0)) return;
     d.t -= dt; if (d.t > 0) return;
+    if ([10, 15, 20, 25].includes(d.onda)) { const id = { 10: 'tornado', 15: 'raios', 20: 'enchente', 25: 'vento' }[d.onda], ds = this.cm.dons = this.cm.dons || {}; if (!this.temDom(id)) { ds[id] = (ds[id] || 0) + 1; if (!this.cm.dom) this.cm.dom = id; sfx('level'); this.ui.toast('DOM: ' + DONS[id].nome + (DONS[id].partes > 1 && ds[id] < DONS[id].partes ? ' (uma das duas metades)' : '') + '. ' + DONS[id].desc, 9000); this.salvar(); } }
     if (d.onda > 0) { const premio = 12 + d.onda * 6; this.char.data.gold += premio; this.textoEm(p.x, p.y - 80, '+' + premio + ' denários', '#FFD23F', 13); if (d.onda > (this.cm.recorde || 0)) { this.cm.recorde = d.onda; this.salvar(); } if (d.onda % 5 === 0) { p.vida = Math.min(p.vidaMax, p.vida + 1); this.efeito('cura', p.x, p.y); } }
     d.onda++; d.t = 1.2; this.grito('ONDA ' + d.onda); sfx('boss');
     const tipos = ['desanimo', 'distracao', 'inveja', 'duvida', 'ira', 'ganancia', 'medo', 'vaidade', 'orgulho', 'preguica'], voadores = ['distracao', 'duvida', 'medo', 'vaidade'], n = Math.min(9, 2 + Math.ceil(d.onda * 0.8));
@@ -981,6 +1010,8 @@ export class Caminho {
       case 'ferreiro': return forja(this);
       case 'armeiro': return armeiro(this);
       case 'noe': return petShop(this);
+      case 'pedro': return pesca(this);
+      case 'samuel': return trocarVocacao(this);
       case 'dorcas': return guardaRoupa(this);
       case 'mestre': texto = 'Ferro com ferro se afia; assim o homem afia o rosto do seu amigo (Pv 27:17).\n\nA arena é para os peregrinos da mesma sala medirem forças. O desafio das ondas é para quem quer saber até onde aguenta. Melhor marca sua: ' + (cm.recorde || 0) + ' ondas.'; break;
       case 'zaqueu':

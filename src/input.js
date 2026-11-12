@@ -8,9 +8,9 @@ const KEYMAP = {
 // No Caminho, o teclado segue o padrão de Hollow Knight: setas andam, Z pula, X golpeia, C é o passo,
 // Padrão: seta para cima pula, Z e X golpeiam, C é o passo, A (segurar) ora, D ergue a lâmpada, S solta o especial, E interage.
 const KEYMAP_HK = { ArrowUp: 'dodge', KeyZ: 'attack', KeyX: 'attack', KeyC: 'dash', KeyA: 'botija', KeyD: 'defend', KeyS: 'skill', KeyF: 'skill',
-  KeyE: 'interact', Enter: 'interact', Tab: 'map', KeyM: 'map', KeyI: 'menu', Escape: 'escape' };
+  KeyE: 'interact', Enter: 'interact', KeyQ: 'item2', KeyR: 'item2', Tab: 'map', KeyM: 'map', KeyI: 'menu', Escape: 'escape' };
 // teclas escolhidas pelo jogador (menu › Ajustes › Teclas): { ação: código da tecla }
-export const ACOES_TECLA = [['dodge', 'Pular'], ['attack', 'Golpear'], ['dash', 'Passo pronto'], ['botija', 'Orar (alma)'], ['defend', 'Lâmpada (vela)'], ['skill', 'Especial'], ['interact', 'Ler e falar']];
+export const ACOES_TECLA = [['dodge', 'Pular'], ['attack', 'Golpear'], ['dash', 'Passo pronto'], ['botija', 'Orar (alma)'], ['defend', 'Lâmpada (vela)'], ['skill', 'Especial'], ['item2', 'Dom'], ['interact', 'Ler e falar']];
 export function teclaDe(acao) { return config.teclas?.[acao] || Object.keys(KEYMAP_HK).find(k => KEYMAP_HK[k] === acao); }
 function mapaHK() {
   const t = config.teclas; if (!t || !Object.keys(t).length) return KEYMAP_HK;

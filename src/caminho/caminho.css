@@ -70,3 +70,4 @@ body.caminho.touch #actions .act:not(#aInteract)::before { content: attr(data-na
 .gr-linha { display: grid; grid-template-columns: 1fr 40px 110px 40px; gap: 8px; align-items: center; padding: 4px 0; }
 .gr-linha span { text-align: center; font-size: 13.5px; } .gr-cor { justify-self: center; width: 46px; height: 22px; border: 1px solid rgba(222, 226, 238, .4); }
 @media (max-width: 640px) { .gr { grid-template-columns: 1fr; justify-items: center; } }
+.pesca-cv { width: 100%; max-width: 620px; display: block; margin: 8px auto; image-rendering: pixelated; border: 1px solid rgba(222, 226, 238, .2); touch-action: none; }

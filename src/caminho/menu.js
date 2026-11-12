@@ -7,7 +7,7 @@ import { CINEMAS } from '../content/cinematicas.js';
 import { TODAS } from '../content/index.js';
 import { faseProg } from '../game/player.js';
 import { L, R, U, D } from './nivel.js';
-import { ARMADURA, RELIQUIAS, DIFICULDADES, FORJA, ARMAS_ALT, PETS } from './dados.js';
+import { ARMADURA, RELIQUIAS, DIFICULDADES, FORJA, ARMAS_ALT, PETS, DONS } from './dados.js';
 import { LOOK_OPTIONS } from '../data/classes.js';
 import { novoHeroi } from './heroi.js';
 import { quadroHeroi, AX, AY } from './pixel/humano.js';
@@ -86,6 +86,8 @@ export function abrirMenu(G, aba = 'inventario') {
         quadro('●', cm.pedras > 0, false, () => mostra('Pedras lisas do ribeiro', cm.pedras + ' de 5', 'Com as cinco, o Vale de Elá se abre (1Sm 17:40).'))]);
       sec('Armadura de Deus · ' + Object.keys(cm.hab).length + ' de 6', Object.values(ARMADURA).map(a => quadro(a.icone, cm.hab[a.hab], cm.hab[a.hab], () => mostra(a.nome, a.ref, cm.hab[a.hab] ? a.poder + '\n\n' + a.desc : 'Ainda não é sua. Um chefe de Corinto a guarda.'))));
       const usar = id => { const R = RELIQUIAS[id], on = cm.eq.includes(id); if (R.passiva) return; if (on) cm.eq.splice(cm.eq.indexOf(id), 1); else if (cm.eq.length < G.espacos()) cm.eq.push(id); else return G.ui.toast('Sem espaço: guarde outra relíquia primeiro.'); G.p.vidaMax = G.vidaMax(); G.p.vida = Math.min(G.p.vida, G.p.vidaMax); G.salvar(); desenha(); };
+      const ds = cm.dons || {};
+      sec('Dons · Q usa o escolhido', Object.entries(DONS).map(([id, d]) => { const tem = G.temDom(id), n = ds[id] || 0; return quadro(id === 'tornado' ? '🔥' : id === 'raios' ? '⚡' : id === 'enchente' ? '🌊' : id === 'vento' ? '🌪' : '🕊', tem || n > 0, cm.dom === id, () => mostra(d.nome, d.ref + (tem ? (cm.dom === id ? ' · escolhido' : '') : d.partes > 1 ? ' · ' + n + ' de ' + d.partes + ' metades' : d.exige ? ' · falta ' + [...d.exige.filter(x => !G.temDom(x)).map(x => DONS[x].nome), ...(ds.lingua ? [] : ['a Língua de Fogo'])].join(', ') : ' · ainda não é seu'), d.desc, tem ? h('button', { class: 'btn', onclick: () => { cm.dom = id; G.salvar(); desenha(); } }, 'Escolher') : '')); }));
       sec('Relíquias · ' + cm.eq.length + ' de ' + G.espacos() + ' vestidas', cm.reliquias.length ? cm.reliquias.map(id => { const R = RELIQUIAS[id], on = cm.eq.includes(id) || R.passiva; return quadro(R.icone, true, on, () => mostra(R.nome, R.ref + (R.passiva ? ' · sempre ativa' : on ? ' · vestida' : ' · guardada'), R.desc, R.passiva ? '' : h('button', { class: 'btn', onclick: () => usar(id) }, cm.eq.includes(id) ? 'Guardar' : 'Vestir')), () => usar(id)); }) : [h('p', { class: 'muted' }, 'Nenhuma ainda. Vêm dos chefes de Jonas e de Daniel, dos gigantes, da Lídia e, às vezes, do Mercador.')]);
       mostra(c.name + ' · nível ' + c.level, 'Fôlegos ' + G.p.vida + '/' + G.p.vidaMax + ' · azeite ' + Math.round(G.p.oleo) + '/' + G.oleoMax(), 'Escolha um quadro para ver o que ele faz. Toque duas vezes numa relíquia para vestir ou guardar.');
       return [h('div', { class: 'inv' }, grade, det)];
@@ -272,6 +274,50 @@ export function petShop(G) {
     p.append(h('div', { class: 'p-head' }, h('h3', {}, 'Noé, criador de animais'), h('button', { class: 'x', onclick: () => close(), 'aria-label': 'Fechar' }, '✕')),
       h('p', {}, 'De tudo o que vive, dois de cada espécie entraram comigo (Gn 6:19). Estes aqui eu criei para acompanhar gente de caminho. Não são baratos: bicho bom dá trabalho.'), lista);
     desenha();
+  }, { wide: true });
+}
+// Samuel: trocar de vocação (a arma muda; o resto do caminho continua seu)
+export function trocarVocacao(G) {
+  const c = G.char;
+  return G.ui.modal((p, close) => {
+    p.classList.add('cm-menu'); const lista = h('div', {});
+    for (const [id, C] of Object.entries(CLASSES)) lista.append(h('button', { class: 'fase-row cm-rel' + (c.cls === id ? ' on' : ''), onclick: () => { c.cls = id; G.tipoArma = C.arma || 'espada'; G.equiparArma(); const b = document.querySelector('[data-act="skill"]'); if (b) b.dataset.name = C.skill?.nome || 'Verso'; sfx('level'); G.salvar(); close(); G.ui.toast('Agora você caminha como ' + C.nome + '.', 4000); } },
+      h('span', { class: 'cm-ico' }, c.cls === id ? '✓' : '·'), h('div', {}, h('b', {}, C.nome + (c.cls === id ? ' (a sua)' : '')), h('small', {}, (C.arma || 'espada') + ' · especial: ' + (C.skill?.nome || 'Verso') + ' · ' + (C.ref || '')))));
+    p.append(h('div', { class: 'p-head' }, h('h3', {}, 'Samuel, o que unge'), h('button', { class: 'x', onclick: () => close(), 'aria-label': 'Fechar' }, '✕')),
+      h('p', {}, 'O Senhor não vê como vê o homem (1Sm 16:7). O chamado é um só; o jeito de servir pode mudar. Escolha a vocação com que quer caminhar agora; a armadura, as relíquias e o que você aprendeu ficam.'), lista);
+  }, { wide: true });
+}
+// Simão: pesca de barquinho. Lançar, esperar o puxão, e recolher mantendo a linha na faixa certa.
+export function pesca(G) {
+  const c = G.char, cm = G.cm;
+  return G.ui.modal((p, close) => {
+    p.classList.add('cm-menu');
+    const cv = h('canvas', { width: 520, height: 230, class: 'pesca-cv' }), g = cv.getContext('2d'), msg = h('p', { class: 'muted' }, 'Cada lance custa 5 denários de isca. Toque em LANÇAR; quando a boia afundar, toque em FISGAR; depois segure RECOLHER só enquanto a marca estiver na faixa clara.');
+    const botao = h('button', { class: 'btn gold' }, 'Lançar'); let est = 'pronto', t = 0, espera = 0, marca = 0.5, vel = 0, faixa = 0.5, prog = 0, forca = 1, seg = false, vivo = true, ultimo = performance.now();
+    const fim = (txt) => { est = 'pronto'; botao.textContent = 'Lançar'; msg.textContent = txt; G.salvar(); };
+    const pegou = () => { const r = Math.random(), ds = cm.dons = cm.dons || {};
+      if (r < 0.006 && !ds.lingua) { ds.lingua = 1; sfx('level'); return fim('Na boca do peixe, uma LÍNGUA DE FOGO (At 2:3). Com os quatro dons, ela acende o Fogo do Espírito.'); }
+      if (r < 0.04) { const falta = ['tornado', 'raios', 'enchente', 'vento', 'vento'].filter(id => (ds[id] || 0) < (DONS[id].partes || 1)); if (falta.length) { const id = falta[Math.floor(Math.random() * falta.length)]; ds[id] = (ds[id] || 0) + 1; if (!cm.dom && G.temDom(id)) cm.dom = id; sfx('level'); return fim('A rede trouxe um DOM: ' + DONS[id].nome + (DONS[id].partes > 1 && ds[id] < DONS[id].partes ? ' (uma das duas metades)' : '') + '. Veja no inventário.'); } }
+      if (r < 0.07) { c.data.gold += 120; sfx('coin'); return fim('Um peixe com uma moeda na boca! (Mt 17:27) +120 denários.'); }
+      const v = Math.round(12 + forca * 26); c.data.gold += v; cm.peixes = (cm.peixes || 0) + 1; sfx('coin'); if (cm.peixes === 153) G.ovo('rede', 'Cento e cinquenta e três grandes peixes, e a rede não se rompeu (Jo 21:11).'); fim('Pescou um peixe de ' + (forca > 1.6 ? 'bom tamanho' : 'tamanho comum') + ': +' + v + ' denários. (' + cm.peixes + ' peixes)'); };
+    botao.onpointerdown = e => { e.preventDefault(); seg = true; if (est === 'pronto') { if (c.data.gold < 5) return (msg.textContent = 'Faltam denários para a isca.'); c.data.gold -= 5; est = 'espera'; espera = 1.2 + Math.random() * 3; t = 0; botao.textContent = 'Fisgar'; msg.textContent = 'A boia está na água…'; sfx('swing'); }
+      else if (est === 'espera') fim('Cedo demais: o peixe nem tinha chegado.'); else if (est === 'puxou') { est = 'recolhe'; marca = 0.5; vel = 0; prog = 0.25; forca = 1 + Math.random() * 1.4; faixa = 0.5; botao.textContent = 'Recolher (segure)'; msg.textContent = 'Segure para puxar a marca para cima; solte para ela descer. Mantenha-a na faixa clara.'; } };
+    botao.onpointerup = botao.onpointerleave = () => { seg = false; };
+    botao.onkeydown = e => { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); if (!seg) botao.onpointerdown(e); } }; botao.onkeyup = () => { seg = false; };
+    const laco = agora => { if (!vivo || !cv.isConnected) return; const dt = Math.min(0.05, (agora - ultimo) / 1000); ultimo = agora; t += dt;
+      if (est === 'espera' && t > espera) { est = 'puxou'; t = 0; sfx('click'); msg.textContent = 'FISGUE!'; } else if (est === 'puxou' && t > 0.75) fim('O peixe levou a isca.');
+      else if (est === 'recolhe') { vel += (seg ? 2.6 : -2.2) * dt; vel *= 0.97; marca = Math.max(0, Math.min(1, marca + vel * dt)); if (marca <= 0 || marca >= 1) vel = 0; faixa = 0.5 + Math.sin(t * forca * 1.3) * 0.3 + Math.sin(t * 3.1) * 0.06; const dentro = Math.abs(marca - faixa) < 0.13; prog += (dentro ? 0.3 : -0.24 * forca) * dt; if (prog >= 1) pegou(); else if (prog <= 0) fim('A linha arrebentou.'); }
+      // cena: céu, mar, barquinho, linha e boia
+      g.imageSmoothingEnabled = false; g.fillStyle = '#0D1120'; g.fillRect(0, 0, 520, 230); g.fillStyle = '#1E2440'; g.fillRect(0, 60, 520, 50); g.fillStyle = '#E9E6DC'; g.fillRect(420, 24, 16, 16);
+      const T2 = agora / 1000, nivel = 120; for (let x = 0; x < 520; x += 4) { const h1 = Math.round(Math.sin(x * 0.03 + T2 * 1.6) * 3 + Math.sin(x * 0.011 - T2) * 3); g.fillStyle = '#123847'; g.fillRect(x, nivel + h1, 4, 230); g.fillStyle = '#3A9AB0'; g.fillRect(x, nivel + h1, 4, 2); }
+      const by = nivel - 14 + Math.round(Math.sin(T2 * 1.6 + 2.4) * 3), bx = 110; g.fillStyle = '#17121f'; g.fillRect(bx - 44, by, 88, 16); g.fillStyle = '#6B4A2E'; g.fillRect(bx - 40, by + 2, 80, 10); g.fillRect(bx - 46, by - 2, 8, 6); g.fillRect(bx + 38, by - 2, 8, 6); g.fillStyle = '#17121f'; g.fillRect(bx - 4, by - 26, 10, 26); g.fillStyle = '#497A80'; g.fillRect(bx - 2, by - 22, 6, 20); g.fillStyle = '#C68B59'; g.fillRect(bx - 2, by - 30, 6, 7);
+      const fx2 = est === 'pronto' ? bx + 30 : 330, fy = est === 'pronto' ? by - 30 : nivel + (est === 'puxou' ? 8 : est === 'recolhe' ? 4 + Math.round(Math.sin(T2 * 20) * 3) : Math.round(Math.sin(T2 * 3) * 2)); g.strokeStyle = '#C9C3AE'; g.lineWidth = 1; g.beginPath(); g.moveTo(bx + 4, by - 20); g.lineTo(bx + 34, by - 44); g.lineTo(fx2, fy); g.stroke(); g.fillStyle = '#6B4A2E'; g.fillRect(bx + 4, by - 22, 2, 4);
+      if (est !== 'pronto') { g.fillStyle = est === 'puxou' ? '#FF4A5A' : '#E2463C'; g.fillRect(fx2 - 3, fy - 4, 7, 7); g.fillStyle = '#fff'; g.fillRect(fx2 - 3, fy - 4, 7, 2); if (est === 'puxou') { g.fillStyle = '#FFE9A8'; g.font = '700 22px Cinzel, serif'; g.fillText('!', fx2 + 10, fy - 10); } }
+      if (est === 'recolhe') { g.fillStyle = '#04050A'; g.fillRect(470, 20, 26, 190); g.fillStyle = 'rgba(190,240,248,.45)'; g.fillRect(470, 20 + (1 - faixa - 0.13) * 190, 26, 0.26 * 190); g.fillStyle = '#FFE9A8'; g.fillRect(466, 20 + (1 - marca) * 190 - 3, 34, 6); g.fillStyle = '#04050A'; g.fillRect(40, 208, 400, 10); g.fillStyle = '#9BE0B4'; g.fillRect(40, 208, 400 * Math.max(0, prog), 10); }
+      requestAnimationFrame(laco); };
+    requestAnimationFrame(laco);
+    p.append(h('div', { class: 'p-head' }, h('h3', {}, 'Simão, o pescador'), h('button', { class: 'x', onclick: () => { vivo = false; close(); }, 'aria-label': 'Fechar' }, '✕')),
+      h('p', {}, 'Trabalhamos a noite toda e nada apanhamos; mas, sobre a tua palavra, lançarei as redes (Lc 5:5). O barco é pequeno, o mar é fundo. Às vezes ele devolve coisas que ninguém perdeu.'), cv, msg, h('div', { class: 'btn-row' }, botao));
   }, { wide: true });
 }
 // Tubalcaim: o fio da arma, um degrau por vez
