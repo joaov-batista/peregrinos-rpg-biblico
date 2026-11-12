@@ -103,9 +103,33 @@ function menu(gp, b, borda, janela) {
     if (dir !== nav.dir || agora > nav.t) { mover(janela, dx, dy); nav.t = agora + (dir !== nav.dir ? 320 : 140); }
   }
   nav.dir = dx || dy ? dir : null;
-  if (borda(0)) { const at = document.activeElement; if (janela.contains(at) && at.click) at.click(); else focaveis(janela)[0]?.focus(); }
+  if (borda(0)) confirmar(janela);
   if (borda(1) || borda(9)) { if (janela.classList.contains('modal') && !janela.classList.contains('locked')) janela._close?.(); }
 }
+
+// o botão que faz sentido começar escolhido: uma resposta, o botão da conversa, o principal — nunca o ✕
+function preferido(janela) { return janela.querySelector('.answer:not([disabled]), .btn-row .btn:not([disabled]), .btn.gold:not([disabled]), .forge-primary:not([disabled])') || focaveis(janela).find(el => !el.classList.contains('x')) || focaveis(janela)[0]; }
+function confirmar(janela) {
+  const at = document.activeElement;
+  if (janela.contains(at) && at.click && !at.disabled) return at.click();
+  const b = preferido(janela); if (!b) return;
+  b.focus({ preventScroll: true }); if (janela.querySelector('.dlg-text') && !janela.querySelector('.answer')) b.click(); // numa conversa, confirmar já segue adiante
+}
+// Teclado nas janelas (falas, perguntas, lojas, menus, telas de entrada): setas ou WASD escolhem, Enter / Espaço / Z / X / E / F confirmam,
+// 1 a 4 respondem direto, Esc fecha. Fica na fase de borbulha: quem captura teclas antes (pesca, troca de teclas) continua mandando.
+if (typeof document !== 'undefined') addEventListener('keydown', e => {
+  const janela = topo(); if (!janela || e.ctrlKey || e.metaKey || e.altKey) return;
+  const alvo = e.target, digitando = alvo && (alvo.tagName === 'INPUT' || alvo.tagName === 'TEXTAREA' || alvo.tagName === 'SELECT' || alvo.isContentEditable);
+  const dir = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], KeyW: [0, -1], KeyS: [0, 1], KeyA: [-1, 0], KeyD: [1, 0] }[e.code];
+  if (digitando) { if ((e.code === 'ArrowUp' || e.code === 'ArrowDown') && alvo.tagName !== 'SELECT' && alvo.tagName !== 'TEXTAREA') { e.preventDefault(); mover(janela, 0, dir[1]); } return; }
+  if (dir) { e.preventDefault(); return mover(janela, dir[0], dir[1]); }
+  if (/^(Digit|Numpad)[1-9]$/.test(e.code)) { const r = [...janela.querySelectorAll('.answer:not([disabled])')][+e.code.slice(-1) - 1]; if (r) { e.preventDefault(); r.click(); } return; }
+  if (e.code === 'Escape') { if (janela.classList.contains('modal') && !janela.classList.contains('locked')) { e.preventDefault(); e.stopImmediatePropagation(); janela._close?.(); } return; }
+  // Enter e Espaço: o jogo cancela o clique nativo dessas teclas, então a janela confirma por conta própria
+  if (['Enter', 'NumpadEnter', 'Space', 'KeyZ', 'KeyX', 'KeyE', 'KeyF', 'KeyJ'].includes(e.code)) { e.preventDefault(); if (!e.repeat) confirmar(janela); }
+});
+// quando os botões aparecem depois (a fala termina de ser escrita, a pergunta troca), o foco vai para o botão certo
+if (typeof document !== 'undefined') setInterval(() => { const janela = topo(); if (!janela) return; const at = document.activeElement; if (at && janela.contains(at) && !at.disabled && at.isConnected) return; if (at && (at.tagName === 'INPUT' || at.tagName === 'TEXTAREA')) return; preferido(janela)?.focus({ preventScroll: true }); }, 250);
 
 // tremida do controle (ou do celular) nos golpes e na defesa perfeita
 export function vibrar(ms = 120, forca = 0.6) {
