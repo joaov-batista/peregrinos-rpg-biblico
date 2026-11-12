@@ -78,7 +78,22 @@ export const input = {
 
 function typing(e) { const t = e.target; return t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable); }
 
+// No celular, dois dedos na tela (um andando, outro num botão) não podem virar "pinça" de zoom, nem dois toques
+// seguidos podem ampliar a página: qualquer um dos dois faz o navegador cancelar os toques do jogo.
+function travarZoom() {
+  const livre = e => !!e.target.closest?.('.panel, #screens, input, textarea, select');
+  const emJogo = () => document.body.classList.contains('playing');
+  document.addEventListener('touchstart', e => { if (emJogo() && e.touches.length > 1 && !livre(e)) e.preventDefault(); }, { passive: false });
+  document.addEventListener('touchmove', e => { if (emJogo() && !livre(e)) e.preventDefault(); }, { passive: false });
+  let ultimo = 0; document.addEventListener('touchend', e => { const t = Date.now(); if (emJogo() && t - ultimo < 320 && !livre(e)) e.preventDefault(); ultimo = t; }, { passive: false });
+  for (const g of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(g, e => e.preventDefault(), { passive: false });
+  document.addEventListener('dblclick', e => { if (emJogo()) e.preventDefault(); });
+  // um campo de texto pode ter ampliado a página: ao sair dele, volta ao normal
+  document.addEventListener('focusout', () => setTimeout(() => { if (!document.activeElement || document.activeElement === document.body) scrollTo(0, 0); }, 50));
+}
+
 export function initInput(canvas) {
+  travarZoom();
   addEventListener('keydown', e => {
     if (typing(e) || !document.body.classList.contains('playing')) return;
     const hk = input.perfil === 'caminho', a = (hk ? mapaHK() : KEYMAP)[e.code];

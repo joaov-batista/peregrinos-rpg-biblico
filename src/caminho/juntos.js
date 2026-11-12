@@ -17,6 +17,21 @@ const LETRAS = 'ACDEFGHJKLMNPQRTUVWXY34679', PREFIXO = 'peregrinos-caminho-', MA
 export const novoCodigo = () => Array.from({ length: 5 }, () => LETRAS[Math.random() * LETRAS.length | 0]).join('');
 export const limparCodigo = s => (s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
 
+// Mensagens grandes (o retrato de uma luta cheia de dardos) são partidas em pedaços: um canal WebRTC fecha
+// se receber de uma vez mais do que aguenta, e era isso que congelava a sala no meio dos chefes.
+const LIMITE = 12000, partes = new Map(); let seqPt = 0;
+function manda(c, m) {
+  const s = JSON.stringify(m); if (s.length <= LIMITE) return c.send(m);
+  const k = ++seqPt + Math.random().toString(36).slice(2, 6), n = Math.ceil(s.length / LIMITE);
+  for (let i = 0; i < n; i++) c.send({ t: 'pt', k, i, n, s: s.slice(i * LIMITE, (i + 1) * LIMITE) });
+}
+function junta(m) {
+  if (m?.t !== 'pt') return m;
+  let p = partes.get(m.k); if (!p) partes.set(m.k, p = { n: m.n, v: [], c: 0, t: performance.now() });
+  if (p.v[m.i] == null) { p.v[m.i] = m.s; p.c++; }
+  if (p.c < p.n) { if (partes.size > 40) for (const [k, q] of partes) if (performance.now() - q.t > 5000) partes.delete(k); return null; }
+  partes.delete(m.k); try { return JSON.parse(p.v.join('')); } catch { return null; }
+}
 const SEM = new Set(['d', 'v', 'c', 'art', 'hits', 'def', 'capa', 'rastro', 'sx', 'sy', 'sumiu']);
 // cópia enxuta para a rede: sem funções, sem referências a definições e sem ciclos
 function copia(o, nivel = 0) {
@@ -83,22 +98,22 @@ export class Juntos {
   info() { const c = this.G.char; return { nome: c.name, look: c.look || {}, cls: c.cls, hab: this.G.hab }; }
 
   static async abrir(G, codigo, local) {
-    const mp = new Juntos(G); mp.anfitriao = true; mp.codigo = codigo;
+    const mp = new Juntos(G); mp.anfitriao = true; mp.codigo = codigo; mp.local = local;
     mp.rede = await ligar(codigo, true, local, {
       entra: () => { },
-      msg: (c, m) => mp.doAnfitriao(c, m),
+      msg: (c, m) => { m = junta(m); if (m) mp.doAnfitriao(c, m); },
       sai: c => { const id = mp.cons.get(c); if (id == null) return; mp.cons.delete(c); mp.saiu(id); mp.enviar({ t: 'sx', id }); }
     });
     return mp;
   }
   static async entrar(G, codigo, local) {
-    const mp = new Juntos(G); mp.codigo = codigo;
+    const mp = new Juntos(G); mp.codigo = codigo; mp.local = local; mp.ultimo = performance.now();
     let ok, erro; const bem = new Promise((a, b) => { ok = a; erro = b; });
     mp.rede = await ligar(codigo, false, local, {
-      msg: (_, m) => { if (m.t === 'bem') { mp.eu = m.id; for (const p of m.pares) mp.chegou(p.id, p, true); ok(); } else if (m.t === 'cheio') erro(new Error('A sala já tem quatro peregrinos.')); else { try { mp.receber(m); } catch (e) { console.error('[juntos]', e); } } },
-      sai: () => mp.caiu()
+      msg: (_, m) => { m = junta(m); if (!m) return; mp.ultimo = performance.now(); if (m.t === 'bem') { mp.eu = m.id; for (const p of m.pares) mp.chegou(p.id, p, true); ok(); } else if (m.t === 'cheio') erro(new Error('A sala já tem quatro peregrinos.')); else { try { mp.receber(m); } catch (e) { console.error('[juntos]', e); } } },
+      sai: () => mp.reconectar()
     });
-    mp.rede.con.send({ t: 'oi', ...mp.info() });
+    manda(mp.rede.con, { t: 'oi', ...mp.info() });
     setTimeout(() => erro(new Error('O anfitrião não respondeu.')), 8000);
     try { await bem; } catch (e) { mp.rede.fechar(); throw e; }
     return mp;
@@ -107,25 +122,35 @@ export class Juntos {
   doAnfitriao(c, m) {
     if (m.t === 'oi') {
       let id = 1; const usados = new Set(this.cons.values()); while (usados.has(id)) id++;
-      if (id >= MAX) { c.send({ t: 'cheio' }); return; }
+      if (id >= MAX) { manda(c, { t: 'cheio' }); return; }
       this.cons.set(c, id);
-      c.send({ t: 'bem', id, pares: [{ id: 0, ...this.info() }, ...[...this.pares.values()].map(p => ({ id: p.id, nome: p.nome, look: p.look, cls: p.cls, hab: p.hab }))] });
+      manda(c, { t: 'bem', id, pares: [{ id: 0, ...this.info() }, ...[...this.pares.values()].map(p => ({ id: p.id, nome: p.nome, look: p.look, cls: p.cls, hab: p.hab }))] });
       const ch = { t: 'ch', de: id, nome: m.nome, look: m.look, cls: m.cls, hab: m.hab };
-      for (const [o, oid] of this.cons) if (oid !== id) o.send(ch);
+      for (const [o, oid] of this.cons) if (oid !== id) manda(o, ch);
       this.receber(ch); return;
     }
     const id = this.cons.get(c); if (id == null) return;
-    m.de = id;
-    for (const [o, oid] of this.cons) if (oid !== id) { try { o.send(m); } catch { /* um par caindo não derruba os outros */ } }
+    m.de = id; const quem = this.pares.get(id); if (quem) quem.vistoEm = performance.now();
+    for (const [o, oid] of this.cons) if (oid !== id) { try { manda(o, m); } catch { /* um par caindo não derruba os outros */ } }
     try { this.receber(m); } catch (e) { console.error('[juntos]', e); }
   }
   enviar(m) {
     // retratos e posições são descartáveis: se a fila de envio encher (rede lenta), pula em vez de acumular atraso
     const leve = m.t === 'w' || m.t === 'e' || m.t === 'fx', cheio = c => leve && (c.dataChannel?.bufferedAmount || 0) > 180000;
-    try { if (this.anfitriao) { m.de = 0; for (const c of this.cons.keys()) if (!cheio(c)) c.send(m); } else if (!cheio(this.rede.con)) this.rede.con.send(m); } catch { /* conexão caindo: o 'close' cuida */ }
+    try { if (this.anfitriao) { m.de = 0; for (const c of this.cons.keys()) if (!cheio(c)) manda(c, m); } else if (!cheio(this.rede.con)) manda(this.rede.con, m); } catch { /* conexão caindo: o 'close' cuida */ }
   }
   ev(t, o) { if (this.acompanhado()) this.enviar({ t, a: this.G.area, ...o }); }
   sair() { this.rede?.fechar(); this.fechado = true; if (this.G.mp === this) this.G.mp = null; }
+  // a ligação caiu ou ficou muda: tenta entrar de novo na mesma sala antes de desistir
+  async reconectar() {
+    if (this.fechado || this.religando || this.anfitriao) return; this.religando = true; const G = this.G;
+    G.ui.toast('A ligação com a sala caiu. Reconectando…', 4000);
+    for (let i = 0; i < 4 && G.running && G.mp === this; i++) {
+      try { const novo = await Juntos.entrar(G, this.codigo, this.local); this.fechado = true; try { this.rede.fechar(); } catch { /* já estava fechada */ } G.mp = novo; novo.mudouArea(G.area); G.ui.toast('Reconectado à sala ' + this.codigo + '.', 3500); return; }
+      catch { await new Promise(r => setTimeout(r, 2500)); }
+    }
+    this.religando = false; this.caiu();
+  }
   caiu() { if (this.fechado) return; this.sair(); this.G.ui.toast('A sala fechou. Você segue o caminho sozinho; o que conquistou continua com você.', 6000); }
 
   chegou(id, m, quieto) {
@@ -160,6 +185,9 @@ export class Juntos {
     const G = this.G, la = this.naArea(), agora = performance.now();
     for (const p of this.pares.values()) { const h = p.h; h.x = damp(h.x, h.tx, 22, dt); h.y = damp(h.y, h.ty, 22, dt); }
     for (const [k, t] of this.gastos) if (agora - t > 1500) this.gastos.delete(k);
+    // vigia a ligação: quem fica mudo por muito tempo é dado como fora (anfitrião) ou tenta religar (convidado)
+    if (!this.anfitriao && this.ultimo && agora - this.ultimo > 7000) this.reconectar();
+    if (this.anfitriao && (this.tV = (this.tV || 0) + dt) > 2) { this.tV = 0; for (const [c, id] of [...this.cons]) { const q = this.pares.get(id); if (q && q.vistoEm && agora - q.vistoEm > 10000) { this.cons.delete(c); try { c.close(); } catch { /* */ } this.saiu(id); this.enviar({ t: 'sx', id }); } } }
     this.fxN = Math.max(0, this.fxN - dt * 50);
     // posse da área
     const outros = la.filter(p => p.h.dn);
@@ -181,7 +209,7 @@ export class Juntos {
   }
   mundo() {
     const G = this.G, id = o => { o.nid = o.nid || ++this.seq; return o; };
-    return { t: 'w', a: G.area, i: G.inimigos.map(e => copia(id(e))), ti: G.tiros.filter(t => !t.amigo).map(t => copia(id(t))), z: G.zonas.filter(z => !z.amigo).map(z => copia(id(z))),
+    return { t: 'w', a: G.area, i: G.inimigos.map(e => copia(id(e))), ti: G.tiros.filter(t => !t.amigo).slice(-90).map(t => copia(id(t))), z: G.zonas.filter(z => !z.amigo).map(z => copia(id(z))),
       g: { luta: !!G.luta, puxao: G.puxao, ea: G.escuroAlvo || 0, vento: G.vento, congela: !!G.congela, emb: G.emb ? G.N.celulas.indexOf(G.emb.c) : null } };
   }
   aplicarMundo(m) {
