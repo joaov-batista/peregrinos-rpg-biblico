@@ -22,33 +22,31 @@ const COLOR_NAMES = {
   cape:['Azul noturno','Bronze','Bordô','Violeta','Musgo','Pérola','Sem capa']
 };
 
-// Quiet ruined sanctuary, drawn as vector scenery so it stays sharp at any DPR.
+// O fundo da prévia, em pixel (cada ponto vale 4): a praça do Refúgio à noite — céu em faixas, lua, a muralha ao longe,
+// um arco de pedra, um poste aceso, uma oliveira e o chão de lajes onde o peregrino pisa.
 function sanctuary(g, t) {
-  const bg=g.createLinearGradient(0,0,0,440);bg.addColorStop(0,'#101A28');bg.addColorStop(.58,'#263C4A');bg.addColorStop(1,'#101C27');
-  g.fillStyle=bg;g.fillRect(0,0,360,440);
-  const light=g.createRadialGradient(180,110,4,180,175,190);light.addColorStop(0,'rgba(166,210,216,.2)');light.addColorStop(1,'rgba(121,184,203,0)');g.fillStyle=light;g.fillRect(0,0,360,440);
-  // Receding pointed arches, not a photograph pasted behind the sprite.
-  for(let i=0;i<3;i++) {
-    const left=27+i*24, right=333-i*24, top=17+i*23;
-    g.beginPath();g.moveTo(left,365);g.lineTo(left,145+i*8);g.bezierCurveTo(left,85,125,top+29,180,top);g.bezierCurveTo(235,top+29,right,85,right,145+i*8);g.lineTo(right,365);
-    g.strokeStyle=i===0?'#0B1420':i===1?'#344B55':'#304A58';g.lineWidth=i===0?14:3;g.stroke();
-  }
-  for(const x of [29,55,305,331]){g.fillStyle='#152630';g.fillRect(x-3,148,6,211);g.fillStyle='#52616A';g.fillRect(x-4,151,8,2);}
-  g.strokeStyle='rgba(159,184,186,.12)';g.lineWidth=1;
-  for(let y=193;y<360;y+=44){g.beginPath();g.moveTo(25,y);g.lineTo(59,y);g.moveTo(301,y);g.lineTo(335,y);g.stroke();}
-  g.beginPath();g.arc(180,104,24,0,Math.PI*2);g.strokeStyle='rgba(205,223,209,.24)';g.stroke();
-  g.beginPath();g.moveTo(180,88);g.lineTo(180,121);g.moveTo(171,100);g.lineTo(189,100);g.strokeStyle='#AEBDB4';g.lineWidth=1.3;g.stroke();
-  // Low fog and an engraved stone dais establish contact with the ground.
-  const fog=g.createRadialGradient(180,355,0,180,355,180);fog.addColorStop(0,'rgba(134,183,194,.12)');fog.addColorStop(1,'rgba(134,183,194,0)');g.fillStyle=fog;g.fillRect(0,260,360,160);
-  g.beginPath();g.ellipse(180,375,117,23,0,0,Math.PI*2);g.fillStyle='#0D1721';g.fill();
-  g.beginPath();g.ellipse(180,366,117,23,0,0,Math.PI*2);g.fillStyle='#263941';g.fill();g.strokeStyle='#66756F';g.lineWidth=.8;g.stroke();
-  g.beginPath();g.ellipse(180,366,106,18,0,0,Math.PI*2);g.strokeStyle='#425655';g.stroke();
-  for(let i=0;i<16;i++){const a=i*Math.PI/8;g.beginPath();g.moveTo(180+Math.cos(a)*108,366+Math.sin(a)*18);g.lineTo(180+Math.cos(a)*113,366+Math.sin(a)*20);g.stroke();}
-  for(let i=0;i<15;i++) {
-    const k=(t*.035+i/15)%1,x=38+(i*71%285)+Math.sin(t*.25+i)*7,y=365-k*290;
-    g.globalAlpha=Math.sin(k*Math.PI)*.5;g.fillStyle='#B7D7D3';g.beginPath();g.ellipse(x,y,i%3===0?1.3:.65,.65,0,0,Math.PI*2);g.fill();
-  }g.globalAlpha=1;
-  const shade=g.createLinearGradient(0,350,0,440);shade.addColorStop(0,'rgba(9,17,25,0)');shade.addColorStop(1,'#0D1721');g.fillStyle=shade;g.fillRect(0,350,360,90);
+  const P = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x * 4, y * 4, w * 4, h * 4); };
+  ['#0B1024', '#0E1630', '#121C3A', '#172446', '#1D2D52', '#25375E', '#2F426A', '#3A4A72'].forEach((c, i) => P(0, i * 8, 90, 9, c));
+  for (let i = 0; i < 30; i++) { const x = (i * 37) % 90, y = (i * 29 + (i >> 2) * 7) % 47; if ((i + Math.floor(t * 1.5)) % 7) P(x, y, 1, 1, i % 4 ? '#C9CCDA' : '#FFF4CF'); }
+  P(64, 9, 8, 8, '#FFF4CF'); P(63, 10, 10, 6, '#FFF4CF'); P(65, 8, 6, 10, '#FFF4CF'); P(67, 10, 2, 2, '#E4D6A6'); P(65, 13, 2, 2, '#E4D6A6'); P(69, 14, 1, 1, '#E4D6A6');
+  // muralha e torres ao longe, com janelas acesas
+  for (let x = 0; x < 90; x++) { const a = 58 - ((x >> 3) % 2) - Math.round(Math.sin(x * 0.2) * 1); P(x, a, 1, 90 - a, '#1B2748'); }
+  for (const [x, w, a] of [[4, 9, 44], [30, 7, 49], [72, 11, 42]]) { P(x, a, w, 60 - a, '#1B2748'); for (let k = 0; k < w; k += 2) P(x + k, a - 1, 1, 1, '#1B2748'); P(x + 2, a + 4, 1, 2, '#FFD98A'); if (w > 8) P(x + w - 3, a + 9, 1, 2, '#FFD98A'); }
+  // arco de pedra atrás do peregrino
+  for (const x of [14, 68]) { P(x, 30, 8, 56, '#2B3653'); P(x, 30, 1, 56, '#1A2238'); P(x + 7, 30, 1, 56, '#4A5A86'); for (let y = 34; y < 86; y += 6) P(x + 1, y, 6, 1, '#1A2238'); P(x - 1, 28, 10, 3, '#38466B'); P(x - 1, 28, 10, 1, '#6276AE'); }
+  for (let k = 0; k <= 30; k++) { const an = Math.PI * k / 30, x = Math.round(45 - Math.cos(an) * 27), y = Math.round(29 - Math.sin(an) * 17); P(x - 2, y - 2, 5, 4, k % 5 === 0 ? '#1A2238' : '#2B3653'); P(x - 2, y - 2, 5, 1, '#4A5A86'); }
+  P(42, 9, 7, 5, '#38466B'); P(42, 9, 7, 1, '#6276AE'); P(44, 10, 3, 3, '#E8C873');
+  // oliveira e poste aceso
+  P(7, 70, 2, 16, '#5E4630'); P(6, 76, 1, 10, '#3A2A1C'); for (const [x, y, w, h, c] of [[2, 62, 12, 7, '#4F6B4A'], [4, 58, 8, 5, '#6E8A5E'], [0, 65, 6, 5, '#3F5A3E'], [9, 64, 6, 6, '#3F5A3E'], [5, 59, 3, 1, '#A8C098']]) P(x, y, w, h, c);
+  const pisca = Math.floor(t * 6) % 3 === 0 ? '#FFD86A' : '#FFE9A8';
+  P(81, 58, 1, 28, '#17121f'); P(80, 85, 3, 1, '#17121f'); P(79, 53, 5, 6, '#17121f'); P(80, 54, 3, 4, pisca); g.globalAlpha = 0.1; P(74, 48, 15, 16, '#FFE9A8'); g.globalAlpha = 0.07; P(70, 44, 23, 24, '#FFE9A8'); g.globalAlpha = 1;
+  // chão de lajes
+  P(0, 86, 90, 24, '#232D49'); P(0, 86, 90, 1, '#C9B88A'); P(0, 87, 90, 1, '#4A5A86');
+  for (let y = 0; y < 5; y++) for (let x = (y % 2) * 5 - 5; x < 90; x += 10) { P(x, 89 + y * 4, 1, 4, '#141B2D'); } for (let y = 0; y < 6; y++) P(0, 88 + y * 4, 90, 1, y ? '#141B2D' : '#1A2238');
+  g.globalAlpha = 0.35; P(34, 86, 22, 2, '#05060B'); g.globalAlpha = 1;
+  // vaga-lumes
+  for (let i = 0; i < 9; i++) { const k = (t * 0.05 + i / 9) % 1, x = 8 + (i * 31) % 74 + Math.round(Math.sin(t * 0.6 + i) * 2), y = Math.round(84 - k * 50); if (Math.floor(t * 3 + i) % 3) { g.globalAlpha = Math.sin(k * Math.PI); P(x, y, 1, 1, '#FFE9A8'); } } g.globalAlpha = 1;
+  for (let y = 100; y < 110; y++) { g.globalAlpha = (y - 99) / 12; P(0, y, 90, 1, '#0B1024'); } g.globalAlpha = 1;
 }
 
 export function mountCreator(root, onCreated, onBack) {
@@ -161,7 +159,7 @@ export function mountCreator(root, onCreated, onBack) {
       const anda=motion==='walk'&&!reduced; pxHeroi.chao=true; pxHeroi.vx=anda?230:0; pxHeroi.face=face===3?-1:1; if(anda)pxHeroi.passo+=230*dt/26;
       pxHeroi.atk=attack?{t:since%.22,dur:.17,dir:face===2?'cima':'lado',face:pxHeroi.face,n:Math.floor(since/.22)}:null;
       const q=quadroHeroi(pxHeroi,look,cls,CLASSES[cls].arma,T,{});g.imageSmoothingEnabled=false;
-      g.save();g.translate(180,338);g.scale(5*pxHeroi.face,5);g.drawImage(q.tela(),-AX,-AY);g.restore();
+      g.save();g.translate(180,344);g.scale(5*pxHeroi.face,5);g.drawImage(q.tela(),-AX,-AY);g.restore();
       raf=requestAnimationFrame(draw);return;
     }
     drawPerson(g,180,310,4.05,look,personMotion(motionActor,look,{t:T,fx:faces[face][0],fy:faces[face][1],moving:motion==='walk'&&!reduced,walk:time*.55,cls,weapon:CLASSES[cls].arma,weaponId:CLASSES[cls].armaInicial,shield:true,

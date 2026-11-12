@@ -179,3 +179,31 @@ html.remake .journey-summary h3 { font-family: 'Jersey 20', monospace !important
 html.remake .starting-stats > div, html.remake .starting-gear { border-radius: 0; border: 0; background: #1A2238; box-shadow: 0 0 0 2px var(--px-tinta); font-size: 17px; } html.remake .starting-stats b, html.remake .starting-gear b { font-size: 20px; color: var(--px-osso); } html.remake .starting-gear small { font-size: 15px; }
 html.remake .pilgrim-canvas { image-rendering: pixelated; }
 html.remake .cm-menu .cm-ico { filter: none; opacity: 1; width: auto; min-width: 38px; white-space: nowrap; font-size: 20px; color: var(--px-ouro); font-family: 'Jersey 20', monospace !important; }
+
+/* pesca */
+.pesca-cv { width: 100%; max-width: 768px; height: auto; display: block; margin: 8px auto; image-rendering: pixelated; border: 0; box-shadow: 0 0 0 2px #05060B, 0 0 0 4px #9A7B3A, 0 0 0 6px #05060B; touch-action: none; cursor: pointer; }
+html.remake .pesca-msg { min-height: 2.6em; margin: 10px 0 4px; text-align: center; font-size: 19px; color: #F1E9D2; } html.remake .pesca-msg.bom { color: #B8F0C8; } html.remake .pesca-msg.ruim { color: #FFB0A6; }
+html.remake .pesca-bt { min-width: 220px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.pesca-album { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px; }
+.pesca-item { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: #1A2238; box-shadow: 0 0 0 2px #05060B; color: #8C93AD; } .pesca-item.tem { color: #F1E9D2; }
+.pesca-item canvas { width: 51px; height: 27px; image-rendering: pixelated; } html.remake .pesca-item b { font-size: 17px; }
+@media (max-height: 480px) { .pesca-cv { max-height: 52vh; width: auto; } html.remake .pesca-msg { min-height: 1.3em; margin: 4px 0 0; font-size: 16px; } .pesca-album { display: none; } }
+
+/* entrada (login): cartão em moldura, abas em etiqueta */
+html.remake .card.auth, html.remake .abertura .card.auth:has(input), html.remake .abertura .card.auth:has(input):hover { width: min(380px, 92vw) !important; align-items: stretch !important; background: var(--px-fundo) !important; border: 12px solid transparent !important; border-image: var(--px-moldura) 6 fill / 12px / 0 stretch !important; box-shadow: 0 8px 0 rgba(0, 0, 0, .45) !important; padding: 10px 14px !important; display: flex; flex-direction: column; gap: 10px; }
+html.remake .abertura .card.auth:not(:has(input)), html.remake .abertura .card.auth:not(:has(input)):hover { background: none !important; border: 0 !important; border-image: none !important; box-shadow: none !important; padding: 0 !important; gap: 4px; }
+html.remake .card.auth .tabs { display: flex; gap: 4px; border-bottom: 4px solid var(--px-tinta); box-shadow: 0 2px 0 var(--px-ouro2); align-items: flex-end; }
+html.remake .card.auth label { display: flex; flex-direction: column; gap: 6px; text-align: left; font-size: 18px; color: var(--px-ouro); }
+html.remake .card.auth input, html.remake .abertura .card.auth input { font-size: 20px !important; padding: 10px 12px; text-align: left; margin: 2px 4px; width: auto; }
+html.remake .abertura .card.auth:has(input) .btn.gold { background: #D9A93C !important; color: #1E1508 !important; text-shadow: 1px 1px 0 #FFE9A8 !important; box-shadow: inset 0 2px 0 #FFE08A, inset 0 -3px 0 #9A6A1C, 0 0 0 2px var(--px-tinta), 0 4px 0 2px var(--px-tinta) !important; font-size: 22px !important; min-height: 46px; width: auto; margin: 4px 4px 6px; padding: 6px 16px; }
+html.remake .abertura .card.auth:has(input) .btn.gold::before { display: none; }
+html.remake .form-msg { font-size: 17px; min-height: 1.2em; } html.remake .form-msg.err { color: #FFB0A6; } html.remake .form-msg.ok { color: #B8F0C8; }
+html.remake .card.auth .link { font-size: 16px; color: var(--px-apagado); }
+html.remake .card.auth .tabs { border-radius: 0; background: none; padding: 0; border-top: 0; border-left: 0; border-right: 0; }
+@media (max-height: 480px) {
+  html.remake .abertura:has(.card.auth input) { padding-top: 0; gap: 0; justify-content: flex-start; } html.remake .abertura:has(.card.auth input) .logo h1 { font-size: 30px; } html.remake .abertura:has(.card.auth input) .floreio, html.remake .abertura:has(.card.auth input) .logo p { display: none; }
+  html.remake .abertura .card.auth:has(input) { width: min(620px, 96vw) !important; display: grid !important; grid-template-columns: 1fr 1fr; gap: 4px 10px; padding: 4px 8px !important; border-width: 8px !important; border-image-width: 8px !important; }
+  html.remake .card.auth:has(input) .tabs, html.remake .card.auth:has(input) .btn.gold, html.remake .card.auth:has(input) .form-msg, html.remake .card.auth:has(input) .link { grid-column: 1 / -1; }
+  html.remake .card.auth label { font-size: 15px; gap: 2px; } html.remake .card.auth input, html.remake .abertura .card.auth input { padding: 6px 10px; font-size: 17px !important; }
+  html.remake .abertura .card.auth:has(input) .btn.gold { min-height: 36px; font-size: 19px !important; margin: 2px 4px 4px; } html.remake .form-msg { min-height: 0; font-size: 15px; }
+}
