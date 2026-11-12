@@ -19,5 +19,5 @@ const PADRAO = {
 export const config = { ...PADRAO, ...store.get('peregrinos.config', {}) };
 export function setConfig(k, v) { config[k] = v; store.set('peregrinos.config', config); aplicarTexto(); }
 // tamanho do texto/interface (combina com o zoom do navegador, ver zoom.js)
-export function aplicarTexto() { document.documentElement.style.setProperty('--ui-esc', String(config.texto || 1)); }
+export function aplicarTexto() { if (typeof document === 'undefined') return; document.documentElement.style.setProperty('--ui-esc', String(config.texto || 1)); }
 aplicarTexto();

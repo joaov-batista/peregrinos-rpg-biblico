@@ -66,7 +66,7 @@ export function atualizarHeroi(G, dt) {
   p.buf = c.pulo ? 0.13 : p.buf - dt;
   p.coyote = p.chao ? 0.1 : p.coyote - dt;
   p.desliza = 0;
-  if (hab.firmeza && !p.chao && !emDash && p.vy > 0) {
+  if (!p.chao && !emDash && p.vy > 0) { // deslizar e pular na parede: todo peregrino sabe
     const lado = c.mx > 0.3 ? 1 : c.mx < -0.3 ? -1 : 0;
     if (lado && paredeAoLado(N, p, lado)) { p.desliza = lado; p.vy = Math.min(p.vy, 115); p.pulos = hab.asas ? 2 : 1; p.dashAr = true; p.face = -lado; if (Math.random() < dt * 14) G.fx.po(p.x + lado * 9, p.y - 20, 1, '#C9D2C4'); }
   }
@@ -74,7 +74,7 @@ export function atualizarHeroi(G, dt) {
   if (c.my > 0.5 && p.chao && p.naPonte && !preso) { p.baixoT = (p.baixoT || 0) + dt; if (p.baixoT > 0.14 || p.buf > 0) { p.desce = 0.2; p.buf = 0; p.chao = false; p.baixoT = 0; } } else p.baixoT = 0;
   if (p.buf > 0 && !preso && p.orando <= 0) {
     if (p.coyote > 0) { p.vy = -PULO; p.coyote = 0; p.buf = 0; p.sq = 1.22; sfx('step'); G.fx.po(p.x, p.y, 5, '#C9D2C4'); p.dashT = 0; }
-    else if (hab.firmeza && (p.desliza || paredeAoLado(N, p, 1) || paredeAoLado(N, p, -1))) {
+    else if ((p.desliza || paredeAoLado(N, p, 1) || paredeAoLado(N, p, -1))) {
       const lado = p.desliza || (paredeAoLado(N, p, 1) ? 1 : -1);
       p.vy = -PULO * 0.95; p.vx = -lado * 300; p.travaX = 0.14; p.face = -lado; p.buf = 0; p.sq = 1.2; sfx('step'); G.fx.po(p.x + lado * 9, p.y - 16, 5, '#C9D2C4');
     }
@@ -114,14 +114,14 @@ export function atualizarHeroi(G, dt) {
   if (p.atk) {
     const a = p.atk; a.t += dt;
     if (arma.duplo && !a.segundo && a.t > 0.11) { a.segundo = true; a.hits.clear(); a.reagiu = false; sfx('swing'); if (a.dir === 'lado') G.efeito(arma.fx, p.x, p.y - 8, a.face, { gruda: p, dy: -8, vel: 1.4 }); } // a adaga fere duas vezes
-    if (a.t > 0.03 && a.t < a.dur && !a.semCaixa) {
+    if (a.t > 0.02 && a.t < a.dur + 0.04 && !a.semCaixa) { // as caixas cobrem o que o efeito mostra
       const alc = arma.alc, f = a.face; let cx, cy, w, h;
-      if (a.dir === 'lado') { cx = p.x + f * (alc / 2 + 4); cy = p.y - 28; w = alc; h = arma.alt; }
+      if (a.dir === 'lado') { cx = p.x + f * (alc / 2 + 2); cy = p.y - 28; w = alc + 16; h = arma.alt + 16; }
       else if (a.dir === 'rasteira') { cx = p.x + f * (alc / 2 + 4); cy = p.y - 11; w = alc * 1.1; h = 22; }
-      else if (a.dir === 'cima') { cx = p.x; cy = p.y - 50 - alc / 2; w = arma.alt + 6; h = alc; }
-      else if (a.dir === 'baixo') { cx = p.x; cy = p.y + alc / 2 - 6; w = arma.alt + 6; h = alc; }
-      else if (a.dir === 'diagC') { cx = p.x + f * alc * 0.5; cy = p.y - 54 - alc * 0.28; w = h = alc * 0.85; }
-      else { cx = p.x + f * alc * 0.48; cy = p.y + alc * 0.26; w = h = alc * 0.85; }
+      else if (a.dir === 'cima') { cx = p.x; cy = p.y - 44 - alc / 2; w = arma.alt + 28; h = alc + 18; }
+      else if (a.dir === 'baixo') { h = alc + 40; cx = p.x; cy = p.y - 22 + h / 2; w = Math.max(arma.alt + 34, 76); }
+      else if (a.dir === 'diagC') { cx = p.x + f * alc * 0.5; cy = p.y - 50 - alc * 0.28; w = h = alc * 1.05 + 12; }
+      else { cx = p.x + f * alc * 0.46; cy = p.y + alc * 0.2; w = h = alc * 1.05 + 16; }
       const r = G.golpear({ x: cx - w / 2, y: cy - h / 2, w, h }, G.danoBase() * arma.d, a);
       if (r && !a.reagiu) {
         a.reagiu = true;

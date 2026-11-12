@@ -2,6 +2,7 @@
 import { h } from '../util.js';
 import { sfx, setMuted, audio } from '../audio.js';
 import { config, setConfig } from '../config.js';
+import { ACOES_TECLA, teclaDe } from '../input.js';
 import { CINEMAS } from '../content/cinematicas.js';
 import { TODAS } from '../content/index.js';
 import { faseProg } from '../game/player.js';
@@ -158,8 +159,14 @@ export function abrirMenu(G, aba = 'inventario') {
     }
     function ajustes() {
       const out = [h('h4', {}, 'Dificuldade')];
+      const nomeTecla = c => (c || '—').replace('Key', '').replace('Arrow', 'Seta ').replace('Up', '↑').replace('Down', '↓').replace('Left', '←').replace('Right', '→').replace('Digit', '');
+      const teclas = h('div', { class: 'cfg-teclas' });
+      for (const [acao, nome] of ACOES_TECLA) teclas.append(h('button', { class: 'fase-row cm-rel', onclick: ev => { const b = ev.currentTarget; b.querySelector('small').textContent = 'aperte a tecla nova…'; const pega = e => { e.preventDefault(); e.stopPropagation(); removeEventListener('keydown', pega, true); if (e.code !== 'Escape') setConfig('teclas', { ...(config.teclas || {}), [acao]: e.code }); desenha(); }; addEventListener('keydown', pega, true); } },
+        h('span', { class: 'cm-ico' }, nomeTecla(teclaDe(acao))), h('div', {}, h('b', {}, nome), h('small', {}, 'Toque para trocar a tecla'))));
+      teclas.append(h('button', { class: 'btn sm', onclick: () => { setConfig('teclas', {}); desenha(); } }, 'Voltar às teclas de sempre'));
       for (const [id, d] of Object.entries(DIFICULDADES)) out.push(h('button', { class: 'fase-row cm-rel' + (cm.dif === id ? ' on' : ''), onclick: () => { cm.dif = id; sfx('click'); G.p.vidaMax = G.vidaMax(); G.p.vida = Math.min(G.p.vida, G.p.vidaMax); G.salvar(); desenha(); } }, h('div', {}, h('b', {}, d.nome + (cm.dif === id ? ' ✓' : '')), h('small', {}, d.desc))));
       const alterna = (k, nome) => h('button', { class: 'chip-btn' + (config[k] !== false ? ' on' : ''), onclick: () => { setConfig(k, config[k] === false); desenha(); } }, nome + ': ' + (config[k] !== false ? 'ligado' : 'desligado'));
+      out.push(h('h4', {}, 'Teclas (teclado)'), teclas);
       out.push(h('h4', {}, 'Arte'), h('div', { class: 'cfg-opts' }, h('button', { class: 'chip-btn' + (config.pixel !== false ? ' on' : ''), onclick: () => { setConfig('pixel', config.pixel === false); G.pixel = config.pixel !== false; document.body.classList.toggle('cm-pixel', G.pixel); desenha(); } }, config.pixel !== false ? 'Pixel art (nova)' : 'Vetorial (antiga)')),
         t('A arte em pixel é a nova direção do jogo. Chefes e vícios ainda não redesenhados aparecem com a arte antiga reduzida.', 'muted'));
       out.push(h('h4', {}, 'Jogo'), h('div', { class: 'cfg-opts' }, alterna('cinemas', '🎬 Cutscenes'), alterna('tremor', '📳 Tremor da tela'), alterna('numerosDano', '🔢 Números de dano'),

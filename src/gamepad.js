@@ -12,7 +12,8 @@ const ACOES = { 5: 'attack', 7: 'skill', 4: 'defend', 6: 'lock', 11: 'lock', 0: 
 const ACOES_CAMINHO = { 0: 'dodge', 2: 'attack', 1: 'botija', 7: 'dash', 5: 'skill', 3: 'interact', 4: 'defend', 6: 'botija', 10: 'skill', 11: 'skill' };
 // em tela dividida (?pad=N) cada quadro escuta só o seu controle
 const PAD_FIXO = new URLSearchParams(location.search).has('pad') ? +new URLSearchParams(location.search).get('pad') : null;
-const meuControle = () => { const l = [...(navigator.getGamepads?.() || [])].filter(Boolean); return PAD_FIXO != null ? l[PAD_FIXO] : l[0]; };
+let padAtivo = -1;
+const meuControle = () => { const l = [...(navigator.getGamepads?.() || [])].filter(Boolean); if (PAD_FIXO != null) return l[PAD_FIXO]; for (const g of l) if (g.buttons.some(b => b.pressed) || Math.hypot(g.axes[0] || 0, g.axes[1] || 0) > 0.5) padAtivo = g.index; return l.find(g => g.index === padAtivo) || l[0]; }; // fora da tela dividida, vale o controle que foi usado por último
 const ZONA = 0.22; // zona morta dos analógicos
 let antes = [], nav = { t: 0, dir: null };
 export const pad = { conectado: false, nome: '' };

@@ -95,7 +95,7 @@ export class Juntos {
     const mp = new Juntos(G); mp.codigo = codigo;
     let ok, erro; const bem = new Promise((a, b) => { ok = a; erro = b; });
     mp.rede = await ligar(codigo, false, local, {
-      msg: (_, m) => { if (m.t === 'bem') { mp.eu = m.id; for (const p of m.pares) mp.chegou(p.id, p, true); ok(); } else if (m.t === 'cheio') erro(new Error('A sala já tem quatro peregrinos.')); else mp.receber(m); },
+      msg: (_, m) => { if (m.t === 'bem') { mp.eu = m.id; for (const p of m.pares) mp.chegou(p.id, p, true); ok(); } else if (m.t === 'cheio') erro(new Error('A sala já tem quatro peregrinos.')); else { try { mp.receber(m); } catch (e) { console.error('[juntos]', e); } } },
       sai: () => mp.caiu()
     });
     mp.rede.con.send({ t: 'oi', ...mp.info() });
@@ -116,11 +116,13 @@ export class Juntos {
     }
     const id = this.cons.get(c); if (id == null) return;
     m.de = id;
-    for (const [o, oid] of this.cons) if (oid !== id) o.send(m);
-    this.receber(m);
+    for (const [o, oid] of this.cons) if (oid !== id) { try { o.send(m); } catch { /* um par caindo não derruba os outros */ } }
+    try { this.receber(m); } catch (e) { console.error('[juntos]', e); }
   }
   enviar(m) {
-    try { if (this.anfitriao) { m.de = 0; for (const c of this.cons.keys()) c.send(m); } else this.rede.con.send(m); } catch { /* conexão caindo: o 'close' cuida */ }
+    // retratos e posições são descartáveis: se a fila de envio encher (rede lenta), pula em vez de acumular atraso
+    const leve = m.t === 'w' || m.t === 'e' || m.t === 'fx', cheio = c => leve && (c.dataChannel?.bufferedAmount || 0) > 180000;
+    try { if (this.anfitriao) { m.de = 0; for (const c of this.cons.keys()) if (!cheio(c)) c.send(m); } else if (!cheio(this.rede.con)) this.rede.con.send(m); } catch { /* conexão caindo: o 'close' cuida */ }
   }
   ev(t, o) { if (this.acompanhado()) this.enviar({ t, a: this.G.area, ...o }); }
   sair() { this.rede?.fechar(); this.fechado = true; if (this.G.mp === this) this.G.mp = null; }
@@ -224,6 +226,21 @@ export class Juntos {
     return ok;
   }
 
+  // Pergunta por votação: aparece para todos da área; vale a resposta da maioria. No empate, vota-se de novo.
+  async votar(q, titulo, fb) {
+    const G = this.G;
+    for (let rodada = 0; rodada < 3; rodada++) {
+      this.resp = new Map(); this.ev('vq', { q, titulo, fb });
+      G.ui.quiz(fb ? { ...q, fb } : q, titulo + ' · VOTAÇÃO').then(ok => { this.resp?.set(this.eu, ok); G.ui.toast('Voto dado. Esperando os outros…', 2500); });
+      const t0 = performance.now();
+      while (G.running && G.mp === this) { const faltam = [this.eu, ...this.naArea().map(p => p.id)].filter(id => !this.resp.has(id)); if (!faltam.length || performance.now() - t0 > 75000) break; await new Promise(r => setTimeout(r, 200)); }
+      const vals = [...(this.resp?.values() || [])].filter(v => typeof v === 'boolean'), sim = vals.filter(Boolean).length, nao = vals.length - sim; this.resp = null;
+      if (sim !== nao) { const ok = sim > nao; this.ev('vf', { ok }); G.ui.toast(ok ? 'A maioria acertou.' : 'A maioria errou.', 3500); return ok; }
+      this.ev('vt'); G.ui.toast('Empate na votação. Conversem: alguém precisa ceder. Votem de novo.', 4500); await new Promise(r => setTimeout(r, 1500));
+    }
+    this.ev('vf', { ok: false }); return false;
+  }
+
   receber(m) {
     const G = this.G, par = this.pares.get(m.de);
     switch (m.t) {
@@ -252,6 +269,13 @@ export class Juntos {
       case 'qz': { const b = ini(m.b) || G.chefe; if (!b || G.ui.blocking) { this.ev('qr', { ok: null }); break; } G.perguntaDoChefe(b, m.p).then(ok => this.ev('qr', { ok })); break; }
       case 'qr': this.resp?.set(m.de, m.ok); break;
       case 'cin': G.cinema(m.id, true, true); break;
+      case 'vq': if (G.ui.blocking) { this.ev('vr', { ok: null }); break; } G.ui.quiz(m.fb ? { ...m.q, fb: m.fb } : m.q, m.titulo + ' · VOTAÇÃO').then(ok => { this.ev('vr', { ok }); G.ui.toast('Voto dado. Esperando os outros…', 2500); }); break;
+      case 'vr': this.resp?.set(m.de, m.ok); break;
+      case 'vt': G.ui.toast('Empate na votação. Conversem: alguém precisa ceder. Votem de novo.', 4500); break;
+      case 'vf': G.ui.toast(m.ok ? 'A maioria acertou.' : 'A maioria errou.', 3500); break;
+      case 'ap': G.aplicarLeitura(m); break;
+      case 'rs': G.resetT = G.T; break;
+      case 'pv': if (m.id === this.eu) G.ganharOleo(11); break;
       case 'eco': G.ui.toast(m.txt, m.d || 4000); break;
       case 'qf': G.respostaDoGrupo(m.ok); break;
       case 'fx': {

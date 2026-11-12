@@ -67,11 +67,11 @@ export function sfx(n) {
 const SCALES = { mundo: [0, 2, 3, 5, 7, 9, 10], chefe: [0, 1, 4, 5, 7, 8, 10], fase: [0, 2, 4, 5, 7, 9, 11], cinema: [0, 2, 3, 5, 7, 8, 10] };
 // ---- trilha: piano esparso, cordas longas e muito eco (a melancolia de um reino esquecido) ----
 // Tudo é sintetizado: um "piano" de senoides com decaimento, um colchão de cordas filtradas e, nos chefes, um ostinato grave.
-let eco = null;
+let eco = null, canal = null;
 function sala() { // eco de sala grande: três atrasos realimentados e filtrados
   if (eco || !AC) return eco;
   eco = AC.createGain(); eco.gain.value = 1;
-  for (const [t, fb] of [[0.31, 0.42], [0.47, 0.36], [0.73, 0.3]]) { const d = AC.createDelay(1.5), g = AC.createGain(), lp = AC.createBiquadFilter(); d.delayTime.value = t; g.gain.value = fb; lp.type = 'lowpass'; lp.frequency.value = 1900; eco.connect(d); d.connect(lp); lp.connect(g); g.connect(d); lp.connect(musicGain); }
+  for (const [t, fb] of [[0.31, 0.42], [0.47, 0.36], [0.73, 0.3]]) { const d = AC.createDelay(1.5), g = AC.createGain(), lp = AC.createBiquadFilter(); d.delayTime.value = t; g.gain.value = fb; lp.type = 'lowpass'; lp.frequency.value = 1900; eco.connect(d); d.connect(lp); lp.connect(g); g.connect(d); lp.connect(canal || musicGain); }
   return eco;
 }
 const nota = st => 220 * Math.pow(2, st / 12); // semitons a partir do lá
@@ -79,15 +79,15 @@ function piano(st, vol = 0.2, delay = 0, dur = 3.2) {
   if (!AC) return; const t = AC.currentTime + delay, g = AC.createGain(), f = nota(st);
   g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(vol * 0.35, t + 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   for (const [m, tipo, k] of [[1, 'sine', 1], [2, 'sine', 0.3], [3, 'triangle', 0.08]]) { const o = AC.createOscillator(), og = AC.createGain(); o.type = tipo; o.frequency.value = f * m; og.gain.value = k; o.connect(og); og.connect(g); o.start(t); o.stop(t + dur + 0.05); }
-  g.connect(musicGain); g.connect(sala());
+  g.connect(canal || musicGain); g.connect(sala());
 }
 function cordas(sts, dur, vol = 0.05, delay = 0) {
   if (!AC) return; const t = AC.currentTime + delay, g = AC.createGain(), lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700; lp.Q.value = 0.4;
   g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + dur * 0.35); g.gain.linearRampToValueAtTime(vol * 0.8, t + dur * 0.7); g.gain.linearRampToValueAtTime(0.0001, t + dur);
   for (const st of sts) for (const des of [-5, 6]) { const o = AC.createOscillator(); o.type = 'sawtooth'; o.frequency.value = nota(st); o.detune.value = des; o.connect(lp); o.start(t); o.stop(t + dur + 0.05); }
-  lp.connect(g); g.connect(musicGain); g.connect(sala());
+  lp.connect(g); g.connect(canal || musicGain); g.connect(sala());
 }
-function tambor(vol = 0.3, delay = 0) { if (!AC) return; const t = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain(); o.frequency.setValueAtTime(92, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.3); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5); o.connect(g); g.connect(musicGain); o.start(t); o.stop(t + 0.55); }
+function tambor(vol = 0.3, delay = 0) { if (!AC) return; const t = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain(); o.frequency.setValueAtTime(92, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.3); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5); o.connect(g); g.connect(canal || musicGain); o.start(t); o.stop(t + 0.55); }
 // progressões em menor (semitons a partir do lá): [baixo, acorde..., notas boas para a melodia]
 const TRILHAS = {
   mundo: { compasso: 5.2, acordes: [[-12, [0, 3, 7], [12, 15, 19, 22]], [-16, [-4, 0, 3], [8, 12, 15, 20]], [-9, [3, 7, 10], [10, 15, 19, 22]], [-14, [-2, 2, 5], [10, 14, 17, 19]]], dens: 0.55 },
@@ -95,9 +95,13 @@ const TRILHAS = {
   chefe: { compasso: 2.6, acordes: [[-12, [0, 3, 7], [12, 15, 19]], [-12, [0, 3, 8], [12, 15, 20]], [-14, [-2, 2, 5], [10, 14, 17]], [-17, [-5, -1, 4], [7, 11, 16]]], dens: 1, luta: true }
 };
 export function music(mode) {
+  if (AC && mode && mode === audio.modo && musicTimer) return; // a mesma trilha já está tocando
   audio.modo = mode || null;
   if (!AC) return;
-  clearInterval(musicTimer);
+  clearInterval(musicTimer); musicTimer = null;
+  // corta o que ainda soava da trilha anterior (as notas longas não invadem a cutscene nem a luta)
+  if (canal) { const velho = canal; try { velho.gain.setTargetAtTime(0, AC.currentTime, 0.12); } catch { /* */ } setTimeout(() => { try { velho.disconnect(); } catch { /* */ } }, 900); }
+  canal = AC.createGain(); canal.gain.value = 1; canal.connect(musicGain); eco = null;
   if (!mode) return;
   if (mode === 'cinema') return pad(); // fundo lento e baixo para não brigar com a narração
   const T = TRILHAS[mode] || TRILHAS.mundo; let n = 0;
@@ -124,7 +128,7 @@ function pad() {
   let i = 0;
   const toca = () => {
     if (audio.muted || document.hidden) return;
-    for (const st of acordes[i++ % acordes.length]) tone(root * Math.pow(2, st / 12), 0, 5.2, 'sine', 0.09, 0, musicGain);
+    for (const st of acordes[i++ % acordes.length]) tone(root * Math.pow(2, st / 12), 0, 5.2, 'sine', 0.09, 0, canal || musicGain);
   };
   toca(); musicTimer = setInterval(toca, 4800);
 }

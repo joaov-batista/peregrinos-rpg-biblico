@@ -31,14 +31,14 @@ import { Juntos, limparCodigo } from './juntos.js';
 
 // Primeiros passos: [toque, controle, teclado]
 const PASSOS = [
-  { id: 'andar', titulo: 'ANDAR', txt: ['Arraste o dedo no lado esquerdo da tela.', 'Use o direcional esquerdo.', 'Setas para andar.'] },
-  { id: 'pular', titulo: 'SALTO DUPLO', txt: ['Toque em PULAR e, no ar, toque de novo.', 'A (✕) para pular. No ar, aperte de novo.', 'Z para pular. No ar, aperte de novo.'] },
+  { id: 'andar', titulo: 'ANDAR', txt: ['Arraste o dedo no lado esquerdo da tela.', 'Use o direcional esquerdo.', 'Setas ← → para andar.'] },
+  { id: 'pular', titulo: 'SALTO DUPLO', txt: ['Toque em PULAR e, no ar, toque de novo.', 'A (✕) para pular. No ar, aperte de novo.', 'Seta ↑ para pular. No ar, aperte de novo. Encostado numa parede, pule de novo para subir por ela.'] },
   { id: 'passo', titulo: 'PASSO PRONTO', txt: ['Toque em PASSO: você atravessa o perigo. Ele demora a voltar (as três setas no alto).', 'RT (R2): atravessa o perigo, mas demora a voltar.', 'C: atravessa o perigo. Demora a voltar (as três setas no alto).'] },
-  { id: 'golpe', titulo: 'GOLPE', txt: ['Toque em GOLPE. Segurando para cima ou para baixo, o golpe muda de direção.', 'X (□) golpeia; RB (R1) solta o especial. Com o direcional para cima, para baixo ou na diagonal, o golpe muda.', 'X (ou clique) golpeia. Segure ↑ ou ↓ para golpear para cima, para baixo e nas diagonais.'] },
+  { id: 'golpe', titulo: 'GOLPE', txt: ['Toque em GOLPE. Segurando para cima ou para baixo, o golpe muda de direção.', 'X (□) golpeia; RB (R1) solta o especial. Com o direcional para cima, para baixo ou na diagonal, o golpe muda.', 'Z ou X golpeiam. Segure ↓ para golpear baixo (agachado, no chão) ou para baixo (no ar).'] },
   { id: 'descer', titulo: 'DESCER DE PLATAFORMAS', txt: ['Sobre uma plataforma de madeira, puxe o direcional para BAIXO e ela deixa você passar.', 'Sobre uma plataforma de madeira, segure para baixo.', 'Sobre uma plataforma de madeira, segure ↓.'] },
   { id: 'rasteiro', titulo: 'PASSO RASTEIRO', txt: ['Para BAIXO + PASSO: você atravessa o adversário sem ser ferido.', 'Para baixo + passo: atravessa o adversário sem ser ferido.', '↓ + C: você atravessa o adversário sem ser ferido.'] },
-  { id: 'luz', titulo: 'A LÂMPADA · LUZ', txt: ['Segure LÂMPADA: a luz cresce e revela paredes falsas e pisos escondidos.', 'Segure LB (L1): a luz revela paredes falsas e pisos escondidos.', 'Segure S: a luz cresce e revela paredes falsas e pisos escondidos.'] },
-  { id: 'vigilia', titulo: 'A LÂMPADA · VIGÍLIA', txt: ['É a sua única defesa. Toque em LÂMPADA no instante em que o dardo chega. Cedo ou tarde demais, não protege.', 'É a sua única defesa. Aperte LB (L1) no instante em que o dardo chega. Cedo ou tarde demais, não protege.', 'É a sua única defesa. Aperte S no instante em que o dardo chega. Cedo ou tarde demais, não protege.'] },
+  { id: 'luz', titulo: 'A LÂMPADA · LUZ', txt: ['Segure LÂMPADA: a luz cresce e revela paredes falsas e pisos escondidos.', 'Segure LB (L1): a luz revela paredes falsas e pisos escondidos.', 'Segure D: a luz cresce e revela paredes falsas e pisos escondidos.'] },
+  { id: 'vigilia', titulo: 'A LÂMPADA · VIGÍLIA', txt: ['É a sua única defesa. Toque em LÂMPADA no instante em que o dardo chega. Cedo ou tarde demais, não protege.', 'É a sua única defesa. Aperte LB (L1) no instante em que o dardo chega. Cedo ou tarde demais, não protege.', 'É a sua única defesa. Aperte D no instante em que o dardo chega. Cedo ou tarde demais, não protege.'] },
   { id: 'azeite', titulo: 'O AZEITE', txt: ['O jarro no alto é o azeite da lâmpada. Cada golpe certo e cada defesa perfeita o enchem.'] },
   { id: 'orar', titulo: 'ORAR', txt: ['Segure ORAR, parado: gasta um terço do azeite e devolve um fôlego.', 'Segure B (○) ou LT (L2), parado: gasta um terço do azeite e devolve um fôlego.', 'Segure A, parado: gasta um terço do azeite e devolve um fôlego.'] }
 ];
@@ -133,7 +133,7 @@ export class Caminho {
       if (ob.tipo === 'ebenezer') ob.luz = 150;
       if (ob.tipo === 'portal' || ob.tipo === 'segredo') ob.luz = 80;
     }
-    if (def.fase || def.mundo || def.extra) this.objs.push({ tipo: 'retorno', x: N.inicio.x - 72, y: N.inicio.y, luz: 80 });
+    if (def.fase || def.mundo || (def.extra && !def.desafio)) this.objs.push({ tipo: 'retorno', x: N.inicio.x - 72, y: N.inicio.y, luz: 80 });
     if (cm.sacola?.area === id) this.objs.push({ tipo: 'sacola', x: cm.sacola.x, y: cm.sacola.y, luz: 70 });
     this.mp?.mudouArea(id);
     if (this.souDono()) this.povoar();
@@ -168,7 +168,7 @@ export class Caminho {
   textoControles() {
     return input.touch
       ? 'Arraste o dedo à esquerda para andar. Botões: pular (duas vezes no ar) · passo pronto, que demora a voltar · golpear (com o direcional para cima ou para baixo) · 🛡 erguer a lâmpada (vigília) · 🫙 orar e recuperar um fôlego.\n\nA lâmpada só defende no instante certo do golpe: é a DEFESA PERFEITA. Cedo ou tarde demais, não protege.'
-      : 'Setas: andar · Z: pular (duas vezes no ar) · X: golpear, com ↑ ou ↓ para mudar a direção · C: passo pronto (↓ + C atravessa o adversário) · S: erguer a lâmpada · A (segurar): orar · D: especial da vocação · ↑ ou E: ler e falar · Tab: mapa · I: inventário · Esc: menu.\n\nNo controle: A pula, X golpeia, B (segurar) ora, RT é o passo, LB ergue a lâmpada, RB solta o especial, Y interage.\n\nA lâmpada só defende no instante certo: erguê-la quando o golpe chega é a DEFESA PERFEITA. Cedo ou tarde demais, não protege. A luz também revela o que está escondido.';
+      : 'Setas ← →: andar · ↑: pular (duas vezes no ar, e de novo encostado na parede) · Z ou X: golpear, com ↓ para golpear baixo · C: passo pronto (↓ + C atravessa o adversário) · D: erguer a lâmpada · A (segurar): orar · S: especial da vocação · E: ler e falar · Tab: mapa · I: inventário · Esc: menu. As teclas podem ser trocadas em Menu › Ajustes.\n\nNo controle: A pula, X golpeia, B (segurar) ora, RT é o passo, LB ergue a lâmpada, RB solta o especial, Y interage.\n\nA lâmpada só defende no instante certo: erguê-la quando o golpe chega é a DEFESA PERFEITA. Cedo ou tarde demais, não protege.';
   }
 
   // os vícios da área (voltam a cada descanso numa Pedra de Ebenézer)
@@ -192,8 +192,9 @@ export class Caminho {
   loop(now) {
     if (!this.running) return;
     const dt = Math.min(0.033, (now - this.last) / 1000); this.last = now;
-    if (!document.hidden) { if (!this.ui.blocking) this.update(dt); else if (this.mp) this.updateAusente(dt); this.mp?.tick(dt); }
-    this.render();
+    // um erro num quadro não pode parar o jogo (nem a sala, para quem joga junto)
+    try { if (!document.hidden) { if (!this.ui.blocking) this.update(dt); else if (this.mp) this.updateAusente(dt); this.mp?.tick(dt); } this.render(); }
+    catch (e) { this.p = this.eu || this.p; if (!this.erroVisto) { this.erroVisto = true; console.error('[caminho]', e); } }
     this.raf = requestAnimationFrame(t => this.loop(t));
   }
 
@@ -273,6 +274,8 @@ export class Caminho {
       }
     }
     this.inimigos = this.inimigos.filter(e => e.kind === 'chefe' ? !e.fora : e.hp > 0 || (!e.sumiu && this.matar(e), false));
+    if (this.congela) { this.congelaT = (this.congelaT || 0) + dt; if (this.congelaT > 90) this.congela = false; } else this.congelaT = 0; // nunca fica preso esperando
+    if (mp && this.souDono() && (this.luta || this.emb) && p.morto && mp.naArea().every(o => o.h.morto) && this.T - (this.resetT ?? -99) > 5) this.resetarEncontro();
     // juntos: se ninguém vivo ficou na arena, o chefe volta a esperar
     if (mp && dono && this.luta && this.chefe && !this.chefe.morrendo) { this.vazioT = mp.vivosNaArena(this.N.arena) ? 0 : (this.vazioT || 0) + dt; if (this.vazioT > 3) { this.inimigos = this.inimigos.filter(e => e.kind !== 'chefe' && !e.daLuta); this.lutaRemota(false); } }
   }
@@ -315,12 +318,28 @@ export class Caminho {
     if (on) { music('chefe'); sfx('boss'); const b = this.inimigos.find(e => e.kind === 'chefe'); if (b) { this.chefe = b; this.ui.banner(b.d.titulo || 'Chefe', b.d.nome, b.d.ref); } }
     else { this.chefe = null; this.vazioT = 0; this.limparPerigos(); this.puxao = null; this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.ui.bossBar(null); if (!this.venceu) music(this.def.paz ? 'mundo' : 'fase'); }
   }
+  // todos caíram ao mesmo tempo: desfaz a emboscada ou a luta para recomeçar do zero
+  resetarEncontro() {
+    this.resetT = this.T; this.mp?.ev('rs');
+    if (this.emb) { const c = this.emb.c; this.inimigos = this.inimigos.filter(v => v.cel !== c); this.trancar(c, false); this.emb = null; sfx('gate'); }
+    if (this.luta) { this.inimigos = this.inimigos.filter(e => e.kind !== 'chefe' && !e.daLuta); this.lutaRemota(false); }
+  }
+  // o resultado de uma pergunta votada vale para todos os que estão na área
+  aplicarLeitura(m) {
+    const cm = this.cm, ob = this.objs.find(o => m.tp === 'rolo' ? o.tipo === 'rolo' && o.n === m.n : o.tipo === 'estacao' && o.n === m.n); if (!ob || ob.feito) return;
+    ob.feito = true; if (m.tp === 'rolo') { if (!cm.selos[this.area].includes(ob.n)) cm.selos[this.area].push(ob.n); } else if (!cm.est[this.area].includes(ob.dados.id)) cm.est[this.area].push(ob.dados.id);
+    this.pontos(40); this.fx.anel(ob.x, ob.y - 30, '#FFE9A8', 90); this.ganharOleo(20); this.conferirPorta(); this.salvar();
+  }
   // sem voltar a gerar a área: os outros continuam nela
   reviver() {
-    const p = this.eu, eb = this.cm.ebenezer?.area === this.area && this.objs.find(ob => ob.tipo === 'ebenezer'), pos = eb ? { x: eb.x - 40, y: eb.y } : this.N.inicio;
+    // Se alguém ainda está de pé, o caído volta para dentro da mesma câmara (ou da arena do chefe).
+    // Se todos caíram, o encontro recomeça e cada um volta ao início.
+    const p = this.eu, eb = this.cm.ebenezer?.area === this.area && this.objs.find(ob => ob.tipo === 'ebenezer'), A = this.N.arena, cel = this.emb?.c || this.embLocal;
+    const recomeca = this.T - (this.resetT ?? -99) < 5;
+    const pos = !recomeca && this.luta && A ? { x: A.x0 + 96, y: A.chao } : !recomeca && cel ? { x: (cel.cx * CW + 3.5) * T, y: (cel.cy * CH + 16) * T } : eb ? { x: eb.x - 40, y: eb.y } : this.N.inicio;
     Object.assign(p, novoHeroi(pos.x, pos.y - 1, this.vidaMax())); p.oleo = Math.min(this.oleoMax(), OLEO_USO); p.inv = 2; this.fade = 1; this.usouSelo = this.usouCepa = false;
     this.vista.cam.x = pos.x - this.vista.W / this.vista.Z / 2; this.vista.cam.y = this.camYAlvo(this.vista.H / this.vista.Z); this.prenderCam();
-    this.ui.toast('"O justo cai sete vezes e se levanta" (Pv 24:16). Seus companheiros seguem na luta.', 5000);
+    this.ui.toast(recomeca ? 'Todos caíram: o encontro recomeça.' : '"O justo cai sete vezes e se levanta" (Pv 24:16). Seus companheiros seguem na luta.', 5000);
   }
 
   // a câmera se alinha à sala (cada sala tem a altura da tela) e só desliza nos poços
@@ -640,7 +659,7 @@ export class Caminho {
       if (a && !a.semCaixa && a.n !== h.feriuN && a.t > 0.03 && a.t < a.dur) {
         const arma = ARMAS[o.arma] || ARMAS.espada, f = a.face || h.face, lado = a.dir === 'lado' || a.dir === 'rasteira';
         const cx = lado ? h.x + f * (arma.alc / 2 + 4) : a.dir === 'cima' || a.dir === 'baixo' ? h.x : h.x + f * arma.alc * 0.5, cy = lado ? h.y - 28 : a.dir === 'cima' || a.dir === 'diagC' ? h.y - 60 - arma.alc * 0.3 : h.y + arma.alc * 0.3, w = lado ? arma.alc : arma.alt + 8, hh = lado ? arma.alt : arma.alc;
-        if (toca({ x: cx - w / 2, y: cy - hh / 2, w, h: hh }, eu)) { h.feriuN = a.n; const r = this.ferirHeroi(1, h); if (r === 'parry') this.textoEm(p.x, p.y - 84, 'aparou ' + o.nome, '#FFE9A8', 12); }
+        if (toca({ x: cx - w / 2, y: cy - hh / 2, w, h: hh }, eu)) { h.feriuN = a.n; const r = this.ferirHeroi(1, h); if (r === true) this.mp.ev('pv', { id: o.id }); if (r === 'parry') this.textoEm(p.x, p.y - 84, 'aparou ' + o.nome, '#FFE9A8', 12); }
       }
       for (const t of h.ts || []) if (Math.hypot(t[0] - p.x, t[1] - (p.y - 26)) < t[4] + 16) this.ferirHeroi(1, { x: t[0], y: t[1] });
     }
@@ -898,7 +917,9 @@ export class Caminho {
         await this.ui.dialog({ nome: '📜 Rolo ' + (ob.n + 1) + ' de 3 · ' + f.ref, texto: (ob.n === 0 ? f.licao : ob.n === 1 ? '“' + f.versiculo.texto + '”\n— ' + f.versiculo.ref : f.reflexao ? 'PARA REFLETIR\n' + f.reflexao : f.licao) + trecho, acoes: [{ label: ob.feito ? 'Fechar' : 'Li. Quero responder' }] });
         if (ob.feito || !this.running) return;
         const q = this.sortearPergunta(f);
-        const ok = await this.ui.quiz({ ...q, fb: ['Certo! O selo deste rolo se acende.', 'Releia com calma: o rolo se fecha por alguns instantes.'] }, 'Rolo ' + (ob.n + 1) + ' · ' + f.ref);
+        const fbR = ['Certo! O selo deste rolo se acende.', 'Releia com calma: o rolo se fecha por alguns instantes.'], titR = 'Rolo ' + (ob.n + 1) + ' · ' + f.ref;
+        const ok = this.mp?.acompanhado() ? await this.mp.votar(q, titR, fbR) : await this.ui.quiz({ ...q, fb: fbR }, titR); // juntos, a resposta é por votação
+        if (ok) this.mp?.ev('ap', { tp: 'rolo', n: ob.n });
         this.revisao(q, ok);
         const st = this.char.data.stats;
         if (ok) { st.quizOk++; this.ok++; ob.feito = true; cm.selos[this.area].push(ob.n); this.pontos(50); sfx('key'); this.fx.anel(ob.x, ob.y - 30, '#FFE9A8', 90); this.ganharOleo(33); this.conferirPorta(); this.salvar(); }
@@ -906,7 +927,8 @@ export class Caminho {
         break;
       }
       case 'estacao': {
-        const e = ob.dados, ok = await this.ui.quiz(e, e.nome + ' · ' + f.ref);
+        const e = ob.dados, ok = this.mp?.acompanhado() ? await this.mp.votar(e, e.nome + ' · ' + f.ref) : await this.ui.quiz(e, e.nome + ' · ' + f.ref);
+        if (ok) this.mp?.ev('ap', { tp: 'est', n: ob.n });
         this.revisao(e, ok);
         if (ok) { ob.feito = true; cm.est[this.area].push(e.id); this.pontos(40); this.char.data.stats.quizOk++; this.ok++; this.fx.anel(ob.x, ob.y - 30, '#93E4CC', 90); this.ganharOleo(20); this.conferirPorta(); this.salvar(); }
         else { this.char.data.stats.quizErr++; this.err++; }

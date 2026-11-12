@@ -1,3 +1,4 @@
+import { config } from './config.js';
 // Teclado + mouse no PC, joystick virtual + botões na tela no celular.
 const KEYMAP = {
   KeyZ: 'dodge', KeyX: 'attack', KeyC: 'dash', KeyV: 'skill', // atalhos do Caminho (plataforma)
@@ -5,9 +6,19 @@ const KEYMAP = {
   KeyQ: 'item1', Digit1: 'item1', Numpad1: 'item1', Digit2: 'item2', Numpad2: 'item2', KeyR: 'mount', KeyE: 'interact', KeyF: 'interact', KeyI: 'menu', Tab: 'menu', KeyM: 'map', KeyT: 'lock', KeyH: 'botija', Enter: 'chat', Escape: 'escape'
 };
 // No Caminho, o teclado segue o padrão de Hollow Knight: setas andam, Z pula, X golpeia, C é o passo,
-// A (segurar) ora, S ergue a lâmpada, D solta o especial, seta para cima (ou E) interage, Tab abre o mapa, I o inventário.
-const KEYMAP_HK = { KeyZ: 'dodge', Space: 'dodge', KeyX: 'attack', KeyC: 'dash', KeyA: 'botija', KeyS: 'defend', ShiftLeft: 'defend', KeyD: 'skill', KeyF: 'skill',
-  ArrowUp: 'interact', KeyE: 'interact', Enter: 'interact', Tab: 'map', KeyM: 'map', KeyI: 'menu', Escape: 'escape' };
+// Padrão: seta para cima pula, Z e X golpeiam, C é o passo, A (segurar) ora, D ergue a lâmpada, S solta o especial, E interage.
+const KEYMAP_HK = { ArrowUp: 'dodge', KeyZ: 'attack', KeyX: 'attack', KeyC: 'dash', KeyA: 'botija', KeyD: 'defend', KeyS: 'skill', KeyF: 'skill',
+  KeyE: 'interact', Enter: 'interact', Tab: 'map', KeyM: 'map', KeyI: 'menu', Escape: 'escape' };
+// teclas escolhidas pelo jogador (menu › Ajustes › Teclas): { ação: código da tecla }
+export const ACOES_TECLA = [['dodge', 'Pular'], ['attack', 'Golpear'], ['dash', 'Passo pronto'], ['botija', 'Orar (alma)'], ['defend', 'Lâmpada (vela)'], ['skill', 'Especial'], ['interact', 'Ler e falar']];
+export function teclaDe(acao) { return config.teclas?.[acao] || Object.keys(KEYMAP_HK).find(k => KEYMAP_HK[k] === acao); }
+function mapaHK() {
+  const t = config.teclas; if (!t || !Object.keys(t).length) return KEYMAP_HK;
+  const m = { ...KEYMAP_HK };
+  for (const [acao, cod] of Object.entries(t)) { for (const k of Object.keys(m)) if (m[k] === acao && k !== 'Escape') delete m[k]; }
+  for (const [acao, cod] of Object.entries(t)) m[cod] = acao;
+  return m;
+}
 const MOVE_HK = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
 const MOVE = { KeyW: [0, -1], ArrowUp: [0, -1], KeyS: [0, 1], ArrowDown: [0, 1], KeyA: [-1, 0], ArrowLeft: [-1, 0], KeyD: [1, 0], ArrowRight: [1, 0] };
 const BUFFERED = new Set(['dodge', 'defend', 'item1', 'item2', 'botija']);
@@ -70,13 +81,13 @@ function typing(e) { const t = e.target; return t && (t.tagName === 'INPUT' || t
 export function initInput(canvas) {
   addEventListener('keydown', e => {
     if (typing(e) || !document.body.classList.contains('playing')) return;
-    const hk = input.perfil === 'caminho', a = (hk ? KEYMAP_HK : KEYMAP)[e.code];
+    const hk = input.perfil === 'caminho', a = (hk ? mapaHK() : KEYMAP)[e.code];
     if ((hk ? MOVE_HK : MOVE)[e.code]) { input.keys.add(e.code); input.mouseAim = false; e.preventDefault(); }
     if (a) { if (!e.repeat) input.press(a, e.code); e.preventDefault(); }
   });
   addEventListener('keyup', e => {
     input.keys.delete(e.code);
-    for (const m of [KEYMAP, KEYMAP_HK]) if (m[e.code]) input.release(m[e.code], e.code);
+    for (const m of [KEYMAP, mapaHK()]) if (m[e.code]) input.release(m[e.code], e.code);
   });
   addEventListener('blur', () => input.clear());
   document.addEventListener('visibilitychange', () => { if (document.hidden) input.clear(); });
