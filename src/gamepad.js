@@ -50,7 +50,11 @@ function ler() {
     menu(gp, b, borda, janela);
   } else {
     // movimento e mira
-    const mx = Math.abs(ax[0]) > ZONA ? ax[0] : 0, my = Math.abs(ax[1]) > ZONA ? ax[1] : 0;
+    let mx = Math.abs(ax[0]) > ZONA ? ax[0] : 0, my = Math.abs(ax[1]) > ZONA ? ax[1] : 0;
+    if (gp.mapping !== 'standard' && !mx && !my) { // controles genéricos: o direcional costuma vir como eixos 6/7 ou como um "chapéu" no eixo 9
+      if (ax.length >= 8 && (Math.abs(ax[6]) > 0.5 || Math.abs(ax[7]) > 0.5) && Math.abs(ax[6]) <= 1 && Math.abs(ax[7]) <= 1) { mx = Math.round(ax[6]); my = Math.round(ax[7]); }
+      else if (ax.length >= 10 && Math.abs(ax[9]) > 0.1 && Math.abs(ax[9]) <= 1.01) { const k = Math.round((ax[9] + 1) * 3.5); mx = [0, 1, 1, 1, 0, -1, -1, -1][k] || 0; my = [-1, -1, 0, 1, 1, 1, 0, -1][k] || 0; }
+    }
     input.pad = mx || my ? { x: mx, y: my } : null;
     const rx = ax[2] || 0, ry = ax[3] || 0;
     input.padAim = Math.hypot(rx, ry) > 0.4 ? Math.atan2(ry, rx) : null;

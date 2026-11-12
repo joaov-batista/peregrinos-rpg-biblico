@@ -1,4 +1,5 @@
 // O peregrino em vista lateral: movimento, a Lâmpada (vigília), a oração, os golpes e o desenho articulado.
+import { MIRA_CUSTO, MIRA_CARGA, soltarMira } from './mira.js';
 import { clamp, lerp, TAU, rand } from '../util.js';
 import { sfx } from '../audio.js';
 import { vibrar } from '../gamepad.js';
@@ -103,15 +104,15 @@ export function atualizarHeroi(G, dt) {
   if (p.atkBuf > 0 && p.atkCd <= 0 && !p.lamp && !preso && !emDash && p.orando <= 0) {
     // oito direções: para os lados, para cima, para baixo (no ar quica; no chão é rasteira) e as diagonais
     const dir = c.my < -0.5 ? (c.mx ? 'diagC' : 'cima') : c.my > 0.5 ? (p.chao ? 'rasteira' : c.mx ? 'diagB' : 'baixo') : 'lado';
-    const [ux, uy] = DIRS[dir], tiro = arma.tiro && dir !== 'baixo' && dir !== 'rasteira' ? arma.tiro : null, cor = hab.espada ? 'luz' : arma.cor;
-    p.atk = { t: 0, dur: arma.duplo ? 0.24 : 0.17, dir, face: p.face, hits: new Set(), n: p.combo++, semCaixa: !!tiro };
+    const [ux, uy] = DIRS[dir], tiro = arma.tiro && dir !== 'baixo' ? arma.tiro : null, cor = hab.espada ? 'luz' : arma.cor;
+    p.atk = { t: 0, dur: arma.duplo ? 0.24 : 0.17, dir, face: p.face, hits: new Set(), n: p.combo++ };
     p.atkCd = arma.cd; p.atkBuf = 0; sfx(tiro ? 'shoot' : 'swing');
     const corFx = G.esp > 0 ? 'fogo' : cor; // com o Fogo do Espírito, a lâmina arde
     const fxDe = { cima: 'cima_' + corFx, diagC: 'cima_' + corFx, baixo: 'baixo_' + corFx, diagB: 'baixo_' + corFx }[dir] || (G.esp > 0 ? 'corteFogo' : arma.fx);
     if (fxDe) G.efeito(fxDe === 'corte' && hab.espada ? 'corteLuz' : fxDe, p.x, p.y, p.face, { gruda: p, dx: dir === 'diagC' || dir === 'diagB' ? p.face * 14 : 0, dy: dir === 'baixo' || dir === 'diagB' ? 24 : dir === 'rasteira' ? 20 : 0, vel: 1.25 });
     if (arma.avanco && dir === 'lado' && p.chao) p.vx = p.face * arma.avanco * 3;
     if (tiro) { const n = tiro.n || 1, ang = Math.atan2(uy, ux); for (let i = 0; i < n; i++) { const b = ang + (i - (n - 1) / 2) * (tiro.leque || 0.14), cx2 = Math.cos(b), sy2 = Math.sin(b); // algumas armas atiram várias pedras em leque
-      G.tiros.push({ x: p.x + p.face * cx2 * 16, y: p.y - 28 + sy2 * 14, vx: p.face * cx2 * tiro.v, vy: sy2 * tiro.v - (tiro.g ? 60 : 0), g: tiro.g || 0, r: tiro.r, r0: tiro.r, dano: G.danoBase() * arma.d, amigo: true, vida: tiro.vida, max: tiro.vida, cor: '#FFF1BE', tipo: tiro.tipo, fura: tiro.fura, basico: true }); } }
+      G.tiros.push({ golpe: p.atk, x: p.x + p.face * cx2 * 16, y: p.y - (dir === 'rasteira' ? 12 : 28) + sy2 * 14, vx: p.face * cx2 * tiro.v, vy: sy2 * tiro.v - (tiro.g ? 60 : 0), g: tiro.g || 0, r: tiro.r, r0: tiro.r, dano: G.danoBase() * arma.d, amigo: true, vida: tiro.vida, max: tiro.vida, cor: '#FFF1BE', tipo: tiro.tipo, fura: tiro.fura, basico: true }); } }
   }
   if (p.atk) {
     const a = p.atk; a.t += dt;
@@ -135,15 +136,16 @@ export function atualizarHeroi(G, dt) {
     }
     if (a.t >= a.dur + 0.05) p.atk = null;
   }
-  // Espada do Espírito: segurar o golpe carrega uma onda de luz ("Está escrito")
-  if (hab.espada && c.atkSeg && !p.lamp && !preso) {
-    p.carga += dt; if (p.carga > 0.6 && p.carga - dt <= 0.6) sfx('key');
+  // Ataque mira: segurar o golpe carrega; ao soltar, o golpe sai só na direção apontada. Pede muito azeite e demora a voltar.
+  if (p.miraCd > 0) p.miraCd -= dt;
+  const livre = !p.lamp && !preso && p.orando <= 0 && !G.investidaMira && !G.quedaMira;
+  if (c.atkSeg && livre) {
+    p.segGolpe = (p.segGolpe || 0) + dt;
+    if (p.miraCd > 0 || p.oleo < MIRA_CUSTO) { p.carga = 0; if (p.segGolpe > 0.45 && !p.avisoMira) { p.avisoMira = true; G.textoEm(p.x, p.y - 64, p.miraCd > 0 ? 'ataque mira: ainda não' : 'ataque mira pede ' + MIRA_CUSTO + ' de azeite', '#C9B88A', 12); } }
+    else { p.carga += dt; if (p.carga > MIRA_CARGA && p.carga - dt <= MIRA_CARGA) sfx('key'); }
   } else {
-    if (p.carga >= 0.6 && !preso) {
-      G.tiros.push({ x: p.x + p.face * 20, y: p.y - 22, vx: p.face * 560, vy: 0, r: 20, dano: G.danoBase() * 2.4, amigo: true, vida: 0.7, cor: '#FFF1BE', tipo: 'onda', fura: true });
-      sfx('magic'); G.tremor(4); p.vx -= p.face * 120;
-    }
-    p.carga = 0;
+    if (p.carga >= MIRA_CARGA && livre) soltarMira(G, c.mira ?? (p.face > 0 ? 0 : Math.PI));
+    p.carga = 0; p.segGolpe = 0; p.avisoMira = false;
   }
   // verso (especial da vocação)
   if (c.verso && p.oleo >= OLEO_USO && !preso && !p.lamp && p.orando <= 0) G.verso();

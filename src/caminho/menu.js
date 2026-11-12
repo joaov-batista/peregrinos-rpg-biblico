@@ -29,7 +29,7 @@ export function abrirMenu(G, aba = 'inventario') {
     const corpo = h('div', { class: 'cm-corpo' }), abas = h('div', { class: 'cm-abas' });
     const ir = a => { aba = a; desenha(); };
     const desenha = () => {
-      abas.replaceChildren(...ABAS.map(([id, nome]) => h('button', { class: 'chip-btn' + (id === aba ? ' on' : ''), onclick: () => { sfx('click'); ir(id); } }, nome)));
+      abas.replaceChildren(...ABAS.filter(([id]) => id !== 'mapa' || G.temMapa()).map(([id, nome]) => h('button', { class: 'chip-btn' + (id === aba ? ' on' : ''), onclick: () => { sfx('click'); ir(id); } }, nome)));
       corpo.replaceChildren(...({ inventario, jornada, bestiario, armadura: inventario, reliquias: inventario, mapa, biblia, juntos, ajustes })[aba]());
     };
     const t = (txt, cls = '') => h('p', { class: cls }, txt);
@@ -157,6 +157,7 @@ export function abrirMenu(G, aba = 'inventario') {
         else if (o.tipo === 'ebenezer') marca(o, '#F1E9D2', 2, 4);
         else if (o.tipo === 'sacola') marca(o, '#FFD23F', 2, 2);
       }
+      const ms = G.objetivo?.(); if (ms) { const x = Math.floor(ms.portal.x / 32) * s + (s >> 1), y = Y(ms.portal.y / 32); g.fillStyle = '#05060B'; g.fillRect(x - 7, y - 26, 14, 12); g.fillStyle = '#FFD23F'; g.fillRect(x - 6, y - 25, 12, 6); g.fillRect(x - 4, y - 19, 8, 2); g.fillRect(x - 2, y - 17, 4, 2); g.strokeStyle = '#FFD23F'; g.lineWidth = 2; g.strokeRect(x - 9, y - 12, 18, 13); }
       if (N.arena) marca({ x: N.arena.cx, y: N.arena.chao }, G.cm.feitas?.[G.area] ? '#8C93AD' : '#E2463C', 4, 4);
       if (G.mp) for (const o of G.outros) marca({ x: o.corpo.x, y: o.corpo.y }, '#B8A0FF', 2, 3);
       const eu = () => { const x = Math.floor(G.p.x / 32) * s + (s >> 1), y = Y(G.p.y / 32); g.fillStyle = '#05060B'; g.fillRect(x - 4, y - 11, 8, 11); g.fillStyle = '#fff'; g.fillRect(x - 3, y - 10, 6, 9); g.fillStyle = '#E8C873'; g.fillRect(x - 3, y - 6, 6, 5); };
@@ -165,7 +166,7 @@ export function abrirMenu(G, aba = 'inventario') {
       const cx = h('div', { class: 'cm-mapa-cx' }, cv);
       setTimeout(() => { cx.scrollLeft = Math.floor(G.p.x / 32) * s - cx.clientWidth / 2; }, 0);
       return [t(G.def.nome + (G.def.sub ? ' · ' + G.def.sub : ''), 'muted'), cx,
-        h('div', { class: 'cm-mapa-leg' }, leg('#fff', 'você'), leg('#9BE0B4', 'gente'), leg('#7FE0E8', 'portal'), leg('#C9A27A', 'casa'), leg('#FFE9A8', 'rolo'), leg('#F1E9D2', 'Ebenézer'), leg('#E2463C', 'chefe'), leg('#B08A4E', 'plataforma'), G.mp ? leg('#B8A0FF', 'companheiro') : '')];
+        h('div', { class: 'cm-mapa-leg' }, leg('#fff', 'você'), G.objetivo?.() ? leg('#FFD23F', 'missão') : '', leg('#9BE0B4', 'gente'), leg('#7FE0E8', 'portal'), leg('#C9A27A', 'casa'), leg('#FFE9A8', 'rolo'), leg('#F1E9D2', 'Ebenézer'), leg('#E2463C', 'chefe'), leg('#B08A4E', 'plataforma'), G.mp ? leg('#B8A0FF', 'companheiro') : '')];
     }
     function biblia() {
       const out = [];
@@ -193,7 +194,7 @@ export function abrirMenu(G, aba = 'inventario') {
       const explica = t(wasd() ? 'A D andam · W ou Espaço pula · S abaixa e desce · botão esquerdo do mouse golpeia · botão direito solta o especial · Q ora · E ergue a lâmpada · Shift é o passo · F lê e fala · R usa o dom.' : 'Setas andam · ↑ pula · Z ou X golpeia · C é o passo · A ora · D ergue a lâmpada · S solta o especial · E lê e fala · Q usa o dom. O mouse também golpeia (esquerdo) e solta o especial (direito).', 'muted');
       for (const [id, d] of Object.entries(DIFICULDADES)) out.push(h('button', { class: 'fase-row cm-rel' + (cm.dif === id ? ' on' : ''), onclick: () => { cm.dif = id; sfx('click'); G.p.vidaMax = G.vidaMax(); G.p.vida = Math.min(G.p.vida, G.p.vidaMax); G.salvar(); desenha(); } }, h('div', {}, h('b', {}, d.nome + (cm.dif === id ? ' ✓' : '')), h('small', {}, d.desc))));
       const alterna = (k, nome) => h('button', { class: 'chip-btn' + (config[k] !== false ? ' on' : ''), onclick: () => { setConfig(k, config[k] === false); desenha(); } }, nome + ': ' + (config[k] !== false ? 'ligado' : 'desligado'));
-      out.push(h('h4', {}, 'Teclas (teclado)'), modos, explica, teclas);
+      out.push(h('h4', {}, 'Teclas (teclado)'), modos, explica, t('Ataque mira: segure o golpe até a linha dourada aparecer, aponte e solte. No mouse, aponta o cursor; no controle, o analógico; no teclado, as setas; no celular, arraste o dedo a partir do botão do golpe. Gasta 66 de azeite.', 'muted'), teclas);
       const botoes = h('div', { class: 'cfg-teclas' }), NOMES = ['A / ✕', 'B / ○', 'X / □', 'Y / △', 'LB / L1', 'RB / R1', 'LT / L2', 'RT / R2', 'Select', 'Start', 'L3', 'R3', '↑', '↓', '←', '→'];
       for (const [acao, nome] of ACOES_TECLA) botoes.append(h('button', { class: 'fase-row cm-rel', onclick: async ev => { const sm = ev.currentTarget.querySelector('small'); sm.textContent = 'aperte o botão novo no controle…'; const i = await proximoBotao(); if (i != null) setConfig('botoes', { ...(config.botoes || {}), [acao]: i }); desenha(); } },
         h('span', { class: 'cm-ico' }, NOMES[botaoDe(acao)] || (botaoDe(acao) != null ? 'B' + botaoDe(acao) : '—')), h('div', {}, h('b', {}, nome), h('small', {}, 'Toque e aperte o botão que quer usar'))));

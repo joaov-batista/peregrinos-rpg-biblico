@@ -274,10 +274,17 @@ function pintarTiro(g, t, x, y, Tm) {
   if (!t.cor) t.cor = '#D8C8F0';
   const r = Math.max(2, Math.round(t.r / PX));
   if (t.tipo === 'choque') { const d = Math.sign(t.vx), f = Math.floor(Tm * 12) % 2; for (let i = 0; i < 9; i++) { const h = [3, 6, 10, 13, 11, 8, 5, 3, 1][i] + (i % 2 ? f : 0); g.fillStyle = i < 4 ? '#fff' : t.cor; g.fillRect(x + d * (4 - i) , y + 6 - h, 1, h); } g.fillStyle = '#17121f'; g.fillRect(x - 5, y + 6, 10, 1); return; }
-  if (t.tipo === 'fogo') { // bola de fogo: núcleo claro e línguas que ficam para trás
-    const vx = t.vx / 60 / PX, vy = t.vy / 60 / PX, f = Math.floor(Tm * 18) % 2;
-    for (let k = 5; k >= 0; k--) { const rr = Math.max(1, r - k + (k % 2 ? f : 0)); g.fillStyle = k > 3 ? '#C9281F' : k > 1 ? '#FF8A2A' : '#FFE26B'; g.fillRect(Math.round(x - vx * k * 1.5 - rr / 2), Math.round(y - vy * k * 1.5 - rr / 2 - (k > 2 ? k - 2 : 0)), rr, rr); }
-    g.fillStyle = '#FFFFFF'; g.fillRect(x - 1, y - 1, 2, 2); return; }
+  if (t.tipo === 'fogo') { // bola de fogo: halo, cauda de línguas que ondulam, núcleo branco em losango e fagulhas que ficam para trás
+    const vel = Math.hypot(t.vx, t.vy) || 1, ux = t.vx / vel, uy = t.vy / vel, f = Math.floor(Tm * 20), R = r + 1;
+    g.globalAlpha = 0.22; g.fillStyle = '#FF8A2A'; g.fillRect(x - R - 3, y - R - 2, R * 2 + 6, R * 2 + 4); g.fillRect(x - R - 1, y - R - 4, R * 2 + 2, R * 2 + 8); g.globalAlpha = 1;
+    for (let k = 9; k >= 1; k--) { // cauda: mais fina e mais vermelha para trás, serpenteando
+      const d = k * 2.2, on = Math.sin(Tm * 22 + k * 0.9) * (k * 0.35), rr = Math.max(1, Math.round(R * (1 - k / 11))), cx2 = x - ux * d - uy * on, cy2 = y - uy * d + ux * on - k * 0.25;
+      g.fillStyle = k > 6 ? '#7A1A14' : k > 4 ? '#C9281F' : k > 2 ? '#FF6A1F' : '#FFB53A'; g.fillRect(Math.round(cx2 - rr), Math.round(cy2 - rr), rr * 2, rr * 2); }
+    for (let yy = -R; yy <= R; yy++) { const lg = R - Math.abs(yy) + ((yy + f) % 2 ? 0 : 1); g.fillStyle = Math.abs(yy) > R * 0.55 ? '#FF8A2A' : '#FFD23F'; g.fillRect(x - lg, y + yy, lg * 2, 1); }
+    const n = Math.max(1, R - 2); for (let yy = -n; yy <= n; yy++) { const lg = n - Math.abs(yy); g.fillStyle = '#FFF6C8'; g.fillRect(x - lg + Math.round(ux), y + yy, Math.max(1, lg * 2), 1); }
+    g.fillStyle = '#FFFFFF'; g.fillRect(x - 1 + Math.round(ux * 2), y - 1, 2, 2);
+    for (let k = 0; k < 4; k++) { const d = 8 + ((f * 3 + k * 7) % 14), lado = ((f + k * 5) % 7) - 3; g.fillStyle = k % 2 ? '#FFE26B' : '#FF8A2A'; g.fillRect(Math.round(x - ux * d - uy * lado), Math.round(y - uy * d + ux * lado - (d * 0.2)), 1, 1); }
+    return; }
   if (t.tipo === 'som') { // onda de som: três arcos voltados para onde ela vai
     const a = Math.atan2(t.vy, t.vx); g.fillStyle = '#BFF0F8';
     for (let k = 0; k < 3; k++) { const rr = r + k * 3 - 2; g.globalAlpha = 1 - k * 0.3; for (let q = -5; q <= 5; q++) { const b = a + q * 0.16; g.fillRect(x + Math.round(Math.cos(b) * rr - Math.cos(a) * k * 4), y + Math.round(Math.sin(b) * rr - Math.sin(a) * k * 4), k ? 1 : 2, k ? 1 : 2); } }
@@ -381,6 +388,18 @@ function pintarTextos(g, G, esc, cx, cy) {
   for (const t of G.textos) { const x = t.fixo ? t.fixo.x : t.x, y = t.fixo ? t.fixo.y - t.fixo.h - 16 : t.y; g.globalAlpha = Math.min(1, t.t * 2); txt(t.txt, sx(x), sy(y), Math.round(t.tam * 0.62 * e / 1.3), t.cor, 'center'); }
   g.globalAlpha = 1;
   for (const o of G.outros) txt(o.nome, sx(o.corpo.x), sy(o.corpo.y - 68), 8 * u * 1.5, '#BFE3D8', 'center');
+  // ataque mira: a linha de pontaria enquanto carrega e os riscos de luz dos golpes soltos
+  if (p.carga >= 0.5 && G.ctl?.mira != null && !p.morto) { const a = G.ctl.mira, ux = Math.cos(a), uy = Math.sin(a), q = Math.max(4, 4 * u), f = Math.floor(G.T * 20);
+    for (let d = 26; d < 330; d += 10) { if ((Math.floor(d / 10) + f) % 4 === 0) continue; g.fillStyle = d > 290 ? '#FFFFFF' : '#FFD23F'; g.globalAlpha = 1 - d / 600; g.fillRect(Math.round(sx(p.x + ux * d) - q / 2), Math.round(sy(p.y - 26 + uy * d) - q / 2), q, q); }
+    g.globalAlpha = 1; const tx = sx(p.x + ux * 330), ty = sy(p.y - 26 + uy * 330); g.fillStyle = '#17121f'; g.fillRect(tx - 5 * u, ty - 5 * u, 10 * u, 10 * u); g.fillStyle = '#FFE9A8'; g.fillRect(tx - 4 * u, ty - 4 * u, 8 * u, 8 * u); g.fillStyle = '#17121f'; g.fillRect(tx - 2 * u, ty - 2 * u, 4 * u, 4 * u); }
+  for (const r of G.riscos || []) { const k = r.t / r.max, n = Math.max(6, Math.round(Math.hypot(r.x1 - r.x0, r.y1 - r.y0) / 6)), gr = Math.max(1, Math.round(r.g * u * (0.4 + k * 0.6))), nx = -(r.y1 - r.y0), ny = r.x1 - r.x0, nl = Math.hypot(nx, ny) || 1;
+    for (let i = 0; i <= n; i++) { const q = i / n; if (q > 1 - (1 - k) * 0.5 && !r.chicote) continue; const on = r.chicote ? Math.sin(q * 9 + k * 12) * 14 * (1 - q) * k : 0, x = sx(r.x0 + (r.x1 - r.x0) * q + nx / nl * on), y = sy(r.y0 + (r.y1 - r.y0) * q + ny / nl * on);
+      g.globalAlpha = Math.min(1, k * 1.6); g.fillStyle = r.cor; g.fillRect(Math.round(x - gr), Math.round(y - gr), gr * 2, gr * 2); if (gr > 1) { g.fillStyle = '#FFFFFF'; g.fillRect(Math.round(x - gr / 2), Math.round(y - gr / 2), gr, gr); } } g.globalAlpha = 1; }
+  { const ob = G.objetivo?.(); if (ob && !G.ui.blocking) { // a missão: seta dourada sobre o alvo, ou na borda da tela apontando para ele
+    const x = sx(ob.x), y = sy(ob.y - 132), W2 = g.canvas.width, m = 40 * u, pula = Math.round(Math.sin(G.T * 6) * 3 * u), fora = x < m || x > W2 - m;
+    g.fillStyle = '#17121f'; const seta = (ax, ay, dx, dy, c) => { g.fillStyle = c; for (let i = 0; i < 5; i++) { const lg = (5 - i) * 2 * u; if (dy) g.fillRect(ax - lg / 2, ay + i * 2 * u * dy, lg, 2 * u); else g.fillRect(ax + i * 2 * u * dx, ay - lg / 2, 2 * u, lg); } };
+    if (!fora) { seta(x, y + pula - u, 0, 1, '#17121f'); seta(x, y + pula - 2 * u, 0, 1, '#FFD23F'); txt(ob.rot, x, y + pula - 8 * u, 8 * u * 1.6, '#FFE9A8', 'center'); }
+    else { const esq = x < m, ax = esq ? m : W2 - m, ay = Math.min(g.canvas.height - 90 * u, Math.max(90 * u, sy(ob.y - 60))); seta(ax + (esq ? -pula : pula) + (esq ? -u : u), ay, esq ? -1 : 1, 0, '#17121f'); seta(ax + (esq ? -pula : pula), ay, esq ? -1 : 1, 0, '#FFD23F'); txt('missão', ax + (esq ? 16 * u : -16 * u), ay + 4 * u, 8 * u * 2, '#FFE9A8', esq ? 'left' : 'right'); } } }
   if (G.perto && !input.touch) { const o = G.perto; txt((document.body.classList.contains('pad') ? 'Y' : wasd() ? 'F' : 'E') + ' · ' + o.rot, sx(o.x), sy(o.y - (o.tipo === 'npc' ? 80 : 104)), 8 * u * 1.4, '#F2E9D0', 'center'); }
   for (const o of G.objs) if ((o.tipo === 'portal' || o.tipo === 'saida' || o.tipo === 'retorno') && Math.abs(o.x - p.x) < 900) {
     const sem = o.semana ? TODAS.find(s => s.id === o.semana) : null, nome = o.tipo === 'saida' ? 'Seguir' : o.tipo === 'retorno' ? 'Refúgio' : o.rotulo ? o.rotulo : sem ? sem.estudo : MUNDO[o.mundo].nome;

@@ -313,6 +313,7 @@ export class Juntos {
           if (f[0] === 'e') G.efeito(f[1], f[2], f[3], f[4]);
           else if (f[0] === 't') G.textoEm(f[1], f[2], f[3], f[4], f[5]);
           else if (f[0] === 'g') G.grito(f[1]);
+          else if (f[0] === 'r') G.risco(f[1], f[2], f[3], f[4], f[5], f[6], f[7]);
           else if (f[0] === 'f') { const b = ini(f[1]); if (b) G.fala(b, f[2]); }
           else if (f[0] === 'p' && G.fx[f[1]]) G.fx[f[1]](f[2], f[3], f[4], f[5]);
         } finally { this.mudo = false; }

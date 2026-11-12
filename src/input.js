@@ -162,13 +162,15 @@ export function initInput(canvas) {
     b.addEventListener('pointerdown', e => {
       e.preventDefault(); e.stopPropagation(); input.touch = true; input.mouseAim = false;
       pointers.set(e.pointerId, b); input.press(a, 'pointer:' + e.pointerId);
+      if (a === 'attack') { input.arrasto = { x: 0, y: 0, ox: e.clientX, oy: e.clientY, id: e.pointerId }; } // arrastar o dedo a partir do botão do golpe aponta o ataque mira
       b.classList.add('down'); b.setPointerCapture?.(e.pointerId);
     });
+    if (a === 'attack') b.addEventListener('pointermove', e => { const r = input.arrasto; if (r && r.id === e.pointerId) { r.x = e.clientX - r.ox; r.y = e.clientY - r.oy; } });
     const up = e => {
       if (pointers.get(e.pointerId) !== b) return;
       // Alguns navegadores transferem a captura implícita do ícone para o botão.
       if (e.type === 'lostpointercapture' && b.hasPointerCapture?.(e.pointerId)) return;
-      pointers.delete(e.pointerId);
+      pointers.delete(e.pointerId); if (a === 'attack' && input.arrasto?.id === e.pointerId) setTimeout(() => { if (input.arrasto?.id === e.pointerId) input.arrasto = null; }, 60);
       input.release(a, 'pointer:' + e.pointerId, e.type !== 'pointerup');
       if (![...pointers.values()].includes(b)) b.classList.remove('down');
     };

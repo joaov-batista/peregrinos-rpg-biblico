@@ -3,6 +3,7 @@
 // os rolos precisam ser lidos (e entendidos) para abrir a porta do chefe, e cada chefe guarda uma peça da Armadura de Deus.
 import { rand, clamp, lerp, TAU, pick, shuffle, weekId, h } from '../util.js';
 import { input, wasd } from '../input.js';
+import { anguloMira, passoMira, tiroEspecial, estourar, MIRA_CARGA } from './mira.js';
 import { config } from '../config.js';
 import { sfx, music, audio } from '../audio.js';
 import { vibrar } from '../gamepad.js';
@@ -167,9 +168,9 @@ export class Caminho {
   }
   textoControles() {
     return input.touch
-      ? 'Arraste o dedo à esquerda para andar. Botões: pular (duas vezes no ar) · passo pronto, que demora a voltar · golpear (com o direcional para cima ou para baixo) · 🛡 erguer a lâmpada (vigília) · 🫙 orar e recuperar um fôlego.\n\nA lâmpada só defende no instante certo do golpe: é a DEFESA PERFEITA. Cedo ou tarde demais, não protege.'
-      : wasd() ? 'A D: andar · W ou Espaço: pular (duas vezes no ar, e de novo encostado na parede) · botão esquerdo do mouse: golpear, com S para golpear baixo · botão direito: especial da vocação · Shift: passo pronto (S + Shift atravessa o adversário) · E: erguer a lâmpada · Q (segurar): orar · F: ler e falar · R: dom · Tab: mapa · I: inventário · Esc: menu. O modo de teclas se troca em Menu › Ajustes.\n\nA lâmpada só defende no instante certo: erguê-la quando o golpe chega é a DEFESA PERFEITA. Cedo ou tarde demais, não protege.'
-      : 'Setas ← →: andar · ↑: pular (duas vezes no ar, e de novo encostado na parede) · Z ou X: golpear, com ↓ para golpear baixo · C: passo pronto (↓ + C atravessa o adversário) · D: erguer a lâmpada · A (segurar): orar · S: especial da vocação · E: ler e falar · Tab: mapa · I: inventário · Esc: menu. As teclas podem ser trocadas em Menu › Ajustes.\n\nNo controle: A pula, X golpeia, B (segurar) ora, RT é o passo, LB ergue a lâmpada, RB solta o especial, Y interage.\n\nA lâmpada só defende no instante certo: erguê-la quando o golpe chega é a DEFESA PERFEITA. Cedo ou tarde demais, não protege.';
+      ? 'Arraste o dedo à esquerda para andar. Botões: pular (duas vezes no ar) · passo pronto, que demora a voltar · golpear (com o direcional para cima ou para baixo) · 🛡 erguer a lâmpada (vigília) · 🫙 orar e recuperar um fôlego.\n\nATAQUE MIRA: segure o golpe até a linha dourada aparecer, aponte (mouse, analógico, setas ou arrastando o dedo no botão) e solte. Sai só na direção apontada, gasta 66 de azeite e demora a voltar.\n\nA lâmpada só defende no instante certo do golpe: é a DEFESA PERFEITA. Cedo ou tarde demais, não protege.'
+      : wasd() ? 'A D: andar · W ou Espaço: pular (duas vezes no ar, e de novo encostado na parede) · botão esquerdo do mouse: golpear, com S para golpear baixo · botão direito: especial da vocação · Shift: passo pronto (S + Shift atravessa o adversário) · E: erguer a lâmpada · Q (segurar): orar · F: ler e falar · R: dom · Tab: mapa · I: inventário · Esc: menu. O modo de teclas se troca em Menu › Ajustes.\n\nATAQUE MIRA: segure o golpe até a linha dourada aparecer, aponte (mouse, analógico, setas ou arrastando o dedo no botão) e solte. Sai só na direção apontada, gasta 66 de azeite e demora a voltar.\n\nA lâmpada só defende no instante certo: erguê-la quando o golpe chega é a DEFESA PERFEITA. Cedo ou tarde demais, não protege.'
+      : 'Setas ← →: andar · ↑: pular (duas vezes no ar, e de novo encostado na parede) · Z ou X: golpear, com ↓ para golpear baixo · C: passo pronto (↓ + C atravessa o adversário) · D: erguer a lâmpada · A (segurar): orar · S: especial da vocação · E: ler e falar · Tab: mapa · I: inventário · Esc: menu. As teclas podem ser trocadas em Menu › Ajustes.\n\nNo controle: A pula, X golpeia, B (segurar) ora, RT é o passo, LB ergue a lâmpada, RB solta o especial, Y interage.\n\nATAQUE MIRA: segure o golpe até a linha dourada aparecer, aponte (mouse, analógico, setas ou arrastando o dedo no botão) e solte. Sai só na direção apontada, gasta 66 de azeite e demora a voltar.\n\nA lâmpada só defende no instante certo: erguê-la quando o golpe chega é a DEFESA PERFEITA. Cedo ou tarde demais, não protege.';
   }
 
   // os vícios da área (voltam a cada descanso numa Pedra de Ebenézer)
@@ -209,6 +210,7 @@ export class Caminho {
     c.lampP = input.consume('defend'); c.lamp = input.isHeld('defend');
     c.orar = input.isHeld('botija') || input.isHeld('item1'); input.consume('botija'); input.consume('item1');
     c.verso = input.consume('skill'); c.interagir = input.consume('interact');
+    c.mira = anguloMira(this, input);
     if (input.consume('menu') || input.consume('escape')) this.menu();
     if (input.consume('map')) this.menu('mapa');
     c.dom = input.consume('item2'); for (const a of ['mount', 'chat']) input.consume(a);
@@ -216,6 +218,7 @@ export class Caminho {
 
   update(dt) {
     this.lerControles();
+    if (this.p.carga >= MIRA_CARGA && !this.mp?.acompanhado()) dt *= 0.4; // mirando sozinho, o tempo quase para
     this.fade = Math.max(0, this.fade - dt * 1.6);
     if (this.clarao > 0) this.clarao -= dt; if (this.p.flashT > 0) this.p.flashT -= dt;
     if (this.hitstop > 0) { this.hitstop -= dt; this.atualizarFx(dt * 0.2); atualizarEfeitos(this.fxPx, dt * 0.25); return; }
@@ -239,6 +242,7 @@ export class Caminho {
     if (p.lamp) this.revelar();
     for (let i = 0; i < N.revel.length; i++) if (N.revel[i] > 0) N.revel[i] -= dt;
     this.simular(dt);
+    passoMira(this, dt); if (this.riscos) { for (const r of this.riscos) r.t -= dt; this.riscos = this.riscos.filter(r => r.t > 0); }
     this.atualizarTiros(dt); this.atualizarZonas(dt); this.atualizarMoedas(dt); this.atualizarFx(dt);
     if (this.pecado) this.atualizarPecado(dt);
     this.clima(dt); this.gatilhos(); this.emboscadas(dt); this.interacoes(); this.tutorial(dt);
@@ -248,7 +252,7 @@ export class Caminho {
     const v = this.vista, vw = v.W / v.Z, vh = v.H / v.Z;
     if (this.N.barco) this.balanco = Math.sin(this.T * 0.9) * 7 + Math.sin(this.T * 2.3) * 2; else this.balanco = 0; // o navio sobe e desce na tempestade
     const meio = this.juntas && this.meioDoGrupo();
-    v.cam.x = damp(v.cam.x, (meio ? meio.x : p.x + p.face * 46) - vw / 2, 6, dt); v.cam.y = damp(v.cam.y, this.camYAlvo(vh), 6, dt); this.prenderCam();
+    v.cam.x = damp(v.cam.x, (meio ? meio.x : p.x) - vw / 2, 14, dt); v.cam.y = damp(v.cam.y, this.camYAlvo(vh), 6, dt); this.prenderCam();
     this.tremorA = Math.max(0, this.tremorA - dt * 34);
     if (this.chefe) this.ui.bossBar(this.chefe.d.nome, Math.max(0, this.chefe.hp / this.chefe.max), this.chefe.d.titulo, this.chefe.post / 100);
     this.salvaT = (this.salvaT || 0) + dt; if (this.salvaT > 40) { this.salvaT = 0; this.salvar(); }
@@ -386,6 +390,8 @@ export class Caminho {
 
   /* ================= Combate ================= */
   efeito(nome, x, y, vira = 1, o) { if (this.pixel) soltar(this.fxPx, nome, x, y, vira, o); this.mp?.fx(['e', nome, x, y, vira]); }
+  // um risco de luz na direção do golpe mirado (some em um instante); chicote = desenhado ondulando
+  risco(x0, y0, x1, y1, cor = '#FFF1BE', g = 4, chicote) { (this.riscos = this.riscos || []).push({ x0, y0, x1, y1, cor, g, chicote: !!chicote, t: 0.28, max: 0.28 }); this.mp?.fx(['r', x0, y0, x1, y1, cor, g, chicote ? 1 : 0]); }
   tremor(a) { if (config.tremor !== false) this.tremorA = Math.max(this.tremorA, a); }
   textoEm(x, y, txt, cor = '#fff', tam = 14) { this.textos.push({ x, y, txt, cor, tam, t: 1.3 }); this.mp?.fx(['t', x, y, txt, cor, tam]); }
   fala(b, txt) { this.textos.push({ x: b.x, y: b.y - b.h - 16, txt: '“' + txt + '”', cor: '#F2E9D0', tam: 13, t: 2.4, fixo: b }); if (b.nid) this.mp?.fx(['f', b.nid, txt]); }
@@ -556,12 +562,13 @@ export class Caminho {
     for (const t of this.tiros) {
       t.vida -= dt; if (t.g) t.vy += t.g * dt; t.x += t.vx * dt; t.y += t.vy * dt;
       if (t.tipo === 'som' && t.max) t.r = t.r0 + (1 - t.vida / t.max) * 16;
-      if (!t.fixo && !t.fura && solido(N, Math.floor(t.x / T), Math.floor(t.y / T))) { t.vida = 0; this.fx.po(t.x, t.y, 3, t.cor); continue; }
+      if (t.quica > 0) tiroEspecial(this, t, dt);
+      if (!t.fixo && !t.fura && !(t.altoAte && t.y < t.altoAte) && solido(N, Math.floor(t.x / T), Math.floor(t.y / T))) { t.vida = 0; estourar(this, t); this.fx.po(t.x, t.y, 3, t.cor); continue; }
       if (t.fixo && N.arena && (t.x < N.arena.x0 || t.x > N.arena.x1)) { t.vida = 0; continue; }
       if (t.amigo) {
         t.hits = t.hits || new Set();
-        for (const e of this.inimigos) if (e.hp > 0 && !e.morrendo && !t.hits.has(e) && toca({ x: t.x - t.r, y: t.y - t.r, w: t.r * 2, h: t.r * 2 }, caixa(e))) {
-          t.hits.add(e); if (this.atingir(e, t.dano, t.x - t.vx, { dir: 'lado', carga: t.tipo === 'onda', semOleo: !t.basico && t.tipo !== 'pedra' }) && !t.fura) { t.vida = 0; break; }
+        for (const e of this.inimigos) if (e.hp > 0 && !e.morrendo && !t.hits.has(e) && !t.golpe?.hits.has(e) && toca({ x: t.x - t.r, y: t.y - t.r, w: t.r * 2, h: t.r * 2 }, caixa(e))) {
+          t.hits.add(e); if (this.atingir(e, t.dano, t.x - t.vx, { dir: 'lado', carga: t.tipo === 'onda', semOleo: t.semOleo || (!t.basico && t.tipo !== 'pedra') }) && !t.fura) { t.vida = 0; estourar(this, t); break; }
         }
       } else if (!p.morto && toca({ x: t.x - t.r * 0.7, y: t.y - t.r * (t.tipo === 'choque' ? 1.6 : 0.7), w: t.r * 1.4, h: t.r * (t.tipo === 'choque' ? 2.2 : 1.4) }, pc)) {
         if (t.treino && !(p.vig > 0)) { t.vida = 0; this.fx.po(t.x, t.y, 5, t.cor); this.textoEm(p.x, p.y - 64, p.lamp ? 'cedo demais' : 'erga a lâmpada quando o dardo chegar', '#C9B88A', 12); continue; }
@@ -1036,6 +1043,14 @@ export class Caminho {
     switch (ob.id) {
       case 'velho': {
         const hab = Object.keys(cm.hab).length;
+        if (!cm.mapa) { // o primeiro encontro: a história, o mapa e onde fica a primeira missão
+          cm.mapa = true; this.salvar();
+          const tecla = input.touch ? 'o botão do menu (≡) e a aba MAPA' : document.body.classList.contains('pad') ? 'SELECT no controle' : 'M (ou Tab)';
+          await this.ui.dialog({ nome: ob.nome, look: ob.look, texto: 'Então ainda há quem carregue uma lâmpada.\n\nO Livro não foi queimado, peregrino: foi esquecido. Cada página que ninguém lê, a sombra cobre, e o que a sombra cobre ganha corpo. Mamom, a Mentira, o Pavor… são páginas não lidas andando por aí.\n\n"Lâmpada para os meus pés é a tua palavra" (Sl 119:105).', acoes: [{ label: 'Por onde começo?' }] });
+          sfx('level'); this.efeito('coleta', p.x, p.y - 30);
+          await this.ui.dialog({ nome: ob.nome, look: ob.look, texto: 'Tome. É o MAPA do Refúgio: eu mesmo o risquei.\n\nPara abrir, use ' + tecla + '. O ponto dourado que pisca é a sua missão.\n\nA primeira fica em CORINTO (Atos 18). O portal está no Salão dos Rolos, debaixo do Mercado: siga para a direita até o arco de pedra com a lâmpada e segure PARA BAIXO para descer a escada.', acoes: [{ label: 'Abrir o mapa' }] });
+          return this.menu('mapa');
+        }
         texto = n === 1 ? 'Então ainda há quem carregue uma lâmpada.\n\nO Livro não foi queimado, peregrino: foi esquecido. Cada página que ninguém lê, a sombra cobre — e o que a sombra cobre ganha corpo. Mamom, a Mentira, o Pavor… são páginas não lidas andando por aí.\n\n"Lâmpada para os meus pés é a tua palavra" (Sl 119:105). Leia, entenda, e a luz volta.'
           : hab < 6 ? 'Comece por Corinto, no primeiro portal. Cada sombra de lá guarda uma peça da Armadura de Deus (Ef 6): com elas você alcança o que hoje não alcança.\n\nPeças vestidas: ' + hab + ' de 6.\n\nE lembre: a lâmpada não serve só para ver. Erga-a no instante do golpe.'
             : 'Armadura completa… "depois de terdes vencido tudo, permanecei inabaláveis" (Ef 6:13).\n\nHá uma porta no fim da aldeia que nenhuma espada abre. Você vai entender quando chegar lá.';
@@ -1114,7 +1129,25 @@ export class Caminho {
     }
   }
 
-  menu(aba) { if (!this.ui.blocking) abrirMenu(this, aba); }
+  menu(aba) {
+    if (this.ui.blocking) return;
+    if (aba === 'mapa' && !this.temMapa()) return this.ui.toast('Você ainda não tem um mapa. Fale com o Velho Peregrino, na praça do Refúgio.', 4500);
+    abrirMenu(this, aba);
+  }
+  // quem já vinha jogando antes de o mapa existir não precisa voltar para buscá-lo
+  temMapa() { const cm = this.cm; if (!cm.mapa && (Object.keys(cm.feitas).length || Object.keys(cm.hab).length || cm.falas.velho)) cm.mapa = true; return !!cm.mapa; }
+  // A missão da vez no Refúgio: o portal da primeira semana com fase por fazer. Na superfície, o alvo é a escada que leva até ele.
+  objetivo() {
+    if (this.area !== 'refugio') return null;
+    if (!this.temMapa()) { const v = this.objs.find(o => o.id === 'velho'); return v ? { x: v.x, y: v.y + 40, rot: 'fale com o Velho Peregrino', portal: v } : null; }
+    if (this.objT === Math.floor(this.T)) return this.objC; this.objT = Math.floor(this.T);
+    const sem = TODAS.find(s => s.fases.some(f => !this.cm.feitas[s.id + ':' + f.n])), portal = sem && this.objs.find(o => o.tipo === 'portal' && o.semana === sem.id);
+    if (!portal) return this.objC = null;
+    const andar = y => Math.floor((y - 2) / (CH * T));
+    let alvo = portal, rot = 'missão: ' + sem.estudo;
+    if (andar(this.p.y) !== andar(portal.y)) { const esc = this.objs.filter(o => o.tipo === 'cenario' && o.qual === 'descida').sort((a, b) => Math.abs(a.x - portal.x) - Math.abs(b.x - portal.x))[0]; if (esc) { alvo = esc; rot = 'desça aqui: segure para baixo'; } }
+    return this.objC = { x: alvo.x, y: alvo.y, rot, portal };
+  }
 
   salvar() {
     const c = this.char; c.data.hp = null; c.week_id = c.week_id || weekId();
