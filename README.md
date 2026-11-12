@@ -6,6 +6,7 @@
 
 > **Arte em pixel (prova de conceito):** novo renderizador em pixel art com protagonista humano personalizável, o chefe Mamom, a arena da Ágora, cenários em paralaxe, HUD e efeitos da PixelFX. Veja [docs/ARTE-PIXEL.md](docs/ARTE-PIXEL.md).
 
+
 > **O Caminho (remake):** o jogo agora é um metroidvania em vista lateral, com chefes de padrão em fases, a lâmpada como mecânica central (luz, defesa perfeita e oração num só recurso), a Armadura de Deus como progressão e a **semana 3: Daniel 4, o rei que virou fera**. Ler os rolos e responder continua abrindo a porta de cada chefe. Veja [docs/CAMINHO.md](docs/CAMINHO.md). O mundo aberto antigo continua no botão **Clássico**.
 
 > **Semana 2 · Jonas:** cinco fases sobre os quatro capítulos, 50 perguntas, 15 decisões de estudo e cinco chefes com sprites animados próprios. Semanas independentes e dificuldade por nível, com modos História, Jornada e Desafio. Veja [a campanha e sua validação](docs/JONAS-E-DUNGEONS.md).
