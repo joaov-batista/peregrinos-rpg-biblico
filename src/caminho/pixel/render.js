@@ -2,7 +2,7 @@
 // 1 pixel de arte = 2 unidades do mundo) e ampliado sem suavização; só os textos ficam na resolução da tela.
 // A lógica do jogo não muda: este arquivo só lê o estado e desenha.
 import { clamp, TAU, hash } from '../../util.js';
-import { input } from '../../input.js';
+import { input, wasd } from '../../input.js';
 import { TODAS } from '../../content/index.js';
 import { T, CH } from '../nivel.js';
 import { desenharVicio } from '../bichos.js';
@@ -381,7 +381,7 @@ function pintarTextos(g, G, esc, cx, cy) {
   for (const t of G.textos) { const x = t.fixo ? t.fixo.x : t.x, y = t.fixo ? t.fixo.y - t.fixo.h - 16 : t.y; g.globalAlpha = Math.min(1, t.t * 2); txt(t.txt, sx(x), sy(y), Math.round(t.tam * 0.62 * e / 1.3), t.cor, 'center'); }
   g.globalAlpha = 1;
   for (const o of G.outros) txt(o.nome, sx(o.corpo.x), sy(o.corpo.y - 68), 8 * u * 1.5, '#BFE3D8', 'center');
-  if (G.perto && !input.touch) { const o = G.perto; txt((document.body.classList.contains('pad') ? 'Y' : 'E') + ' · ' + o.rot, sx(o.x), sy(o.y - (o.tipo === 'npc' ? 80 : 104)), 8 * u * 1.4, '#F2E9D0', 'center'); }
+  if (G.perto && !input.touch) { const o = G.perto; txt((document.body.classList.contains('pad') ? 'Y' : wasd() ? 'F' : 'E') + ' · ' + o.rot, sx(o.x), sy(o.y - (o.tipo === 'npc' ? 80 : 104)), 8 * u * 1.4, '#F2E9D0', 'center'); }
   for (const o of G.objs) if ((o.tipo === 'portal' || o.tipo === 'saida' || o.tipo === 'retorno') && Math.abs(o.x - p.x) < 900) {
     const sem = o.semana ? TODAS.find(s => s.id === o.semana) : null, nome = o.tipo === 'saida' ? 'Seguir' : o.tipo === 'retorno' ? 'Refúgio' : o.rotulo ? o.rotulo : sem ? sem.estudo : MUNDO[o.mundo].nome;
     txt(nome, sx(o.x), sy(o.y - 104), 8 * u * 1.3, '#F2E9D0', 'center');

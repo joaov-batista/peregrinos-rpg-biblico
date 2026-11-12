@@ -2,7 +2,7 @@
 // Um peregrino, uma lâmpada e um Livro com as páginas cobertas de sombra. Cada área é uma passagem bíblica:
 // os rolos precisam ser lidos (e entendidos) para abrir a porta do chefe, e cada chefe guarda uma peça da Armadura de Deus.
 import { rand, clamp, lerp, TAU, pick, shuffle, weekId, h } from '../util.js';
-import { input } from '../input.js';
+import { input, wasd } from '../input.js';
 import { config } from '../config.js';
 import { sfx, music, audio } from '../audio.js';
 import { vibrar } from '../gamepad.js';
@@ -31,15 +31,15 @@ import { Juntos, limparCodigo } from './juntos.js';
 
 // Primeiros passos: [toque, controle, teclado]
 const PASSOS = [ // t: [toque, controle, teclado]; alvo: o botão de toque que pisca
-  { id: 'andar', titulo: 'Andar', t: ['arraste à esquerda', 'direcional', '← →'], txt: 'Vá para os lados.' },
-  { id: 'pular', titulo: 'Salto duplo', alvo: 'dodge', t: ['PULAR, PULAR', 'A, A', '↑, ↑'], txt: 'Pule e, no ar, pule de novo.' },
-  { id: 'passo', titulo: 'Passo pronto', alvo: 'lock', t: ['PASSO', 'RT', 'C'], txt: 'Atravessa o perigo. Demora a voltar.' },
-  { id: 'golpe', titulo: 'Golpe', alvo: 'attack', t: ['GOLPE', 'X', 'Z ou X'], txt: 'Segurando para baixo, bate baixo.' },
-  { id: 'descer', titulo: 'Descer', t: ['puxe para baixo', '↓', '↓'], txt: 'Numa plataforma de madeira, segure para baixo.' },
-  { id: 'luz', titulo: 'Lâmpada: luz', alvo: 'defend', t: ['segure LÂMPADA', 'segure LB', 'segure D'], txt: 'A luz mostra o que está escondido.' },
-  { id: 'vigilia', titulo: 'Lâmpada: defesa', alvo: 'defend', t: ['LÂMPADA na hora', 'LB na hora', 'D na hora'], txt: 'Aperte quando o dardo chegar. É a sua única defesa.' },
+  { id: 'andar', titulo: 'Andar', t: ['arraste à esquerda', 'direcional', '← →', 'A D'], txt: 'Vá para os lados.' },
+  { id: 'pular', titulo: 'Salto duplo', alvo: 'dodge', t: ['PULAR, PULAR', 'A, A', '↑, ↑', 'W, W'], txt: 'Pule e, no ar, pule de novo.' },
+  { id: 'passo', titulo: 'Passo pronto', alvo: 'lock', t: ['PASSO', 'RT', 'C', 'Shift'], txt: 'Atravessa o perigo. Demora a voltar.' },
+  { id: 'golpe', titulo: 'Golpe', alvo: 'attack', t: ['GOLPE', 'X', 'Z ou X', 'clique do mouse'], txt: 'Segurando para baixo, bate baixo.' },
+  { id: 'descer', titulo: 'Descer', t: ['puxe para baixo', '↓', '↓', 'S'], txt: 'Numa plataforma de madeira, segure para baixo.' },
+  { id: 'luz', titulo: 'Lâmpada: luz', alvo: 'defend', t: ['segure LÂMPADA', 'segure LB', 'segure D', 'segure E'], txt: 'A luz mostra o que está escondido.' },
+  { id: 'vigilia', titulo: 'Lâmpada: defesa', alvo: 'defend', t: ['LÂMPADA na hora', 'LB na hora', 'D na hora', 'E na hora'], txt: 'Aperte quando o dardo chegar. É a sua única defesa.' },
   { id: 'azeite', titulo: 'Azeite', t: ['jarro no alto', 'jarro no alto', 'jarro no alto'], txt: 'Golpes certos e defesas enchem o jarro.' },
-  { id: 'orar', titulo: 'Orar', alvo: 'botija', t: ['segure ORAR', 'segure B', 'segure A'], txt: 'Parado: gasta azeite e devolve um fôlego.' }
+  { id: 'orar', titulo: 'Orar', alvo: 'botija', t: ['segure ORAR', 'segure B', 'segure A', 'segure Q'], txt: 'Parado: gasta azeite e devolve um fôlego.' }
 ];
 
 const caixa = e => ({ x: e.x - e.w / 2, y: e.y - e.h, w: e.w, h: e.h });
@@ -168,6 +168,7 @@ export class Caminho {
   textoControles() {
     return input.touch
       ? 'Arraste o dedo à esquerda para andar. Botões: pular (duas vezes no ar) · passo pronto, que demora a voltar · golpear (com o direcional para cima ou para baixo) · 🛡 erguer a lâmpada (vigília) · 🫙 orar e recuperar um fôlego.\n\nA lâmpada só defende no instante certo do golpe: é a DEFESA PERFEITA. Cedo ou tarde demais, não protege.'
+      : wasd() ? 'A D: andar · W ou Espaço: pular (duas vezes no ar, e de novo encostado na parede) · botão esquerdo do mouse: golpear, com S para golpear baixo · botão direito: especial da vocação · Shift: passo pronto (S + Shift atravessa o adversário) · E: erguer a lâmpada · Q (segurar): orar · F: ler e falar · R: dom · Tab: mapa · I: inventário · Esc: menu. O modo de teclas se troca em Menu › Ajustes.\n\nA lâmpada só defende no instante certo: erguê-la quando o golpe chega é a DEFESA PERFEITA. Cedo ou tarde demais, não protege.'
       : 'Setas ← →: andar · ↑: pular (duas vezes no ar, e de novo encostado na parede) · Z ou X: golpear, com ↓ para golpear baixo · C: passo pronto (↓ + C atravessa o adversário) · D: erguer a lâmpada · A (segurar): orar · S: especial da vocação · E: ler e falar · Tab: mapa · I: inventário · Esc: menu. As teclas podem ser trocadas em Menu › Ajustes.\n\nNo controle: A pula, X golpeia, B (segurar) ora, RT é o passo, LB ergue a lâmpada, RB solta o especial, Y interage.\n\nA lâmpada só defende no instante certo: erguê-la quando o golpe chega é a DEFESA PERFEITA. Cedo ou tarde demais, não protege.';
   }
 
@@ -735,7 +736,7 @@ export class Caminho {
   tutorial(dt) {
     const v = this.cm.visto, p = this.eu;
     if (v.tut == null || v.tut >= PASSOS.length) { if (this.tutEl) { this.tutEl.remove(); this.tutEl = null; document.querySelectorAll('.tut-alvo').forEach(x => x.classList.remove('tut-alvo')); } return; }
-    const s = PASSOS[v.tut], modo = input.touch ? 0 : document.body.classList.contains('pad') ? 1 : 2;
+    const s = PASSOS[v.tut], modo = input.touch ? 0 : document.body.classList.contains('pad') ? 1 : wasd() ? 3 : 2;
     this.tutT = (this.tutT || 0) + dt;
     // a dica é um cartão grande no alto da tela: o que fazer, com que tecla, numa frase
     const el = this.tutEl || (this.tutEl = document.body.appendChild(h('div', { id: 'cmTut' })));
@@ -1154,7 +1155,7 @@ export class Caminho {
     for (const t of this.textos) { const x = t.fixo ? t.fixo.x : t.x, y = t.fixo ? t.fixo.y - t.fixo.h - 16 : t.y; g.globalAlpha = Math.min(1, t.t * 2); g.font = `800 ${t.tam}px Alegreya Sans, sans-serif`; g.lineWidth = 3.5; g.strokeStyle = 'rgba(8,15,25,.9)'; g.strokeText(t.txt, x, y); g.fillStyle = t.cor; g.fillText(t.txt, x, y); }
     g.globalAlpha = 1;
     // etiqueta do que dá para usar
-    if (this.perto && !input.touch) { const ob = this.perto, txt = (document.body.classList.contains('pad') ? 'Y' : 'E') + ' · ' + ob.rot; g.font = '800 12px Alegreya Sans, sans-serif'; const w = g.measureText(txt).width + 16, y = ob.y - (ob.tipo === 'npc' ? 76 : 92); g.fillStyle = 'rgba(8,15,25,.85)'; g.fillRect(ob.x - w / 2, y - 14, w, 20); g.fillStyle = '#F2E9D0'; g.fillText(txt, ob.x, y); }
+    if (this.perto && !input.touch) { const ob = this.perto, txt = (document.body.classList.contains('pad') ? 'Y' : wasd() ? 'F' : 'E') + ' · ' + ob.rot; g.font = '800 12px Alegreya Sans, sans-serif'; const w = g.measureText(txt).width + 16, y = ob.y - (ob.tipo === 'npc' ? 76 : 92); g.fillStyle = 'rgba(8,15,25,.85)'; g.fillRect(ob.x - w / 2, y - 14, w, 20); g.fillStyle = '#F2E9D0'; g.fillText(txt, ob.x, y); }
     g.restore();
     pintarLuz(g, this);
     this.pintarClima(g);
