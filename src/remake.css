@@ -217,3 +217,9 @@ html.remake .char-card .col { grid-template-columns: 1fr; min-width: 170px; }
 
 /* celular: campos com letra de 16px (abaixo disso o iPhone amplia a página ao focar) e nada de ampliar com toques */
 @media (pointer: coarse) { input, select, textarea { font-size: 16px !important; } html, body { touch-action: none; -webkit-text-size-adjust: 100%; } .panel, #screens { touch-action: pan-y; } }
+
+/* tela dividida que se junta: o quadro do jogador 1 ocupa tudo; os outros seguem rodando por baixo */
+.telas-grade { position: relative; }
+.telas-grade.juntas iframe { position: absolute; inset: 0; z-index: 0; }
+.telas-grade.juntas iframe:first-child { z-index: 1; }
+.telas-vidas { color: #E9E6DC; white-space: nowrap; font-variant-numeric: tabular-nums; }

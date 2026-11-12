@@ -85,6 +85,22 @@ function montarTelas(n) {
   const grade = document.createElement('div'); grade.className = 'telas-grade'; document.body.append(grade);
   const quadros = [];
   for (let i = 0; i < n; i++) { const f = document.createElement('iframe'); f.allow = 'gamepad; autoplay; fullscreen'; f.title = 'Jogador ' + (i + 1); if (i === 0) f.src = location.pathname + '?quadro=0&pad=0'; else f.srcdoc = '<body style="margin:0;display:grid;place-items:center;height:100vh;background:#05060B;color:#9096AA;font:600 15px system-ui;text-align:center">Jogador ' + (i + 1) + '<br>aguardando o jogador 1 entrar no jogo…</body>'; grade.append(f); quadros.push(f); }
+  // quadros que se juntam: todos na mesma área, perto e sem janela aberta → um quadro só; afastou, divide de novo
+  const pos = [], vidas = document.createElement('span'); vidas.className = 'telas-vidas'; barra.insertBefore(vidas, sair);
+  let juntas = false, vwQuadro = 0;
+  const avisa = () => quadros.forEach(f => { try { f.contentWindow?.postMessage({ peregrinosJuntas: juntas }, location.origin); } catch {} });
+  addEventListener('message', e => {
+    const d = e.origin === location.origin && e.data?.peregrinosPos; if (!d) return;
+    d.t = performance.now(); pos[d.q] = d;
+    const vivos = pos.filter(p => p && d.t - p.t < 1500);
+    vidas.textContent = vivos.map(p => (p.nome || 'J' + (p.q + 1)) + ' ♥ ' + p.hp + '/' + p.max).join('  ·  ');
+    if (!juntas) vwQuadro = pos[0]?.vw || vwQuadro;
+    const larg = vwQuadro * (n === 2 ? 2 : 1), xs = vivos.map(p => p.x), ys = vivos.map(p => p.y);
+    const dx = Math.max(...xs) - Math.min(...xs), dy = Math.max(...ys) - Math.min(...ys);
+    const todos = vivos.length === n && vivos.every(p => p.livre && p.a === vivos[0].a);
+    const quer = todos && larg > 0 && (juntas ? dx < larg * 0.8 && dy < 400 : dx < larg * 0.5 && dy < 260);
+    if (quer !== juntas) { juntas = quer; grade.classList.toggle('juntas', juntas); avisa(); }
+  });
   addEventListener('message', e => {
     if (e.origin !== location.origin || !e.data?.peregrinosSala) return;
     const { peregrinosSala: cod, local } = e.data;

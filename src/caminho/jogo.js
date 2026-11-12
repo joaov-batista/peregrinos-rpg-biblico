@@ -194,7 +194,7 @@ export class Caminho {
     if (!this.running) return;
     const dt = Math.min(0.033, (now - this.last) / 1000); this.last = now;
     // um erro num quadro não pode parar o jogo (nem a sala, para quem joga junto)
-    try { if (!document.hidden) { if (!this.ui.blocking) this.update(dt); else if (this.mp) this.updateAusente(dt); this.mp?.tick(dt); } this.render(); }
+    try { if (!document.hidden) { if (!this.ui.blocking) this.update(dt); else if (this.mp) this.updateAusente(dt); this.mp?.tick(dt); this.telaJunta(dt); } this.render(); }
     catch (e) { this.p = this.eu || this.p; if (!this.erroVisto) { this.erroVisto = true; console.error('[caminho]', e); } }
     this.raf = requestAnimationFrame(t => this.loop(t));
   }
@@ -246,7 +246,8 @@ export class Caminho {
     // câmera
     const v = this.vista, vw = v.W / v.Z, vh = v.H / v.Z;
     if (this.N.barco) this.balanco = Math.sin(this.T * 0.9) * 7 + Math.sin(this.T * 2.3) * 2; else this.balanco = 0; // o navio sobe e desce na tempestade
-    v.cam.x = damp(v.cam.x, p.x + p.face * 46 - vw / 2, 6, dt); v.cam.y = damp(v.cam.y, this.camYAlvo(vh), 6, dt); this.prenderCam();
+    const meio = this.juntas && this.meioDoGrupo();
+    v.cam.x = damp(v.cam.x, (meio ? meio.x : p.x + p.face * 46) - vw / 2, 6, dt); v.cam.y = damp(v.cam.y, this.camYAlvo(vh), 6, dt); this.prenderCam();
     this.tremorA = Math.max(0, this.tremorA - dt * 34);
     if (this.chefe) this.ui.bossBar(this.chefe.d.nome, Math.max(0, this.chefe.hp / this.chefe.max), this.chefe.d.titulo, this.chefe.post / 100);
     this.salvaT = (this.salvaT || 0) + dt; if (this.salvaT > 40) { this.salvaT = 0; this.salvar(); }
@@ -290,6 +291,20 @@ export class Caminho {
 
   /* ================= Juntos ================= */
   souDono() { return !this.mp || this.mp.souDono; }
+  // Tela dividida: cada quadro conta à página de fora onde o seu peregrino está. Quando todos estão perto, na mesma área
+  // e sem janela aberta, a página junta os quadros num só (o do jogador 1) e a câmera passa a seguir o meio do grupo.
+  telaJunta(dt) {
+    if (this.quadro == null) {
+      const q = new URLSearchParams(location.search).get('quadro');
+      this.quadro = q !== null && parent !== window ? +q : -1;
+      if (this.quadro >= 0) addEventListener('message', e => { if (e.origin === location.origin && e.data && 'peregrinosJuntas' in e.data) this.juntas = !!e.data.peregrinosJuntas; });
+    }
+    if (this.quadro < 0 || (this.tQuadro = (this.tQuadro || 0) - dt) > 0) return;
+    this.tQuadro = 0.15;
+    const p = this.eu, v = this.vista;
+    parent.postMessage({ peregrinosPos: { q: this.quadro, a: this.area, x: Math.round(p.x), y: Math.round(p.y), vw: Math.round(v.W / v.Z), hp: Math.max(0, Math.ceil(p.vida)), max: p.vidaMax, nome: this.char.name || '', livre: !this.ui.blocking && !p.morto && this.fade < 0.5 } }, location.origin);
+  }
+  meioDoGrupo() { const hs = [this.eu, ...(this.mp ? this.mp.naArea().map(o => o.h) : [])]; let x0 = Infinity, x1 = -Infinity; for (const h of hs) { x0 = Math.min(x0, h.x); x1 = Math.max(x1, h.x); } return { x: (x0 + x1) / 2 }; }
   get outros() { const r = []; if (this.mp) for (const o of this.mp.naArea()) if (!o.h.morto) r.push({ corpo: o.h, look: o.look, cls: o.cls, arma: o.arma, hab: o.hab, nome: o.nome }); return r; }
   async abrirSala(local) {
     if (this.mp) return this.mp.codigo;

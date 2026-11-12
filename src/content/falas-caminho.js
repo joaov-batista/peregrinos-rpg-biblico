@@ -2,7 +2,8 @@
 // Chave: semana → número da fase → nome do personagem. Quem não está aqui usa as falas do próprio arquivo da semana.
 export const FALAS = {
   'semana-01': {
-    1: { Paulo: ['Vim de Atenas sozinho. Lá me ouviram como quem ouve uma novidade; aqui, talvez nem isso (At 17:21; 18:1).', 'Corinto mede tudo em dinheiro. O evangelho não tem preço, e é justamente isso que incomoda.', 'As sombras desta cidade guardam páginas. Leia o que elas escondem antes de enfrentar quem as guarda.'] },
+    1: { Mercador: ['Prata, bronze, púrpura! Em Corinto tudo tem preço, peregrino. Até os deuses saem da forma do ourives.', 'Chegou de Atenas um fazedor de tendas chamado Paulo. Anuncia um Deus que não mora em templo feito por mãos (At 17:24).', 'Se isso pegar, quem vai comprar os meus ídolos?'],
+      Paulo: ['Vim de Atenas sozinho. Lá me ouviram como quem ouve uma novidade; aqui, talvez nem isso (At 17:21; 18:1).', 'Corinto mede tudo em dinheiro. O evangelho não tem preço, e é justamente isso que incomoda.', 'As sombras desta cidade guardam páginas. Leia o que elas escondem antes de enfrentar quem as guarda.'] },
     2: { Priscila: ['Cláudio mandou todos os judeus saírem de Roma. Perdemos a casa, não o ofício (At 18:2).', 'Tenda se faz ponto por ponto. Quem deixa para amanhã o ponto de hoje acorda com a lona rasgada.'],
       'Áquila': ['Paulo trabalha conosco durante a semana e, aos sábados, discute na sinagoga (At 18:3-4).', 'Ele não vive do que os ouvintes dão. As mãos dele pagam o pão dele.'] },
     3: { Paulo: ['Sábado após sábado eu lhes mostro, pelas Escrituras, que o Cristo é Jesus (At 18:5).', 'Quando a verdade é recusada, a mentira não fica parada: ocupa o lugar.', 'Se me expulsarem, sacudo as vestes e vou aos gentios. A consciência eu levo limpa (At 18:6).'],
@@ -26,5 +27,17 @@ export const FALAS = {
       'Moradora de Nínive': ['Do maior ao menor, vestimos pano de saco. Até o rei desceu do trono e sentou na cinza (Jn 3:5-6).', '"Quem sabe se Deus se voltará?" Não tínhamos promessa. Só esse "quem sabe" (Jn 3:9).'] },
     5: { 'Jonas à sombra': ['Era isso que eu dizia ainda na minha terra: tu és Deus compassivo, tardio em irar-se e grande em benignidade (Jn 4:2).', 'Fiquei contente com a planta. Um verme a secou numa madrugada, e eu quis morrer (Jn 4:6-8).'],
       'Moradora de Nínive': ['Mais de cento e vinte mil pessoas que não sabem discernir entre a mão direita e a esquerda (Jn 4:11).', 'O livro termina numa pergunta. Quem responde é quem lê.'] }
+  },
+  'semana-03': {
+    1: { Nabucodonosor: ['Eu estava sossegado em minha casa e próspero no meu palácio. Então veio o sonho (Dn 4:4).', 'Magos, encantadores, caldeus, adivinhos: contei a todos. Nenhum soube me dizer o que significa (Dn 4:7).', 'Um rei que manda no mundo e não manda no próprio sono.'],
+      'Arauto do palácio': ['Por decreto do rei: que se apresentem todos os sábios da Babilônia! (Dn 4:6)', 'Falta um. Beltessazar, o hebreu. Dizem que nenhum mistério lhe é difícil (Dn 4:9).'] },
+    2: { Daniel: ['Fiquei atônito por algum tempo. Quem dera o sonho fosse para os teus inimigos, ó rei (Dn 4:19).', 'A árvore que cresceu até o céu és tu. E o vigilante mandou cortá-la (Dn 4:22-23).', 'Ainda há um conselho: desfaz os teus pecados pela justiça, usando de misericórdia com os pobres (Dn 4:27).'],
+      'Trabalhadora dos tijolos': ['Dizem que a árvore do rei dá sombra a toda a terra. Aqui embaixo só chega o peso do tijolo.', 'Misericórdia com os pobres? Se o rei ouvisse o hebreu, este canteiro seria outro.'] },
+    3: { Nabucodonosor: ['Doze meses depois, e nada aconteceu. Venha ver do terraço (Dn 4:29).', '"Não é esta a grande Babilônia que eu edifiquei, com a força do meu poder, para a glória da minha majestade?" (Dn 4:30)'],
+      Daniel: ['Doze meses de silêncio não eram esquecimento. Eram prazo.', 'Conte quantas vezes ele diz "eu" e "meu". A voz do céu responde antes que a frase termine (Dn 4:31).'] },
+    4: { 'Pastor do campo': ['Tem um homem pastando com os bois. O cabelo cresceu como pena de águia, as unhas como as das aves (Dn 4:33).', 'Dizem que foi rei. Eu deixo água por perto; o orvalho do céu faz o resto.'],
+      Daniel: ['Mandaram deixar o toco com as raízes. Isso é promessa: o reino volta quando ele reconhecer que o céu domina (Dn 4:26).', 'Sete tempos. Não lute contra o homem; lute contra o que o pôs de quatro.'] },
+    5: { Nabucodonosor: ['Ao fim daqueles dias, levantei os olhos ao céu, e o entendimento me voltou (Dn 4:34).', 'Bendisse o Altíssimo antes de reaver o trono. A ordem foi essa.', 'Ele pode humilhar os que andam na soberba. Falo como quem andou (Dn 4:37).'],
+      Daniel: ['A coroa voltou. A Soberba não precisa de coroa para voltar também.', 'Ela vai se gabar, acusar e citar meio versículo. Responda com o versículo inteiro.'] }
   }
 };
