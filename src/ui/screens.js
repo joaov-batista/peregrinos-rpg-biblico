@@ -64,8 +64,8 @@ export function showAuth(onDone) {
 
 // Botão "Instalar app" (aparece só quando dá para instalar)
 function installButton(msg) {
-  const b = h('button', { class: 'btn install', type: 'button', onclick: () => pwa.install(t => { msg.className = 'form-msg ok'; msg.textContent = t; }) }, '📲 Instalar o app no celular');
-  const sync = () => { b.hidden = !pwa.available; };
+  const b = h('button', { class: 'btn install', type: 'button', onclick: () => pwa.install(t => { msg.className = 'form-msg ok'; msg.textContent = t; }) }, matchMedia('(pointer: coarse)').matches ? 'Instalar no celular' : 'Baixar para o PC');
+  const sync = () => { b.hidden = pwa.installed; }; // sempre à vista: se o navegador não oferecer a instalação, o botão explica como fazer
   sync(); const off = pwa.onChange(() => b.isConnected ? sync() : off());
   return b;
 }
@@ -106,7 +106,6 @@ export async function showSelect(onPlay, onNew, onLogout) {
       h('div', { class: 'info' }, h('b', {}, c.name), h('small', {}, icon(CLASSES[c.cls].arma, 15), ' ' + CLASSES[c.cls].nome + ' · nível ' + c.level), h('small', {}, '⭐ ' + fmt(c.score) + ' pontos')),
       h('div', { class: 'col' },
         h('button', { class: 'btn gold', onclick: () => { sfx('click'); onPlay(c); } }, 'Jogar'),
-        h('button', { class: 'btn sm', title: 'O mundo aberto antigo, visto de cima', onclick: () => { sfx('click'); onPlay(c, 'classico'); } }, 'Clássico'),
         h('button', { class: 'btn sm danger', onclick: async e => {
           const b = e.currentTarget;
           if (b.dataset.sure) { try { await net.deleteChar(c.id); showSelect(onPlay, onNew, onLogout); } catch (err) { b.textContent = err.message; delete b.dataset.sure; } }
@@ -115,6 +114,7 @@ export async function showSelect(onPlay, onNew, onLogout) {
     if (conflict) list.append(conflictBox);
   }
   screen(logo(), h('h2', { class: 'title' }, 'Escolha seu peregrino'), list,
+    installButton(h('p', {})),
     h('div', { class: 'btn-row' }, chars.length < 3 ? h('button', { class: 'btn', onclick: onNew }, '+ Novo personagem') : '', h('button', { class: 'btn link', onclick: onLogout }, ONLINE && net.user ? 'Sair da conta' : 'Voltar')));
 }
 

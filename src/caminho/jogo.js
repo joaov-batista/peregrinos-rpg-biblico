@@ -30,16 +30,16 @@ import { aquecerEfeitos, soltar, atualizarEfeitos } from './pixel/efeitos.js';
 import { Juntos, limparCodigo } from './juntos.js';
 
 // Primeiros passos: [toque, controle, teclado]
-const PASSOS = [
-  { id: 'andar', titulo: 'ANDAR', txt: ['Arraste o dedo no lado esquerdo da tela.', 'Use o direcional esquerdo.', 'Setas ← → para andar.'] },
-  { id: 'pular', titulo: 'SALTO DUPLO', txt: ['Toque em PULAR e, no ar, toque de novo.', 'A (✕) para pular. No ar, aperte de novo.', 'Seta ↑ para pular. No ar, aperte de novo. Encostado numa parede, pule de novo para subir por ela.'] },
-  { id: 'passo', titulo: 'PASSO PRONTO', txt: ['Toque em PASSO: você atravessa o perigo. Ele demora a voltar (as três setas no alto).', 'RT (R2): atravessa o perigo, mas demora a voltar.', 'C: atravessa o perigo. Demora a voltar (as três setas no alto).'] },
-  { id: 'golpe', titulo: 'GOLPE', txt: ['Toque em GOLPE. Segurando para cima ou para baixo, o golpe muda de direção.', 'X (□) golpeia; RB (R1) solta o especial. Com o direcional para cima, para baixo ou na diagonal, o golpe muda.', 'Z ou X golpeiam. Segure ↓ para golpear baixo (agachado, no chão) ou para baixo (no ar).'] },
-  { id: 'descer', titulo: 'DESCER DE PLATAFORMAS', txt: ['Sobre uma plataforma de madeira, puxe o direcional para BAIXO e ela deixa você passar.', 'Sobre uma plataforma de madeira, segure para baixo.', 'Sobre uma plataforma de madeira, segure ↓.'] },
-  { id: 'luz', titulo: 'A LÂMPADA · LUZ', txt: ['Segure LÂMPADA: a luz cresce e revela paredes falsas e pisos escondidos.', 'Segure LB (L1): a luz revela paredes falsas e pisos escondidos.', 'Segure D: a luz cresce e revela paredes falsas e pisos escondidos.'] },
-  { id: 'vigilia', titulo: 'A LÂMPADA · VIGÍLIA', txt: ['É a sua única defesa. Toque em LÂMPADA no instante em que o dardo chega. Cedo ou tarde demais, não protege.', 'É a sua única defesa. Aperte LB (L1) no instante em que o dardo chega. Cedo ou tarde demais, não protege.', 'É a sua única defesa. Aperte D no instante em que o dardo chega. Cedo ou tarde demais, não protege.'] },
-  { id: 'azeite', titulo: 'O AZEITE', txt: ['O jarro no alto é o azeite da lâmpada. Cada golpe certo e cada defesa perfeita o enchem.'] },
-  { id: 'orar', titulo: 'ORAR', txt: ['Segure ORAR, parado: gasta um terço do azeite e devolve um fôlego.', 'Segure B (○) ou LT (L2), parado: gasta um terço do azeite e devolve um fôlego.', 'Segure A, parado: gasta um terço do azeite e devolve um fôlego.'] }
+const PASSOS = [ // t: [toque, controle, teclado]; alvo: o botão de toque que pisca
+  { id: 'andar', titulo: 'Andar', t: ['arraste à esquerda', 'direcional', '← →'], txt: 'Vá para os lados.' },
+  { id: 'pular', titulo: 'Salto duplo', alvo: 'dodge', t: ['PULAR, PULAR', 'A, A', '↑, ↑'], txt: 'Pule e, no ar, pule de novo.' },
+  { id: 'passo', titulo: 'Passo pronto', alvo: 'lock', t: ['PASSO', 'RT', 'C'], txt: 'Atravessa o perigo. Demora a voltar.' },
+  { id: 'golpe', titulo: 'Golpe', alvo: 'attack', t: ['GOLPE', 'X', 'Z ou X'], txt: 'Segurando para baixo, bate baixo.' },
+  { id: 'descer', titulo: 'Descer', t: ['puxe para baixo', '↓', '↓'], txt: 'Numa plataforma de madeira, segure para baixo.' },
+  { id: 'luz', titulo: 'Lâmpada: luz', alvo: 'defend', t: ['segure LÂMPADA', 'segure LB', 'segure D'], txt: 'A luz mostra o que está escondido.' },
+  { id: 'vigilia', titulo: 'Lâmpada: defesa', alvo: 'defend', t: ['LÂMPADA na hora', 'LB na hora', 'D na hora'], txt: 'Aperte quando o dardo chegar. É a sua única defesa.' },
+  { id: 'azeite', titulo: 'Azeite', t: ['jarro no alto', 'jarro no alto', 'jarro no alto'], txt: 'Golpes certos e defesas enchem o jarro.' },
+  { id: 'orar', titulo: 'Orar', alvo: 'botija', t: ['segure ORAR', 'segure B', 'segure A'], txt: 'Parado: gasta azeite e devolve um fôlego.' }
 ];
 
 const caixa = e => ({ x: e.x - e.w / 2, y: e.y - e.h, w: e.w, h: e.h });
@@ -80,7 +80,7 @@ export class Caminho {
   }
 
   destroy() {
-    this.mp?.sair(); this.running = false; cancelAnimationFrame(this.raf); removeEventListener('resize', this.onResize);
+    this.mp?.sair(); this.running = false; this.tutEl?.remove(); document.querySelectorAll('.tut-alvo').forEach(x => x.classList.remove('tut-alvo')); cancelAnimationFrame(this.raf); removeEventListener('resize', this.onResize);
     for (const [b, filhos, oculto] of this.icones) { b.replaceChildren(...filhos); b.hidden = oculto; }
     document.body.classList.remove('caminho', 'cm-dash', 'cm-pixel'); input.perfil = null; input.padAcoes = this.padAntes; this.botao.remove(); music(null); this.ui.bossBar(null); this.ui.setInteract(null);
   }
@@ -714,9 +714,14 @@ export class Caminho {
   // Uma dica por vez, no rodapé; cada uma some quando o jogador FAZ o que ela ensina.
   tutorial(dt) {
     const v = this.cm.visto, p = this.eu;
-    if (v.tut == null || v.tut >= PASSOS.length) { this.dicaTxt = null; return; }
+    if (v.tut == null || v.tut >= PASSOS.length) { if (this.tutEl) { this.tutEl.remove(); this.tutEl = null; document.querySelectorAll('.tut-alvo').forEach(x => x.classList.remove('tut-alvo')); } return; }
     const s = PASSOS[v.tut], modo = input.touch ? 0 : document.body.classList.contains('pad') ? 1 : 2;
-    this.tutT = (this.tutT || 0) + dt; this.dicaTxt = { titulo: s.titulo, txt: s.txt[modo] || s.txt[0], n: v.tut + 1, de: PASSOS.length };
+    this.tutT = (this.tutT || 0) + dt;
+    // a dica é um cartão grande no alto da tela: o que fazer, com que tecla, numa frase
+    const el = this.tutEl || (this.tutEl = document.body.appendChild(h('div', { id: 'cmTut' })));
+    el.hidden = !!this.luta || this.ui.blocking;
+    if (this.tutVisto !== v.tut + ':' + modo) { this.tutVisto = v.tut + ':' + modo; document.querySelectorAll('.tut-alvo').forEach(x => x.classList.remove('tut-alvo')); if (s.alvo && modo === 0) document.querySelector(`[data-act="${s.alvo}"]`)?.classList.add('tut-alvo');
+      el.replaceChildren(h('small', {}, 'Primeiros passos · ' + (v.tut + 1) + ' de ' + PASSOS.length), h('b', {}, s.titulo), h('span', { class: 'kbd' }, s.t[modo]), h('p', {}, s.txt), h('i', {}, ...PASSOS.map((_, i) => h('u', { class: i < v.tut ? 'ok' : i === v.tut ? 'on' : '' })))); el.classList.remove('entra'); void el.offsetWidth; el.classList.add('entra'); }
     if (s.id === 'andar') this.tutAndou = (this.tutAndou || 0) + Math.abs(p.vx) * dt;
     if (s.id === 'vigilia' && this.area === 'refugio' && !p.morto) { // dardos de treino: não ferem, só ensinam o tempo
       this.tutDardo = (this.tutDardo || 1.2) - dt;

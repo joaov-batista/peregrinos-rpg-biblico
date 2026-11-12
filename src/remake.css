@@ -173,3 +173,44 @@ html.remake #screens.creating > * { zoom: .84; }
 .quiz-tempo i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #F0A093, #FFE9A8); transform-origin: left; animation: quizTempo linear forwards; }
 .quiz-tempo.parou i { animation-play-state: paused; }
 @keyframes quizTempo { to { transform: scaleX(0); } }
+
+/* o aviso de offline/progresso saiu de vez */
+#offlineStatus { display: none !important; }
+
+/* primeiros passos: um cartão legível no alto da tela */
+#cmTut { position: fixed; z-index: 12; left: 50%; top: calc(var(--safe-t, 0px) + 74px); transform: translateX(-50%); width: min(460px, calc(100vw - 220px)); padding: 12px 20px 12px; text-align: center; pointer-events: none;
+  background: rgba(7, 8, 14, .9); border-top: 1px solid rgba(233, 230, 220, .7); border-bottom: 1px solid rgba(233, 230, 220, .7); color: #E9E6DC; font-family: var(--font-ui); }
+#cmTut[hidden] { display: none; }
+#cmTut.entra { animation: tutEntra .35s ease-out; }
+@keyframes tutEntra { from { opacity: 0; transform: translate(-50%, -8px); } }
+#cmTut small { display: block; font-family: var(--font-title); letter-spacing: .2em; text-transform: uppercase; font-size: 10.5px; color: #9096AA; }
+#cmTut b { display: block; font-family: var(--font-title); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; font-size: 19px; color: #fff; margin: 3px 0 7px; }
+#cmTut .kbd { display: inline-block; padding: 5px 14px; border: 1.5px solid #FFE9A8; border-bottom-width: 3px; border-radius: 6px; background: rgba(255, 233, 168, .1); color: #FFE9A8; font: 700 17px/1.1 var(--font-ui); letter-spacing: .04em; }
+#cmTut p { font-size: 16px; line-height: 1.35; margin: 8px 0 8px; font-weight: 600; }
+#cmTut i { display: flex; gap: 5px; justify-content: center; } #cmTut u { width: 14px; height: 3px; background: rgba(255, 255, 255, .18); text-decoration: none; } #cmTut u.ok { background: #9BE0B4; } #cmTut u.on { background: #FFE9A8; }
+.tut-alvo { animation: tutAlvo 1s ease-in-out infinite; border-color: #FFE9A8 !important; }
+@keyframes tutAlvo { 50% { box-shadow: 0 0 0 7px rgba(255, 233, 168, .35), 0 0 22px rgba(255, 233, 168, .6); } }
+@media (prefers-reduced-motion: reduce) { #cmTut.entra, .tut-alvo { animation: none; } }
+
+/* escolha do peregrino sem o modo clássico: Jogar grande, Apagar discreto */
+html.remake .char-card .col { grid-template-columns: 1fr; min-width: 170px; }
+
+/* ---------- celular deitado (tela baixa) ---------- */
+@media (max-height: 480px) {
+  html.remake .panel { width: calc(100% - 16px) !important; max-width: 760px; max-height: 100%; padding: 12px 16px 12px; }
+  html.remake .panel h3 { font-size: 14px; } html.remake .p-head { margin-bottom: 8px; padding-bottom: 8px; }
+  html.remake .cm-menu .cm-abas { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 4px 0 8px; } html.remake .cm-menu .cm-abas::-webkit-scrollbar { display: none; }
+  html.remake .chip-btn { padding: 8px 10px; font-size: 10.5px; flex: none; }
+  html.remake .fase-row { padding: 7px 9px; min-height: 44px; } html.remake .fase-row b { font-size: 14px; } html.remake .fase-row small { font-size: 12px; }
+  html.remake .inv { gap: 10px; } html.remake .inv-q { width: 44px; height: 44px; font-size: 20px; } html.remake .inv-det { padding: 8px 10px; min-height: 0; } html.remake .inv-det p { font-size: 14px; }
+  html.remake .panel:has(> .dlg-text) { padding: 12px 20px 10px; max-height: 92%; } html.remake .dlg-text { font-size: 15px; line-height: 1.45; } html.remake .portrait { width: 44px; height: 44px; }
+  html.remake .panel:has(> .answers) h3 { font-size: 16px; margin-top: 4px; } html.remake .answers { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; } html.remake .answer { min-height: 44px; font-size: 14.5px; padding: 6px 10px; }
+  html.remake .btn { min-height: 40px; } html.remake .btn-row { margin-top: 8px; }
+  html.remake .abertura { gap: 2px; padding-top: 2vh; } html.remake .logo h1 { font-size: clamp(26px, 13vh, 50px); } html.remake .floreio svg { width: 200px; } html.remake .logo p { margin-top: 4px; font-size: 10px; }
+  html.remake .abertura .week { display: none; } html.remake .abertura .btn { min-height: 34px; font-size: 15px; padding: 3px 30px; } html.remake .abertura .tela-div { display: none; }
+  html.remake .char-list { gap: 6px; } html.remake .char-card { padding: 8px 12px; } html.remake .char-card .portrait { width: 52px; height: 52px; } html.remake .title { font-size: 14px; }
+  html.remake #screens.creating > * { zoom: .62; }
+  #cmTut { top: calc(var(--safe-t, 0px) + 6px); left: 42%; width: min(380px, 46vw); padding: 6px 12px; } #cmTut b { font-size: 14px; margin: 1px 0 4px; } #cmTut .kbd { font-size: 14px; padding: 3px 10px; } #cmTut p { font-size: 13.5px; margin: 4px 0; } #cmTut small { font-size: 9px; }
+  .gr { grid-template-columns: 150px 1fr; gap: 10px; } .gr-cv { width: 150px; height: 165px; } .gr-linha { padding: 1px 0; }
+  .pesca-cv { max-height: 46vh; width: auto; }
+}
