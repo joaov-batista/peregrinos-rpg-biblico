@@ -76,7 +76,7 @@ function planta(def, rng) {
 
 export function gerarNivel(def) {
   const rng = semente(def.seed || 'peregrinos');
-  const pl = def.planta ? plantaFixa(def.planta) : planta(def, rng);
+  const pl = def.planta ? plantaFixa(def.planta, def.aberto) : planta(def, rng);
   const w = pl.cols * CW, h = pl.rows * CH;
   const N = { w, h, tiles: new Uint8Array(w * h), objs: [], spawns: [], celulas: pl.celulas, cols: pl.cols, rows: pl.rows, luzes: [], def };
   N.tiles.fill(SOLIDO);
@@ -106,6 +106,7 @@ export function gerarNivel(def) {
   for (const c of pl.celulas) {
     const ox = c.cx * CW, oy = c.cy * CH;
     for (let y = 1; y < CH - 1; y++) for (let x = 1; x < CW - 1; x++) set(ox + x, oy + y, VAZIO);
+    if (c.ceu) for (let y = 0; y < CH - 1; y++) for (let x = c.mask & L ? 0 : 1; x <= (c.mask & R ? CW - 1 : CW - 2); x++) set(ox + x, oy + y, VAZIO); // céu aberto: sem teto e sem parede entre as praças
     if (c.mask & L) for (let y = 13; y <= 15; y++) set(ox, oy + y, VAZIO);
     if (c.mask & R) for (let y = 13; y <= 15; y++) set(ox + CW - 1, oy + y, VAZIO);
     if (c.mask & U) for (let x = 13; x <= 16; x++) set(ox + x, oy, VAZIO);
@@ -160,7 +161,8 @@ export function gerarNivel(def) {
     (c.itens || []).forEach((it, i) => { const p = c._ped[i] || { x: (ox + (c.papel === 'inicio' ? 9 + i * 3 : 8 + i * 12)) * T + 16, y: (oy + 16) * T }; N.objs.push({ ...it, x: p.x, y: p.y, cel: c }); });
     if (c.papel === 'ebenezer') N.objs.push({ tipo: 'ebenezer', x: c._ped[0].x, y: c._ped[0].y, cel: c });
     for (const o of c.objs || []) N.objs.push({ ...o, x: (ox + o.col) * T + 16, y: (oy + (o.lin ?? 16)) * T, cel: c });
-    N.luzes.push({ x: (ox + 6) * T, y: (oy + 9) * T, r: 150 }, { x: (ox + 24) * T, y: (oy + 9) * T, r: 150 });
+    if (c.ceu) N.luzes.push({ x: (ox + 2) * T + 16, y: (oy + 13) * T, r: 170, poste: (oy + 16) * T }, { x: (ox + 17) * T + 16, y: (oy + 13) * T, r: 170, poste: (oy + 16) * T });
+    else N.luzes.push({ x: (ox + 6) * T, y: (oy + 9) * T, r: 150 }, { x: (ox + 24) * T, y: (oy + 9) * T, r: 150 });
   }
   // remove vícios e vasos que ficaram dentro de parede, e segredos sem chão
   const livre = (x, y) => get(Math.floor(x / T), Math.floor(y / T)) === VAZIO;
@@ -175,9 +177,16 @@ export function gerarNivel(def) {
 }
 
 // Planta escrita à mão (Refúgio e arenas dos chefes do mundo): uma fileira de salas.
-function plantaFixa(lista) {
-  const celulas = lista.map((c, i) => ({ cx: i, cy: 0, mask: (i > 0 ? L : 0) | (i < lista.length - 1 ? R : 0), ...c }));
-  return { cols: lista.length, rows: 1, celulas, caminho: celulas, ramos: [] };
+function plantaFixa(lista, aberto) {
+  // cada sala pode dizer onde fica (cx, cy); sem isso, é uma fileira. Em área aberta, o andar de cima é a céu aberto.
+  const celulas = lista.map((c, i) => ({ cx: c.cx ?? i, cy: c.cy ?? 0, mask: 0, ...c }));
+  const em = (x, y) => celulas.find(c => c.cx === x && c.cy === y);
+  for (const c of celulas) {
+    if (em(c.cx - 1, c.cy)) c.mask |= L; if (em(c.cx + 1, c.cy)) c.mask |= R;
+    if (c.desce && em(c.cx, c.cy + 1)) c.mask |= D; if (em(c.cx, c.cy - 1)?.desce) c.mask |= U;
+    if (aberto && c.cy === 0) c.ceu = true;
+  }
+  return { cols: Math.max(...celulas.map(c => c.cx)) + 1, rows: Math.max(...celulas.map(c => c.cy)) + 1, celulas, caminho: celulas, ramos: [] };
 }
 
 export const tileEm = (N, tx, ty) => tx < 0 || ty < 0 || tx >= N.w || ty >= N.h ? SOLIDO : N.tiles[ty * N.w + tx];

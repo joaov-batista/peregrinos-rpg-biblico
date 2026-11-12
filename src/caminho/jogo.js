@@ -22,7 +22,7 @@ import { CHEFES, novoChefe, atualizarChefe, desenharChefe, danoNoChefe } from '.
 import { ARMADURA, RELIQUIAS, MUNDO, DIFICULDADES, ARMAS_ALT, DONS, areaDef, novoCaminho, semanaDe } from './dados.js';
 import { tema, pintarFundo, pintarBlocos, pintarEnfeites, pintarLampioes, pintarLuz, corA } from './cena.js';
 import { desenharObjeto } from './objetos.js';
-import { abrirMenu, escolherFase, loja, forja, mercador, armeiro, guardaRoupa, petShop, pesca, trocarVocacao } from './menu.js';
+import { abrirMenu, escolherFase, loja, forja, mercador, armeiro, guardaRoupa, petShop, pesca, trocarVocacao, banco } from './menu.js';
 import { renderPixel } from './pixel/render.js';
 import { ECOS_CORINTO } from '../content/ecos-corinto.js';
 import { iconePx } from './pixel/icones.js';
@@ -959,6 +959,7 @@ export class Caminho {
       case 'rolo': return ob.feito ? 'Reler o rolo' : ob.trava > this.T || !this.roloLivre(ob) ? null : 'Ler o rolo';
       case 'estacao': return ob.feito ? null : ob.dados.nome;
       case 'npc': return 'Falar';
+      case 'casa': return 'Bater à porta';
       case 'ebenezer': return 'Descansar';
       case 'portal': return 'Entrar';
       case 'saida': return 'Seguir caminho';
@@ -995,7 +996,7 @@ export class Caminho {
         else { this.char.data.stats.quizErr++; this.err++; }
         break;
       }
-      case 'npc': await this.falar(ob); break;
+      case 'npc': case 'casa': await this.falar(ob); break;
       case 'ebenezer': {
         const primeira = !cm.ebenezer;
         cm.ebenezer = { area: this.area }; if (!this.luta && this.souDono()) this.povoar(); p.vida = p.vidaMax; p.oleo = Math.max(p.oleo, OLEO_USO); this.usouSelo = this.usouCepa = false; sfx('heal'); this.fx.anel(ob.x, ob.y - 30, '#FFE9A8', 120); this.salvar();
@@ -1028,7 +1029,7 @@ export class Caminho {
   }
 
   async falar(ob) {
-    const cm = this.cm, c = this.char;
+    const cm = this.cm, c = this.char, p = this.p;
     const n = cm.falas[ob.id || ob.nome] = (cm.falas[ob.id || ob.nome] || 0) + 1;
     let texto;
     switch (ob.id) {
@@ -1059,6 +1060,28 @@ export class Caminho {
         if (n < 3) texto = '…\n\n(Ela olha para você. Parece que ia dizer alguma coisa.)';
         else if (this.ovo('jumenta', 'A jumenta de Balaão falou (Nm 22:28).')) { c.data.gold += 22; texto = '"Que te fiz eu, para me espancares já três vezes?"\n\n…Brincadeira. Você só me cutucou. Mas eu já vi um anjo no caminho quando meu dono não viu nada (Nm 22:23). Tome 22 denários, pelo capítulo.'; }
         else texto = 'Nem todo mundo que fala vê. Nem todo mundo que vê fala.';
+        break;
+      case 'mateus': return banco(this);
+      case 'nicodemos':
+        if (this.ovo('nicodemos', 'Nicodemos veio ter com Jesus de noite (Jo 3:2).')) { p.oleo = this.oleoMax(); texto = 'Você também desce aqui escondido? Eu vim de noite, para ninguém me ver perguntando.\n\n"Como pode um homem nascer, sendo velho?" Ele me respondeu: "O que é nascido da carne é carne; o que é nascido do Espírito é espírito" (Jo 3:4-6).\n\nLeve azeite. A cisterna guarda mais do que água.'; }
+        else texto = n % 2 ? '"Quem pratica a verdade vem para a luz" (Jo 3:21). Demorei, mas subi. Levei mirra e aloés quando ninguém mais quis aparecer (Jo 19:39).' : 'Deus amou o mundo de tal maneira que deu o seu Filho unigênito (Jo 3:16). Ouvi isso primeiro, no escuro, antes de virar a frase que todos sabem.';
+        break;
+      case 'estalagem': {
+        const cheio = p.vida >= p.vidaMax && p.oleo >= this.oleoMax();
+        return this.ui.dialog({ nome: ob.nome, texto: '"Cuida dele, e tudo o que gastares a mais eu te pagarei quando voltar" (Lc 10:35).\n\nCama, pão e azeite para a lâmpada: dois denários, como o samaritano deixou.' + (cheio ? '\n\n(Você já está inteiro.)' : ''),
+          acoes: [!cheio && c.data.gold >= 2 ? { label: 'Descansar (2 denários)', fn: () => { c.data.gold -= 2; p.vida = p.vidaMax; p.oleo = this.oleoMax(); sfx('heal'); this.efeito('cura', p.x, p.y); this.fade = 1; this.ui.toast('Fôlegos e azeite cheios.', 3500); this.salvar(); } } : null, { label: 'Agora não' }].filter(Boolean) });
+      }
+      case 'viuva':
+        if (this.ovo('sarepta', 'A farinha da panela não se acabou, e o azeite da botija não faltou (1Rs 17:16).')) { c.data.gold += 40; p.oleo = this.oleoMax(); texto = 'Só tenho um punhado de farinha e um pouco de azeite. Ia fazer o último pão para mim e meu filho.\n\nO profeta pediu que eu fizesse primeiro um para ele. Fiz. E a panela não esvaziou mais (1Rs 17:12-16).\n\nLeve, peregrino: quem reparte não fica sem. (+40 denários, azeite cheio)'; }
+        else { p.oleo = this.oleoMax(); texto = 'A botija continua dando. Encha a lâmpada antes de sair (1Rs 17:16).'; }
+        break;
+      case 'marta':
+        texto = n % 2 ? 'Marta: Senhor, não te importas que minha irmã me deixe servir sozinha?\n\n"Marta, Marta, andas inquieta com muitas coisas; mas uma só é necessária" (Lc 10:40-42).' : 'Maria: Fiquei sentada aos pés dele, ouvindo. Disseram que escolhi a boa parte, e que ela não me será tirada (Lc 10:39,42).\n\nLeia antes de correr, peregrino.';
+        if (this.ovo('betania', 'Maria escolheu a boa parte (Lc 10:42).')) this.ganharOleo(30);
+        break;
+      case 'oleiro':
+        if ((cm.oleiroT || 0) < Date.now()) { cm.oleiroT = Date.now() + 20 * 60000; c.data.gold += 15; texto = '"Como o barro na mão do oleiro, assim sois vós na minha mão" (Jr 18:6).\n\nO vaso que se estragou eu não jogo fora: torno a fazer outro, como me parece bem (Jr 18:4).\n\nVocê anda quebrando muito vaso por aí. Tome 15 denários e quebre com mais respeito.'; }
+        else texto = 'O barro ainda está na roda. Volte mais tarde; vaso bom não se faz com pressa (Jr 18:3-4).';
         break;
       case 'saul': texto = cm.chefes.golias ? 'Saul feriu os seus milhares… e você, o gigante. (1Sm 18:7)' : 'O filisteu desafia as fileiras há quarenta dias (1Sm 17:16). Ninguém desce ao vale.\n\nUm pastor uma vez escolheu cinco pedras lisas do ribeiro. Você tem ' + cm.pedras + ' de 5: procure-as nos cantos escondidos de Corinto — a lâmpada mostra onde.'; break;
       default: if (ob.nome === 'Mercador') return mercador(this, ob); texto = ob.falas ? ob.falas[(n - 1) % ob.falas.length] : '…';

@@ -144,6 +144,7 @@ export function abrirMenu(G, aba = 'inventario') {
         g.font = '14px sans-serif'; g.textAlign = 'center';
         const ic = cel.papel === 'arena' ? '☠' : cel.papel === 'rolo' ? '📜' : cel.papel === 'ebenezer' ? '🪨' : cel.papel === 'tesouro' ? '✦' : cel.papel === 'inicio' ? '⌂' : '';
         if (ic) g.fillText(ic, x + w / 2, y + hh / 2 + 5);
+        if (cel.nome) { g.font = '600 9px system-ui, sans-serif'; g.fillStyle = '#E9E6DC'; const pal = cel.nome.split(' '), meio = Math.ceil(pal.length / 2), l1 = pal.slice(0, pal.length > 2 ? meio : pal.length > 1 ? 1 : 1).join(' '), l2 = pal.slice(pal.length > 2 ? meio : 1).join(' '); g.fillText(l1, x + w / 2, y + hh / 2 + (l2 ? (ic ? 12 : -1) : 4)); if (l2) g.fillText(l2, x + w / 2, y + hh / 2 + (ic ? 22 : 10)); }
         if (cel.cx === pc.x && cel.cy === pc.y) { g.strokeStyle = '#FFE9A8'; g.lineWidth = 3; g.strokeRect(x + 4, y + 4, w - 8, hh - 8); }
       }
       return [t(G.def.nome + ' — a sala com a borda clara é onde você está.', 'muted'), cv, t('⌂ início · 📜 rolo · 🪨 Ebenézer · ✦ tesouro · ☠ chefe', 'hint')];
@@ -328,6 +329,23 @@ export function pesca(G) {
   }, { wide: true });
 }
 // Tubalcaim: o fio da arma, um degrau por vez
+// Mateus guarda os denários: o que está no tesouro não cai com você
+export function banco(G) {
+  const c = G.char, cm = G.cm;
+  return G.ui.modal((p, close) => {
+    p.classList.add('cm-menu');
+    const lista = h('div', {});
+    const move = n => { n = Math.max(-(cm.banco || 0), Math.min(Math.floor(c.data.gold), n)); if (!n) return; c.data.gold -= n; cm.banco = (cm.banco || 0) + n; sfx('coin'); G.salvar(); desenha(); };
+    const linha = (rot, sub, n, ok) => h('button', { class: 'fase-row cm-rel', disabled: !ok, onclick: () => move(n) }, h('span', { class: 'cm-ico' }, iconeItem('denarios', 26)), h('div', {}, h('b', {}, rot), h('small', {}, sub)));
+    const desenha = () => { const g = Math.floor(c.data.gold), b = cm.banco || 0;
+      lista.replaceChildren(h('p', { class: 'muted' }, 'Na bolsa: ' + g + ' denários · No tesouro: ' + b + ' denários.'),
+        linha('Guardar 100', 'Do que está na bolsa.', 100, g >= 1), linha('Guardar tudo', g + ' denários vão para a arca.', g, g >= 1),
+        linha('Retirar 100', 'De volta para a bolsa.', -100, b >= 1), linha('Retirar tudo', b + ' denários voltam com você.', -b, b >= 1)); };
+    p.append(h('div', { class: 'p-head' }, h('h3', {}, 'A Casa do Tesouro'), h('button', { class: 'x', onclick: () => close(), 'aria-label': 'Fechar' }, '✕')),
+      h('p', {}, 'Eu me sentava na coletoria quando ele passou e disse: "Segue-me" (Mt 9:9). Hoje conto moedas dos outros sem ficar com nenhuma. O que você guardar aqui não cai no chão quando você cair.'), lista);
+    desenha();
+  }, { wide: true });
+}
 export function forja(G) {
   const c = G.char, cm = G.cm;
   return G.ui.modal((p, close) => {

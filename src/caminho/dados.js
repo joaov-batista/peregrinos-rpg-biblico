@@ -115,47 +115,75 @@ export const MUNDO = {
   leviata: { nome: 'O Mar do Leviatã', chefe: 'leviata', tema: 'mar', ref: 'Jó 41', premio: 'escama_leviata', pede: { hab: 'escudo' }, porque: 'Os jatos do mar pedem o Escudo da Fé.' }
 };
 
+// plataformas de uma sala escrita à mão: [linha do mapa, coluna inicial, coluna final] (linha 13 = teto de uma casa)
+const sala = (...pls) => { const topo = Math.min(15, ...pls.map(p => p[0])), g = Array.from({ length: 16 - topo }, () => Array(28).fill('.')); for (const [lin, a, b] of pls) for (let x = a; x <= b; x++) g[lin - topo][x - 1] = '='; return g.map(r => r.join('')); };
+const casa = (col, id, nome) => ({ tipo: 'casa', col, id, nome });
+const planta = (col, qual) => ({ tipo: 'planta', col, qual });
+const povo = (col, vai, look) => ({ tipo: 'morador', col, vai, look });
+
+// O Refúgio: uma aldeia a céu aberto (praças, mercado, bairro, pátio, olival, o portão do Éden) e, por baixo dela,
+// os salões de pedra: o Salão dos Rolos (as páginas do Livro), a Casa do Tesouro, a Cripta dos Gigantes e a cisterna.
 const REFUGIO = [
-  { papel: 'inicio', tiles: ['............................'], objs: [
-    { tipo: 'ebenezer', col: 6 },
-    { tipo: 'poco', col: 16 },
-    { tipo: 'npc', col: 13, id: 'velho', nome: 'Velho Peregrino', look: velho },
-    { tipo: 'npc', col: 24, id: 'jumenta', nome: 'Uma jumenta', bicho: 'jumenta' },
-    { tipo: 'npc', col: 10, id: 'pedro', nome: 'Simão, o pescador', look: { skin: '#A0673E', hair: '#3A2314', tunic: '#497A80', cape: 'none', style: 'cacheado', beard: true, body: 'forte' } },
-    { tipo: 'morador', col: 18, vai: 3, look: { skin: '#C68B59', hair: '#6B4423', tunic: '#497A80', cape: 'none', style: 'rabo' } }, { tipo: 'ave', col: 9, lin: 16 }, { tipo: 'ave', col: 21, lin: 16 }] },
-  { papel: 'vila', tiles: ['.....................=====..', '............................', '............................', '..................=====.....', '............................', '............................'], objs: [
-    { tipo: 'cenario', col: 8, qual: 'banca' }, { tipo: 'cenario', col: 14, qual: 'forja' },
-    { tipo: 'npc', col: 8, id: 'lidia', nome: 'Lídia, vendedora de púrpura', look: lidia },
-    { tipo: 'npc', col: 14, id: 'ferreiro', nome: 'Tubalcaim, o ferreiro', look: { skin: '#8A5A3A', hair: '#1E1612', tunic: '#5A4636', cape: 'none', style: 'curto', beard: true, body: 'forte' } },
+  { cx: 0, nome: 'Praça do poço', papel: 'inicio', tiles: sala([13, 20, 23]), objs: [
+    planta(2, 'oliveira'), planta(12, 'palmeira'), casa(21, 'viuva', 'Casa da viúva de Sarepta'), planta(27, 'oliveira'),
+    { tipo: 'ebenezer', col: 6 }, { tipo: 'poco', col: 14 },
+    { tipo: 'npc', col: 10, id: 'velho', nome: 'Velho Peregrino', look: velho },
+    { tipo: 'npc', col: 17, id: 'pedro', nome: 'Simão, o pescador', look: { skin: '#A0673E', hair: '#3A2314', tunic: '#497A80', cape: 'none', style: 'cacheado', beard: true, body: 'forte' } },
+    { tipo: 'npc', col: 26, id: 'jumenta', nome: 'Uma jumenta', bicho: 'jumenta' },
+    povo(19, 3, { skin: '#C68B59', hair: '#6B4423', tunic: '#497A80', cape: 'none', style: 'rabo' }), { tipo: 'ave', col: 9, lin: 16 }, { tipo: 'ave', col: 22, lin: 13 }] },
+  // a rua do mercado; no meio dela, a escada que desce ao Salão dos Rolos
+  { cx: 1, nome: 'Mercado', papel: 'vila', desce: true, tiles: sala([10, 22, 26], [13, 19, 23]), objs: [
+    planta(2, 'palmeira'), { tipo: 'cenario', col: 5, qual: 'banca' }, { tipo: 'cenario', col: 8, qual: 'forja' }, { tipo: 'cenario', col: 14, qual: 'descida', rotulo: 'Salão dos Rolos' },
+    { tipo: 'npc', col: 5, id: 'lidia', nome: 'Lídia, vendedora de púrpura', look: lidia },
+    { tipo: 'npc', col: 8, id: 'ferreiro', nome: 'Tubalcaim, o ferreiro', look: { skin: '#8A5A3A', hair: '#1E1612', tunic: '#5A4636', cape: 'none', style: 'curto', beard: true, body: 'forte' } },
     { tipo: 'arvore', col: 23 }, { tipo: 'fruto', col: 20, lin: 9 }, { tipo: 'fruto', col: 22, lin: 8 }, { tipo: 'fruto', col: 25, lin: 9 }, { tipo: 'fruto', col: 26, lin: 12 }, { tipo: 'npc', col: 24, lin: 10, id: 'zaqueu', nome: 'Zaqueu', look: zaqueu }] },
-  // a praça do mercado: armas, roupas e gente passando
-  { papel: 'vila', tiles: ['...=====............=====...', '............................', '............................', '............................'], objs: [
-    { tipo: 'cenario', col: 6, qual: 'armas' }, { tipo: 'cenario', col: 13, qual: 'tear' }, { tipo: 'cenario', col: 20, qual: 'arca' },
+  // a praça das armas: armas, roupas e os bichos de Noé
+  { cx: 2, nome: 'Praça das armas', papel: 'vila', tiles: sala([12, 4, 8], [12, 21, 25]), objs: [
+    { tipo: 'cenario', col: 6, qual: 'armas' }, { tipo: 'cenario', col: 13, qual: 'tear' }, { tipo: 'cenario', col: 20, qual: 'arca' }, planta(27, 'oliveira'),
     { tipo: 'npc', col: 6, id: 'armeiro', nome: 'Jael, a armeira', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5E4A3A', cape: '#713E49', style: 'trancas', body: 'forte' } },
     { tipo: 'npc', col: 13, id: 'dorcas', nome: 'Dorcas, a costureira', look: { skin: '#E3B48C', hair: '#6B4423', tunic: '#A18C61', cape: '#C8C9BC', style: 'veu' } },
-    { tipo: 'morador', col: 18, vai: 5, look: { skin: '#C68B59', hair: '#3A2314', tunic: '#874D4C', cape: 'none', style: 'turbante', beard: true } },
-    { tipo: 'morador', col: 23, vai: 3, look: { skin: '#A0673E', hair: '#1C120A', tunic: '#4C665E', cape: 'none', style: 'coque' } },
+    povo(17, 4, { skin: '#C68B59', hair: '#3A2314', tunic: '#874D4C', cape: 'none', style: 'turbante', beard: true }),
     { tipo: 'npc', col: 20, id: 'noe', nome: 'Noé, criador de animais', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#4C665E', cape: '#877451', style: 'longo', beard: true } },
-    { tipo: 'vaso', col: 10 }, { tipo: 'vaso', col: 26 }, { tipo: 'ave', col: 4, lin: 12 }, { tipo: 'ave', col: 22, lin: 12 }] },
-  { papel: 'vila', tiles: ['............................'], objs: TODAS.map((s, i) => ({ tipo: 'portal', col: 6 + i * 9, semana: s.id })) },
-  // o pátio das provas: treino entre peregrinos e o desafio das ondas
-  { papel: 'vila', tiles: ['..........======............', '............................', '............................'], objs: [
-    { tipo: 'npc', col: 27, id: 'samuel', nome: 'Samuel, o que unge', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#D2CFBB', cape: '#55516D', style: 'longo', beard: true } },
+    { tipo: 'vaso', col: 10 }, { tipo: 'vaso', col: 26 }, { tipo: 'ave', col: 5, lin: 12 }, { tipo: 'ave', col: 23, lin: 12 }] },
+  // o bairro: casas de teto plano (dá para andar por cima), a estalagem e o oleiro
+  { cx: 3, nome: 'Bairro', papel: 'vila', tiles: sala([13, 3, 6], [13, 10, 13], [10, 15, 17], [13, 19, 22]), objs: [
+    casa(4, 'estalagem', 'Estalagem do caminho'), planta(8, 'palmeira'), casa(11, 'marta', 'Casa de Marta e Maria'), planta(16, 'oliveira'), casa(20, 'oleiro', 'Casa do oleiro'), planta(27, 'cipreste'),
+    { tipo: 'vaso', col: 24 }, { tipo: 'vaso', col: 25 }, { tipo: 'vaso', col: 26 },
+    povo(8, 5, { skin: '#A0673E', hair: '#1C120A', tunic: '#4C665E', cape: 'none', style: 'coque' }), povo(16, 3, { skin: '#E3B48C', hair: '#B8863B', tunic: '#686078', cape: '#394F62', style: 'longo' }),
+    { tipo: 'ave', col: 5, lin: 13 }, { tipo: 'ave', col: 16, lin: 10 }, { tipo: 'ave', col: 21, lin: 13 }] },
+  // o pátio das provas; a escada do meio desce à cisterna
+  { cx: 4, nome: 'Pátio das provas', papel: 'vila', desce: true, tiles: sala([12, 22, 26]), objs: [
+    planta(2, 'cipreste'), { tipo: 'cenario', col: 14, qual: 'descida', rotulo: 'Cisterna' },
     { tipo: 'npc', col: 4, id: 'mestre', nome: 'Benaia, mestre das provas', look: { skin: '#8A5A3A', hair: '#D9D2C5', tunic: '#343F51', cape: '#877451', style: 'curto', beard: true, body: 'forte' } },
-    { tipo: 'boneco', col: 7 }, { tipo: 'boneco', col: 16 },
-    { tipo: 'portal', col: 11, area: 'treino', rotulo: 'Arena de treino' }, { tipo: 'portal', col: 20, area: 'desafio', rotulo: 'Desafio das ondas' },
-    { tipo: 'morador', col: 25, vai: 2, look: { skin: '#E3B48C', hair: '#B8863B', tunic: '#686078', cape: '#394F62', style: 'longo' } }, { tipo: 'ave', col: 14, lin: 13 }] },
-  { papel: 'vila', tiles: ['............................'], objs: [
+    { tipo: 'boneco', col: 7 }, { tipo: 'boneco', col: 23 },
+    { tipo: 'portal', col: 10, area: 'treino', rotulo: 'Arena de treino' }, { tipo: 'portal', col: 20, area: 'desafio', rotulo: 'Desafio das ondas' },
+    { tipo: 'npc', col: 27, id: 'samuel', nome: 'Samuel, o que unge', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#D2CFBB', cape: '#55516D', style: 'longo', beard: true } }, { tipo: 'ave', col: 24, lin: 12 }] },
+  // o olival: figos, sombra e a caravana que às vezes traz algo raro
+  { cx: 5, nome: 'Olival', papel: 'vila', tiles: sala([12, 8, 11], [9, 13, 16], [12, 18, 21]), objs: [
+    planta(4, 'oliveira'), planta(10, 'oliveira'), planta(15, 'palmeira'), planta(20, 'oliveira'), planta(26, 'cipreste'), { tipo: 'cenario', col: 23, qual: 'banca' },
+    { tipo: 'fruto', col: 4, lin: 14 }, { tipo: 'fruto', col: 10, lin: 11 }, { tipo: 'fruto', col: 15, lin: 8 }, { tipo: 'fruto', col: 20, lin: 11 },
+    { tipo: 'npc', col: 23, nome: 'Mercador', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#7A5A2E', cape: '#3F2E4F', style: 'turbante', beard: true } },
+    { tipo: 'poco', col: 7 }, povo(13, 4, { skin: '#C68B59', hair: '#D9D2C5', tunic: '#5B4E66', cape: 'none', style: 'veu' }), { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
+  { cx: 6, nome: 'Portão do Éden', papel: 'vila', tiles: sala(), objs: [planta(3, 'cipreste'), planta(6, 'cipreste'), { tipo: 'porta-pecado', col: 10 }, planta(14, 'oliveira'), { tipo: 'querubim', col: 20 }, planta(25, 'cipreste')] },
+  // ---- o subsolo ----
+  { cx: 1, cy: 1, nome: 'Salão dos Rolos', papel: 'vila', tiles: sala(), objs: [...TODAS.map((s, i) => ({ tipo: 'portal', col: [4, 9, 21, 26, 7, 23][i % 6], semana: s.id })),
+    povo(19, 2, { skin: '#D9A273', hair: '#E3DED2', tunic: '#55516D', cape: '#C9B88A', style: 'longo', beard: true })] },
+  { cx: 2, cy: 1, nome: 'Casa do Tesouro', papel: 'vila', tiles: sala([12, 20, 25]), objs: [
+    { tipo: 'cenario', col: 11, qual: 'cofre' }, { tipo: 'npc', col: 14, id: 'mateus', nome: 'Mateus, o coletor', look: { skin: '#C68B59', hair: '#2B1A10', tunic: '#3F5A4A', cape: '#C9A63C', style: 'curto', beard: true } },
+    { tipo: 'vaso', col: 5 }, { tipo: 'vaso', col: 6 }, { tipo: 'vaso', col: 22, lin: 12 }, { tipo: 'vaso', col: 24, lin: 12 }] },
+  { cx: 3, cy: 1, nome: 'Cripta dos Gigantes', papel: 'vila', tiles: sala(), objs: [
     { tipo: 'npc', col: 4, id: 'saul', nome: 'Rei Saul', look: saul },
     { tipo: 'portal', col: 9, mundo: 'golias' }, { tipo: 'portal', col: 17, mundo: 'behemote' }, { tipo: 'portal', col: 25, mundo: 'leviata' }] },
-  { papel: 'vila', tiles: ['............................'], objs: [{ tipo: 'querubim', col: 20 }, { tipo: 'porta-pecado', col: 10 }] }
+  { cx: 4, cy: 1, nome: 'Cisterna', papel: 'vila', tiles: sala([12, 3, 7]), objs: [
+    { tipo: 'npc', col: 22, id: 'nicodemos', nome: 'Nicodemos', look: { skin: '#D9A273', hair: '#D9D2C5', tunic: '#343F51', cape: '#6B5A8C', style: 'turbante', beard: true } },
+    { tipo: 'poco', col: 8 }, { tipo: 'vaso', col: 4, lin: 12 }, { tipo: 'vaso', col: 6, lin: 12 }, { tipo: 'vaso', col: 25 }, { tipo: 'vaso', col: 26 }] }
 ];
 
 export function semanaDe(id) { return TODAS.find(s => s.id === id); }
 
 // Descrição de uma área para o gerador de níveis. ids: "refugio", "semana-01:3", "mundo:golias"
 export function areaDef(id) {
-  if (id === 'refugio') return { id, nome: 'Refúgio', sub: 'A última aldeia acesa', tema: 'refugio', planta: REFUGIO, seed: 'refugio', paz: true };
+  if (id === 'refugio') return { id, nome: 'Refúgio', sub: 'A última aldeia acesa', tema: 'refugio', planta: REFUGIO, seed: 'refugio', paz: true, aberto: true };
   if (id === 'treino') return { id, nome: 'Arena de treino', sub: 'Ferro com ferro se afia (Pv 27:17)', tema: 'ela', seed: id, extra: true, pvp: true,
     planta: [{ papel: 'inicio', tiles: ['....====............====....', '............................', '..........========..........', '............................', '............................'] }] };
   if (id === 'desafio') return { id, nome: 'Desafio das ondas', sub: 'Quantas você aguenta?', tema: 'tribunal', seed: id, extra: true, desafio: true,

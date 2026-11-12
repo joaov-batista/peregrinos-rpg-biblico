@@ -141,9 +141,17 @@ export function cenaPixel(tm, chave) {
 
 const faixa = (g, img, off, y, vw) => { const w = img.width; let x = -(((Math.round(off) % w) + w) % w); for (; x < vw; x += w) g.drawImage(img, x, y); };
 
+const SUBSOLO = '#0d1019';
+// nuvens em pixel, que derivam devagar (só nas áreas a céu aberto)
+let nuvemCv = null;
+function nuvens(tm) { if (nuvemCv) return nuvemCv; const s = new Sprite(520, 70), c = [cor(mistura(tm.ceu[1], '#FFFFFF', 0.16)), cor(mistura(tm.ceu[1], '#FFFFFF', 0.3)), cor(mistura(tm.ceu[2], '#FFFFFF', 0.4))]; const rng = semente('nuvens');
+  for (let n = 0; n < 7; n++) { const x = 20 + rng() * 460, y = 14 + rng() * 40, w = 30 + rng() * 50; for (let k = 0; k < 6; k++) { const bx = x + (k - 2.5) * w / 6, r = 4 + rng() * 5; for (let yy = -r; yy <= 0; yy++) for (let xx = -r * 1.6; xx <= r * 1.6; xx++) if (xx * xx / 2.56 + yy * yy < r * r) s.px(bx + xx, y + yy, yy < -r * 0.5 ? c[1] : c[0]); } s.ret(x - w / 2, y, w, 2, c[0]); s.ret(x - w / 2 + 4, y + 2, w - 8, 1, c[2]); }
+  return nuvemCv = s.tela(); }
+
 export function pintarFundoPixel(g, G, C, vw, vh, cx, cy) {
   const dy = Math.round((vh - C.H) / 2);
   faixa(g, C.ceu, cx * 0.02, dy, vw);
+  if (G.N.def.aberto) { g.globalAlpha = 0.8; faixa(g, nuvens(G.tm), cx * 0.05 + G.T * 3, dy + 8 + Math.round(-cy * 0.02), vw); g.globalAlpha = 1; }
   faixa(g, C.longe, cx * 0.1, dy + Math.round(-cy * 0.02), vw);
   faixa(g, C.meio, cx * 0.24, dy + Math.round(-cy * 0.05) + 4, vw);
   faixa(g, C.perto, cx * 0.45, dy + Math.round(-cy * 0.1) + 10, vw);
@@ -155,6 +163,8 @@ export function pintarSalasPixel(g, G, C, vw, vh, cx, cy) {
   for (const cel of N.celulas) {
     const x0 = cel.cx * salaW - cx, y0 = cel.cy * salaH - cy;
     if (x0 > vw || x0 + salaW < 0 || y0 > vh || y0 + salaH < 0) continue;
+    if (cel.ceu) continue; // praça a céu aberto: nada de véu, pilar ou estandarte
+    if (N.def.aberto) { g.fillStyle = SUBSOLO; g.fillRect(x0, y0, salaW, salaH); } // o subsolo não deixa ver o céu
     g.fillStyle = tm.bloco; g.globalAlpha = 0.26; g.fillRect(x0 + TL, y0 + TL, salaW - 2 * TL, salaH - 2 * TL); g.globalAlpha = 1;
     for (let k = 0; k < 3; k++) {
       if (k === 1 && cel.mask & 12) continue;
@@ -163,7 +173,7 @@ export function pintarSalasPixel(g, G, C, vw, vh, cx, cy) {
       if (hash(cel.cx * 5 + k, cel.cy * 3 + 9) > 0.4 && tm.deco !== 'costelas' && tm.deco !== 'arvores') g.drawImage(C.estandarte, px + 44 + Math.round(r * 20), y0 + TL + (Math.floor(G.T * 2 + k) % 4 === 0 ? 1 : 0));
     }
   }
-  for (const l of N.luzes) { const x = Math.round(l.x / PX - cx), y = Math.round(l.y / PX - cy); if (x < -10 || x > vw + 10) continue; const topo = Math.floor(l.y / T / CH) * salaH + TL - cy; g.fillStyle = tm.bloco; g.fillRect(x, topo, 1, y - 6 - topo); g.drawImage(C.lampiao, x - 4, y - 6); }
+  for (const l of N.luzes) { const x = Math.round(l.x / PX - cx), y = Math.round(l.y / PX - cy); if (x < -10 || x > vw + 10) continue; if (l.poste) { const pe = Math.round(l.poste / PX - cy); g.fillStyle = '#17121f'; g.fillRect(x - 1, y + 5, 3, pe - y - 5); g.fillRect(x - 3, pe - 3, 7, 3); g.fillStyle = '#4A4658'; g.fillRect(x, y + 5, 1, pe - y - 8); g.drawImage(C.lampiao, x - 4, y - 6); continue; } const topo = Math.floor(l.y / T / CH) * salaH + TL - cy; g.fillStyle = tm.bloco; g.fillRect(x, topo, 1, y - 6 - topo); g.drawImage(C.lampiao, x - 4, y - 6); }
 }
 
 export function pintarBlocosPixel(g, G, C, vw, vh, cx, cy) {
