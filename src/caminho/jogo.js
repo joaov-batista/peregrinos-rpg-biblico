@@ -178,7 +178,8 @@ export class Caminho {
     this.inimigos = this.inimigos.filter(e => e.kind === 'chefe');
     if (!def.inimigos) return;
     const esc = 1 + (def.fase?.nivel || 1) * 0.05, voadores = ['distracao', 'duvida', 'medo', 'vaidade'];
-    this.N.spawns.forEach((s, i) => { const tipos = def.inimigos.filter(t => !!s.voa === voadores.includes(t)), lista = tipos.length ? tipos : def.inimigos; this.nascer(lista[i % lista.length], s.x, s.y + 14, false, esc).cel = s.cel; });
+    this.N.spawns.forEach((s, i) => { const tipos = def.inimigos.filter(t => !!s.voa === voadores.includes(t)), lista = tipos.length ? tipos : def.inimigos; if (s.cel?.papel === 'ebenezer' || Math.hypot(s.x - this.N.inicio.x, s.y - this.N.inicio.y) < 300 || this.objs.some(o => o.tipo === 'ebenezer' && Math.abs(o.x - s.x) < 260 && Math.abs(o.y - s.y) < 200)) return; // nada nasce em cima da pedra de descanso nem do ponto de chegada
+      this.nascer(lista[i % lista.length], s.x, s.y + 14, false, esc).cel = s.cel; });
   }
   nascer(tipo, x, y, daLuta, esc = 1) { const e = novoVicio(tipo, x, y, esc); e.daLuta = daLuta; this.inimigos.push(e); return e; }
 
@@ -392,6 +393,7 @@ export class Caminho {
       atk.hits.add(e);
       if (this.atingir(e, dano, p.x, atk)) acertou = true;
     }
+    for (const ob of this.objs) if (ob.tipo === 'boneco' && !atk.hits.has(ob) && toca(cx, { x: ob.x - 14, y: ob.y - 56, w: 28, h: 56 })) { atk.hits.add(ob); acertou = true; ob.bal = 0.4; ob.dir = Math.sign(ob.x - p.x) || 1; sfx('hit'); this.efeito('faisca', ob.x, ob.y - 30, ob.dir); this.textoEm(ob.x + rand(-10, 10), ob.y - 62, String(Math.round(dano)), '#E6E0CF', 13); this.ganharOleo(6); }
     for (const ob of this.objs) if (ob.tipo === 'vaso' && !ob.quebrado && toca(cx, { x: ob.x - 11, y: ob.y - 24, w: 22, h: 24 })) {
       ob.quebrado = true; acertou = true; sfx('hit'); this.fx.po(ob.x, ob.y - 10, 10, '#B79A6E'); this.soltarMoedas(ob.x, ob.y - 12, Math.floor(rand(2, 6)));
       const st = this.char.data.stats; st.vasos = (st.vasos || 0) + 1;
@@ -653,8 +655,10 @@ export class Caminho {
     const q = this.pet = this.pet && this.pet.tipo === tipo ? this.pet : { tipo, x: p.x - 30, y: p.y, t: 0, cd: 2, alvo: null, late: 0 };
     q.t += dt; q.cd -= dt; q.late -= dt;
     const voa = tipo === 'papagaio', ax = p.x - p.face * (voa ? 26 : 38), ay = voa ? p.y - 62 + Math.sin(q.t * 3) * 6 : p.y;
-    if (q.alvo && q.alvo.hp > 0 && q.mordida > 0) { q.mordida -= dt; q.x = damp(q.x, q.alvo.x, 14, dt); q.y = damp(q.y, q.alvo.y, 14, dt); if (q.mordida <= 0) { this.atingirJa(q.alvo, this.danoBase() * 0.7, q.x - 1, { semOleo: true, hits: new Set(), dir: 'lado' }); this.efeito('faisca', q.alvo.x, q.alvo.y - q.alvo.h / 2); q.alvo = null; } }
+    if (q.alvo && q.alvo.hp > 0 && q.mordida > 0) { q.mordida -= dt; q.x = damp(q.x, q.alvo.x, 14, dt); q.y = damp(q.y, q.alvo.y, 14, dt); if (q.mordida <= 0) { this.atingirJa(q.alvo, this.danoBase() * (q.forca || 0.7), q.x - 1, { semOleo: true, hits: new Set(), dir: 'lado' }); this.efeito('faisca', q.alvo.x, q.alvo.y - q.alvo.h / 2); q.alvo = null; } }
     else { q.x = damp(q.x, ax, voa ? 5 : 7, dt); q.y = damp(q.y, ay, voa ? 5 : 12, dt); q.face = Math.abs(ax - q.x) > 4 ? Math.sign(ax - q.x) : p.face; q.anda = Math.abs(ax - q.x) > 6; }
+    if (tipo === 'leao' && q.cd <= 0 && this.souDono()) { const e = this.inimigos.filter(v => v.kind === 'vicio' && v.hp > 0 && Math.hypot(v.x - p.x, v.y - p.y) < 230)[0]; if (e) { q.alvo = e; q.mordida = 0.2; q.cd = 2; q.forca = 2.4; sfx('swing'); } }
+    if (tipo === 'leao' && (q.rugido = (q.rugido ?? 6) - dt) <= 0 && this.inimigos.some(v => v.kind === 'vicio' && v.hp > 0 && Math.hypot(v.x - p.x, v.y - p.y) < 240)) { q.rugido = 9; sfx('boss'); this.tremor(6); this.fx.anel(q.x, q.y - 12, '#FFD86A', 220); this.textoEm(q.x, q.y - 34, 'RUGIDO', '#FFD86A', 13); for (const v of this.inimigos) if (v.kind === 'vicio' && Math.hypot(v.x - q.x, v.y - q.y) < 240) { v.stun = 1.8; v.aberto = 1.8; } }
     if (tipo === 'cachorro') {
       if (q.cd <= 0 && this.souDono()) { const e = this.inimigos.filter(v => v.kind === 'vicio' && v.hp > 0 && Math.hypot(v.x - p.x, v.y - p.y) < 190)[0]; if (e) { q.alvo = e; q.mordida = 0.22; q.cd = 2.6; sfx('swing'); } }
       if (q.late <= 0) { q.late = 3.5; const N = this.N, tx = Math.floor(p.x / T), ty = Math.floor(p.y / T); for (let y = ty - 4; y <= ty + 2; y++) for (let x = tx - 6; x <= tx + 6; x++) { const t = tileEm(N, x, y); if ((t === OCULTO || t === FALSA) && !N.desfeita.has(y * N.w + x)) { this.textoEm(q.x, q.y - 26, 'au! au!', '#FFE9A8', 11); sfx('click'); x = 1e9; y = 1e9; } } }
@@ -915,6 +919,7 @@ export class Caminho {
     for (const ob of this.objs) {
       const dd = Math.hypot(ob.x - p.x, ob.y - 20 - (p.y - 20));
       if (ob.tipo === 'segredo' && dd < 30) { ob.fora = true; this.efeito('coleta', ob.x, ob.y - 10); this.cm.seg[this.area].push(ob.n); this.ganhar(ob.item); continue; }
+      if (ob.tipo === 'fruto' && dd < 30 && !(ob.volta > this.T)) { ob.volta = this.T + 50; sfx('coin'); this.efeito('coleta', ob.x, ob.y - 6); if (p.vida < p.vidaMax) { p.vida++; this.textoEm(p.x, p.y - 60, 'figo: +1 fôlego', '#B8E6A0', 12); } else { this.char.data.gold += 4; this.ganharOleo(12); this.textoEm(p.x, p.y - 60, 'figo: +4 denários', '#FFD23F', 12); } const st = this.char.data.stats; st.figos = (st.figos || 0) + 1; if (st.figos === 12) this.ovo('figos', 'Zaqueu subiu num sicômoro, a figueira brava (Lc 19:4). Doze figos colhidos.'); continue; }
       if (ob.tipo === 'sacola' && dd < 30) { ob.fora = true; const s = this.cm.sacola; if (s) { this.char.data.gold += s.gold; this.textoEm(p.x, p.y - 56, '+' + s.gold + ' denários recuperados', '#FFD23F'); sfx('coin'); this.cm.sacola = null; } continue; }
       const rot = this.rotulo(ob); if (rot && dd < pd) { pd = dd; perto = ob; perto.rot = rot; }
     }
@@ -933,6 +938,7 @@ export class Caminho {
       case 'saida': return 'Seguir caminho';
       case 'retorno': return 'Voltar ao Refúgio';
       case 'querubim': case 'porta-pecado': return 'Olhar';
+      case 'poco': return 'Beber';
     }
     return null;
   }
@@ -988,6 +994,7 @@ export class Caminho {
         else this.entrar('refugio', { portal: d.mundo });
         break;
       }
+      case 'poco': p.oleo = this.oleoMax(); p.vida = Math.min(p.vidaMax, p.vida + 1); sfx('heal'); this.efeito('cura', p.x, p.y); this.ui.toast('"Quem beber da água que eu lhe der nunca mais terá sede" (Jo 4:14). Azeite cheio.', 5000); break;
       case 'retorno': this.entrar('refugio', { portal: d.sem?.id || d.mundo }); break;
       case 'querubim': this.ovo('querubim', 'Um querubim e uma espada flamejante guardam o caminho da árvore da vida (Gn 3:24). Por aqui não se volta: o caminho de volta é outro.'); await this.ui.dialog({ nome: 'A leste do jardim', texto: 'A espada de fogo se revolve sem ruído. Atrás dela, um verde que você nunca viu e de que, estranhamente, sente saudade.\n\n"E pôs querubins ao oriente do jardim do Éden" (Gn 3:24).', acoes: [{ label: 'Recuar' }] }); break;
       case 'porta-pecado': await this.portaDoPecado(ob); break;

@@ -16,8 +16,8 @@ export const ARMAS = {
   lanca: { alc: 96, alt: 28, cd: 0.46, d: 1.2, len: 34, fx: 'estocada', cor: 'bronze' },
   chicote: { alc: 118, alt: 30, cd: 0.5, d: 0.95, len: 18, fx: null, cor: 'couro', chicote: true },
   cajado: { alc: 54, alt: 44, cd: 0.5, d: 1.05, len: 30, fx: 'corteFogo', cor: 'fogo', tiro: { tipo: 'fogo', v: 470, r: 8, vida: 0.75 } },
-  trombeta: { alc: 54, alt: 50, cd: 0.56, d: 0.8, len: 20, fx: 'corteSom', cor: 'som', empurra: 1.8, tiro: { tipo: 'som', v: 390, r: 9, vida: 0.44, fura: true } },
-  funda: { alc: 46, alt: 40, cd: 0.42, d: 0.95, len: 20, fx: 'corteCurto', cor: 'aco', tiro: { tipo: 'pedra', v: 640, r: 5, vida: 0.8, g: 380 } }
+  trombeta: { alc: 54, alt: 50, cd: 0.5, d: 0.9, len: 20, fx: 'corteSom', cor: 'som', empurra: 1.8, tiro: { tipo: 'som', v: 470, r: 10, vida: 0.82, fura: true } },
+  funda: { alc: 46, alt: 40, cd: 0.34, d: 1.3, len: 20, fx: 'corteCurto', cor: 'aco', tiro: { tipo: 'pedra', v: 720, r: 6, vida: 0.95, g: 300, fura: true } }
 };
 // direção do golpe → vetor (x multiplicado pela face)
 export const DIRS = { lado: [1, 0], cima: [0, -1], baixo: [0, 1], diagC: [0.72, -0.7], diagB: [0.72, 0.7], rasteira: [1, 0] };
@@ -109,7 +109,8 @@ export function atualizarHeroi(G, dt) {
     const fxDe = { cima: 'cima_' + cor, diagC: 'cima_' + cor, baixo: 'baixo_' + cor, diagB: 'baixo_' + cor }[dir] || arma.fx;
     if (fxDe) G.efeito(fxDe === 'corte' && hab.espada ? 'corteLuz' : fxDe, p.x, p.y, p.face, { gruda: p, dx: dir === 'diagC' || dir === 'diagB' ? p.face * 14 : 0, dy: dir === 'baixo' || dir === 'diagB' ? 24 : dir === 'rasteira' ? 20 : 0, vel: 1.25 });
     if (arma.avanco && dir === 'lado' && p.chao) p.vx = p.face * arma.avanco * 3;
-    if (tiro) G.tiros.push({ x: p.x + p.face * ux * 16, y: p.y - 28 + uy * 14, vx: p.face * ux * tiro.v, vy: uy * tiro.v - (tiro.g ? 60 : 0), g: tiro.g || 0, r: tiro.r, r0: tiro.r, dano: G.danoBase() * arma.d, amigo: true, vida: tiro.vida, max: tiro.vida, cor: '#FFF1BE', tipo: tiro.tipo, fura: tiro.fura, basico: true });
+    if (tiro) { const n = tiro.n || 1, ang = Math.atan2(uy, ux); for (let i = 0; i < n; i++) { const b = ang + (i - (n - 1) / 2) * (tiro.leque || 0.14), cx2 = Math.cos(b), sy2 = Math.sin(b); // algumas armas atiram várias pedras em leque
+      G.tiros.push({ x: p.x + p.face * cx2 * 16, y: p.y - 28 + sy2 * 14, vx: p.face * cx2 * tiro.v, vy: sy2 * tiro.v - (tiro.g ? 60 : 0), g: tiro.g || 0, r: tiro.r, r0: tiro.r, dano: G.danoBase() * arma.d, amigo: true, vida: tiro.vida, max: tiro.vida, cor: '#FFF1BE', tipo: tiro.tipo, fura: tiro.fura, basico: true }); } }
   }
   if (p.atk) {
     const a = p.atk; a.t += dt;
@@ -118,8 +119,8 @@ export function atualizarHeroi(G, dt) {
       const alc = arma.alc, f = a.face; let cx, cy, w, h;
       if (a.dir === 'lado') { cx = p.x + f * (alc / 2 + 2); cy = p.y - 28; w = alc + 16; h = arma.alt + 16; }
       else if (a.dir === 'rasteira') { cx = p.x + f * (alc / 2 + 4); cy = p.y - 11; w = alc * 1.1; h = 22; }
-      else if (a.dir === 'cima') { cx = p.x; cy = p.y - 44 - alc / 2; w = arma.alt + 28; h = alc + 18; }
-      else if (a.dir === 'baixo') { h = alc + 40; cx = p.x; cy = p.y - 22 + h / 2; w = Math.max(arma.alt + 34, 76); }
+      else if (a.dir === 'cima') { h = alc + 52; cx = p.x; cy = p.y - 30 - h / 2; w = arma.alt + 44; }
+      else if (a.dir === 'baixo') { h = alc + 70; cx = p.x; cy = p.y - 26 + h / 2; w = Math.max(arma.alt + 46, 92); }
       else if (a.dir === 'diagC') { cx = p.x + f * alc * 0.5; cy = p.y - 50 - alc * 0.28; w = h = alc * 1.05 + 12; }
       else { cx = p.x + f * alc * 0.46; cy = p.y + alc * 0.2; w = h = alc * 1.05 + 16; }
       const r = G.golpear({ x: cx - w / 2, y: cy - h / 2, w, h }, G.danoBase() * arma.d, a);

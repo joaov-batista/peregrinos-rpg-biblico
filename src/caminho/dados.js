@@ -22,9 +22,11 @@ export const ARMADURA = {
 // Armas à venda no armeiro: duas por vocação, cada uma muda o jeito de lutar (os valores substituem os da arma de base)
 export const ARMAS_ALT = {
   espada: { curta: { nome: 'Espada curta de Eúde', ref: 'Juízes 3:16', preco: 320, desc: 'Curta e muito rápida: menos alcance, golpes em sequência.', alc: 46, cd: 0.24, d: 0.78 }, montante: { nome: 'Espada de Golias', ref: '1 Samuel 21:9', preco: 560, desc: 'Lenta e pesada: alcance enorme e golpe que empurra.', alc: 88, alt: 54, cd: 0.56, d: 1.65, empurra: 1.8 } },
-  funda: { cajadoPastor: { nome: 'Funda de couro trançado', ref: '1 Samuel 17:40', preco: 300, desc: 'Pedras mais rápidas e retas, que voam mais longe.', tiro: { tipo: 'pedra', v: 840, r: 5, vida: 1, g: 160 }, cd: 0.46 }, saraiva: { nome: 'Funda dos benjamitas', ref: 'Juízes 20:16', preco: 540, desc: 'Atira mais depressa, com pedras mais leves.', cd: 0.26, d: 0.62 } },
+  funda: { cajadoPastor: { nome: 'Funda de couro trançado', ref: '1 Samuel 17:40', preco: 300, desc: 'Pedras mais rápidas e retas, que voam mais longe e ferem mais.', tiro: { tipo: 'pedra', v: 900, r: 6, vida: 1.1, g: 120, fura: true }, cd: 0.4, d: 1.55 },
+    saraiva: { nome: 'Funda dos benjamitas', ref: 'Juízes 20:16', preco: 540, desc: 'Três pedras de uma vez, em leque.', tiro: { tipo: 'pedra', v: 700, r: 5, vida: 0.9, g: 300, n: 3, leque: 0.16, fura: true }, cd: 0.4, d: 0.8 },
+    cinco: { nome: 'As cinco pedras do ribeiro', ref: '1 Samuel 17:40', preco: 900, desc: 'Cinco pedras a cada lance. Mais lenta, mas cobre a sala.', tiro: { tipo: 'pedra', v: 680, r: 5, vida: 0.95, g: 260, n: 5, leque: 0.15, fura: true }, cd: 0.56, d: 0.72 } },
   cajado: { brasa: { nome: 'Cajado de brasa viva', ref: 'Isaías 6:6', preco: 340, desc: 'Fogo lento e grande, que atravessa os adversários.', tiro: { tipo: 'fogo', v: 300, r: 13, vida: 1.1, fura: true }, cd: 0.62, d: 1.25 }, vara: { nome: 'Vara de amendoeira', ref: 'Jeremias 1:11', preco: 520, desc: 'Fagulhas rápidas e fracas, uma atrás da outra.', tiro: { tipo: 'fogo', v: 620, r: 5, vida: 0.6 }, cd: 0.27, d: 0.62 } },
-  trombeta: { shofar: { nome: 'Shofar de carneiro', ref: 'Josué 6:5', preco: 330, desc: 'A onda vai mais longe e empurra com mais força.', tiro: { tipo: 'som', v: 480, r: 9, vida: 0.62, fura: true }, empurra: 2.6, cd: 0.6 }, prata: { nome: 'Trombeta de prata', ref: 'Números 10:2', preco: 520, desc: 'Toques curtos e rápidos, de perto.', tiro: { tipo: 'som', v: 360, r: 8, vida: 0.26, fura: true }, cd: 0.3, d: 0.7 } },
+  trombeta: { shofar: { nome: 'Shofar de carneiro', ref: 'Josué 6:5', preco: 330, desc: 'A onda atravessa a sala inteira e empurra com mais força.', tiro: { tipo: 'som', v: 560, r: 10, vida: 1.1, fura: true }, empurra: 2.6, cd: 0.56 }, prata: { nome: 'Trombeta de prata', ref: 'Números 10:2', preco: 520, desc: 'Toques curtos e rápidos, de meia distância.', tiro: { tipo: 'som', v: 440, r: 9, vida: 0.5, fura: true }, cd: 0.28, d: 0.7 } },
   adaga: { dupla: { nome: 'Punhais gêmeos', ref: 'Juízes 3:21', preco: 320, desc: 'Avança mais a cada golpe e fere com mais força.', avanco: 150, d: 0.6, cd: 0.28 }, espinho: { nome: 'Espinho de acácia', ref: 'Êxodo 25:10', preco: 500, desc: 'A mais rápida de todas, de alcance mínimo.', alc: 36, cd: 0.16, d: 0.42 } },
   lanca: { dardo: { nome: 'Dardo de Joabe', ref: '2 Samuel 18:14', preco: 340, desc: 'A lança vira arremesso: voa reta e atravessa.', tiro: { tipo: 'lanca', v: 700, r: 7, vida: 0.5, fura: true }, cd: 0.6, d: 1.1 }, alabarda: { nome: 'Lança de Jasobeão', ref: '1 Crônicas 11:11', preco: 560, desc: 'Muito longa e lenta: mantém todos à distância.', alc: 130, cd: 0.6, d: 1.45 } },
   chicote: { aguilhada: { nome: 'Aguilhada de Sangar', ref: 'Juízes 3:31', preco: 330, desc: 'Mais curta e mais pesada: cada estalo dói.', alc: 86, d: 1.4, cd: 0.52 }, cordas: { nome: 'Azorrague de cordas', ref: 'João 2:15', preco: 520, desc: 'Longo e veloz, para varrer a sala.', alc: 150, d: 0.8, cd: 0.36 } }
@@ -41,6 +43,7 @@ export const DONS = {
 // companheiros de caminho, vendidos caro por Noé no Refúgio
 export const PETS = {
   cachorro: { nome: 'Cão pastor', ref: 'Jó 30:1', preco: 2400, desc: 'Morde o vício mais próximo de tempos em tempos e late quando há algo escondido por perto.' },
+  leao: { nome: 'Leão de Judá (filhote)', ref: 'Gênesis 49:9', preco: 4800, desc: 'Ataca com muito mais força que o cão e, de tempos em tempos, ruge: os vícios por perto ficam atordoados.' },
   papagaio: { nome: 'Papagaio de Ofir', ref: '1 Reis 10:22', preco: 2000, desc: 'Busca denários de longe e grita "VIGIAI!" um instante antes do golpe de um chefe.' }
 };
 // melhorias da forja (Tubalcaim, "artífice de todo instrumento cortante de bronze e de ferro", Gn 4:22)
@@ -114,16 +117,19 @@ export const MUNDO = {
 const REFUGIO = [
   { papel: 'inicio', tiles: ['............................'], objs: [
     { tipo: 'ebenezer', col: 6 },
+    { tipo: 'poco', col: 16 },
     { tipo: 'npc', col: 13, id: 'velho', nome: 'Velho Peregrino', look: velho },
     { tipo: 'npc', col: 24, id: 'jumenta', nome: 'Uma jumenta', bicho: 'jumenta' },
     { tipo: 'npc', col: 10, id: 'pedro', nome: 'Simão, o pescador', look: { skin: '#A0673E', hair: '#3A2314', tunic: '#497A80', cape: 'none', style: 'cacheado', beard: true, body: 'forte' } },
     { tipo: 'morador', col: 18, vai: 3, look: { skin: '#C68B59', hair: '#6B4423', tunic: '#497A80', cape: 'none', style: 'rabo' } }, { tipo: 'ave', col: 9, lin: 16 }, { tipo: 'ave', col: 21, lin: 16 }] },
   { papel: 'vila', tiles: ['.....................=====..', '............................', '............................', '..................=====.....', '............................', '............................'], objs: [
+    { tipo: 'cenario', col: 8, qual: 'banca' }, { tipo: 'cenario', col: 14, qual: 'forja' },
     { tipo: 'npc', col: 8, id: 'lidia', nome: 'Lídia, vendedora de púrpura', look: lidia },
     { tipo: 'npc', col: 14, id: 'ferreiro', nome: 'Tubalcaim, o ferreiro', look: { skin: '#8A5A3A', hair: '#1E1612', tunic: '#5A4636', cape: 'none', style: 'curto', beard: true, body: 'forte' } },
-    { tipo: 'arvore', col: 23 }, { tipo: 'npc', col: 24, lin: 10, id: 'zaqueu', nome: 'Zaqueu', look: zaqueu }] },
+    { tipo: 'arvore', col: 23 }, { tipo: 'fruto', col: 20, lin: 9 }, { tipo: 'fruto', col: 22, lin: 8 }, { tipo: 'fruto', col: 25, lin: 9 }, { tipo: 'fruto', col: 26, lin: 12 }, { tipo: 'npc', col: 24, lin: 10, id: 'zaqueu', nome: 'Zaqueu', look: zaqueu }] },
   // a praça do mercado: armas, roupas e gente passando
   { papel: 'vila', tiles: ['...=====............=====...', '............................', '............................', '............................'], objs: [
+    { tipo: 'cenario', col: 6, qual: 'armas' }, { tipo: 'cenario', col: 13, qual: 'tear' }, { tipo: 'cenario', col: 20, qual: 'arca' },
     { tipo: 'npc', col: 6, id: 'armeiro', nome: 'Jael, a armeira', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5E4A3A', cape: '#713E49', style: 'trancas', body: 'forte' } },
     { tipo: 'npc', col: 13, id: 'dorcas', nome: 'Dorcas, a costureira', look: { skin: '#E3B48C', hair: '#6B4423', tunic: '#A18C61', cape: '#C8C9BC', style: 'veu' } },
     { tipo: 'morador', col: 18, vai: 5, look: { skin: '#C68B59', hair: '#3A2314', tunic: '#874D4C', cape: 'none', style: 'turbante', beard: true } },
@@ -135,6 +141,7 @@ const REFUGIO = [
   { papel: 'vila', tiles: ['..........======............', '............................', '............................'], objs: [
     { tipo: 'npc', col: 27, id: 'samuel', nome: 'Samuel, o que unge', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#D2CFBB', cape: '#55516D', style: 'longo', beard: true } },
     { tipo: 'npc', col: 4, id: 'mestre', nome: 'Benaia, mestre das provas', look: { skin: '#8A5A3A', hair: '#D9D2C5', tunic: '#343F51', cape: '#877451', style: 'curto', beard: true, body: 'forte' } },
+    { tipo: 'boneco', col: 7 }, { tipo: 'boneco', col: 16 },
     { tipo: 'portal', col: 11, area: 'treino', rotulo: 'Arena de treino' }, { tipo: 'portal', col: 20, area: 'desafio', rotulo: 'Desafio das ondas' },
     { tipo: 'morador', col: 25, vai: 2, look: { skin: '#E3B48C', hair: '#B8863B', tunic: '#686078', cape: '#394F62', style: 'longo' } }, { tipo: 'ave', col: 14, lin: 13 }] },
   { papel: 'vila', tiles: ['............................'], objs: [
