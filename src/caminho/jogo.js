@@ -628,11 +628,13 @@ export class Caminho {
     else if (tipo === 'brasas') { for (let i = -1; i <= 1; i++) this.zonas.push({ tipo: 'col', x: p.x + i * 120 + rand(-20, 20), w: 40, aviso: 1.1 + (i + 1) * 0.25, dur: 0.22, cor: '#FF5A3C', y0: oy + T, y1: oy + sala - T }); sfx('shoot'); }
     if (this.tm.deco === 'mastros' && this.def.fase && !p.morto) { // no mar de Jonas, lanças e arpões cruzam o convés na altura do peito: pule, abaixe-se com o passo rasteiro ou apare
       const lado = Math.random() < 0.5 ? -1 : 1; this.textoEm(p.x, p.y - 84, 'lanças!', '#FF8A7A', 12); sfx('swing');
-      if (this.N.barco && Math.random() < 0.6) { this.vento = { t: 2.6, f: (Math.random() < 0.5 ? -1 : 1) * 135 }; this.textoEm(p.x, p.y - 100, 'o navio aderna!', this.tm.acento, 12); }
+      if (this.N.barco && Math.random() < 0.6) { this.soprar(2.6, (Math.random() < 0.5 ? -1 : 1) * 135, 'o navio aderna!'); }
       for (let i = 0; i < 3; i++) this.tiros.push({ x: p.x - lado * (520 + i * 150), y: p.y - 30 - (i === 1 ? 44 : 0), vx: lado * 470, vy: 0, r: 7, vida: 3, cor: '#C9B48A', tipo: 'lanca', fura: true });
     }
-    else if (tipo === 'vento') { this.vento = { t: 2.4, f: -150 }; this.textoEm(p.x, p.y - 70, 'vento oriental!', this.tm.acento, 12); sfx('dodge'); }
+    else if (tipo === 'vento') { this.soprar(2.4, -150, 'vento oriental!'); sfx('dodge'); }
   }
+  // o vento empurra todos os peregrinos da área: quem sorteia avisa os outros
+  soprar(d, f, texto, remoto) { this.vento = { t: d, f }; this.textoEm(this.eu.x, this.eu.y - 96, texto, this.tm.acento, 12); if (!remoto) this.mp?.ev('vn', { d, f, tx: texto }); }
 
   // Jonas no navio: abre vãos no convés (cair no mar fere e devolve ao último chão firme) e marca a área como travessia.
   fazerBarco(N) {

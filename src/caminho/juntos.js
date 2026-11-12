@@ -297,6 +297,7 @@ export class Juntos {
       case 'qz': { const b = ini(m.b) || G.chefe; if (!b || G.ui.blocking) { this.ev('qr', { ok: null }); break; } G.perguntaDoChefe(b, m.p).then(ok => this.ev('qr', { ok })); break; }
       case 'qr': this.resp?.set(m.de, m.ok); break;
       case 'cin': G.cinema(m.id, true, true); break;
+      case 'vn': G.soprar(+m.d || 2, +m.f || 0, String(m.tx || '').slice(0, 40), true); break;
       case 'vq': if (G.ui.blocking) { this.ev('vr', { ok: null }); break; } G.ui.quiz(m.fb ? { ...m.q, fb: m.fb, tempo: 10 } : { ...m.q, tempo: 10 }, m.titulo + ' · VOTAÇÃO').then(ok => { this.ev('vr', { ok }); G.ui.toast('Voto dado. Esperando os outros…', 2500); }); break;
       case 'vr': this.resp?.set(m.de, m.ok); break;
       case 'vt': G.ui.toast('Empate na votação. Conversem: alguém precisa ceder. Votem de novo.', 4500); break;
