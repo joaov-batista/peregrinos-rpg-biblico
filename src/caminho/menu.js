@@ -132,22 +132,40 @@ export function abrirMenu(G, aba = 'inventario') {
       return out;
     }
     function mapa() {
-      const N = G.N, cv = h('canvas', { width: 560, height: 220, class: 'cm-mapa' }), g = cv.getContext('2d');
-      const s = Math.min(540 / N.cols / 30, 200 / N.rows / 17), w = 30 * s, hh = 17 * s, ox = (560 - N.cols * w) / 2, oy = (220 - N.rows * hh) / 2;
-      const pc = { x: Math.floor(G.p.x / 32 / 30), y: Math.floor(G.p.y / 32 / 17) };
+      // o mapa é a própria área em miniatura: cada bloco vira um ponto, com marcas para gente, portais, rolos e o chefe
+      const N = G.N, s = Math.max(3, Math.min(6, Math.round(840 / N.w))), topo = 16, W = N.w * s, H = N.h * s + topo * N.rows;
+      const cv = h('canvas', { width: W, height: H, class: 'cm-mapa' }), g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+      const Y = ty => Math.floor(ty / 17) * topo + topo + ty * s, pc = { x: Math.floor(G.p.x / 32 / 30), y: Math.floor((G.p.y - 2) / 32 / 17) };
+      const COR = { 1: '#3A4666', 2: '#B08A4E', 3: '#D8574A', 4: '#3A4666', 5: '#3A4666', 6: '#C9A63C', 7: '#C9A63C' };
       for (const cel of N.celulas) {
-        const x = ox + cel.cx * w, y = oy + cel.cy * hh;
-        g.fillStyle = cel.papel === 'arena' ? '#5E2A2A' : cel.papel === 'rolo' ? '#4A4326' : cel.papel === 'ebenezer' ? '#2E4A46' : '#1F2A38'; g.fillRect(x + 2, y + 2, w - 4, hh - 4);
-        g.strokeStyle = '#C9B88A'; g.lineWidth = 1.5; g.strokeRect(x + 2, y + 2, w - 4, hh - 4);
-        g.fillStyle = '#C9B88A';
-        if (cel.mask & R) g.fillRect(x + w - 3, y + hh * 0.6, 6, 5); if (cel.mask & D) g.fillRect(x + w / 2 - 3, y + hh - 3, 6, 6);
-        g.font = '14px sans-serif'; g.textAlign = 'center';
-        const ic = cel.papel === 'arena' ? '☠' : cel.papel === 'rolo' ? '📜' : cel.papel === 'ebenezer' ? '🪨' : cel.papel === 'tesouro' ? '✦' : cel.papel === 'inicio' ? '⌂' : '';
-        if (ic) g.fillText(ic, x + w / 2, y + hh / 2 + 5);
-        if (cel.nome) { g.font = '600 9px system-ui, sans-serif'; g.fillStyle = '#E9E6DC'; const pal = cel.nome.split(' '), meio = Math.ceil(pal.length / 2), l1 = pal.slice(0, pal.length > 2 ? meio : pal.length > 1 ? 1 : 1).join(' '), l2 = pal.slice(pal.length > 2 ? meio : 1).join(' '); g.fillText(l1, x + w / 2, y + hh / 2 + (l2 ? (ic ? 12 : -1) : 4)); if (l2) g.fillText(l2, x + w / 2, y + hh / 2 + (ic ? 22 : 10)); }
-        if (cel.cx === pc.x && cel.cy === pc.y) { g.strokeStyle = '#FFE9A8'; g.lineWidth = 3; g.strokeRect(x + 4, y + 4, w - 8, hh - 8); }
+        const x0 = cel.cx * 30 * s, y0 = Y(cel.cy * 17), w = 30 * s, hh = 17 * s, aqui = cel.cx === pc.x && cel.cy === pc.y;
+        g.fillStyle = cel.ceu ? '#1D2B4A' : cel.papel === 'arena' ? '#3A1C22' : cel.papel === 'ebenezer' ? '#1C3A36' : '#161C2E'; g.fillRect(x0, y0, w, hh);
+        if (cel.ceu) { g.fillStyle = '#2A3C63'; g.fillRect(x0, y0 + hh * 0.55, w, hh * 0.45); g.fillStyle = '#F1E9D2'; for (let k = 0; k < 5; k++) g.fillRect(x0 + ((cel.cx * 37 + k * 53) % (w - 2)), y0 + 2 + ((k * 17) % Math.max(1, hh * 0.4 | 0)), 1, 1); }
+        g.fillStyle = aqui ? '#FFE9A8' : '#8C93AD'; g.font = '13px "Jersey 15", monospace'; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+        const nome = cel.nome || { inicio: 'Entrada', arena: 'Chefe', ebenezer: 'Ebenézer', tesouro: 'Tesouro', corredor: 'Câmara' }[cel.papel] || '';
+        if (nome && g.measureText(nome).width < w + 20) g.fillText(nome, x0 + w / 2, y0 - 4);
       }
-      return [t(G.def.nome + ' — a sala com a borda clara é onde você está.', 'muted'), cv, t('⌂ início · 📜 rolo · 🪨 Ebenézer · ✦ tesouro · ☠ chefe', 'hint')];
+      const sala = new Set(N.celulas.map(c => c.cx + ',' + c.cy));
+      for (let ty = 0; ty < N.h; ty++) for (let tx = 0; tx < N.w; tx++) { if (!sala.has(Math.floor(tx / 30) + ',' + Math.floor(ty / 17))) continue; const tl = N.tiles[ty * N.w + tx]; if (!tl || (tl === 4 && !(N.revel?.[ty * N.w + tx] > 0)) || (tl === 6 && N.portaAberta)) continue; g.fillStyle = COR[tl]; g.fillRect(tx * s, Y(ty), s, tl === 2 ? Math.max(1, s >> 1) : s); }
+      const marca = (o, cor, lg = 2, al = 3) => { const x = Math.floor(o.x / 32) * s + (s >> 1), y = Y(o.y / 32) ; g.fillStyle = '#05060B'; g.fillRect(x - lg - 1, y - al * 2 - 1, lg * 2 + 2, al * 2 + 2); g.fillStyle = cor; g.fillRect(x - lg, y - al * 2, lg * 2, al * 2); };
+      for (const o of G.objs) {
+        if (o.tipo === 'portal' || o.tipo === 'saida' || o.tipo === 'retorno') marca(o, '#7FE0E8', 3, 4);
+        else if (o.tipo === 'npc') marca(o, '#9BE0B4', 2, 3);
+        else if (o.tipo === 'casa') marca(o, '#C9A27A', 4, 3);
+        else if (o.tipo === 'rolo') marca(o, o.feito ? '#8C93AD' : '#FFE9A8', 2, 3);
+        else if (o.tipo === 'estacao') marca(o, o.feito ? '#8C93AD' : '#F0A6D8', 2, 2);
+        else if (o.tipo === 'ebenezer') marca(o, '#F1E9D2', 2, 4);
+        else if (o.tipo === 'sacola') marca(o, '#FFD23F', 2, 2);
+      }
+      if (N.arena) marca({ x: N.arena.cx, y: N.arena.chao }, G.cm.feitas?.[G.area] ? '#8C93AD' : '#E2463C', 4, 4);
+      if (G.mp) for (const o of G.outros) marca({ x: o.corpo.x, y: o.corpo.y }, '#B8A0FF', 2, 3);
+      const eu = () => { const x = Math.floor(G.p.x / 32) * s + (s >> 1), y = Y(G.p.y / 32); g.fillStyle = '#05060B'; g.fillRect(x - 4, y - 11, 8, 11); g.fillStyle = '#fff'; g.fillRect(x - 3, y - 10, 6, 9); g.fillStyle = '#E8C873'; g.fillRect(x - 3, y - 6, 6, 5); };
+      eu();
+      const leg = (cor, tx) => h('span', {}, h('i', { style: 'background:' + cor }), tx);
+      const cx = h('div', { class: 'cm-mapa-cx' }, cv);
+      setTimeout(() => { cx.scrollLeft = Math.floor(G.p.x / 32) * s - cx.clientWidth / 2; }, 0);
+      return [t(G.def.nome + (G.def.sub ? ' · ' + G.def.sub : ''), 'muted'), cx,
+        h('div', { class: 'cm-mapa-leg' }, leg('#fff', 'você'), leg('#9BE0B4', 'gente'), leg('#7FE0E8', 'portal'), leg('#C9A27A', 'casa'), leg('#FFE9A8', 'rolo'), leg('#F1E9D2', 'Ebenézer'), leg('#E2463C', 'chefe'), leg('#B08A4E', 'plataforma'), G.mp ? leg('#B8A0FF', 'companheiro') : '')];
     }
     function biblia() {
       const out = [];

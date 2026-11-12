@@ -1,0 +1,181 @@
+/* Interfaces em pixel: letra de jogo, molduras de canto recortado, botões em bloco com sombra dura. Nada de brilho difuso,
+   canto redondo ou letra de livro: os menus têm de parecer parte do mesmo mundo do jogo. Carregado por último. */
+html.remake {
+  --font-title: 'Jersey 20', 'Pixelify Sans', monospace; --font-ui: 'Jersey 15', 'Pixelify Sans', monospace; --font-text: 'Jersey 15', 'Pixelify Sans', monospace;
+  --px-tinta: #05060B; --px-fundo: #121829; --px-fundo2: #1A2238; --px-ouro: #E8C873; --px-ouro2: #9A7B3A; --px-osso: #F1E9D2; --px-apagado: #8C93AD;
+  --muted: #8C93AD; --paper: #F1E9D2; --ink: #F1E9D2;
+  --px-moldura: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' shape-rendering='crispEdges'%3E%3Cpath fill='%2305060b' d='M2 0h14v1h1v1h1v14h-1v1h-1v1H2v-1H1v-1H0V2h1V1h1z'/%3E%3Cpath fill='%23e8c873' d='M3 1h12v1h1v1h1v12h-1v1h-1v1H3v-1H2v-1H1V3h1V2h1z'/%3E%3Cpath fill='%239a7b3a' d='M3 2h12v1h1v12h-1v1H3v-1H2V3h1z'/%3E%3Cpath fill='%2305060b' d='M3 3h12v12H3z'/%3E%3Cpath fill='%23121829' d='M4 4h10v10H4z'/%3E%3Cpath fill='%23ffe9a8' d='M2 2h2v2H2zM14 2h2v2h-2zM2 14h2v2H2zM14 14h2v2h-2z'/%3E%3C/svg%3E");
+  --px-quadro: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' shape-rendering='crispEdges'%3E%3Cpath fill='%2305060b' d='M1 0h10v1h1v10h-1v1H1v-1H0V1h1z'/%3E%3Cpath fill='%234a5a86' d='M1 1h10v10H1z'/%3E%3Cpath fill='%231a2238' d='M2 2h9v9H2z'/%3E%3Cpath fill='%23232d49' d='M2 2h8v8H2z'/%3E%3C/svg%3E");
+}
+html.remake body, html.remake button, html.remake input, html.remake select, html.remake textarea, html.remake .panel *, html.remake #screens *, html.remake .toast, html.remake #banner *, html.remake #cmTut *, html.remake #aInteract, html.remake .telas-barra, html.remake .telas-barra * { font-family: 'Jersey 15', 'Pixelify Sans', monospace !important; font-variant: normal !important; font-style: normal !important; font-weight: 400 !important; }
+html.remake .panel h3, html.remake h4, html.remake .title, html.remake .chip-btn, html.remake .tabs .tab, html.remake .btn, html.remake #cmTut b, html.remake .char-card .info b, html.remake .fase-row b, html.remake #banner b { font-family: 'Jersey 20', 'Pixelify Sans', monospace !important; }
+html.remake .logo h1 { font-family: 'Pixelify Sans', monospace !important; font-weight: 700 !important; }
+html.remake .panel, html.remake #screens { font-size: 19px; }
+html.remake canvas, html.remake .portrait { image-rendering: pixelated; }
+
+/* painéis: moldura dourada de canto recortado */
+html.remake .card, html.remake .panel, html.remake .creator { background: var(--px-fundo); border: 12px solid transparent; border-image: var(--px-moldura) 6 fill / 12px / 0 stretch; border-radius: 0; box-shadow: 0 8px 0 rgba(0, 0, 0, .45); image-rendering: pixelated; backdrop-filter: none !important; }
+html.remake .panel { padding: 12px 16px 12px; scrollbar-color: var(--px-ouro2) var(--px-tinta); }
+html.remake .modal { background: rgba(3, 4, 9, .78); background-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, .18) 0 2px, transparent 2px 4px); }
+html.remake .panel h3 { font-weight: 700; letter-spacing: .04em; text-transform: none; font-size: 28px; color: var(--px-ouro); text-shadow: 2px 2px 0 var(--px-tinta); }
+html.remake .panel h4, html.remake h4 { font-weight: 600; letter-spacing: .06em; text-transform: uppercase; font-size: 17px; color: var(--px-ouro); text-shadow: 1px 1px 0 var(--px-tinta); margin-top: 14px; }
+html.remake .p-head::after { height: 4px; background: repeating-linear-gradient(90deg, var(--px-ouro2) 0 4px, transparent 4px 8px); opacity: .8; }
+html.remake .p-head::before { display: none; }
+html.remake .muted { color: var(--px-apagado); font-weight: 500; } html.remake .hint { color: var(--px-apagado); }
+html.remake p, html.remake small, html.remake li { letter-spacing: .01em; }
+html.remake .eyebrow { letter-spacing: .12em; color: var(--px-apagado); }
+
+/* botões: bloco com luz em cima e sombra dura embaixo; afunda ao apertar */
+html.remake .btn, html.remake .x, html.remake .answer { background: #2B3653; border: 0; border-radius: 0; color: var(--px-osso); font-weight: 600; letter-spacing: .04em; text-transform: none; font-size: 20px; text-shadow: 1px 1px 0 var(--px-tinta);
+  box-shadow: inset 0 2px 0 #4A5A86, inset 0 -3px 0 #1A2238, 0 0 0 2px var(--px-tinta), 0 4px 0 2px var(--px-tinta); transition: none; margin-bottom: 4px; }
+html.remake .btn:hover:not(:disabled), html.remake .answer:hover:not(:disabled), html.remake .x:hover { background: #38466B; color: #fff; border-color: transparent; box-shadow: inset 0 2px 0 #6276AE, inset 0 -3px 0 #232D49, 0 0 0 2px var(--px-ouro), 0 4px 0 2px var(--px-tinta); filter: none; }
+html.remake .btn:active:not(:disabled), html.remake .answer:active:not(:disabled), html.remake .x:active { transform: translateY(3px); background: #232D49; box-shadow: inset 0 2px 0 #1A2238, 0 0 0 2px var(--px-tinta), 0 1px 0 2px var(--px-tinta); }
+html.remake .btn.gold { background: #D9A93C; color: #1E1508; text-shadow: 1px 1px 0 #FFE9A8; box-shadow: inset 0 2px 0 #FFE08A, inset 0 -3px 0 #9A6A1C, 0 0 0 2px var(--px-tinta), 0 4px 0 2px var(--px-tinta); }
+html.remake .btn.gold::before, html.remake .btn.gold::after { display: none; }
+html.remake .btn.gold:hover:not(:disabled) { background: #EDC055; color: #1E1508; box-shadow: inset 0 2px 0 #FFF0B8, inset 0 -3px 0 #9A6A1C, 0 0 0 2px #fff, 0 4px 0 2px var(--px-tinta); }
+html.remake .btn.danger { background: #8A2E2E; color: #FFD9D0; box-shadow: inset 0 2px 0 #C05048, inset 0 -3px 0 #561A1A, 0 0 0 2px var(--px-tinta), 0 4px 0 2px var(--px-tinta); }
+html.remake .btn.on { background: #38466B; box-shadow: inset 0 2px 0 #6276AE, inset 0 -3px 0 #232D49, 0 0 0 2px var(--px-ouro), 0 4px 0 2px var(--px-tinta); color: #fff; }
+html.remake .btn:disabled, html.remake .answer:disabled { opacity: .45; }
+html.remake .btn.link, html.remake button.link { background: none; box-shadow: none; color: var(--px-apagado); text-decoration: underline; text-shadow: none; margin-bottom: 0; }
+html.remake .btn.install { background: #232D49; color: var(--px-osso); }
+html.remake .x { width: 34px; height: 34px; font-size: 16px; color: var(--px-osso); }
+html.remake button:focus-visible, html.remake body.pad button:focus { outline: 0; box-shadow: inset 0 2px 0 #6276AE, inset 0 -3px 0 #232D49, 0 0 0 2px #fff, 0 4px 0 2px var(--px-tinta); background: #38466B; color: #fff; }
+html.remake .btn.gold:focus-visible, html.remake body.pad .btn.gold:focus { background: #EDC055; color: #1E1508; box-shadow: inset 0 2px 0 #FFF0B8, inset 0 -3px 0 #9A6A1C, 0 0 0 2px #fff, 0 4px 0 2px var(--px-tinta); }
+
+/* abas: etiquetas que sobem quando escolhidas */
+html.remake .cm-menu .cm-abas { border-bottom: 4px solid var(--px-tinta); gap: 4px; padding: 0 2px; margin: 8px 0 14px; align-items: flex-end; box-shadow: 0 2px 0 var(--px-ouro2); }
+html.remake .chip-btn, html.remake .tabs .tab { background: #1A2238; border: 0; border-radius: 0; color: var(--px-apagado); font-weight: 600; letter-spacing: .03em; text-transform: none; font-size: 19px; padding: 7px 12px 6px; box-shadow: inset 0 2px 0 #2B3653, 0 0 0 2px var(--px-tinta); }
+html.remake .chip-btn:hover, html.remake .tabs .tab:hover { color: var(--px-osso); background: #232D49; }
+html.remake .chip-btn.on, html.remake .tabs .tab.on { background: var(--px-ouro); color: #1E1508; padding-bottom: 10px; box-shadow: inset 0 2px 0 #FFE9A8, 0 0 0 2px var(--px-tinta); border: 0; }
+
+/* linhas de lista e quadros do inventário */
+html.remake .fase-row { background: #1A2238; border-radius: 0; color: var(--px-osso); box-shadow: inset 0 2px 0 #2B3653, inset 0 -2px 0 #0E1322, 0 0 0 2px var(--px-tinta); margin: 4px 2px; }
+html.remake button.fase-row:hover:not(:disabled) { background: #232D49; box-shadow: inset 0 2px 0 #38466B, inset 0 -2px 0 #0E1322, 0 0 0 2px var(--px-ouro); }
+html.remake .fase-row.done, html.remake .fase-row.on { box-shadow: inset 4px 0 0 var(--px-ouro), inset 0 2px 0 #2B3653, inset 0 -2px 0 #0E1322, 0 0 0 2px var(--px-tinta); }
+html.remake .fase-row b { font-weight: 600; font-size: 21px; letter-spacing: .02em; } html.remake .fase-row small { color: var(--px-apagado); font-size: 17px; }
+html.remake .cm-menu .cm-rel.on { outline: 0; }
+html.remake .porque { background: #1A2238; box-shadow: inset 4px 0 0 var(--px-ouro), 0 0 0 2px var(--px-tinta); color: var(--px-osso); }
+html.remake .porque b { color: var(--px-ouro); letter-spacing: .06em; font-size: 16px; }
+html.remake .inv-q { width: 56px; height: 56px; background: none; border: 6px solid transparent; border-image: var(--px-quadro) 4 fill / 6px / 0 stretch; border-radius: 0; image-rendering: pixelated; }
+html.remake .inv-q.on { box-shadow: 0 0 0 2px var(--px-ouro); border-color: transparent; }
+html.remake .inv-q.sel, html.remake .inv-q:hover { box-shadow: 0 0 0 2px #fff; background: none; border-color: transparent; filter: brightness(1.25); }
+html.remake .inv-det { border-left: 0; background: #0E1322; box-shadow: 0 0 0 2px var(--px-tinta), inset 0 0 0 2px #2B3653; padding: 14px 16px; }
+html.remake .inv-det p { font-size: 20px; line-height: 1.45; }
+
+/* conversas e perguntas */
+html.remake .modal:has(> .panel > .dlg-text) { background: linear-gradient(180deg, transparent 40%, rgba(3, 4, 9, .8)); }
+html.remake .panel:has(> .dlg-text) { text-align: left; padding: 10px 18px 10px; }
+html.remake .dlg-head { justify-content: flex-start; gap: 12px; } html.remake .dlg-head::after { left: 0; right: 0; height: 4px; background: repeating-linear-gradient(90deg, var(--px-ouro2) 0 4px, transparent 4px 8px); }
+html.remake .dlg-head h3 { font-size: 25px; letter-spacing: .04em; color: var(--px-ouro); text-shadow: 2px 2px 0 var(--px-tinta); }
+html.remake .dlg-text { font-size: 23px; line-height: 1.35; text-align: left; color: var(--px-osso); }
+html.remake .portrait { border-radius: 0; background: #0E1322; box-shadow: 0 0 0 2px var(--px-tinta), 0 0 0 4px var(--px-ouro2), 0 0 0 6px var(--px-tinta); }
+html.remake .panel:has(> .answers) h3 { font-size: 25px; font-weight: 600; letter-spacing: .01em; color: var(--px-osso); line-height: 1.35; }
+html.remake .answer { font-size: 21px; font-weight: 500; text-align: left; min-height: 50px; }
+html.remake .answer.right { background: #2E6B48; color: #E2FFE9; box-shadow: inset 0 2px 0 #4FA06E, inset 0 -3px 0 #1C4530, 0 0 0 2px var(--px-tinta), 0 4px 0 2px var(--px-tinta); }
+html.remake .answer.wrong { background: #8A2E2E; color: #FFE0DA; box-shadow: inset 0 2px 0 #C05048, inset 0 -3px 0 #561A1A, 0 0 0 2px var(--px-tinta), 0 4px 0 2px var(--px-tinta); }
+html.remake .quiz-tempo { height: 8px; background: var(--px-tinta); box-shadow: 0 0 0 2px var(--px-tinta), 0 0 0 4px var(--px-ouro2); margin: 12px 4px 8px; }
+html.remake .quiz-tempo i { background: repeating-linear-gradient(90deg, #FFD23F 0 6px, #E8A52A 6px 8px); }
+
+/* avisos, dica de ação, tutorial, campos */
+html.remake .toast { background: var(--px-fundo); color: var(--px-osso); border: 0; box-shadow: 0 0 0 2px var(--px-tinta), 0 0 0 4px var(--px-ouro2), 0 0 0 6px var(--px-tinta), 0 6px 0 4px rgba(0, 0, 0, .4); font-size: 19px; font-weight: 500; letter-spacing: .01em; }
+html.remake #aInteract { background: var(--px-ouro); color: #1E1508; border: 0; border-radius: 0; box-shadow: inset 0 2px 0 #FFE9A8, inset 0 -3px 0 #9A6A1C, 0 0 0 2px var(--px-tinta), 0 4px 0 2px var(--px-tinta); letter-spacing: .03em; text-transform: none; font-weight: 700; }
+html.remake input, html.remake select, html.remake textarea { background: #0A0D18; color: var(--px-osso); border: 0; border-radius: 0; box-shadow: inset 0 3px 0 #05060B, 0 0 0 2px var(--px-tinta), 0 0 0 4px #2B3653; }
+html.remake input:focus, html.remake select:focus { outline: 0; box-shadow: inset 0 3px 0 #05060B, 0 0 0 2px var(--px-tinta), 0 0 0 4px var(--px-ouro); }
+html.remake label { color: var(--px-apagado); letter-spacing: .04em; }
+#cmTut { background: var(--px-fundo); border: 0; box-shadow: 0 0 0 2px var(--px-tinta), 0 0 0 4px var(--px-ouro2), 0 0 0 6px var(--px-tinta), 0 6px 0 4px rgba(0, 0, 0, .4); }
+#cmTut small { letter-spacing: .1em; } #cmTut b { letter-spacing: .04em; color: var(--px-ouro); text-shadow: 2px 2px 0 var(--px-tinta); text-transform: none; font-size: 26px; }
+#cmTut .kbd { border-radius: 0; border: 0; background: #2B3653; color: #FFE9A8; box-shadow: inset 0 2px 0 #4A5A86, inset 0 -3px 0 #1A2238, 0 0 0 2px var(--px-tinta); }
+#cmTut u { height: 4px; }
+html.remake body.caminho #cmMenu { border-radius: 0; border: 0; background: #2B3653; box-shadow: inset 0 2px 0 #4A5A86, inset 0 -3px 0 #1A2238, 0 0 0 2px var(--px-tinta); }
+html.remake body.caminho.touch #actions .act:not(#aInteract) { border-radius: 10px; background: rgba(18, 24, 41, .72); border: 0; box-shadow: inset 0 2px 0 rgba(120, 140, 190, .5), inset 0 -3px 0 rgba(5, 6, 11, .6), 0 0 0 2px var(--px-tinta); }
+html.remake body.caminho.touch #actions .act.lg { background: rgba(217, 169, 60, .5); box-shadow: inset 0 2px 0 rgba(255, 233, 168, .7), inset 0 -3px 0 rgba(90, 60, 10, .6), 0 0 0 2px var(--px-tinta); }
+html.remake body.caminho.touch #actions .act.down { transform: translateY(2px); filter: brightness(1.4); }
+
+/* tela inicial: título em bloco, menu com seta */
+html.remake .logo h1 { font-weight: 700; letter-spacing: .08em; padding-left: .08em; font-size: clamp(38px, 8.4vw, 88px); color: #FFE9A8 !important; text-shadow: 0 4px 0 #9A6A1C, 0 8px 0 var(--px-tinta), 4px 4px 0 var(--px-tinta), -4px 4px 0 var(--px-tinta), 4px -2px 0 var(--px-tinta), -4px -2px 0 var(--px-tinta) !important; filter: none; }
+html.remake .floreio { filter: none; color: var(--px-ouro); image-rendering: pixelated; margin-top: 14px; } html.remake .floreio svg { shape-rendering: crispEdges; }
+html.remake .logo p { color: var(--px-osso); letter-spacing: .3em; padding-left: .3em; font-size: 20px; text-shadow: 2px 2px 0 var(--px-tinta); }
+html.remake .week { color: var(--px-apagado); font-size: 19px; text-shadow: 1px 1px 0 var(--px-tinta); } html.remake .week b { color: var(--px-osso); }
+html.remake .abertura .btn, html.remake .abertura .btn.gold, html.remake .abertura .btn.install { font-size: 27px !important; letter-spacing: .04em; color: #C9CCDA !important; text-shadow: 2px 2px 0 var(--px-tinta) !important; min-height: 40px; margin-bottom: 0; transform: none !important; }
+html.remake .abertura .btn::before { content: ""; display: block; position: absolute; left: 6px; top: 50%; width: 3px; height: 3px; margin: -1px 0 0; background: #FFE9A8; box-shadow: 0 -6px #FFE9A8, 0 -3px #FFE9A8, 0 3px #FFE9A8, 0 6px #FFE9A8, 3px -3px #FFE9A8, 3px 0 #FFE9A8, 3px 3px #FFE9A8, 6px 0 #FFE9A8; opacity: 0; transition: none; transform: none; }
+html.remake .abertura .btn::after { display: none; }
+html.remake .abertura .btn:hover:not(:disabled), html.remake .abertura .btn:focus-visible, html.remake body.pad .abertura .btn:focus { color: #FFE9A8 !important; text-shadow: 2px 2px 0 var(--px-tinta) !important; }
+html.remake .abertura .btn:hover::before, html.remake .abertura .btn:focus-visible::before, html.remake body.pad .abertura .btn:focus::before { opacity: 1; animation: pxSeta .5s steps(2) infinite; }
+@keyframes pxSeta { 50% { transform: translateX(3px); } }
+html.remake .abertura .tela-div span { letter-spacing: .06em; font-size: 18px; color: var(--px-apagado); } html.remake .abertura .tela-div .btn { font-size: 22px !important; }
+html.remake .title { color: var(--px-ouro) !important; font-weight: 700; letter-spacing: .06em; text-transform: none; font-size: 30px; text-shadow: 2px 2px 0 var(--px-tinta) !important; }
+html.remake #screens::after { display: none; }
+
+/* escolha do peregrino */
+html.remake #screens:not(.creating) .card.char-card { background: var(--px-fundo) !important; border: 12px solid transparent !important; border-image: var(--px-moldura) 6 fill / 12px / 0 stretch !important; border-radius: 0 !important; box-shadow: 0 8px 0 rgba(0, 0, 0, .45) !important; padding: 6px 10px; }
+html.remake .char-card:hover { filter: brightness(1.12); }
+html.remake .char-card .info b { font-weight: 700; letter-spacing: .03em; text-transform: none; font-size: 26px; color: var(--px-ouro); text-shadow: 2px 2px 0 var(--px-tinta); }
+html.remake .char-card .info small { color: var(--px-apagado); font-size: 18px; }
+html.remake #screens:not(.creating) .char-card .btn.gold { background: #D9A93C !important; color: #1E1508 !important; border: 0 !important; }
+html.remake #screens:not(.creating) .char-card .btn.sm { background: #232D49 !important; border: 0 !important; color: var(--px-apagado) !important; font-size: 16px; letter-spacing: .03em; box-shadow: inset 0 2px 0 #38466B, 0 0 0 2px var(--px-tinta); }
+html.remake .sync-conflict { border-left: 4px solid var(--px-ouro); background: #2A2210; box-shadow: 0 0 0 2px var(--px-tinta); }
+html.remake .sync-conflict b { letter-spacing: .06em; font-size: 13px; }
+
+/* mapa */
+.cm-mapa-cx { overflow-x: auto; padding: 6px; background: #0A0D18; box-shadow: 0 0 0 2px var(--px-tinta, #05060B), inset 0 0 0 2px #2B3653; }
+.cm-menu .cm-mapa { display: block; margin: 0 auto; width: auto; max-width: none; background: none; border-radius: 0; image-rendering: pixelated; }
+.cm-mapa-leg { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: 17px; color: #C9CCDA; }
+.cm-mapa-leg span { display: inline-flex; align-items: center; gap: 6px; } .cm-mapa-leg i { width: 10px; height: 10px; display: inline-block; box-shadow: 0 0 0 2px #05060B; }
+
+/* barra da tela dividida */
+.telas-barra { background: #121829; border-bottom: 4px solid #05060B; box-shadow: 0 2px 0 #9A7B3A; font-size: 17px; }
+.telas-barra button { border: 0; background: #2B3653; box-shadow: inset 0 2px 0 #4A5A86, inset 0 -3px 0 #1A2238, 0 0 0 2px #05060B; }
+
+@media (max-height: 480px) {
+  html.remake .panel { border-width: 8px; border-image-width: 8px; padding: 6px 10px; } html.remake .panel h3 { font-size: 21px; } html.remake .panel, html.remake #screens { font-size: 16px; }
+  html.remake .chip-btn { font-size: 15px; padding: 6px 8px 5px; } html.remake .chip-btn.on { padding-bottom: 8px; }
+  html.remake .btn, html.remake .answer { font-size: 17px; } html.remake .dlg-text { font-size: 19px; } html.remake .fase-row b { font-size: 17px; } html.remake .fase-row small { font-size: 14.5px; } html.remake .inv-det p { font-size: 17px; }
+  html.remake .logo h1 { font-size: clamp(28px, 14vh, 54px); text-shadow: 0 3px 0 #9A6A1C, 0 6px 0 var(--px-tinta), 3px 3px 0 var(--px-tinta), -3px 3px 0 var(--px-tinta) !important; }
+  html.remake .abertura .btn { font-size: 21px !important; min-height: 30px; } html.remake .inv-q { width: 46px; height: 46px; }
+}
+
+html.remake .muted, html.remake .hint, html.remake small { font-size: 17px; } html.remake #cmTut small { font-size: 14px; } html.remake #cmTut p { font-size: 20px; font-weight: 400; } html.remake label { font-size: 17px; }
+html.remake .inv-det small, html.remake .inv-det .muted { font-size: 16px; }
+
+/* ---------- criação do peregrino ---------- */
+html.remake .forge-screen { --gold: #E8C873; --muted: #8C93AD; --paper: #F1E9D2; }
+html.remake .forge-header { border-bottom: 4px solid var(--px-tinta); box-shadow: 0 2px 0 var(--px-ouro2); padding-bottom: 10px; }
+html.remake .forge-brand { font-size: 24px; letter-spacing: .08em; color: var(--px-ouro); text-shadow: 2px 2px 0 var(--px-tinta); }
+html.remake .forge-header-meta, html.remake .forge-footnote, html.remake .overline, html.remake .preview-kicker { font-size: 15px; letter-spacing: .1em; color: var(--px-apagado); }
+html.remake .forge-title h1 { font-family: 'Jersey 20', monospace !important; font-size: 38px; color: var(--px-osso); text-shadow: 3px 3px 0 var(--px-tinta); letter-spacing: .02em; }
+html.remake .forge-title p { font-size: 19px; color: var(--px-apagado); }
+html.remake .pilgrim-preview, html.remake .creation-panel { background: var(--px-fundo); border: 12px solid transparent; border-image: var(--px-moldura) 6 fill / 12px / 0 stretch; border-radius: 0; box-shadow: 0 8px 0 rgba(0, 0, 0, .45); }
+html.remake .preview-caption h2 { font-family: 'Jersey 20', monospace !important; font-size: 30px; color: var(--px-ouro); text-shadow: 2px 2px 0 var(--px-tinta); }
+html.remake .preview-caption p, html.remake .face-label { font-size: 17px; color: var(--px-apagado); }
+html.remake .preview-turn button, html.remake .preview-modes button, html.remake .quiet-button, html.remake .random-look, html.remake .appearance-tabs button, html.remake .ink-choices button { background: #2B3653; border: 0; border-radius: 0; color: var(--px-osso); font-size: 17px; letter-spacing: .02em; box-shadow: inset 0 2px 0 #4A5A86, inset 0 -3px 0 #1A2238, 0 0 0 2px var(--px-tinta); padding: 6px 10px; }
+html.remake .preview-turn button:hover, html.remake .preview-modes button:hover, html.remake .quiet-button:hover, html.remake .random-look:hover, html.remake .appearance-tabs button:hover, html.remake .ink-choices button:hover { background: #38466B; box-shadow: inset 0 2px 0 #6276AE, inset 0 -3px 0 #232D49, 0 0 0 2px var(--px-ouro); }
+html.remake .preview-modes button.on, html.remake .appearance-tabs button.on, html.remake .ink-choices button.on { background: var(--px-ouro); color: #1E1508; box-shadow: inset 0 2px 0 #FFE9A8, inset 0 -3px 0 #9A6A1C, 0 0 0 2px var(--px-tinta); }
+html.remake .preview-modes { border-top: 4px solid var(--px-tinta); gap: 6px; padding: 10px 6px; }
+html.remake .creation-steps { border-bottom: 4px solid var(--px-tinta); box-shadow: 0 2px 0 var(--px-ouro2); gap: 6px; padding: 8px 8px 0; }
+html.remake .creation-step { font-size: 19px; color: var(--px-apagado); background: #1A2238; border: 0; padding: 7px 12px; box-shadow: inset 0 2px 0 #2B3653, 0 0 0 2px var(--px-tinta); }
+html.remake .creation-step.active { background: var(--px-ouro); color: #1E1508; box-shadow: inset 0 2px 0 #FFE9A8, 0 0 0 2px var(--px-tinta); border: 0; }
+html.remake .creation-step.complete { color: var(--px-osso); }
+html.remake .step-number { border-radius: 0; border: 0; background: var(--px-tinta); color: var(--px-ouro); font-size: 14px; width: 22px; height: 22px; }
+html.remake .creation-step.active .step-number { background: #1E1508; color: #FFE9A8; border: 0; }
+html.remake .section-heading h2 { font-family: 'Jersey 20', monospace !important; font-size: 30px; color: var(--px-ouro); text-shadow: 2px 2px 0 var(--px-tinta); }
+html.remake .section-heading p { font-size: 18px; color: var(--px-apagado); }
+html.remake .vocation { background: #1A2238; border: 0; border-radius: 0; box-shadow: inset 0 2px 0 #2B3653, inset 0 -3px 0 #0E1322, 0 0 0 2px var(--px-tinta); padding: 8px 10px; margin: 2px; }
+html.remake .vocation:hover { background: #232D49; box-shadow: inset 0 2px 0 #38466B, inset 0 -3px 0 #0E1322, 0 0 0 2px var(--px-ouro); }
+html.remake .vocation.selected { background: #38466B; box-shadow: inset 0 2px 0 #6276AE, inset 0 -3px 0 #232D49, 0 0 0 2px var(--px-ouro), 0 0 0 4px var(--px-tinta); }
+html.remake .vocation-label b { font-family: 'Jersey 20', monospace !important; font-size: 21px; color: var(--px-osso); } html.remake .vocation-label small { font-size: 16px; color: var(--px-apagado); }
+html.remake .vocation.selected .vocation-label b { color: #FFE9A8; }
+html.remake .vocation-emblem { border-radius: 0; border: 0; background: var(--px-tinta); box-shadow: 0 0 0 2px #2B3653; color: var(--px-ouro); }
+html.remake .vocation-detail { border-top: 4px dotted var(--px-ouro2); } html.remake .vocation-detail h3 { font-family: 'Jersey 20', monospace !important; font-size: 23px; color: var(--px-ouro); } html.remake .vocation-detail p, html.remake .vocation-skill, html.remake .vocation-skill small, html.remake .vocation-detail-top > span { font-size: 17px; }
+html.remake .forge-primary { background: #D9A93C; color: #1E1508; border: 0; border-radius: 0; font-family: 'Jersey 20', monospace !important; font-size: 22px; letter-spacing: .03em; text-shadow: 1px 1px 0 #FFE9A8; box-shadow: inset 0 2px 0 #FFE08A, inset 0 -3px 0 #9A6A1C, 0 0 0 2px var(--px-tinta), 0 4px 0 2px var(--px-tinta); }
+html.remake .forge-primary:hover:not(:disabled) { background: #EDC055; box-shadow: inset 0 2px 0 #FFF0B8, inset 0 -3px 0 #9A6A1C, 0 0 0 2px #fff, 0 4px 0 2px var(--px-tinta); filter: none; transform: none; }
+html.remake .forge-primary:active:not(:disabled) { transform: translateY(3px); box-shadow: inset 0 2px 0 #9A6A1C, 0 0 0 2px var(--px-tinta), 0 1px 0 2px var(--px-tinta); }
+html.remake .forge-primary:disabled { opacity: .45; }
+html.remake .creation-footer { border-top: 4px solid var(--px-tinta); }
+html.remake .appearance-field legend { font-size: 17px; color: var(--px-ouro); letter-spacing: .06em; }
+html.remake .ink-swatch { border-radius: 0; border: 0; box-shadow: 0 0 0 2px var(--px-tinta), 0 0 0 4px #2B3653; }
+html.remake .ink-swatch.on { box-shadow: 0 0 0 2px var(--px-tinta), 0 0 0 4px #fff; }
+html.remake .name-field input { font-size: 26px !important; padding: 10px 12px; } html.remake .name-help, html.remake .creator-message, html.remake .journey-note, html.remake .journey-summary > p { font-size: 17px; }
+html.remake .journey-summary h3 { font-family: 'Jersey 20', monospace !important; font-size: 24px; color: var(--px-ouro); }
+html.remake .starting-stats > div, html.remake .starting-gear { border-radius: 0; border: 0; background: #1A2238; box-shadow: 0 0 0 2px var(--px-tinta); font-size: 17px; } html.remake .starting-stats b, html.remake .starting-gear b { font-size: 20px; color: var(--px-osso); } html.remake .starting-gear small { font-size: 15px; }
+html.remake .pilgrim-canvas { image-rendering: pixelated; }
+html.remake .cm-menu .cm-ico { filter: none; opacity: 1; width: auto; min-width: 38px; white-space: nowrap; font-size: 20px; color: var(--px-ouro); font-family: 'Jersey 20', monospace !important; }

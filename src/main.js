@@ -12,6 +12,7 @@ import { Game } from './game/game.js';
 import { Caminho } from './caminho/jogo.js';
 import './caminho/caminho.css';
 import './remake.css';
+import './pixel-ui.css';
 import { createHud } from './ui/hud.js';
 import { showAuth, showSelect, showCreator, hideScreens } from './ui/screens.js';
 
