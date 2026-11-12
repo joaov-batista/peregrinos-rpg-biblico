@@ -71,3 +71,6 @@ body.caminho.touch #actions .act:not(#aInteract)::before { content: attr(data-na
 .gr-linha span { text-align: center; font-size: 13.5px; } .gr-cor { justify-self: center; width: 46px; height: 22px; border: 1px solid rgba(222, 226, 238, .4); }
 @media (max-width: 640px) { .gr { grid-template-columns: 1fr; justify-items: center; } }
 .pesca-cv { width: 100%; max-width: 620px; display: block; margin: 8px auto; image-rendering: pixelated; border: 1px solid rgba(222, 226, 238, .2); touch-action: none; }
+/* ícones em pixel: sem o filtro cinza que os emojis usavam */
+.inv-q span:has(canvas), .cm-ico:has(canvas) { filter: none !important; opacity: 1 !important; display: grid; place-items: center; }
+.inv-q.falta span { opacity: .5; }

@@ -16,6 +16,7 @@ import { CLASSES } from '../data/classes.js';
 import { ENEMIES, BOSSES } from '../data/bestiary.js';
 import { VICIOS } from './bichos.js';
 import { quadroVicio } from './pixel/viciospx.js';
+import { iconeItem } from './pixel/icones.js';
 import { quadroChefe } from './pixel/chefespx.js';
 import { CHEFES } from './chefes.js';
 
@@ -81,15 +82,15 @@ export function abrirMenu(G, aba = 'inventario') {
       const sec = (titulo, itens) => grade.append(h('h4', {}, titulo), h('div', { class: 'inv-linha' }, ...itens));
       const fio = cm.fio || 0;
       sec('Arma e bolsa', [
-        quadro('⚔', true, true, () => mostra((cls.nome || 'Peregrino') + ' · ' + (cls.arma || 'espada'), fio ? FORJA[fio - 1].nome : 'Fio comum', (fio ? FORJA[fio - 1].desc : 'Tubalcaim, no Refúgio, pode melhorar o fio da sua arma.') + '\n\nEspecial: ' + (cls.skill?.nome || 'Verso') + '.')),
-        quadro('◉', true, false, () => mostra('Denários', Math.floor(c.data.gold) + ' na bolsa', 'Caem dos vícios e dos vasos. Se você cair, a sacola fica no chão até você buscá-la.')),
-        quadro('✦', cm.mana > 0, false, () => mostra('Maná escondido', cm.mana + ' porções', 'A cada três porções, um fôlego a mais (Ap 2:17).')),
-        quadro('●', cm.pedras > 0, false, () => mostra('Pedras lisas do ribeiro', cm.pedras + ' de 5', 'Com as cinco, o Vale de Elá se abre (1Sm 17:40).'))]);
-      sec('Armadura de Deus · ' + Object.keys(cm.hab).length + ' de 6', Object.values(ARMADURA).map(a => quadro(a.icone, cm.hab[a.hab], cm.hab[a.hab], () => mostra(a.nome, a.ref, cm.hab[a.hab] ? a.poder + '\n\n' + a.desc : 'Ainda não é sua. Um chefe de Corinto a guarda.'))));
+        quadro(iconeItem('arma'), true, true, () => mostra((cls.nome || 'Peregrino') + ' · ' + (cls.arma || 'espada'), fio ? FORJA[fio - 1].nome : 'Fio comum', (fio ? FORJA[fio - 1].desc : 'Tubalcaim, no Refúgio, pode melhorar o fio da sua arma.') + '\n\nEspecial: ' + (cls.skill?.nome || 'Verso') + '.')),
+        quadro(iconeItem('denarios'), true, false, () => mostra('Denários', Math.floor(c.data.gold) + ' na bolsa', 'Caem dos vícios e dos vasos. Se você cair, a sacola fica no chão até você buscá-la.')),
+        quadro(iconeItem('mana'), cm.mana > 0, false, () => mostra('Maná escondido', cm.mana + ' porções', 'A cada três porções, um fôlego a mais (Ap 2:17).')),
+        quadro(iconeItem('pedras'), cm.pedras > 0, false, () => mostra('Pedras lisas do ribeiro', cm.pedras + ' de 5', 'Com as cinco, o Vale de Elá se abre (1Sm 17:40).'))]);
+      sec('Armadura de Deus · ' + Object.keys(cm.hab).length + ' de 6', Object.values(ARMADURA).map(a => quadro(iconeItem(a.hab), cm.hab[a.hab], cm.hab[a.hab], () => mostra(a.nome, a.ref, cm.hab[a.hab] ? a.poder + '\n\n' + a.desc : 'Ainda não é sua. Um chefe de Corinto a guarda.'))));
       const usar = id => { const R = RELIQUIAS[id], on = cm.eq.includes(id); if (R.passiva) return; if (on) cm.eq.splice(cm.eq.indexOf(id), 1); else if (cm.eq.length < G.espacos()) cm.eq.push(id); else return G.ui.toast('Sem espaço: guarde outra relíquia primeiro.'); G.p.vidaMax = G.vidaMax(); G.p.vida = Math.min(G.p.vida, G.p.vidaMax); G.salvar(); desenha(); };
       const ds = cm.dons || {};
-      sec('Dons · Q usa o escolhido', Object.entries(DONS).map(([id, d]) => { const tem = G.temDom(id), n = ds[id] || 0; return quadro(id === 'tornado' ? '🔥' : id === 'raios' ? '⚡' : id === 'enchente' ? '🌊' : id === 'vento' ? '🌪' : '🕊', tem || n > 0, cm.dom === id, () => mostra(d.nome, d.ref + (tem ? (cm.dom === id ? ' · escolhido' : '') : d.partes > 1 ? ' · ' + n + ' de ' + d.partes + ' metades' : d.exige ? ' · falta ' + [...d.exige.filter(x => !G.temDom(x)).map(x => DONS[x].nome), ...(ds.lingua ? [] : ['a Língua de Fogo'])].join(', ') : ' · ainda não é seu'), d.desc, tem ? h('button', { class: 'btn', onclick: () => { cm.dom = id; G.salvar(); desenha(); } }, 'Escolher') : '')); }));
-      sec('Relíquias · ' + cm.eq.length + ' de ' + G.espacos() + ' vestidas', cm.reliquias.length ? cm.reliquias.map(id => { const R = RELIQUIAS[id], on = cm.eq.includes(id) || R.passiva; return quadro(R.icone, true, on, () => mostra(R.nome, R.ref + (R.passiva ? ' · sempre ativa' : on ? ' · vestida' : ' · guardada'), R.desc, R.passiva ? '' : h('button', { class: 'btn', onclick: () => usar(id) }, cm.eq.includes(id) ? 'Guardar' : 'Vestir')), () => usar(id)); }) : [h('p', { class: 'muted' }, 'Nenhuma ainda. Vêm dos chefes de Jonas e de Daniel, dos gigantes, da Lídia e, às vezes, do Mercador.')]);
+      sec('Dons · Q usa o escolhido', Object.entries(DONS).map(([id, d]) => { const tem = G.temDom(id), n = ds[id] || 0; return quadro(iconeItem(id), tem || n > 0, cm.dom === id, () => mostra(d.nome, d.ref + (tem ? (cm.dom === id ? ' · escolhido' : '') : d.partes > 1 ? ' · ' + n + ' de ' + d.partes + ' metades' : d.exige ? ' · falta ' + [...d.exige.filter(x => !G.temDom(x)).map(x => DONS[x].nome), ...(ds.lingua ? [] : ['a Língua de Fogo'])].join(', ') : ' · ainda não é seu'), d.desc, tem ? h('button', { class: 'btn', onclick: () => { cm.dom = id; G.salvar(); desenha(); } }, 'Escolher') : '')); }));
+      sec('Relíquias · ' + cm.eq.length + ' de ' + G.espacos() + ' vestidas', cm.reliquias.length ? cm.reliquias.map(id => { const R = RELIQUIAS[id], on = cm.eq.includes(id) || R.passiva; return quadro(iconeItem(id), true, on, () => mostra(R.nome, R.ref + (R.passiva ? ' · sempre ativa' : on ? ' · vestida' : ' · guardada'), R.desc, R.passiva ? '' : h('button', { class: 'btn', onclick: () => usar(id) }, cm.eq.includes(id) ? 'Guardar' : 'Vestir')), () => usar(id)); }) : [h('p', { class: 'muted' }, 'Nenhuma ainda. Vêm dos chefes de Jonas e de Daniel, dos gigantes, da Lídia e, às vezes, do Mercador.')]);
       mostra(c.name + ' · nível ' + c.level, 'Fôlegos ' + G.p.vida + '/' + G.p.vidaMax + ' · azeite ' + Math.round(G.p.oleo) + '/' + G.oleoMax(), 'Escolha um quadro para ver o que ele faz. Toque duas vezes numa relíquia para vestir ou guardar.');
       return [h('div', { class: 'inv' }, grade, det)];
     }
@@ -212,16 +213,16 @@ export function loja(G) {
     p.classList.add('cm-menu');
     const lista = h('div', {});
     const desenha = () => {
-      lista.replaceChildren(h('p', { class: 'muted' }, 'Você tem ◉ ' + Math.floor(c.data.gold) + ' denários.'));
+      lista.replaceChildren(h('p', { class: 'muted' }, 'Você tem ' + Math.floor(c.data.gold) + ' denários.'));
       for (const [id, r] of Object.entries(RELIQUIAS)) {
         if (!r.preco) continue;
         const tem = cm.reliquias.includes(id);
         lista.append(h('button', { class: 'fase-row cm-rel' + (tem ? ' on' : ''), disabled: tem || c.data.gold < r.preco, onclick: () => { c.data.gold -= r.preco; cm.reliquias.push(id); if (cm.eq.length < G.espacos()) cm.eq.push(id); sfx('coin'); G.salvar(); desenha(); } },
-          h('span', { class: 'cm-ico' }, r.icone), h('div', {}, h('b', {}, r.nome + (tem ? ' ✓' : ' — ◉ ' + r.preco)), h('small', {}, r.desc + ' · ' + r.ref))));
+          h('span', { class: 'cm-ico' }, iconeItem(id, 26)), h('div', {}, h('b', {}, r.nome + (tem ? ' (seu)' : ' — ' + r.preco + ' denários')), h('small', {}, r.desc + ' · ' + r.ref))));
       }
       const preco = 150 + cm.mana * 60;
       lista.append(h('button', { class: 'fase-row cm-rel', disabled: c.data.gold < preco || (cm.manaLoja || 0) >= 3, onclick: () => { c.data.gold -= preco; cm.manaLoja = (cm.manaLoja || 0) + 1; close(); G.ganhar('mana'); } },
-        h('span', { class: 'cm-ico' }, '🍯'), h('div', {}, h('b', {}, 'Porção de maná — ◉ ' + preco), h('small', {}, (cm.manaLoja || 0) >= 3 ? 'Acabou. O resto está escondido pelo caminho.' : 'A cada três porções, um fôlego a mais. (' + (3 - (cm.manaLoja || 0)) + ' à venda)'))));
+        h('span', { class: 'cm-ico' }, iconeItem('mana', 26)), h('div', {}, h('b', {}, 'Porção de maná — ' + preco + ' denários'), h('small', {}, (cm.manaLoja || 0) >= 3 ? 'Acabou. O resto está escondido pelo caminho.' : 'A cada três porções, um fôlego a mais. (' + (3 - (cm.manaLoja || 0)) + ' à venda)'))));
     };
     p.append(h('div', { class: 'p-head' }, h('h3', {}, 'Lídia, vendedora de púrpura'), h('button', { class: 'x', onclick: () => close(), 'aria-label': 'Fechar' }, '✕')),
       h('p', {}, '"O Senhor lhe abriu o coração" (At 16:14). Minha casa é sua casa, peregrino. O que posso lhe oferecer para o caminho?'), lista);
