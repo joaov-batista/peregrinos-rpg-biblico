@@ -615,11 +615,14 @@ export class Caminho {
 
   // o clima da área também joga: ondas no convés (Jn 1:4), brasas no tribunal, o vento oriental (Jn 4:8)
   clima(dt) {
-    const p = this.p, tipo = this.tm.perigo;
+    let p = this.p; const tipo = this.tm.perigo;
     if (this.vento) { this.vento.t -= dt; if (!p.morto && p.dashT <= 0) p.x += this.vento.f * dt * (p.chao ? 0.55 : 1) * (p.lamp ? 0.4 : 1); if (Math.random() < dt * 40) this.parts.push({ x: p.x + rand(200, 520), y: p.y - rand(0, 300), vx: this.vento.f * 4, vy: rand(-20, 20), t: 0.6, max: 0.6, r: 1.6, cor: this.tm.acento, g: 0 }); if (this.vento.t <= 0) this.vento = null; }
     if ((!tipo && this.tm.deco !== 'mastros') || (this.luta && this.def.mundo !== 'leviata') || this.venceu || p.morto || this.def.paz || this.def.extra) return; // no barco do Leviatã o mar e as lanças não param
+    // em grupo, só o dono da área sorteia o clima: uma rajada só para todos (os outros a recebem pela rede), mirada num peregrino qualquer
+    if (this.mp?.acompanhado() && !this.souDono()) return;
     this.climaT = (this.climaT ?? 6) - dt; if (this.climaT > 0) return;
     this.climaT = this.tm.deco === 'mastros' || this.def.mundo === 'leviata' ? rand(4.5, 7) : rand(8, 12);
+    if (this.mp?.acompanhado()) { const vivos = [this.eu, ...this.mp.naArea().map(o => o.h)].filter(h => !h.morto); if (vivos.length) p = vivos[Math.floor(Math.random() * vivos.length)]; }
     const sala = CH * T, ox = Math.floor(p.x / (CW * T)) * CW * T, oy = Math.floor((p.y - 2) / sala) * sala;
     if (tipo === 'onda') { this.zonas.push({ tipo: 'faixa', x: ox + T, w: (CW - 2) * T, y: oy + sala - T - 30, h: 30, aviso: 1.3, dur: 0.35, cor: '120,210,245', baixo: true }); sfx('swing'); }
     else if (tipo === 'brasas') { for (let i = -1; i <= 1; i++) this.zonas.push({ tipo: 'col', x: p.x + i * 120 + rand(-20, 20), w: 40, aviso: 1.1 + (i + 1) * 0.25, dur: 0.22, cor: '#FF5A3C', y0: oy + T, y1: oy + sala - T }); sfx('shoot'); }
