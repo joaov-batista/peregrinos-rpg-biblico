@@ -132,3 +132,29 @@ html.remake .card.auth { background: rgba(7, 8, 14, .6); backdrop-filter: blur(3
 html.remake .logo .cross { display: none; }
 html.remake #ceu { image-rendering: pixelated; }
 @media (max-width: 560px) { html.remake .char-card { flex-wrap: wrap; } html.remake .char-card .col { width: 100%; } }
+
+/* ---------- abertura: título que brilha, floreio e menu em lista (sem caixas) ---------- */
+html.remake #screens::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .05) 38%, transparent 46%), linear-gradient(80deg, transparent 52%, rgba(255, 255, 255, .04) 60%, transparent 68%), linear-gradient(95deg, transparent 12%, rgba(255, 255, 255, .03) 18%, transparent 26%), radial-gradient(ellipse at 50% 40%, transparent 30%, rgba(2, 3, 6, .5) 100%); }
+html.remake .logo h1 { font-weight: 600; letter-spacing: .2em; padding-left: .2em; font-size: clamp(34px, 7.4vw, 78px); color: #fff !important; text-shadow: 0 0 12px rgba(255, 255, 255, .75), 0 0 38px rgba(210, 225, 255, .45), 0 0 90px rgba(180, 200, 255, .3); }
+html.remake .logo h1::after { display: none; }
+html.remake .floreio { color: #fff; margin: 6px auto 0; filter: drop-shadow(0 0 6px rgba(255, 255, 255, .7)); line-height: 0; }
+html.remake .floreio svg { width: min(360px, 70vw); height: auto; }
+html.remake .logo p { color: #C9CCDA; letter-spacing: .6em; padding-left: .6em; font-size: 12px; margin-top: 12px; text-shadow: 0 0 10px rgba(255, 255, 255, .35); }
+html.remake .abertura { justify-content: center; gap: 10px; padding-top: 6vh; }
+html.remake .abertura .week { margin-bottom: 4vh; opacity: .8; }
+html.remake .abertura .card.auth { background: none; backdrop-filter: none; box-shadow: none; padding: 0; width: auto; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+html.remake .abertura .card.auth > .muted { display: none; }
+html.remake .abertura .btn, html.remake .abertura .btn.gold, html.remake .abertura .btn.install { background: none !important; border: 0 !important; box-shadow: none !important; min-height: 38px; width: auto; padding: 6px 34px; position: relative;
+  font-family: var(--font-title); font-weight: 500; font-size: 17px; letter-spacing: .14em; text-transform: none; font-variant: small-caps; color: #C4C7D4 !important; text-shadow: 0 0 10px rgba(0, 0, 0, .9); transition: color .15s, text-shadow .15s; }
+html.remake .abertura .btn::before, html.remake .abertura .btn::after { content: ""; position: absolute; top: 50%; width: 22px; height: 9px; margin: -4px 0 0; opacity: 0; transition: opacity .15s, transform .15s; flex: none; transform: none; border-radius: 0;
+  background: linear-gradient(90deg, transparent, #fff) left center / 14px 1px no-repeat, linear-gradient(45deg, transparent 43%, #fff 44% 56%, transparent 57%) right center / 9px 9px no-repeat, linear-gradient(-45deg, transparent 43%, #fff 44% 56%, transparent 57%) right center / 9px 9px no-repeat; }
+html.remake .abertura .btn::before { left: 0; } html.remake .abertura .btn::after { right: 0; transform: scaleX(-1); }
+html.remake .abertura .btn:hover:not(:disabled), html.remake .abertura .btn:focus-visible { background: none !important; color: #fff !important; outline: 0; text-shadow: 0 0 14px rgba(255, 255, 255, .8); filter: none; }
+html.remake .abertura .btn:hover::before, html.remake .abertura .btn:hover::after, html.remake .abertura .btn:focus-visible::before, html.remake .abertura .btn:focus-visible::after { opacity: 1; }
+html.remake .abertura .tela-div { flex-direction: column; gap: 0; margin-top: 2px; }
+html.remake .abertura .tela-div span { font-family: var(--font-title); font-variant: small-caps; letter-spacing: .14em; font-size: 13px; color: #8E93A6; margin-top: 10px; }
+html.remake .abertura .tela-div .btn { font-size: 15px; min-height: 32px; }
+html.remake .abertura input { text-align: center; } html.remake .abertura label { color: #9096AA; font-family: var(--font-title); letter-spacing: .14em; font-size: 12px; }
+html.remake .abertura .btn:hover, html.remake .abertura .btn:focus, html.remake .abertura .btn:active { background: none !important; background-image: none !important; border: 0 !important; box-shadow: none !important; transform: none !important; }
+html.remake .abertura .card.auth, html.remake .abertura .card.auth:hover { background: none !important; box-shadow: none !important; border: 0 !important; }

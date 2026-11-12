@@ -16,7 +16,14 @@ function screen(...kids) {
   const s = scr(); s.classList.remove('creating'); s.innerHTML = ''; s.hidden = false; ligarCeu();
   s.append(h('div', { class: 'screen' }, ...kids));
 }
-const logo = () => h('div', { class: 'logo' }, h('span', { class: 'cross' }, '✝'), h('h1', {}, 'PEREGRINOS'), h('p', {}, document.documentElement.classList.contains('remake') ? 'O Caminho' : 'RPG bíblico online'));
+// floreio sob o título: um losango no centro e volutas para os dois lados
+const FLOREIO = '<svg viewBox="0 0 320 34" width="320" height="34" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M160 6l7 11-7 11-7-11z"/><path d="M150 17H96c-14 0-20-9-12-14 7-4 13 4 6 8"/><path d="M170 17h54c14 0 20-9 12-14-7-4-13 4-6 8"/><path d="M96 17c-10 0-18 6-30 6S44 17 30 17H6"/><path d="M224 17c10 0 18 6 30 6s22-6 36-6h24"/><path d="M118 17c-4 6-12 9-20 7M202 17c4 6 12 9 20 7"/></g><circle cx="160" cy="17" r="1.8" fill="currentColor"/></svg>';
+const logo = () => {
+  const remake = document.documentElement.classList.contains('remake'), el = h('div', { class: 'logo' }, h('span', { class: 'cross' }, '✝'), h('h1', {}, 'PEREGRINOS'));
+  if (remake) { const f = h('div', { class: 'floreio' }); f.innerHTML = FLOREIO; el.append(f); }
+  el.append(h('p', {}, remake ? 'O Caminho' : 'RPG bíblico online'));
+  return el;
+};
 
 export function showAuth(onDone) {
   let mode = 'entrar';
@@ -50,7 +57,8 @@ export function showAuth(onDone) {
   const emQuadro = new URLSearchParams(location.search).has('quadro');
   const nQuadro = +new URLSearchParams(location.search).get('quadro');
   const quem = emQuadro ? h('p', { class: 'title' }, 'Jogador ' + (nQuadro + 1) + (ONLINE ? ': entre com a sua conta' : '')) : '';
-  const juntos = emQuadro ? '' : h('div', { class: 'tela-div' }, h('span', {}, 'No mesmo aparelho, com controles:'), ...[2, 3, 4].map(n => h('button', { class: 'btn sm', type: 'button', onclick: () => { location.href = location.pathname + '?telas=' + n; } }, n + ' jogadores')));
+  const juntos = emQuadro ? '' : h('div', { class: 'tela-div' }, h('span', {}, 'Jogar juntos neste aparelho'), ...[2, 3, 4].map(n => h('button', { class: 'btn sm', type: 'button', onclick: () => { location.href = location.pathname + '?telas=' + n; } }, n + ' jogadores')));
+  setTimeout(() => scr().querySelector('.screen')?.classList.add('abertura'), 0);
   screen(logo(), quem, h('p', { class: 'week' }, 'Estudo da semana: ', h('b', {}, SEMANA_ATUAL.titulo), ' · ' + SEMANA_ATUAL.estudo), form, juntos, emQuadro ? '' : installButton(msg));
 }
 
