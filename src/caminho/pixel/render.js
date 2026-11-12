@@ -240,6 +240,7 @@ function pintarJogador(g, p, look, cls, arma, Tm, hab, X, Y, eu) {
 }
 
 function pintarTiro(g, t, x, y, Tm) {
+  if (!t.cor) t.cor = '#D8C8F0';
   const r = Math.max(2, Math.round(t.r / PX));
   if (t.tipo === 'choque') { const d = Math.sign(t.vx), f = Math.floor(Tm * 12) % 2; for (let i = 0; i < 9; i++) { const h = [3, 6, 10, 13, 11, 8, 5, 3, 1][i] + (i % 2 ? f : 0); g.fillStyle = i < 4 ? '#fff' : t.cor; g.fillRect(x + d * (4 - i) , y + 6 - h, 1, h); } g.fillStyle = '#17121f'; g.fillRect(x - 5, y + 6, 10, 1); return; }
   if (t.tipo === 'fogo') { // bola de fogo: núcleo claro e línguas que ficam para trás
@@ -257,12 +258,12 @@ function pintarTiro(g, t, x, y, Tm) {
   const vx = t.vx / 60 / PX, vy = t.vy / 60 / PX;
   for (let k = 1; k <= 4; k++) { g.globalAlpha = 0.6 - k * 0.12; g.fillStyle = t.amigo ? '#FFE9A8' : t.cor; const rr = Math.max(1, r - k); g.fillRect(Math.round(x - vx * k * 1.6 - rr / 2), Math.round(y - vy * k * 1.6 - rr / 2), rr, rr); }
   g.globalAlpha = 1; g.fillStyle = '#17121f'; g.fillRect(x - r, y - r + 2, r * 2, r * 2 - 4); g.fillRect(x - r + 2, y - r, r * 2 - 4, r * 2); g.fillRect(x - r + 1, y - r + 1, r * 2 - 2, r * 2 - 2);
-  g.fillStyle = t.amigo ? '#FFE9A8' : t.cor.startsWith('#') ? t.cor : '#FFD23F'; g.fillRect(x - r + 1, y - r + 2, r * 2 - 2, r * 2 - 4); g.fillRect(x - r + 2, y - r + 1, r * 2 - 4, r * 2 - 2);
+  g.fillStyle = t.amigo ? '#FFE9A8' : (t.cor || '#FFD23F').startsWith('#') ? t.cor : '#FFD23F'; g.fillRect(x - r + 1, y - r + 2, r * 2 - 2, r * 2 - 4); g.fillRect(x - r + 2, y - r + 1, r * 2 - 4, r * 2 - 2);
   g.fillStyle = '#fff'; g.fillRect(x - 1, y - 2, Math.max(1, r - 2), Math.max(1, r - 2));
 }
 
 function pintarZona(g, G, z, X, Y, vw, vh, Tm) {
-  const A = G.N.arena, p = G.p, ativa = z.aviso <= 0, c = z.cor.startsWith('#') ? z.cor : `rgb(${z.cor})`, pisca = Math.floor(Tm * 12) % 2;
+  const A = G.N.arena, p = G.p, ativa = z.aviso <= 0, c = !z.cor ? '#D8C8F0' : z.cor.startsWith('#') ? z.cor : `rgb(${z.cor})`, pisca = Math.floor(Tm * 12) % 2;
   if (z.tipo === 'circ') {
     const x = X(z.x), y = Y(z.y), r = Math.round(z.r / PX), k = ativa ? 1 : clamp(1 - z.aviso / 0.9, 0, 1);
     g.fillStyle = ativa ? '#fff' : c;

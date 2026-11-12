@@ -231,7 +231,7 @@ export class Juntos {
     const G = this.G;
     for (let rodada = 0; rodada < 3; rodada++) {
       this.resp = new Map(); this.ev('vq', { q, titulo, fb });
-      G.ui.quiz(fb ? { ...q, fb } : q, titulo + ' · VOTAÇÃO').then(ok => { this.resp?.set(this.eu, ok); G.ui.toast('Voto dado. Esperando os outros…', 2500); });
+      G.ui.quiz(fb ? { ...q, fb, tempo: 10 } : { ...q, tempo: 10 }, titulo + ' · VOTAÇÃO').then(ok => { this.resp?.set(this.eu, ok); G.ui.toast('Voto dado. Esperando os outros…', 2500); });
       const t0 = performance.now();
       while (G.running && G.mp === this) { const faltam = [this.eu, ...this.naArea().map(p => p.id)].filter(id => !this.resp.has(id)); if (!faltam.length || performance.now() - t0 > 75000) break; await new Promise(r => setTimeout(r, 200)); }
       const vals = [...(this.resp?.values() || [])].filter(v => typeof v === 'boolean'), sim = vals.filter(Boolean).length, nao = vals.length - sim; this.resp = null;
@@ -269,7 +269,7 @@ export class Juntos {
       case 'qz': { const b = ini(m.b) || G.chefe; if (!b || G.ui.blocking) { this.ev('qr', { ok: null }); break; } G.perguntaDoChefe(b, m.p).then(ok => this.ev('qr', { ok })); break; }
       case 'qr': this.resp?.set(m.de, m.ok); break;
       case 'cin': G.cinema(m.id, true, true); break;
-      case 'vq': if (G.ui.blocking) { this.ev('vr', { ok: null }); break; } G.ui.quiz(m.fb ? { ...m.q, fb: m.fb } : m.q, m.titulo + ' · VOTAÇÃO').then(ok => { this.ev('vr', { ok }); G.ui.toast('Voto dado. Esperando os outros…', 2500); }); break;
+      case 'vq': if (G.ui.blocking) { this.ev('vr', { ok: null }); break; } G.ui.quiz(m.fb ? { ...m.q, fb: m.fb, tempo: 10 } : { ...m.q, tempo: 10 }, m.titulo + ' · VOTAÇÃO').then(ok => { this.ev('vr', { ok }); G.ui.toast('Voto dado. Esperando os outros…', 2500); }); break;
       case 'vr': this.resp?.set(m.de, m.ok); break;
       case 'vt': G.ui.toast('Empate na votação. Conversem: alguém precisa ceder. Votem de novo.', 4500); break;
       case 'vf': G.ui.toast(m.ok ? 'A maioria acertou.' : 'A maioria errou.', 3500); break;

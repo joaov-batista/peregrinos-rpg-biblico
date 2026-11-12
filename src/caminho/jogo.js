@@ -108,9 +108,9 @@ export class Caminho {
     if (remoto && this.ui.blocking) return false;
     if (!remoto) this.mp?.ev('cin', { id }); // juntos, a história aparece para todos de uma vez
     if (!vistas.includes(id)) vistas.push(id);
-    const antes = audio.modo; music('cinema');
+    const antes = audio.modo, chaveAntes = audio.chave; music('cinema');
     await this.ui.cinema(id, { look: this.char.look });
-    if (this.running) music(antes);
+    if (this.running) music(antes, chaveAntes);
     return true;
   }
 
@@ -150,7 +150,7 @@ export class Caminho {
     this.vista.cam.x = pos.x - this.vista.W / this.vista.Z / 2; this.vista.cam.y = this.camYAlvo(this.vista.H / this.vista.Z); this.prenderCam();
     this.conferirPorta(true);
     this.fade = 1; this.t0 = this.T; this.ok = 0; this.err = 0; this.mortosAqui = 0;
-    music(def.paz ? 'mundo' : 'fase');
+    music(def.paz ? 'mundo' : 'fase', def.tema + (def.fase ? def.fase.n : ''));
     this.ui.bossBar(null);
     this.ui.banner(def.sem ? def.sem.titulo.toUpperCase() : 'PEREGRINOS', def.nome, def.sub);
     if (!o.quieto) this.chegada(def);
@@ -374,7 +374,7 @@ export class Caminho {
   textoEm(x, y, txt, cor = '#fff', tam = 14) { this.textos.push({ x, y, txt, cor, tam, t: 1.3 }); this.mp?.fx(['t', x, y, txt, cor, tam]); }
   fala(b, txt) { this.textos.push({ x: b.x, y: b.y - b.h - 16, txt: '“' + txt + '”', cor: '#F2E9D0', tam: 13, t: 2.4, fixo: b }); if (b.nid) this.mp?.fx(['f', b.nid, txt]); }
   grito(txt) { this.gritoTxt = { txt, t: 2.6 }; this.mp?.fx(['g', txt]); }
-  postura(b, n) { if (b.quebrado > 0) return; b.post = Math.min(100, b.post + n); b.postT = 2.2; if (b.post >= 100) { b.quebrado = 2.5; b.mov = null; this.textoEm(b.x, b.y - b.h - 20, 'QUEBRANTADO!', '#FFE9A8', 20); sfx('crit'); this.tremor(10); this.hitstop = 0.12; this.limparPerigos(); } }
+  postura(b, n) { if (b.quebrado > 0 || b.postImune > 0) return; b.post = Math.min(100, b.post + n); b.postT = 2.2; if (b.post >= 100) { b.quebrado = 1.3; b.mov = null; this.textoEm(b.x, b.y - b.h - 20, 'QUEBRANTADO!', '#FFE9A8', 20); sfx('crit'); this.tremor(10); this.hitstop = 0.12; this.limparPerigos(); } }
   limparPerigos() { this.tiros = this.tiros.filter(t => t.amigo); this.zonas = []; }
 
   // aplica um golpe do peregrino em tudo o que a caixa toca
@@ -419,9 +419,11 @@ export class Caminho {
     if (e.kind === 'chefe') {
       if (e.semDano > 0 || e.alpha < 0.5) return false;
       const forte = e.exposto > 0 || e.quebrado > 0 || e.tonto > 0;
+      // o chefe também se defende: fora de um golpe, pode aparar o seu e responder na hora
+      if (!forte && !e.mov && !(e.guardaCd > 0) && !atk.semOleo && Math.random() < 0.26 + e.fase * 0.08) { e.guardaCd = 2.2; e.espera = 0.05; e.flash = 0.05; sfx('block'); this.efeito('vigilia', e.x - dir * e.w * 0.4, clamp(p.y - 28, e.y - e.h, e.y), -dir); this.textoEm(e.x, e.y - e.h - 6, 'APARADO', '#C9D2E8', 12); if (this.souDono()) { p.vx = -dir * 260; p.vy = -160; } return true; }
       let d = danoNoChefe(e, dano, this.tipoArma) * (forte && this.tem('pedra_lisa') ? 1.4 : 1);
       if (e.c.fases[e.fase].golpes.includes('voz') && e.id === 'babilonia') d *= 0.25; // a voz do céu: não é hora de bater
-      e.hp -= d; e.flash = 0.1; e.semGolpe = 0; this.postura(e, atk.carga ? 14 : 2);
+      e.hp -= d; e.flash = 0.1; e.semGolpe = 0; this.postura(e, atk.carga ? 6 : 2);
       if (e.clones.length) { for (const cl of e.clones) this.fx.po(cl.x, cl.y - e.h / 2, 12, e.d.cor || '#C79BFF'); e.clones = []; this.postura(e, 30); this.textoEm(e.x, e.y - e.h - 12, 'A verdadeira!', '#FFE9A8'); sfx('right'); }
       this.fx.faisca(e.x - dir * e.w * 0.3, clamp(p.y - 22, e.y - e.h, e.y), forte ? 12 : 6, forte ? '#FFE9A8' : '#fff'); this.efeito(forte ? 'critico' : 'faiscaLuz', e.x - dir * e.w * 0.3, clamp(p.y - 28, e.y - e.h, e.y), dir);
       if (config.numerosDano !== false) this.textoEm(e.x + rand(-14, 14), e.y - e.h - 4, String(Math.round(d)), forte ? '#FFE9A8' : '#E6E0CF', forte ? 17 : 13);
@@ -799,7 +801,7 @@ export class Caminho {
     else { this.congela = true; await this.cinema(CINEMA_CHEFE[d.chefe] || 'chefe-' + d.chefe); this.congela = false; } // todos assistem à entrada do chefe; ele espera
     const b = novoChefe(d.chefe, A, this.dif);
     if (juntos) { b.max = b.hp = Math.round(b.hp * (1 + 0.6 * this.mp.naArea().length)); b.art.max = b.max; } // mais peregrinos, mais fôlego na sombra
-    this.inimigos.push(b); this.chefe = b; music('chefe'); sfx('boss');
+    this.inimigos.push(b); this.chefe = b; music('chefe', d.chefe); sfx('boss');
     this.ui.banner(b.d.titulo || 'Chefe', b.d.nome, b.d.ref);
     if (b.d.intro) this.fala(b, b.d.intro.replace(/\*/g, ''));
   }
@@ -814,10 +816,10 @@ export class Caminho {
     else { ok = await this.perguntaDoChefe(b, pacote); this.respostaDoGrupo(ok, true); }
     if (!this.running || b.hp <= 0) return;
     if (ok) {
-      const dano = b.max * 0.05 * (this.tem('anel_beltessazar') ? 2 : 1); b.hp = Math.max(1, b.hp - dano); b.post = 0; b.quebrado = 2.8;
+      const dano = b.max * (this.tem('anel_beltessazar') ? 0.03 : 0); b.hp = Math.max(1, b.hp - dano); b.post = 0; b.quebrado = 1; // a resposta certa só abre uma brecha curta: o chefe se vence no golpe
       this.textoEm(b.x, b.y - b.h - 20, 'ESTÁ ESCRITO!', '#FFE9A8', 22); this.efeito('pilar', b.x, this.N.arena.chao); this.clarao = 0.25; this.fx.anel(b.x, b.y - b.h / 2, '#FFE9A8', 160); this.tremor(12); sfx('right');
     } else {
-      b.hp = Math.min(b.max, b.hp + b.max * 0.06); b.furia = 10; sfx('wrong');
+      b.hp = Math.min(b.max, b.hp + b.max * 0.12); b.furia = 14; sfx('wrong');
       this.textoEm(b.x, b.y - b.h - 20, 'O engano o fortalece', '#FF8A7A', 16);
     }
   }
@@ -825,7 +827,7 @@ export class Caminho {
   async perguntaDoChefe(b, pacote) {
     const st = this.char.data.stats; let ok;
     if (pacote.acc) { ok = await this.ui.verseBattle(pacote.acc, pacote.falsas); if (ok && !this.char.data.verses.includes(pacote.acc.ref)) this.char.data.verses.push(pacote.acc.ref); }
-    else { ok = await this.ui.quiz({ ...pacote.q, fb: ['Está escrito! O chefe está quebrantado.', 'O chefe se fortalece com o seu engano.'] }, 'ESTÁ ESCRITO · ' + b.d.nome); this.revisao(pacote.q, ok); }
+    else { ok = await this.ui.quiz({ ...pacote.q, tempo: 10, fb: ['Está escrito! O chefe vacila por um instante.', 'O chefe se fortalece com o seu engano.'] }, 'ESTÁ ESCRITO · ' + b.d.nome); this.revisao(pacote.q, ok); }
     if (ok) { st.quizOk++; this.ok++; this.pontos(150); } else { st.quizErr++; this.err++; }
     return ok;
   }
@@ -846,7 +848,7 @@ export class Caminho {
     this.p = this.eu;
     if (this.mp && !b.remoto && b.nid) this.mp.ev('cc', { id: b.nid });
     b.fora = true; this.chefe = null; this.luta = false; this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.peso = 0; this.puxao = null;
-    this.ui.bossBar(null); music('fase'); sfx('level');
+    this.ui.bossBar(null); music('fase', d.tema + (d.fase ? d.fase.n : '')); sfx('level');
     // juntos, a vitória só conta para quem leu os rolos desta página
     if (this.mp && !this.temSelos()) { this.ui.toast(b.d.nome + ' caiu, mas a recompensa é de quem leu os três rolos desta página. Leia-os e enfrente-o de novo.', 8000); this.semLutaAte = this.T + 8; return; }
     this.venceu = true; this.N.portaAberta = true;
@@ -952,7 +954,7 @@ export class Caminho {
         if (ob.feito || !this.running) return;
         const q = this.sortearPergunta(f);
         const fbR = ['Certo! O selo deste rolo se acende.', 'Releia com calma: o rolo se fecha por alguns instantes.'], titR = 'Rolo ' + (ob.n + 1) + ' · ' + f.ref;
-        const ok = this.mp?.acompanhado() ? await this.mp.votar(q, titR, fbR) : await this.ui.quiz({ ...q, fb: fbR }, titR); // juntos, a resposta é por votação
+        const ok = this.mp?.acompanhado() ? await this.mp.votar(q, titR, fbR) : await this.ui.quiz({ ...q, tempo: 10, fb: fbR }, titR); // juntos, a resposta é por votação
         if (ok) this.mp?.ev('ap', { tp: 'rolo', n: ob.n });
         this.revisao(q, ok);
         const st = this.char.data.stats;
@@ -961,7 +963,7 @@ export class Caminho {
         break;
       }
       case 'estacao': {
-        const e = ob.dados, ok = this.mp?.acompanhado() ? await this.mp.votar(e, e.nome + ' · ' + f.ref) : await this.ui.quiz(e, e.nome + ' · ' + f.ref);
+        const e = ob.dados, ok = this.mp?.acompanhado() ? await this.mp.votar(e, e.nome + ' · ' + f.ref) : await this.ui.quiz({ ...e, tempo: 10 }, e.nome + ' · ' + f.ref);
         if (ok) this.mp?.ev('ap', { tp: 'est', n: ob.n });
         this.revisao(e, ok);
         if (ok) { ob.feito = true; cm.est[this.area].push(e.id); this.pontos(40); this.char.data.stats.quizOk++; this.ok++; this.fx.anel(ob.x, ob.y - 30, '#93E4CC', 90); this.ganharOleo(20); this.conferirPorta(); this.salvar(); }

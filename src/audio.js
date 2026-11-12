@@ -92,10 +92,18 @@ function tambor(vol = 0.3, delay = 0) { if (!AC) return; const t = AC.currentTim
 const TRILHAS = {
   mundo: { compasso: 5.2, acordes: [[-12, [0, 3, 7], [12, 15, 19, 22]], [-16, [-4, 0, 3], [8, 12, 15, 20]], [-9, [3, 7, 10], [10, 15, 19, 22]], [-14, [-2, 2, 5], [10, 14, 17, 19]]], dens: 0.55 },
   fase: { compasso: 4.6, acordes: [[-12, [0, 3, 7], [12, 14, 15, 19]], [-12, [0, 5, 8], [12, 17, 20, 15]], [-17, [-5, -1, 2], [7, 11, 14, 19]], [-16, [-4, 0, 3], [8, 12, 15, 19]]], dens: 0.7 },
-  chefe: { compasso: 2.6, acordes: [[-12, [0, 3, 7], [12, 15, 19]], [-12, [0, 3, 8], [12, 15, 20]], [-14, [-2, 2, 5], [10, 14, 17]], [-17, [-5, -1, 4], [7, 11, 16]]], dens: 1, luta: true }
+  chefe: { compasso: 2.15, acordes: [[-12, [0, 3, 7], [12, 15, 19]], [-12, [0, 3, 8], [12, 15, 20]], [-14, [-2, 2, 5], [10, 14, 17]], [-17, [-5, -1, 4], [7, 11, 16]]], dens: 1, luta: true }
 };
-export function music(mode) {
-  if (AC && mode && mode === audio.modo && musicTimer) return; // a mesma trilha já está tocando
+// cada área tem a sua trilha: a mesma linguagem, em outro tom, outra ordem de acordes e outro andamento
+function trilhaDe(mode, chave) {
+  const base = TRILHAS[mode] || TRILHAS.mundo; if (!chave) return base;
+  let hh = 7; for (const ch of chave) hh = (hh * 31 + ch.charCodeAt(0)) >>> 0;
+  const tr = (hh % 9) - 4, rot = (hh >>> 4) % 4, vel = 0.9 + ((hh >>> 7) % 5) * 0.06;
+  return { ...base, compasso: base.compasso / vel, acordes: base.acordes.map((_, i) => base.acordes[(i + rot) % 4]).map(([b, a, m]) => [b + tr, a.map(x => x + tr), m.map(x => x + tr)]), salto: (hh >>> 10) % 2 };
+}
+function chimbal(vol, delay) { if (!AC) return; const t = AC.currentTime + delay, n = AC.createBufferSource(), b = AC.createBuffer(1, AC.sampleRate * 0.05, AC.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length); const f = AC.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 6000; const g = AC.createGain(); g.gain.value = vol; n.buffer = b; n.connect(f); f.connect(g); g.connect(canal || musicGain); n.start(t); }
+export function music(mode, chave) {
+  if (AC && mode && mode === audio.modo && chave === audio.chave && musicTimer) return; audio.chave = chave; // a mesma trilha já está tocando
   audio.modo = mode || null;
   if (!AC) return;
   clearInterval(musicTimer); musicTimer = null;
@@ -104,11 +112,13 @@ export function music(mode) {
   canal = AC.createGain(); canal.gain.value = 1; canal.connect(musicGain); eco = null;
   if (!mode) return;
   if (mode === 'cinema') return pad(); // fundo lento e baixo para não brigar com a narração
-  const T = TRILHAS[mode] || TRILHAS.mundo; let n = 0;
+  const T = trilhaDe(mode, chave); let n = 0;
   const compasso = () => {
     if (audio.muted || document.hidden) return;
     const [baixo, acorde, mel] = T.acordes[n % T.acordes.length], c = T.compasso, frase = Math.floor(n / T.acordes.length) % 3;
     cordas([baixo, ...acorde], c * 1.25, T.luta ? 0.06 : 0.045); piano(baixo, 0.16, 0, c);
+    if (mode === 'fase') { tambor(0.16, 0); tambor(0.1, c * 0.5); tambor(0.07, c * 0.5 + 0.18); if (n % 4 === 3) cordas([acorde[0] + 13], c * 0.9, 0.022, c * 0.2); } // pulso surdo e uma nota que incomoda: a tensão de quem é vigiado
+    if (T.luta) { for (let i = 0; i < 16; i++) chimbal(i % 4 === 2 ? 0.11 : 0.05, i * c / 16); if (n % 2) { cordas([baixo + 18, baixo + 24], c * 0.5, 0.05, c * 0.5); tambor(0.34, c * 0.75); tambor(0.34, c * 0.875); } }
     if (T.luta) { // ostinato grave em colcheias, tambor e uma linha que sobe
       for (let i = 0; i < 8; i++) { piano(baixo + (i % 2 ? 12 : 0), 0.12, i * c / 8, 0.5); if (i % 4 === 0) tambor(0.32, i * c / 8); if (i === 6) tambor(0.2, i * c / 8 + c / 16); }
       for (let i = 0; i < 4; i++) piano(mel[(i + frase) % mel.length] + (frase === 2 ? 12 : 0), 0.15, i * c / 4 + c / 8, 1.4);

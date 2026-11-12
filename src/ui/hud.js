@@ -353,6 +353,8 @@ export function createHud(onExit) {
     const right = q.a[0];
     p.append(h('small', { class: 'eyebrow' }, title || 'Quiz bíblico'), h('h3', {}, q.q));
     const box = h('div', { class: 'answers' });
+    // perguntas com tempo: a barra esvazia e, no fim, conta como erro
+    if (q.tempo) { const barra = h('div', { class: 'quiz-tempo' }, h('i', { style: 'animation-duration:' + q.tempo + 's' })); p.append(barra); const tm = setTimeout(() => { const errada = [...box.querySelectorAll('button')].find(b => b.textContent !== right && !b.disabled); if (errada) { p.append(h('p', { class: 'feedback no' }, 'O tempo acabou.')); errada.click(); } }, q.tempo * 1000); box.addEventListener('click', () => { clearTimeout(tm); barra.classList.add('parou'); }, true); }
     shuffle(q.a.slice()).forEach(a => box.append(h('button', {
       class: 'btn answer', onclick: e => {
         const ok = a === right; box.querySelectorAll('button').forEach(b => { b.disabled = true; if (b.textContent === right) b.classList.add('right'); });

@@ -18,10 +18,10 @@ export const CHEFES = {
       salto: { tipo: 'salto' }, chamar: { tipo: 'invocar', tipos: ['ganancia'], n: 2, fala: 'Mais! Mais!' }, dupla: { tipo: 'investida', vel: 620, repete: 1 }, cofre: { tipo: 'leque', n: 9, abertura: 0.22, cor: '#FFD23F', alto: true }, tesouro: { tipo: 'chuva', n: 6, vezes: 2, cor: '#FFD23F', tentacao: true } },
     fases: [F(1, ['fortuna', 'investida', 'moedas', 'salto']), F(0.6, ['chamar', 'dupla', 'tesouro', 'salto', 'fortuna'], { grito: 'TUDO TEM PREÇO!' }), F(0.3, ['cofre', 'dupla', 'salto', 'tesouro'], { grito: 'SIRVA A MIM!' })],
     dica: 'As moedas que ficam no chão pesam: cada uma que você apanha deixa o passo mais lento até o fim da luta.' },
-  procrastinacao: { vida: 480, r: 38, arena: 'plat', mover: 'parado', regras: { aura: { raio: 190, lentidao: 0.6 }, regenera: { apos: 3.5, taxa: 0.012 } },
+  procrastinacao: { vida: 760, pressa: 0.6, r: 38, arena: 'plat', mover: 'parado', regras: { aura: { raio: 240, lentidao: 0.5 }, regenera: { apos: 2.2, taxa: 0.03 } },
     golpes: { sono: { tipo: 'sono', raio: 170 }, relogio: { tipo: 'relogio', n: 2, giro: 0.95, dur: 3.6 }, atraso: { tipo: 'marcados', vezes: 3 }, relogio3: { tipo: 'relogio', n: 3, giro: -1.2, dur: 4 }, areia: { tipo: 'chuva', n: 5, vezes: 2, cor: '#A5CDCE' },
       atraso4: { tipo: 'marcados', vezes: 4, intervalo: 0.36 }, relogio4: { tipo: 'relogio', n: 4, giro: 1.35, dur: 4.4 }, pendulo: { tipo: 'varredura', vezes: 2, altura: 'alterna' } },
-    fases: [F(1, ['sono', 'relogio', 'atraso']), F(0.55, ['relogio3', 'areia', 'sono', 'atraso4'], { grito: 'SÓ MAIS CINCO MINUTINHOS…' }), F(0.25, ['relogio4', 'pendulo', 'atraso4', 'areia'], { grito: 'AMANHÃ! AMANHÃ!' })],
+    fases: [F(1, ['sono', 'relogio', 'atraso', 'areia', 'pendulo']), F(0.6, ['relogio3', 'areia', 'sono', 'atraso4', 'pendulo'], { grito: 'SÓ MAIS CINCO MINUTINHOS…' }), F(0.25, ['relogio4', 'pendulo', 'atraso4', 'areia'], { grito: 'AMANHÃ! AMANHÃ!' })],
     dica: 'Ela se cura se você parar de bater. Perto dela tudo fica lento: ataque nas brechas do relógio e não espere.' },
   mentira: { vida: 500, r: 34, arena: 'plat', voa: 120, mover: 'pairar', vel: 90,
     golpes: { copias: { tipo: 'clones', n: 3 }, mentiras: { tipo: 'leque', n: 5, cor: '#C79BFF' }, trocar: { tipo: 'teleporte' }, copias5: { tipo: 'clones', n: 5 }, mentiras7: { tipo: 'leque', n: 7, cor: '#C79BFF' }, falsidade: { tipo: 'marcados', vezes: 3 },
@@ -102,8 +102,17 @@ const bala = (G, x, y, a, vel, o = {}) => G.tiros.push({ x, y, vx: Math.cos(a) *
 const centro = b => ({ x: b.x, y: b.y - b.h * 0.55 });
 const mira = (G, b) => { const c = centro(b); return Math.atan2(G.p.y - 20 - c.y, G.p.x - c.x); };
 
+// Todo chefe luta com pelo menos seis tipos de golpe: os que faltam vêm deste repertório comum (os parados e os que voam
+// não recebem investida nem salto). Os extras entram aos poucos: um na primeira fase, dois na segunda, todos na última.
+const EXTRAS = [['xAnel', { tipo: 'anel', n: 12, cor: '#D8C8F0' }], ['xMarc', { tipo: 'marcados', vezes: 4, intervalo: 0.34, cor: '#D8C8F0' }], ['xChuva', { tipo: 'chuva', n: 6, vezes: 2, cor: '#D8C8F0' }], ['xRaj', { tipo: 'rajada', vezes: 5, intervalo: 0.24, cor: '#D8C8F0' }], ['xVarre', { tipo: 'varredura', vezes: 2, altura: 'alterna', cor: '216,200,240' }], ['xInv', { tipo: 'investida' }], ['xSalto', { tipo: 'salto' }], ['xOndas', { tipo: 'ondas', vezes: 2 }]];
+function completar(c) {
+  const tem = new Set(Object.values(c.golpes).map(g => g.tipo)), fixo = c.voa || c.mover === 'parado', novos = [];
+  for (const [nome, def] of EXTRAS) { if (tem.size + novos.length >= 6) break; if (tem.has(def.tipo) || (fixo && ['investida', 'salto', 'ondas'].includes(def.tipo))) continue; novos.push([nome, def]); }
+  if (!novos.length) return c;
+  return { ...c, golpes: { ...c.golpes, ...Object.fromEntries(novos) }, fases: c.fases.map((f, i) => ({ ...f, golpes: [...f.golpes, ...novos.slice(0, i === 0 ? 1 : i === 1 ? 2 : novos.length).map(n => n[0])] })) };
+}
 export function novoChefe(id, A, dif) {
-  const c = CHEFES[id], d = BOSSES[id] || { nome: id };
+  const c = completar(CHEFES[id]), d = BOSSES[id] || { nome: id };
   const hp = Math.round(c.vida * dif.hp);
   return { kind: 'chefe', id, c, d, x: clamp(A.cx + 250, A.x0 + 80, A.x1 - 80), y: A.chao - (c.voa || 0), vx: 0, vy: 0, w: c.r * 1.5, h: c.r * 2.1, r: c.r, hp, max: hp, fase: 0, post: 0, postT: 0, quebrado: 0,
     mov: null, idx: 0, espera: 1.8, flash: 0, face: -1, voa: !!c.voa, exposto: 0, clones: [], furia: 0, semDano: 0, alpha: 1, raios: null, tonto: 0, ultimoGolpe: 0, t: 0,
@@ -223,7 +232,7 @@ const GOLPES = {
       m.e = 1; m.t = 0; b.clones = [];
       const vagas = Array.from({ length: n + 1 }, (_, i) => ({ x: A.x0 + 70 + i * (A.x1 - A.x0 - 140) / n, y: A.chao - (b.voa ? b.c.voa + (i % 2) * 70 : 0) })), real = Math.floor(rand(0, n + 1));
       vagas.forEach((v, i) => { if (i === real) { b.x = v.x; b.y = v.y; } else b.clones.push({ x: v.x, y: v.y, t: 6.5, alpha: 0, art: { ...b.art } }); });
-      G.fala(b, 'Qual é o verdadeiro?'); sfx('magic');
+      G.grito('Qual é o verdadeiro?'); sfx('magic'); // a pergunta vem de todos os lados: a fala não entrega mais a verdadeira
     } }
     else if (m.e === 1) { b.alpha = Math.min(1, m.t / 0.4); for (const c of b.clones) c.alpha = b.alpha; b.tele = 1; if (m.t > 1.25 * G.dif.aviso) { m.e = 2; m.t = 0; for (const o of [b, ...b.clones]) { const cx = o.x, cy = o.y - b.h * 0.55, a = Math.atan2(G.p.y - 20 - cy, G.p.x - cx); for (let i = -1; i <= 1; i++) bala(G, cx, cy, a + i * 0.2, 270 * G.dif.vel, { cor: b.d.cor || '#C79BFF' }); } sfx('shoot'); } }
     else if (m.t > 1.4) return true;
@@ -290,7 +299,7 @@ function choque(G, b) {
 export function atualizarChefe(G, b, dt) {
   const c = b.c, A = G.N.arena, p = G.p;
   b.t += dt; b.flash = Math.max(0, b.flash - dt); b.semDano = Math.max(0, b.semDano - dt); b.exposto = Math.max(0, b.exposto - dt); b.furia = Math.max(0, b.furia - dt);
-  b.tele = 0; b.art.step = 0; b.perigo = false; if (b.pousou > 0) b.pousou -= dt;
+  b.tele = 0; b.art.step = 0; b.perigo = false; if (b.pousou > 0) b.pousou -= dt; if (b.postImune > 0) b.postImune -= dt; if (b.guardaCd > 0) b.guardaCd -= dt;
   for (const cl of b.clones) cl.t -= dt;
   b.clones = b.clones.filter(cl => cl.t > 0);
   if (b.morrendo) { b.morrendo -= dt; b.vx = 0; if (Math.random() < dt * 22) G.fx.po(b.x + rand(-b.w, b.w) / 2, b.y - rand(0, b.h), 3, b.d.cor || '#fff'); if (b.morrendo <= 0) G.chefeCaiu(b); return; }
@@ -300,7 +309,7 @@ export function atualizarChefe(G, b, dt) {
   if (parado) {
     b.quebrado -= dt; b.tonto -= dt; b.vx = 0; b.raios = null; b.encanta = false; G.puxao = null; b.mov = null; b.alpha = 1;
     if (b.voa) b.y = Math.min(A.chao, b.y + 520 * dt);
-    if (b.quebrado <= 0 && b.tonto <= 0) { b.post = 0; b.espera = 0.7; }
+    if (b.quebrado <= 0 && b.tonto <= 0) { b.post = 0; b.espera = 0.2; b.postImune = 8; b.furia = Math.max(b.furia, 4); } // levanta logo, irado, e por um tempo a postura não quebra de novo
   } else {
     // virada de fase: grito, escuridão e a acusação
     let nf = 0; c.fases.forEach((f, i) => { if (b.hp / b.max <= f.vida) nf = i; });
@@ -323,7 +332,7 @@ export function atualizarChefe(G, b, dt) {
       if (b.espera <= 0) { const nome = f.golpes[b.idx++ % f.golpes.length]; b.mov = { nome, def: c.golpes[nome], t: 0, e: 0 }; }
     } else {
       const m = b.mov, fim = GOLPES[m.def.tipo](G, b, m, dt); m.t += dt;
-      if (fim) { b.mov = null; b.art.lanca = null; b.espera = (m.def.espera ?? 1.05) * G.dif.ritmo * (c.pressa || 1) * (b.fase ? 0.85 : 1) * (b.furia > 0 ? 0.7 : 1); }
+      if (fim) { b.mov = null; b.art.lanca = null; b.espera = (m.def.espera ?? 1.05) * G.dif.ritmo * (c.pressa || 1) * (b.fase ? 0.85 : 1) * (b.furia > 0 ? 0.7 : 1); if (Math.random() < 0.28 + b.fase * 0.14) b.espera = 0.16; } // às vezes emenda um golpe no outro
     }
     // regras passivas
     if (c.regras?.regenera) { b.semGolpe = (b.semGolpe || 0) + dt; if (b.semGolpe > c.regras.regenera.apos && b.hp < b.max) { b.hp = Math.min(b.max, b.hp + b.max * c.regras.regenera.taxa * dt); if (Math.random() < dt * 5) G.fx.sobe(b.x + rand(-20, 20), b.y - 30, 1, '#A5CDCE'); } }
@@ -351,7 +360,7 @@ export function desenharChefe(g, b, Tm, G) {
 export function danoNoChefe(b, dano, origem) {
   const r = b.c.regras || {};
   let m = 1;
-  if (b.quebrado > 0) m = 1.3;
+  if (b.quebrado > 0) m = 1;
   else if (r.armadura != null) m = b.exposto > 0 ? 3 : dano > 150 ? 1 : r.armadura; // arpão e golpes muito fortes atravessam a couraça
   else if (r.casco != null) m = b.tonto > 0 ? 1.5 : r.casco;
   else if (b.exposto > 0) m = 1.8;

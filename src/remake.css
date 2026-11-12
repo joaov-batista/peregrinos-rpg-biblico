@@ -167,3 +167,9 @@ html.remake #screens:not(.creating) .char-card .btn.sm { background: none !impor
 html.remake #screens:not(.creating) .title { color: #fff !important; text-shadow: 0 0 14px rgba(255, 255, 255, .5); }
 html.remake #screens.creating > * { zoom: .84; }
 @media (max-height: 520px) { html.remake #screens.creating > * { zoom: .72; } }
+
+/* tempo das perguntas */
+.quiz-tempo { height: 5px; margin: 10px 0 4px; background: rgba(255, 255, 255, .1); overflow: hidden; }
+.quiz-tempo i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #F0A093, #FFE9A8); transform-origin: left; animation: quizTempo linear forwards; }
+.quiz-tempo.parou i { animation-play-state: paused; }
+@keyframes quizTempo { to { transform: scaleX(0); } }
