@@ -117,7 +117,7 @@ export function mountCreator(root, onCreated, onBack) {
       body.append(tabs);
       const options=h('div',{class:'appearance-fields'});
       if(appearance==='rosto')options.append(field('Tom de pele',swatches('skin')),field('Cor do cabelo',swatches('hair')),field('Cabelo e cobertura',choices('style')),field('Barba',choices('beard')));
-      else options.append(field('Constituição',choices('body')),field('Cor da túnica',swatches('tunic')),field('Cor da capa',swatches('cape')));
+      else options.append(field('Constituição',choices('body')),field('Na cabeça',choices('acessorio')),field('Cor da túnica',swatches('tunic')),field('Cor da capa',swatches('cape')));
       body.append(options,h('button',{type:'button',class:'random-look',onclick:()=>{
         customCloth=true;for(const key of ['skin','hair','tunic','cape'])look[key]=pick(LOOK_OPTIONS[key]);
         for(const key of ['style','body','beard'])look[key]=pick(LOOK_OPTIONS[key]).id;render();

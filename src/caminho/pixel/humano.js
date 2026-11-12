@@ -40,6 +40,8 @@ export function poseDe(p, Tm, corpo) {
   if (p.morto) { P.agacha = 4; P.incl = -3; P.cabY = 2; return P; }
   if (p.stunT > 0) { P.incl = -2; P.cabX = -1; P.mao = { x: -5, y: -18 }; P.ang = -0.6; P.pf = { x: 3, y: -1 }; P.pt = { x: -3, y: 0 }; return ajusta(P, corpo); }
   if (p.orando > 0) { P.agacha = 4; P.incl = 1; P.cabY = 1; P.cabX = 1; P.pf = { x: 4, y: 0 }; P.pt = { x: -4, y: 0 }; P.joelho = true; P.mao = { x: 5, y: -13 }; P.ang = 1.57; P.lamp = { x: 6, y: -16 }; return ajusta(P, corpo); }
+  if (p.dashT > 0 && p.rasteiro) { P.incl = -5; P.agacha = 9; P.cabY = 2; P.pf = { x: 9, y: -1 }; P.pt = { x: 4, y: 0 }; P.mao = { x: -6, y: -8 }; P.ang = 2.9; return ajusta(P, corpo); } // rasteira: desliza quase deitado, pés na frente
+  if (p.atk?.dir === 'rasteira') { P.agacha = 7; P.incl = 3; P.cabY = 1; P.pf = { x: 5, y: 0 }; P.pt = { x: -5, y: 0 }; P.joelho = true; P.mao = { x: 9, y: -6 }; P.ang = 1.75; return ajusta(P, corpo); } // golpe agachado
   if (p.dashT > 0) { P.incl = 4; P.agacha = 1; P.pf = { x: 5, y: -2 }; P.pt = { x: -7, y: -1 }; P.mao = { x: -5, y: -14 }; P.ang = 2.7; return ajusta(P, corpo); }
   if (!p.chao) {
     if (p.desliza) { P.pf = { x: 2, y: -4 }; P.pt = { x: 1, y: -1 }; P.incl = -1; P.mao = { x: 3, y: -24 }; P.ang = -1.2; }

@@ -158,3 +158,12 @@ html.remake .abertura .tela-div .btn { font-size: 15px; min-height: 32px; }
 html.remake .abertura input { text-align: center; } html.remake .abertura label { color: #9096AA; font-family: var(--font-title); letter-spacing: .14em; font-size: 12px; }
 html.remake .abertura .btn:hover, html.remake .abertura .btn:focus, html.remake .abertura .btn:active { background: none !important; background-image: none !important; border: 0 !important; box-shadow: none !important; transform: none !important; }
 html.remake .abertura .card.auth, html.remake .abertura .card.auth:hover { background: none !important; box-shadow: none !important; border: 0 !important; }
+
+/* escolha e criação do peregrino no tema do remake */
+html.remake #screens:not(.creating) .card.char-card { background: rgba(7, 8, 14, .8) !important; border: 0 !important; border-radius: 2px !important; box-shadow: var(--frame), 0 18px 50px rgba(0, 0, 0, .7) !important; }
+html.remake #screens:not(.creating) .char-card .btn { border-radius: 2px; }
+html.remake #screens:not(.creating) .char-card .btn.gold { background: rgba(233, 230, 220, .12) !important; color: #fff !important; border: 1px solid rgba(233, 230, 220, .8) !important; }
+html.remake #screens:not(.creating) .char-card .btn.sm { background: none !important; border: 1px solid rgba(222, 226, 238, .18) !important; color: #9096AA !important; }
+html.remake #screens:not(.creating) .title { color: #fff !important; text-shadow: 0 0 14px rgba(255, 255, 255, .5); }
+html.remake #screens.creating > * { zoom: .84; }
+@media (max-height: 520px) { html.remake #screens.creating > * { zoom: .72; } }

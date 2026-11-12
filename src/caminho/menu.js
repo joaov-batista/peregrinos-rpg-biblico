@@ -3,6 +3,7 @@ import { h } from '../util.js';
 import { sfx, setMuted, audio } from '../audio.js';
 import { config, setConfig } from '../config.js';
 import { ACOES_TECLA, teclaDe } from '../input.js';
+import { botaoDe, proximoBotao } from '../gamepad.js';
 import { CINEMAS } from '../content/cinematicas.js';
 import { TODAS } from '../content/index.js';
 import { faseProg } from '../game/player.js';
@@ -169,6 +170,11 @@ export function abrirMenu(G, aba = 'inventario') {
       for (const [id, d] of Object.entries(DIFICULDADES)) out.push(h('button', { class: 'fase-row cm-rel' + (cm.dif === id ? ' on' : ''), onclick: () => { cm.dif = id; sfx('click'); G.p.vidaMax = G.vidaMax(); G.p.vida = Math.min(G.p.vida, G.p.vidaMax); G.salvar(); desenha(); } }, h('div', {}, h('b', {}, d.nome + (cm.dif === id ? ' ✓' : '')), h('small', {}, d.desc))));
       const alterna = (k, nome) => h('button', { class: 'chip-btn' + (config[k] !== false ? ' on' : ''), onclick: () => { setConfig(k, config[k] === false); desenha(); } }, nome + ': ' + (config[k] !== false ? 'ligado' : 'desligado'));
       out.push(h('h4', {}, 'Teclas (teclado)'), teclas);
+      const botoes = h('div', { class: 'cfg-teclas' }), NOMES = ['A / ✕', 'B / ○', 'X / □', 'Y / △', 'LB / L1', 'RB / R1', 'LT / L2', 'RT / R2', 'Select', 'Start', 'L3', 'R3', '↑', '↓', '←', '→'];
+      for (const [acao, nome] of ACOES_TECLA) botoes.append(h('button', { class: 'fase-row cm-rel', onclick: async ev => { const sm = ev.currentTarget.querySelector('small'); sm.textContent = 'aperte o botão novo no controle…'; const i = await proximoBotao(); if (i != null) setConfig('botoes', { ...(config.botoes || {}), [acao]: i }); desenha(); } },
+        h('span', { class: 'cm-ico' }, NOMES[botaoDe(acao)] || (botaoDe(acao) != null ? 'B' + botaoDe(acao) : '—')), h('div', {}, h('b', {}, nome), h('small', {}, 'Toque e aperte o botão que quer usar'))));
+      botoes.append(h('button', { class: 'btn sm', onclick: () => { setConfig('botoes', {}); desenha(); } }, 'Voltar aos botões de sempre'));
+      out.push(h('h4', {}, 'Controle'), h('p', { class: 'muted' }, 'Se o seu controle não responde como esperado, escolha aqui o botão de cada ação: funciona com qualquer modelo.'), botoes);
       out.push(h('h4', {}, 'Arte'), h('div', { class: 'cfg-opts' }, h('button', { class: 'chip-btn' + (config.pixel !== false ? ' on' : ''), onclick: () => { setConfig('pixel', config.pixel === false); G.pixel = config.pixel !== false; document.body.classList.toggle('cm-pixel', G.pixel); desenha(); } }, config.pixel !== false ? 'Pixel art (nova)' : 'Vetorial (antiga)')),
         t('A arte em pixel é a nova direção do jogo. Chefes e vícios ainda não redesenhados aparecem com a arte antiga reduzida.', 'muted'));
       out.push(h('h4', {}, 'Jogo'), h('div', { class: 'cfg-opts' }, alterna('cinemas', '🎬 Cutscenes'), alterna('tremor', '📳 Tremor da tela'), alterna('numerosDano', '🔢 Números de dano'),

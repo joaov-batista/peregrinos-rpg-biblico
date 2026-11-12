@@ -12,6 +12,11 @@ const ACOES = { 5: 'attack', 7: 'skill', 4: 'defend', 6: 'lock', 11: 'lock', 0: 
 const ACOES_CAMINHO = { 0: 'dodge', 2: 'attack', 1: 'botija', 7: 'dash', 5: 'skill', 3: 'interact', 4: 'defend', 6: 'botija', 10: 'skill', 11: 'item2', 13: 'item2' };
 // em tela dividida (?pad=N) cada quadro escuta só o seu controle
 const PAD_FIXO = new URLSearchParams(location.search).has('pad') ? +new URLSearchParams(location.search).get('pad') : null;
+// botões escolhidos pelo jogador (menu › Ajustes › Controle): { ação: índice do botão }. Serve também para controles fora do padrão.
+function mapaPad() { const t = config.botoes; if (!t || !Object.keys(t).length) return ACOES_CAMINHO; const m = { ...ACOES_CAMINHO }; for (const acao of Object.keys(t)) for (const k of Object.keys(m)) if (m[k] === acao) delete m[k]; for (const [acao, i] of Object.entries(t)) m[i] = acao; return m; }
+export function botaoDe(acao) { const m = mapaPad(); return Object.keys(m).find(k => m[k] === acao); }
+// espera o próximo botão apertado em qualquer controle ligado
+export function proximoBotao(ms = 6000) { return new Promise(ok => { const t0 = performance.now(); let solto = false; const olha = () => { const l = [...(navigator.getGamepads?.() || [])].filter(Boolean); let ap = -1; for (const g of l) g.buttons.forEach((b, i) => { if (b.pressed || b.value > 0.5) ap = i; }); if (ap < 0) solto = true; else if (solto) return ok(ap); if (performance.now() - t0 > ms) return ok(null); requestAnimationFrame(olha); }; olha(); }); }
 let padAtivo = -1;
 const meuControle = () => { const l = [...(navigator.getGamepads?.() || [])].filter(Boolean); if (PAD_FIXO != null) return l[PAD_FIXO]; for (const g of l) if (g.buttons.some(b => b.pressed) || Math.hypot(g.axes[0] || 0, g.axes[1] || 0) > 0.5) padAtivo = g.index; return l.find(g => g.index === padAtivo) || l[0]; }; // fora da tela dividida, vale o controle que foi usado por último
 const ZONA = 0.22; // zona morta dos analógicos
@@ -49,7 +54,7 @@ function ler() {
     input.pad = mx || my ? { x: mx, y: my } : null;
     const rx = ax[2] || 0, ry = ax[3] || 0;
     input.padAim = Math.hypot(rx, ry) > 0.4 ? Math.atan2(ry, rx) : null;
-    for (const [i, a] of Object.entries(input.perfil === 'caminho' ? ACOES_CAMINHO : ACOES)) {
+    for (const [i, a] of Object.entries(input.perfil === 'caminho' ? mapaPad() : ACOES)) {
       if (b[i] && !antes[i]) input.press(a, 'pad:' + i);
       input.setHeld(a, 'pad:' + i, !!b[i]);
     }

@@ -89,7 +89,7 @@ export function atualizarHeroi(G, dt) {
     p.dashT = 0.19; p.dashCd = p.dashMax = hab.calcados ? 0.6 : 1.4; p.dashDir = c.mx ? Math.sign(c.mx) : p.face; p.face = p.dashDir;
     if (!p.chao) p.dashAr = false; p.atk = null; p.lamp = false; sfx('dodge');
     // passo rasteiro (para baixo + passo): passa por baixo do golpe e atravessa o adversário sem ser ferido
-    p.rasteiro = c.my > 0.35; if (p.rasteiro) { p.inv = Math.max(p.inv, 0.42); p.dashT = 0.26; G.textoEm(p.x, p.y - 62, 'passo rasteiro', '#BFD6E8', 11); } G.fx.po(p.x, p.y - 4, 6, '#E8E2C8');
+    p.rasteiro = c.my > 0.35 && !!G.cm.tec?.rasteiro; // técnica ensinada por Benaia, no pátio das provas if (p.rasteiro) { p.inv = Math.max(p.inv, 0.42); p.dashT = 0.26; G.textoEm(p.x, p.y - 62, 'passo rasteiro', '#BFD6E8', 11); } G.fx.po(p.x, p.y - 4, 6, '#E8E2C8');
   }
   if (p.dashT > 0) {
     p.dashT -= dt; p.vx = p.dashDir * 600; p.vy = 0;
@@ -106,7 +106,8 @@ export function atualizarHeroi(G, dt) {
     const [ux, uy] = DIRS[dir], tiro = arma.tiro && dir !== 'baixo' && dir !== 'rasteira' ? arma.tiro : null, cor = hab.espada ? 'luz' : arma.cor;
     p.atk = { t: 0, dur: arma.duplo ? 0.24 : 0.17, dir, face: p.face, hits: new Set(), n: p.combo++, semCaixa: !!tiro };
     p.atkCd = arma.cd; p.atkBuf = 0; sfx(tiro ? 'shoot' : 'swing');
-    const fxDe = { cima: 'cima_' + cor, diagC: 'cima_' + cor, baixo: 'baixo_' + cor, diagB: 'baixo_' + cor }[dir] || arma.fx;
+    const corFx = G.esp > 0 ? 'fogo' : cor; // com o Fogo do Espírito, a lâmina arde
+    const fxDe = { cima: 'cima_' + corFx, diagC: 'cima_' + corFx, baixo: 'baixo_' + corFx, diagB: 'baixo_' + corFx }[dir] || (G.esp > 0 ? 'corteFogo' : arma.fx);
     if (fxDe) G.efeito(fxDe === 'corte' && hab.espada ? 'corteLuz' : fxDe, p.x, p.y, p.face, { gruda: p, dx: dir === 'diagC' || dir === 'diagB' ? p.face * 14 : 0, dy: dir === 'baixo' || dir === 'diagB' ? 24 : dir === 'rasteira' ? 20 : 0, vel: 1.25 });
     if (arma.avanco && dir === 'lado' && p.chao) p.vx = p.face * arma.avanco * 3;
     if (tiro) { const n = tiro.n || 1, ang = Math.atan2(uy, ux); for (let i = 0; i < n; i++) { const b = ang + (i - (n - 1) / 2) * (tiro.leque || 0.14), cx2 = Math.cos(b), sy2 = Math.sin(b); // algumas armas atiram várias pedras em leque

@@ -36,7 +36,6 @@ const PASSOS = [
   { id: 'passo', titulo: 'PASSO PRONTO', txt: ['Toque em PASSO: você atravessa o perigo. Ele demora a voltar (as três setas no alto).', 'RT (R2): atravessa o perigo, mas demora a voltar.', 'C: atravessa o perigo. Demora a voltar (as três setas no alto).'] },
   { id: 'golpe', titulo: 'GOLPE', txt: ['Toque em GOLPE. Segurando para cima ou para baixo, o golpe muda de direção.', 'X (□) golpeia; RB (R1) solta o especial. Com o direcional para cima, para baixo ou na diagonal, o golpe muda.', 'Z ou X golpeiam. Segure ↓ para golpear baixo (agachado, no chão) ou para baixo (no ar).'] },
   { id: 'descer', titulo: 'DESCER DE PLATAFORMAS', txt: ['Sobre uma plataforma de madeira, puxe o direcional para BAIXO e ela deixa você passar.', 'Sobre uma plataforma de madeira, segure para baixo.', 'Sobre uma plataforma de madeira, segure ↓.'] },
-  { id: 'rasteiro', titulo: 'PASSO RASTEIRO', txt: ['Para BAIXO + PASSO: você atravessa o adversário sem ser ferido.', 'Para baixo + passo: atravessa o adversário sem ser ferido.', '↓ + C: você atravessa o adversário sem ser ferido.'] },
   { id: 'luz', titulo: 'A LÂMPADA · LUZ', txt: ['Segure LÂMPADA: a luz cresce e revela paredes falsas e pisos escondidos.', 'Segure LB (L1): a luz revela paredes falsas e pisos escondidos.', 'Segure D: a luz cresce e revela paredes falsas e pisos escondidos.'] },
   { id: 'vigilia', titulo: 'A LÂMPADA · VIGÍLIA', txt: ['É a sua única defesa. Toque em LÂMPADA no instante em que o dardo chega. Cedo ou tarde demais, não protege.', 'É a sua única defesa. Aperte LB (L1) no instante em que o dardo chega. Cedo ou tarde demais, não protege.', 'É a sua única defesa. Aperte D no instante em que o dardo chega. Cedo ou tarde demais, não protege.'] },
   { id: 'azeite', titulo: 'O AZEITE', txt: ['O jarro no alto é o azeite da lâmpada. Cada golpe certo e cada defesa perfeita o enchem.'] },
@@ -811,7 +810,7 @@ export class Caminho {
     const f = this.def.fase;
     const pacote = b.c.acusacoes || !f ? { acc: pick(ACUSACOES), falsas: shuffle(FALSAS.slice()).slice(0, 2) } : { q: this.sortearPergunta(f) };
     let ok;
-    if (this.mp?.acompanhado()) { this.congela = true; ok = await this.mp.quizJunto(pacote, b); this.congela = false; }
+    if (this.mp?.acompanhado()) { this.congela = true; ok = pacote.q ? await this.mp.votar(pacote.q, 'ESTÁ ESCRITO · ' + b.d.nome, ['Está escrito! O chefe está quebrantado.', 'O chefe se fortalece com o engano.']) : await this.mp.quizJunto(pacote, b); this.congela = false; this.respostaDoGrupo(ok, true); this.mp.ev('qf', { ok }); }
     else { ok = await this.perguntaDoChefe(b, pacote); this.respostaDoGrupo(ok, true); }
     if (!this.running || b.hp <= 0) return;
     if (ok) {
@@ -1020,7 +1019,11 @@ export class Caminho {
       case 'pedro': return pesca(this);
       case 'samuel': return trocarVocacao(this);
       case 'dorcas': return guardaRoupa(this);
-      case 'mestre': texto = 'Ferro com ferro se afia; assim o homem afia o rosto do seu amigo (Pv 27:17).\n\nA arena é para os peregrinos da mesma sala medirem forças. O desafio das ondas é para quem quer saber até onde aguenta. Melhor marca sua: ' + (cm.recorde || 0) + ' ondas.'; break;
+      case 'mestre': { cm.tec = cm.tec || {};
+        if (!cm.tec.rasteiro) return this.ui.dialog({ nome: ob.nome, look: ob.look, texto: 'Ferro com ferro se afia (Pv 27:17).\n\nPosso lhe ensinar o PASSO RASTEIRO: para baixo + passo. Você desliza por baixo do golpe e atravessa o adversário sem ser ferido.\n\nCusta 400 denários. Você tem ' + Math.floor(c.data.gold) + '.', acoes: [c.data.gold >= 400 ? { label: 'Aprender', fn: () => { c.data.gold -= 400; cm.tec.rasteiro = 1; sfx('level'); this.salvar(); this.ui.toast('Aprendido: PASSO RASTEIRO (para baixo + passo).', 6000); } } : { label: 'Ainda não tenho' }, { label: 'Agora não' }] });
+      }
+      // falls through
+      case 'mestre2': texto = 'Ferro com ferro se afia; assim o homem afia o rosto do seu amigo (Pv 27:17).\n\nA arena é para os peregrinos da mesma sala medirem forças. O desafio das ondas é para quem quer saber até onde aguenta. Melhor marca sua: ' + (cm.recorde || 0) + ' ondas.'; break;
       case 'zaqueu':
         if (this.ovo('zaqueu', 'Zaqueu subiu num sicômoro para ver Jesus — e desceu depressa (Lc 19:4-6).')) { c.data.gold += 60; texto = 'Você subiu até aqui só para me ver? Eu subi para ver outro.\n\n"Zaqueu, desce depressa, pois me convém ficar hoje em tua casa."\n\nTome: metade do que tenho dou aos pobres. (+60 denários)'; }
         else texto = 'Se defraudei alguém, restituo quatro vezes mais. Hoje houve salvação nesta casa (Lc 19:8-9).';

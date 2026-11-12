@@ -72,8 +72,10 @@ export const CLASS_ATTIRE = {
 export const LOOK_OPTIONS = {
   skin: ['#F2D0B0', '#E3B48C', '#C68B59', '#A0673E', '#6E4428'],
   hair: ['#1C120A', '#3A2314', '#6B4423', '#B8863B', '#E8C77A', '#D9D2C5', '#8E2F1F', '#C85A2A'],
-  tunic: ['#526C78', '#874D4C', '#4C665E', '#686078', '#A18C61', '#343F51', '#D2CFBB', '#497A80'],
-  cape: ['#394F62', '#877451', '#713E49', '#55516D', '#40594F', '#C8C9BC', 'none'],
+  tunic: ['#526C78', '#874D4C', '#4C665E', '#686078', '#A18C61', '#343F51', '#D2CFBB', '#497A80', '#8E2B45', '#2F5FB0', '#3F7A4A', '#C9A63C', '#17121f', '#E9E6DC'],
+  cape: ['#394F62', '#877451', '#713E49', '#55516D', '#40594F', '#C8C9BC', '#8E2B45', '#2E5E44', '#C9A63C', '#17121f', '#E9E6DC', '#2F5FB0', 'none'],
+  // o que vai na cabeça (desenhado em pixel/humano.js)
+  acessorio: [{ id: 'nenhum', nome: 'Nada' }, { id: 'capuz', nome: 'Capuz' }, { id: 'pontudo', nome: 'Capuz pontudo' }, { id: 'faixa', nome: 'Faixa na testa' }, { id: 'elmo', nome: 'Elmo de couro' }],
   style: [
     { id: 'curto', nome: 'Curto' }, { id: 'longo', nome: 'Longo' }, { id: 'coque', nome: 'Coque' },
     { id: 'veu', nome: 'Véu' }, { id: 'careca', nome: 'Careca' }, { id: 'turbante', nome: 'Turbante' },
