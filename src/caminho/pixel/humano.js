@@ -70,8 +70,10 @@ export function poseDe(p, Tm, corpo) {
   return ajusta(P, corpo);
 }
 
-function arma(s, tipo, hx, hy, ang, lendaria, ext = 0) {
-  const c = Math.cos(ang), n = Math.sin(ang), A = lendaria ? rampa('#E9E4C8') : ACO;
+const RAMPAS = new Map(), rampaDe = h => RAMPAS.get(h) || (RAMPAS.set(h, rampa(h)), RAMPAS.get(h));
+function arma(s, tipo, hx, hy, ang, lendaria, ext = 0, lamina) {
+  // a cor da arma vem da variação empunhada (Jael, achados); sem ela, aço (ou luz, com a Espada do Espírito)
+  const c = Math.cos(ang), n = Math.sin(ang), A = lendaria ? rampa('#E9E4C8') : lamina ? rampaDe(lamina) : ACO, L = lamina ? rampaDe(lamina) : null;
   const pt = d => [hx + c * d, hy + n * d];
   if (tipo === 'espada' || tipo === 'adaga') {
     const L = tipo === 'adaga' ? 7 : 13, [bx, by] = pt(-2), [gx, gy] = pt(1), [tx, ty] = pt(L), [mx, my] = pt(2);
@@ -84,16 +86,16 @@ function arma(s, tipo, hx, hy, ang, lendaria, ext = 0) {
   } else if (tipo === 'cajado') {
     const [ax, ay] = pt(-7), [tx, ty] = pt(14); s.linha(ax, ay, tx, ty, 1, MADEIRA[2]); s.linha(ax, ay + 1, pt(4)[0], pt(4)[1] + 1, 1, MADEIRA[1]);
     const [kx, ky] = pt(16); s.px(kx, ky, MADEIRA[3]); s.px(kx - n * 2 + c, ky + c * 2 + n, MADEIRA[2]); s.px(kx - n * 3, ky + c * 3, MADEIRA[2]); s.px(kx - n * 2 - c, ky + c * 2 - n, MADEIRA[1]);
-    s.px(kx - n, ky + c, lendaria ? OURO[4] : cor('#9FE0D6'));
+    s.px(kx - n, ky + c, lendaria ? OURO[4] : L ? L[4] : cor('#9FE0D6')); if (L) { s.px(kx - n * 2, ky + c * 2, L[3]); s.px(kx, ky, L[2]); }
   } else if (tipo === 'funda') {
     const bal = Math.sin(ang * 2) * 2 + ext; s.linha(hx, hy, hx + 2 + bal, hy + 6, 1, COURO[2]); s.linha(hx + 1, hy, hx + 4 + bal, hy + 6, 1, COURO[1]);
-    s.ret(hx + 2 + bal, hy + 6, 3, 2, COURO[3]); s.px(hx + 3 + bal, hy + 6, cor('#C9C4B2'));
+    s.ret(hx + 2 + bal, hy + 6, 3, 2, COURO[3]); s.px(hx + 3 + bal, hy + 6, L ? L[4] : cor('#C9C4B2'));
   } else if (tipo === 'trombeta') {
-    for (let d = 0; d <= 9; d++) { const g = d < 3 ? 1 : d < 7 ? 2 : 3, [x, y] = pt(d); s.ret(x - (g >> 1), y - d * 0.35 - (g >> 1), g, g, d > 7 ? MARFIM[4] : d % 3 ? MARFIM[2] : MARFIM[1]); }
+    for (let d = 0; d <= 9; d++) { const g = d < 3 ? 1 : d < 7 ? 2 : 3, [x, y] = pt(d); const M = L || MARFIM; s.ret(x - (g >> 1), y - d * 0.35 - (g >> 1), g, g, d > 7 ? M[4] : d % 3 ? M[2] : M[1]); }
   } else if (tipo === 'chicote') {
     s.linha(pt(-2)[0], pt(-2)[1], pt(2)[0], pt(2)[1], 1, COURO[1]); s.px(pt(-2)[0], pt(-2)[1], OURO[2]);
     let px = pt(2)[0], py = pt(2)[1];
-    for (let d = 3; d <= 16 + ext; d += 2) { const [x, y] = pt(d), cai = ext ? Math.sin(d * 0.5) * 1.5 : (d - 2) * (d - 2) * 0.06; s.linha(px, py, x, y + cai, 1, d % 4 ? COURO[2] : COURO[3]); px = x; py = y + cai; }
+    for (let d = 3; d <= 16 + ext; d += 2) { const [x, y] = pt(d), cai = ext ? Math.sin(d * 0.5) * 1.5 : (d - 2) * (d - 2) * 0.06; s.linha(px, py, x, y + cai, 1, d % 4 ? (L || COURO)[2] : (L || COURO)[3]); px = x; py = y + cai; }
   }
 }
 
@@ -187,7 +189,7 @@ export function pintarHumano(s, ox, oy, o) {
   // braço da frente e arma
   const m = P.mao || { x: 3 + (P.balanco ? P.balanco * 0.5 : 0), y: qy - 1 + P.respira };
   const cot = { x: (ombro.x + 1 + m.x) / 2 + (m.y < ombro.y ? 1 : -1), y: (ombro.y + m.y) / 2 + (m.y < ombro.y ? 0 : 1.5) };
-  if (!o.semArma && o.tipoArma) arma(s, o.tipoArma, X(m.x), Y(m.y), P.ang, !!hab.espada, o.ext || 0);
+  if (!o.semArma && o.tipoArma) arma(s, o.tipoArma, X(m.x), Y(m.y), P.ang, !!hab.espada, o.ext || 0, o.armaCor);
   s.membro(X(ombro.x + 1), Y(ombro.y), X(cot.x), Y(cot.y), 2, tun); s.membro(X(cot.x), Y(cot.y), X(m.x), Y(m.y), 2, pele, false);
   s.px(X(m.x), Y(m.y), pele[3]); s.px(X(m.x) + 1, Y(m.y), pele[2]);
   if (C.ombro || o.cls === 'guerreiro') s.px(X(ombro.x + 1), Y(ombro.y - 1), o.cls === 'guerreiro' ? ACO[4] : tun[3]);

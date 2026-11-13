@@ -44,12 +44,12 @@ export function anguloMira(G, input) {
 }
 
 export function soltarMira(G, ang) {
-  const p = G.p, cls = G.char.cls, base = G.danoBase() * (G.hab.espada ? 1.3 : 1), { onde, lado } = contextoMira(G);
+  const p = G.p, cls = G.char.cls, base = G.danoBase() * (G.hab.espada ? 1.3 : 1) * (G.tem('porcao_dobrada') ? 1.4 : 1), { onde, lado } = contextoMira(G);
   let ux = Math.cos(ang), uy = Math.sin(ang);
   // na parede, mirar para dentro do muro não tem sentido: o golpe sai para o lado de fora, como num pulo de parede
   if (onde === 'parede' && Math.sign(ux) === lado) { ux = -ux; ang = Math.atan2(uy, ux); }
   const ox = p.x, oy = p.y - 26, fora = -lado;
-  p.oleo -= MIRA_CUSTO; p.miraCd = MIRA_ESPERA; if (Math.abs(ux) > 0.15) p.face = Math.sign(ux); p.desliza = 0;
+  p.oleo -= G.custoMira ? G.custoMira() : MIRA_CUSTO; p.miraCd = MIRA_ESPERA; if (Math.abs(ux) > 0.15) p.face = Math.sign(ux); p.desliza = 0;
   const tiro = o => G.tiros.push({ semOleo: true, x: ox + ux * 18, y: oy + uy * 18, vx: 0, vy: 0, r: 7, amigo: true, vida: 1, cor: '#FFF1BE', tipo: 'pedra', ...o });
   const depois = (ms, fn) => setTimeout(() => { if (G.running && !G.p.morto && G.p === p) fn(); }, ms);
   G.textoEm(p.x, p.y - 70, MIRA_NOME[cls]?.[onde] || 'Ataque mira', '#FFE9A8', 13); G.clarao = 0.1; G.tremor(6); sfx('magic');

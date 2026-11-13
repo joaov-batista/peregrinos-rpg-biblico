@@ -1,5 +1,6 @@
 // O peregrino em vista lateral: movimento, a Lâmpada (vigília), a oração, os golpes e o desenho articulado.
-import { MIRA_CUSTO, MIRA_CARGA, soltarMira } from './mira.js';
+import { MIRA_CARGA, soltarMira } from './mira.js';
+import { espiritoDesce, ESPIRITO_CUSTO } from './arsenal.js';
 import { clamp, lerp, TAU, rand } from '../util.js';
 import { sfx } from '../audio.js';
 import { vibrar } from '../gamepad.js';
@@ -15,8 +16,8 @@ const GOLPE_PASSO = {
   funda: { chao: 'Pedra rasteira', ar: 'Pedrada do alto' }
 };
 function golpeDoPasso(G, p, arma) {
-  const tipo = G.tipoArma || 'espada', modo = p.dashModo || (p.chao ? 'chao' : 'ar'), f = p.dashDir || p.face, base = G.danoBase() * arma.d * 1.5;
-  const atk = (dir = 'lado') => ({ dir, hits: new Set(), carga: true });
+  const tipo = G.tipoArma || 'espada', modo = p.dashModo || (p.chao ? 'chao' : 'ar'), f = p.dashDir || p.face, base = G.danoBase() * arma.d * 1.5 * (G.tem('porcao_dobrada') ? 1.4 : 1);
+  const atk = (dir = 'lado') => ({ dir, hits: new Set(), carga: true, arma: true });
   const bate = (x, y, w, h, d = base, dir) => G.golpear({ x: x - w / 2, y: y - h / 2, w, h }, d, atk(dir));
   const tiro = o => G.tiros.push({ x: p.x + f * 16, y: p.y - 26, vx: 0, vy: 0, r: 8, amigo: true, vida: 0.8, cor: '#FFF1BE', tipo: 'pedra', dano: base * 0.8, ...o });
   p.dashGolpe = true; p.atkBuf = 0; p.atkCd = 0.42; p.face = f; sfx('swing'); G.tremor(3);
@@ -88,10 +89,20 @@ export function atualizarHeroi(G, dt) {
   if (!p.lamp) p.vig = 0;
   p.lampA = damp(p.lampA, p.lamp ? 1 : 0, 16, dt);
 
+  // ---- ORAÇÃO + GOLPE: com a oração apertada, o golpe chama o Espírito, que desce e fere tudo em volta (no alto e no chão) ----
+  if (p.espCd > 0) p.espCd -= dt;
+  if (c.orar && c.atk && !preso && !emDash && !p.lamp && !G.investidaMira && !G.quedaMira) {
+    if (p.espCd > 0 || p.oleo < ESPIRITO_CUSTO) { if (!p.avisoEsp) { p.avisoEsp = 0.8; G.textoEm(p.x, p.y - 64, p.espCd > 0 ? 'o Espírito ainda não (' + Math.ceil(p.espCd) + 's)' : 'a descida do Espírito pede ' + ESPIRITO_CUSTO + ' de azeite', '#C9B88A', 12); } }
+    else espiritoDesce(G);
+    c.atk = false; p.atkBuf = 0;
+  }
+  if (p.avisoEsp > 0) p.avisoEsp -= dt;
   // ---- Oração: gasta azeite para recuperar um fôlego; fica parado e vulnerável ----
-  if (c.orar && p.chao && !preso && !emDash && !p.lamp && p.oleo >= OLEO_USO && p.vida < p.vidaMax) {
+  const custoOra = G.custoOracao();
+  if (c.orar && p.chao && !preso && !emDash && !p.lamp && p.oleo >= custoOra && p.vida < p.vidaMax) {
     p.orando += dt; if (p.orando < dt * 1.5) sfx('magic');
-    if (p.orando >= 0.95) { p.orando = 0; p.oleo -= OLEO_USO; p.vida++; sfx('heal'); G.efeito('cura', p.x, p.y, 1, { gruda: p }); G.fx.anel(p.x, p.y - 20, '#FFE9A8', 60); G.fx.sobe(p.x, p.y - 10, 14, '#FFE9A8'); }
+    if (p.orando >= 0.95) { p.orando = 0; p.oleo -= custoOra; p.vida++; sfx('heal'); G.efeito('cura', p.x, p.y, 1, { gruda: p }); G.fx.anel(p.x, p.y - 20, '#FFE9A8', 60); G.fx.sobe(p.x, p.y - 10, 14, '#FFE9A8');
+      if (G.tem('vaso_alabastro')) { p.inv = Math.max(p.inv, 1.5); G.fx.anel(p.x, p.y - 26, '#F0E6D8', 90); G.textoEm(p.x, p.y - 72, 'perfume de alabastro', '#F0E6D8', 11); } }
   } else p.orando = 0;
 
   // ---- correr ----
@@ -108,7 +119,7 @@ export function atualizarHeroi(G, dt) {
   p.desliza = 0;
   if (!p.chao && !emDash && p.vy > 0) { // deslizar e pular na parede: todo peregrino sabe
     const lado = c.mx > 0.3 ? 1 : c.mx < -0.3 ? -1 : 0;
-    if (lado && paredeAoLado(N, p, lado)) { p.desliza = lado; p.vy = Math.min(p.vy, 115); p.pulos = hab.asas ? 2 : 1; p.dashAr = true; p.face = -lado; if (Math.random() < dt * 14) G.fx.po(p.x + lado * 9, p.y - 20, 1, '#C9D2C4'); }
+    if (lado && paredeAoLado(N, p, lado)) { p.desliza = lado; p.vy = Math.min(p.vy, 115); p.pulos = G.pulosMax(); p.dashAr = true; p.face = -lado; if (Math.random() < dt * 14) G.fx.po(p.x + lado * 9, p.y - 20, 1, '#C9D2C4'); }
   }
   // descer de uma plataforma: segurar para baixo um instante (ou para baixo + pular)
   if (c.my > 0.5 && p.chao && p.naPonte && !preso) { p.baixoT = (p.baixoT || 0) + dt; if (p.baixoT > 0.14 || p.buf > 0) { p.desce = 0.2; p.buf = 0; p.chao = false; p.baixoT = 0; } } else p.baixoT = 0;
@@ -126,7 +137,7 @@ export function atualizarHeroi(G, dt) {
   // ---- passo pronto (dash) ----
   // todo peregrino tem o passo pronto, mas ele demora a voltar (os Calçados da Paz encurtam a espera)
   if (c.dash && p.dashCd <= 0 && !preso && (p.chao || p.dashAr) && p.orando <= 0) {
-    p.dashT = 0.19; p.dashCd = p.dashMax = hab.calcados ? 0.6 : 1.4; p.dashDir = c.mx ? Math.sign(c.mx) : p.face; p.face = p.dashDir;
+    p.dashT = 0.19; p.dashCd = p.dashMax = (hab.calcados ? 0.6 : 1.4) * (G.tem('manto_elias') ? 0.6 : 1); p.dashDir = c.mx ? Math.sign(c.mx) : p.face; p.face = p.dashDir;
     if (!p.chao) p.dashAr = false; p.atk = null; p.lamp = false; sfx('dodge');
     // passo rasteiro (para baixo + passo): passa por baixo do golpe e atravessa o adversário sem ser ferido
     // no chão, o passo é uma RASTEIRA: o peregrino desliza quase deitado, passa por baixo do que vem na altura do peito e
@@ -164,7 +175,7 @@ export function atualizarHeroi(G, dt) {
     if (fxDe) G.efeito(fxDe === 'corte' && hab.espada ? 'corteLuz' : fxDe, p.x, p.y, p.face, { gruda: p, dx: dir === 'diagC' || dir === 'diagB' ? p.face * 14 : 0, dy: dir === 'baixo' || dir === 'diagB' ? 24 : dir === 'rasteira' ? 20 : 0, vel: 1.25 });
     if (arma.avanco && dir === 'lado' && p.chao) p.vx = p.face * arma.avanco * 3;
     if (tiro) { const n = tiro.n || 1, ang = Math.atan2(uy, ux); for (let i = 0; i < n; i++) { const b = ang + (i - (n - 1) / 2) * (tiro.leque || 0.14), cx2 = Math.cos(b), sy2 = Math.sin(b); // algumas armas atiram várias pedras em leque
-      G.tiros.push({ golpe: p.atk, x: p.x + p.face * cx2 * 16, y: p.y - (dir === 'rasteira' ? 12 : 28) + sy2 * 14, vx: p.face * cx2 * tiro.v, vy: sy2 * tiro.v - (tiro.g ? 60 : 0), g: tiro.g || 0, r: tiro.r, r0: tiro.r, dano: G.danoBase() * arma.d, amigo: true, vida: tiro.vida, max: tiro.vida, cor: '#FFF1BE', tipo: tiro.tipo, fura: tiro.fura, basico: true }); } }
+      G.tiros.push({ golpe: p.atk, x: p.x + p.face * cx2 * 16, y: p.y - (dir === 'rasteira' ? 12 : 28) + sy2 * 14, vx: p.face * cx2 * tiro.v, vy: sy2 * tiro.v - (tiro.g ? 60 : 0), g: tiro.g || 0, r: tiro.r, r0: tiro.r, dano: G.danoBase() * arma.d, amigo: true, vida: tiro.vida * (G.tem('aljava_jonatas') ? 1.35 : 1), max: tiro.vida * (G.tem('aljava_jonatas') ? 1.35 : 1), cor: arma.lamina || '#FFF1BE', tipo: tiro.tipo, fura: tiro.fura, basico: true }); } }
   }
   if (p.atk) {
     const a = p.atk; a.t += dt;
@@ -180,7 +191,7 @@ export function atualizarHeroi(G, dt) {
       const r = G.golpear({ x: cx - w / 2, y: cy - h / 2, w, h }, G.danoBase() * arma.d, a);
       if (r && !a.reagiu) {
         a.reagiu = true;
-        if (a.dir === 'baixo' || a.dir === 'diagB') { p.vy = -560; p.pogo = true; p.pulos = hab.asas ? 2 : 1; p.dashAr = true; if (a.dir === 'diagB') p.vx -= f * 90; }
+        if (a.dir === 'baixo' || a.dir === 'diagB') { p.vy = -560; p.pogo = true; p.pulos = G.pulosMax(); p.dashAr = true; if (a.dir === 'diagB') p.vx -= f * 90; }
         else if (a.dir === 'lado' || a.dir === 'rasteira') { p.vx -= f * 150; }
         else if (p.vy < 0) p.vy *= 0.5;
         if (arma.chicote) G.efeito('estalo', cx + f * w * 0.4 * (a.dir === 'cima' || a.dir === 'baixo' ? 0 : 1), cy, f);
@@ -193,14 +204,14 @@ export function atualizarHeroi(G, dt) {
   const livre = !preso && p.orando <= 0 && !G.investidaMira && !G.quedaMira && !G.agarre;
   if (c.atkSeg && livre) {
     p.segGolpe = (p.segGolpe || 0) + dt;
-    if (p.miraCd > 0 || p.oleo < MIRA_CUSTO) { p.carga = 0; if (p.segGolpe > 0.45 && !p.avisoMira) { p.avisoMira = true; G.textoEm(p.x, p.y - 64, p.miraCd > 0 ? 'ataque mira: ainda não' : 'ataque mira pede ' + MIRA_CUSTO + ' de azeite', '#C9B88A', 12); } }
+    if (p.miraCd > 0 || p.oleo < G.custoMira()) { p.carga = 0; if (p.segGolpe > 0.45 && !p.avisoMira) { p.avisoMira = true; G.textoEm(p.x, p.y - 64, p.miraCd > 0 ? 'ataque mira: ainda não' : 'ataque mira pede ' + G.custoMira() + ' de azeite', '#C9B88A', 12); } }
     else { p.carga += dt; if (p.carga > MIRA_CARGA && p.carga - dt <= MIRA_CARGA) sfx('key'); }
   } else {
     if (p.carga >= MIRA_CARGA && livre) soltarMira(G, c.mira ?? (p.face > 0 ? 0 : Math.PI));
     p.carga = 0; p.segGolpe = 0; p.avisoMira = false;
   }
   // verso (especial da vocação)
-  if (c.verso && p.oleo >= OLEO_USO && !preso && !p.lamp && p.orando <= 0) G.verso();
+  if (c.verso && p.oleo >= G.custoVerso() && !preso && !p.lamp && p.orando <= 0) G.verso();
 
   // ---- física ----
   const noAr = !p.chao, vyAntes = p.vy;
@@ -214,7 +225,7 @@ export function atualizarHeroi(G, dt) {
   }
   if (p.chao) {
     if (noAr && vyAntes > 260) { p.sq = clamp(1 - vyAntes / 2600, 0.7, 0.9); G.fx.po(p.x, p.y, vyAntes > 600 ? 9 : 4, '#C9D2C4'); sfx('step'); }
-    p.pulos = hab.asas ? 2 : 1; p.dashAr = true; p.tAr = 0;
+    p.pulos = G.pulosMax(); p.dashAr = true; p.tAr = 0;
     p.segT -= dt;
     if (p.segT <= 0 && !p.naPonte && !tocaEspinho(N, { ...p, w: p.w + 40 })) { p.segT = 0.25; p.seguro = { x: p.x, y: p.y }; }
   } else p.tAr += dt;

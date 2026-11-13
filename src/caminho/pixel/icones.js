@@ -44,7 +44,23 @@ const ITENS = {
   fogo: ['.....O.....', '....OO.....', '....OOO.O..', '..O.OWOOO..', '..OOOWWOO..', '.OOOWWWOOO.', '.OOWWWWWOO.', '.OOOWWWOOo.', '..OOOOOOo..', '...ooooo...'],
   raio: ['......OOO..', '.....OWO...', '....OWO....', '...OWOOOO..', '..OOOOWO...', '.....OWO...', '....OWO....', '...OWO.....', '...OO......', '...o.......'],
   onda: ['...OO......', '..OWWO...OO', '.OW..OO.OWW', 'OO....OOO..', '...OO......', '..OWWO...OO', '.OW..OO.OWW', 'OO....OOO..'],
-  vento: ['..OOOO.....', '.O....O....', '......O.OO.', 'OOOOOOO...O', '..........O', 'OOOOOOOOOO.', '.......O...', '..O....O...', '...OOOO....']
+  vento: ['..OOOO.....', '.O....O....', '......O.OO.', 'OOOOOOO...O', '..........O', 'OOOOOOOOOO.', '.......O...', '..O....O...', '...OOOO....'],
+  adaga: ['..........W', '.........WO', '........WO.', '.......WO..', '..o..WOO...', '...oWO.....', '...oo......', '..o..o.....', '.o.........'],
+  lanca: ['.........WW', '........WOO', '.......oOO.', '......o.O..', '.....o.....', '....o......', '...o.......', '..o........', '.o.........', 'o..........'],
+  cajado: ['......OOO..', '.....O.WO..', '.....O.OO..', '......oO...', '......o....', '.....o.....', '....o......', '...o.......', '..o........', '.o.........'],
+  trombeta: ['.........OO', '........OWO', '.......OOOO', 'oo...OOOOO.', 'OOooOOOO...', 'oOOOOO.....', '..oo.......'],
+  funda: ['o.........o', '.o.......o.', '..o.....o..', '...o...o...', '....OWO....', '...OOOOo...', '....ooo....'],
+  chicote: ['oo.........', 'Ooo........', '.oO..OOO...', '..oOOO..O..', '.......O...', '......O..O.', '.......OOO.'],
+  chifre: ['.........OO', '.......OOWO', '.....OOOOo.', '...OOOOo...', '..OWOo.....', '.OOo.......', 'OOo........', 'Oo.........'],
+  pena: ['........OO.', '.......OWO.', '......OWOO.', '.....OWOo..', '....OWOo...', '...OWOo....', '..OOOo.....', '.oOo.......', 'o..........'],
+  tranca: ['...OO......', '..OWWO.....', '...OOOO....', '....OWOO...', '...OOOO....', '..OOWO.....', '...OOOO....', '....OOO....', '.....o.....'],
+  sal: ['...OOOOO...', '..OoOoOoO..', '..OOOOOOO..', '.OWWOOOOOo.', '.OWOOOOOOo.', '.OOOOOOOOo.', '..ooooooo..'],
+  semente: ['.....W.....', '....WOW....', '.....O.....', '....OOO....', '...OWOOO...', '...OOOOo...', '....ooo....'],
+  vaso: ['...OOOOO...', '....OOO....', '...OWOOO...', '..OWOOOOO..', '..OWOOOOo..', '..OOOOOOo..', '...OOOOo...', '....ooo....'],
+  lenco: ['OOOOOOOOOOO', 'OWWOOOOOOoO', 'OWOOOOOOOoO', 'OOOOOOOOOoO', 'OOOOOOOOOoO', '.OOOOOOOOo.', '..o.o.o.o..'],
+  espiral: ['...OOOOO...', '..O.....O..', '.O..OOO..O.', '.O.O...O.O.', '.O.O.W.O.O.', '.O..OO..O..', '..O.....O..', '...OOOO....'],
+  flecha: ['........WWO', '.......WOO.', '..o...WO...', '...oOWO....', '....OO.....', '...oOo.....', '..o..o.....', '.o.........'],
+  flor: ['...O...O...', '..OWO.OWO..', '...OOWOO...', '..OOWWWOO..', '...OOWOO...', '..OWO.OWO..', '...O.o.O...', '.....o.....', '....oo.....']
 };
 // item → [desenho, cor]
 const DE = {
@@ -54,6 +70,10 @@ const DE = {
   lamparina_abismo: ['candeia', '#D99A3C'], sandalias_mensageiro: ['sandalia', '#C9A45C'], cinto_compaixao: ['cinto', '#B03A5A'], selo_misericordia: ['pomba', '#E9E6DC'], anel_beltessazar: ['anel', '#D9A63C'],
   cepa_raizes: ['cepa', '#8A6A44'], tijolo_humilde: ['tijolo', '#B8744C'], orvalho_ceu: ['gota', '#8FE8FF'], olhos_ceu: ['olho', '#8FB6D6'], coroa_restituida: ['coroa', '#E8C24A'], pedra_lisa: ['gema', '#C9C4B2'],
   osso_bronze: ['osso', '#C08A4A'], escama_leviata: ['escama', '#2F8F9A'], purpura_lidia: ['manto', '#8A4FA0'], odre_novo: ['odre', '#9A6A44'], cinco_paes: ['pao', '#C9A86A'],
+  chifre_azeite: ['chifre', '#E8C24A'], oleo_viuva: ['vaso', '#C98A4E'], manto_elias: ['manto', '#7A5A3A'], pena_aguia: ['pena', '#E9E6DC'], cabelo_sansao: ['tranca', '#6B4A2E'],
+  brasa_altar: ['fogo', '#FF6A2A'], jarro_gideao: ['vaso', '#B8744C'], pedra_angular: ['tijolo', '#C9C4B2'], sal_terra: ['sal', '#E9E6DC'], semente_mostarda: ['semente', '#B8D06A'],
+  vaso_alabastro: ['vaso', '#F0E6D8'], lenco_paulo: ['lenco', '#E9E6DC'], porcao_dobrada: ['espiral', '#FFC94A'], aljava_jonatas: ['flecha', '#C9A06A'], mana_deserto: ['odre', '#F0DDA8'],
+  vara_florida: ['flor', '#F2B8D0'], cantico_novo: ['onda', '#E8C24A'], pomba_jordao: ['pomba', '#FFF4CF'],
   tornado: ['fogo', '#FF8A2A'], raios: ['raio', '#FFE26B'], enchente: ['onda', '#5ED1E8'], vento: ['vento', '#BFF0F8'], espirito: ['pomba', '#FFE9A8']
 };
 const prontos = new Map();
@@ -61,6 +81,16 @@ export function iconeItem(id, tam = 30) {
   const d = DE[id]; if (!d) return document.createTextNode('◆');
   let cv0 = prontos.get(id);
   if (!cv0) { const g = ITENS[d[0]], r = rampa(d[1]), s = new Sprite(13, 12); s.carimbo(g, 1, 1 + ((10 - g.length) >> 1), { O: r[3], o: r[1], W: r[4] }); s.contorno(TINTA); cv0 = s.tela(); prontos.set(id, cv0); }
+  const cv = document.createElement('canvas'); cv.width = cv0.width; cv.height = cv0.height; cv.getContext('2d').drawImage(cv0, 0, 0);
+  cv.style.cssText = `width:${tam}px;height:${Math.round(tam * 12 / 13)}px;image-rendering:pixelated;pointer-events:none`; cv.className = 'ico-px';
+  return cv;
+}
+
+// ícone de uma arma (tipo da vocação), na cor da lâmina da variação
+const ARMA_DESENHO = { espada: 'espada', adaga: 'adaga', lanca: 'lanca', cajado: 'cajado', trombeta: 'trombeta', funda: 'funda', chicote: 'chicote' };
+export function iconeArma(tipo, lamina, tam = 30) {
+  const chave = 'arma:' + tipo + ':' + (lamina || ''); let cv0 = prontos.get(chave);
+  if (!cv0) { const g = ITENS[ARMA_DESENHO[tipo] || 'espada'], r = rampa(lamina || '#B8D0E0'), s = new Sprite(13, 12); s.carimbo(g, 1, 1 + ((10 - g.length) >> 1), { O: r[3], o: rampa('#8A623C')[2], W: r[4] }); s.contorno(TINTA); cv0 = s.tela(); prontos.set(chave, cv0); }
   const cv = document.createElement('canvas'); cv.width = cv0.width; cv.height = cv0.height; cv.getContext('2d').drawImage(cv0, 0, 0);
   cv.style.cssText = `width:${tam}px;height:${Math.round(tam * 12 / 13)}px;image-rendering:pixelated;pointer-events:none`; cv.className = 'ico-px';
   return cv;

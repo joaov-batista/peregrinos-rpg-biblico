@@ -144,7 +144,7 @@ export class Juntos {
     this.tE = 0; this.tW = 0; this.tI = 0; this.semDono = 0; this.fxN = 0; this.seq = (Math.random() * 9e5 | 0) * 1000;
     this.gastos = new Map(); this.mortos = new Set(); this.cons = new Map(); this.mudo = false; this.resp = null;
   }
-  info() { const c = this.G.char; return { nome: c.name, look: c.look || {}, cls: c.cls, hab: this.G.hab, tela: TELA }; }
+  info() { const c = this.G.char, A = this.G.arma; return { nome: c.name, look: c.look || {}, cls: c.cls, hab: this.G.hab, tela: TELA, armaCor: A?.lamina || '', armaRar: A?.rar || '' }; }
   // o par joga no mesmo aparelho (outro quadro da tela dividida): eventos de todos não se repetem no meu quadro
   irmao(id) { return !!TELA && this.pares.get(id)?.tela === TELA; }
 
@@ -206,7 +206,7 @@ export class Juntos {
 
   chegou(id, m, quieto) {
     const h = novoHeroi(0, 0, 5); h.a = null; h.tx = 0; h.ty = 0; h.novo = true;
-    this.pares.set(id, { id, nome: m.nome || 'Peregrino', look: m.look || {}, cls: m.cls, hab: m.hab || {}, tela: m.tela || '', arma: CLASSES[m.cls]?.arma || 'espada', h, visto: 0 });
+    this.pares.set(id, { id, nome: m.nome || 'Peregrino', look: m.look || {}, cls: m.cls, hab: m.hab || {}, tela: m.tela || '', arma: CLASSES[m.cls]?.arma || 'espada', armaCor: m.armaCor || '', armaRar: m.armaRar || '', h, visto: 0 });
     if (!quieto) this.G.ui.toast((m.nome || 'Um peregrino') + ' chegou para caminhar junto.', 4000);
   }
   saiu(id) { const p = this.pares.get(id); if (!p) return; this.pares.delete(id); this.G.ui.toast(p.nome + ' deixou a sala.', 3500); }
@@ -326,7 +326,7 @@ export class Juntos {
     switch (m.t) {
       case 'ch': if (!par && m.de !== this.eu) this.chegou(m.de, m); return;
       case 'sx': this.saiu(m.id); return;
-      case 'inf': if (par) { par.tela = m.tela || ''; par.nome = m.nome; par.look = m.look || {}; par.cls = m.cls; par.hab = m.hab || {}; par.arma = CLASSES[m.cls]?.arma || 'espada'; } return;
+      case 'inf': if (par) { par.tela = m.tela || ''; par.nome = m.nome; par.look = m.look || {}; par.cls = m.cls; par.hab = m.hab || {}; par.arma = CLASSES[m.cls]?.arma || 'espada'; par.armaCor = m.armaCor || ''; par.armaRar = m.armaRar || ''; } return;
       case 'e': {
         if (!par) return;
         const h = par.h, { t, de, x, y, ...r } = m; Object.assign(h, r); h.atk = m.atk || null; h.ts = m.ts || null; h.tx = x; h.ty = y;

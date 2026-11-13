@@ -247,8 +247,9 @@ export function renderPixel(G) {
   }
   if (p.arpao && !p.morto) { const hx = X(p.x) - p.face * 4, hy = Y(p.y) - 34; g.fillStyle = '#A0662A'; g.fillRect(hx, hy, 1, 26); g.fillStyle = '#EEF6FB'; g.fillRect(hx - 1, hy - 4, 3, 4); }
   // outros peregrinos (multijogador) e o herói
-  for (const o of G.outros) pintarJogador(g, o.corpo, o.look, o.cls, o.arma, Tm, o.hab, X, Y, false);
-  if (!p.morto) pintarJogador(g, p, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab, X, Y, true);
+  for (const o of G.outros) pintarJogador(g, o.corpo, o.look, o.cls, o.arma, Tm, o.hab, X, Y, false, o.armaCor, o.armaRar);
+  if (!p.morto) pintarJogador(g, p, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab, X, Y, true, G.arma?.lamina, G.arma?.rar);
+  if (G.pomba) pintarPomba(g, G.pomba, X, Y, Tm);
   else if (G.mortoT > 1.2) { const s = quadroHeroi({ ...p, morto: true, atk: null }, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab); s.dissolve(clamp((1.9 - G.mortoT) / 0.7, 0, 1), 5); carimbar(g, s, X(p.x), Y(p.y), AX, AY, p.face); }
   pintarEfeitos(g, G.fxPx, cx, cy, false);
   for (const t of G.tiros) pintarTiro(g, t, X(t.x), Y(t.y), Tm);
@@ -283,17 +284,32 @@ function pintarChicote(g, p, X, Y, dir, face, k, alc, cor) {
   }
 }
 
-function pintarJogador(g, p, look, cls, arma, Tm, hab, X, Y, eu) {
+function pintarJogador(g, p, look, cls, arma, Tm, hab, X, Y, eu, armaCor, armaRar) {
   if (arma === 'chicote' && p.atk && !p.atk.semCaixa) pintarChicote(g, p, X, Y, p.atk.dir, p.atk.face, Math.min(1, p.atk.t / p.atk.dur), 118, '#C48A4E');
   if (p.acoite) pintarChicote(g, p, X, Y, 'lado', p.acoite.face, Math.min(1, p.acoite.t / p.acoite.dur), p.acoite.alc, '#FFE08A');
-  const s = quadroHeroi(p, look, cls, arma, Tm, hab);
+  const s = quadroHeroi(p, look, cls, arma, Tm, hab, armaCor ? { armaCor } : {});
   if (p.rastro?.length) for (let i = 0; i < p.rastro.length; i += 3) { const r = p.rastro[i]; carimbar(g, vulto(s, cor('#BFD6E8')), X(r.x), Y(r.y), AX, AY, r.face, 0.18 + r.t * 1.6); }
   if (p.inv > 0 && !p.morto && Math.floor(Tm * 20) % 2 && !(p.flashT > 0)) g.globalAlpha = 0.55;
   carimbar(g, s, X(p.x), Y(p.y), AX, AY, p.face); g.globalAlpha = 1;
+  // armas épicas e lendárias brilham na mão: centelhas da cor da lâmina sobem em volta
+  if ((armaRar === 'epica' || armaRar === 'lendaria') && !p.morto) { const n = armaRar === 'lendaria' ? 6 : 3, hx = X(p.x + p.face * 12), hy = Y(p.y) - 16; g.fillStyle = armaCor || '#FFE08A';
+    for (let i = 0; i < n; i++) { const k = (Tm * 0.9 + i / n) % 1; g.globalAlpha = (1 - k) * (armaRar === 'lendaria' ? 0.95 : 0.6); g.fillRect(hx + Math.round(Math.sin(i * 2.3 + Tm * 3) * 6), hy - Math.round(k * 14), 1, 1); }
+    if (armaRar === 'lendaria') { g.globalAlpha = 0.18 + 0.1 * Math.sin(Tm * 4); g.fillRect(hx - 2, hy - 2, 5, 5); } g.globalAlpha = 1; }
   // halo do lampião
   if (p.lampA > 0.3 || p.vig > 0) { const lx = X(p.x + p.face * 12), ly = Y(p.y) - 30; g.fillStyle = '#FFE9A8'; g.globalAlpha = 0.35; for (let a = 0; a < 8; a++) g.fillRect(lx + Math.round(Math.cos(a * 0.785 + Tm * 3) * (5 + (a % 2) * 3)), ly + Math.round(Math.sin(a * 0.785 + Tm * 3) * (5 + (a % 2) * 3)), 1, 1); g.globalAlpha = 1; }
   if (p.orando > 0) { g.fillStyle = '#FFE9A8'; for (let i = 0; i < 9; i++) { const xx = X(p.x) - 7 + ((i * 5) % 15), yy = Y(p.y) - ((Tm * 40 + i * 13) % 46); g.globalAlpha = 0.7; g.fillRect(xx, yy, 1, 2 + (i % 2)); } g.globalAlpha = 1; }
   if (p.carga > 0.15) { g.fillStyle = p.carga >= 0.6 ? '#FFFFFF' : '#FFE9A8'; const r = Math.round(14 - Math.min(0.6, p.carga) * 14); for (let a = 0; a < 10; a++) g.fillRect(X(p.x) + Math.round(Math.cos(a * 0.628 + Tm * 6) * r), Y(p.y) - 14 + Math.round(Math.sin(a * 0.628 + Tm * 6) * r), 1, 1); }
+}
+
+// a pomba de luz que desce na oração + golpe: cai do alto num feixe e some num clarão ao tocar o chão
+const POMBA = ['.......WW..', '..WW..WWWo.', '.WWWW.WWWW.', 'WWWWWWWWW..', '.WWWWWWWW..', '..WWWWWW...', '...WWWW....', '....WW.....'];
+function pintarPomba(g, P, X, Y, Tm) {
+  const k = Math.min(1, P.t / 0.42), x = X(P.x), chao = Y(P.y), y = Math.round(chao - 190 + k * k * 150), fim = P.t > 0.42 ? Math.max(0, 1 - (P.t - 0.42) / 0.9) : 1;
+  g.save(); g.globalAlpha = 0.28 * fim; const gr = g.createLinearGradient(0, chao - 220, 0, chao); gr.addColorStop(0, 'rgba(255,244,207,0)'); gr.addColorStop(1, 'rgba(255,244,207,.9)'); g.fillStyle = gr; g.fillRect(x - 14, chao - 220, 28, 220); g.restore();
+  if (P.t > 0.42) return;
+  const asa = Math.floor(Tm * 12) % 2; g.fillStyle = '#FFF8E6';
+  for (let r = 0; r < POMBA.length; r++) for (let c = 0; c < POMBA[r].length; c++) { const ch = POMBA[r][c]; if (ch === '.') continue; g.fillStyle = ch === 'o' ? '#E8B04A' : '#FFF8E6'; g.fillRect(x - 5 + c, y + r - (asa && r < 3 ? 1 : 0), 1, 1); }
+  g.globalAlpha = 0.35; g.fillStyle = '#FFF4CF'; g.fillRect(x - 8, y - 3, 17, 14); g.globalAlpha = 1;
 }
 
 function pintarTiro(g, t, x, y, Tm) {
@@ -350,6 +366,12 @@ function pintarZona(g, G, z, X, Y, vw, vh, Tm) {
   }
   const y0w = z.tipo === 'col' ? (z.y0 ?? (A ? A.y0 : p.y - 600)) : z.y, y1w = z.tipo === 'col' ? (z.y1 ?? (A ? A.chao : p.y + 100)) : z.y + z.h, xw = z.tipo === 'col' ? z.x - z.w / 2 : z.x;
   const x = X(xw), y = Y(y0w), w = Math.round(z.w / PX), h = Math.round((y1w - y0w) / PX);
+  if (z.santo) { // a luz do Espírito: um véu claro com o miolo aceso e centelhas, nunca um bloco chapado
+    if (!ativa) return; const k = clamp(z.dur / 0.4, 0, 1); g.save(); g.globalAlpha = 0.22 * k; g.fillStyle = c; g.fillRect(x, y, w, h);
+    g.globalAlpha = 0.55 * k; g.fillStyle = '#FFF8E6'; if (z.tipo === 'col') g.fillRect(x + (w >> 1) - 1, y, 3, h); else g.fillRect(x, y + (h >> 1) - 1, w, 2);
+    g.globalAlpha = 0.9 * k; for (let i = 0; i < (z.tipo === 'col' ? 10 : 26); i++) { const px = z.tipo === 'col' ? x + ((i * 7 + Math.floor(Tm * 30)) % w) : x + ((i * 37 + Math.floor(Tm * 40)) % w), py = z.tipo === 'col' ? y + ((i * 53 + Math.floor(Tm * 120)) % h) : y + ((i * 11 + Math.floor(Tm * 20)) % h); g.fillRect(px, py, 1, 2); }
+    g.restore(); return;
+  }
   if (ativa) {
     g.fillStyle = z.tipo === 'poca' ? c : '#fff'; if (z.tipo === 'poca') { for (let i = 0; i < w; i++) g.fillRect(x + i, y + h - 3 - ((i + Math.floor(Tm * 6)) % 3 === 0 ? 1 : 0), 1, 4); g.fillStyle = '#fff'; for (let i = 2; i < w; i += 5) g.fillRect(x + i, y + h - 5 - ((i + Math.floor(Tm * 8)) % 4), 1, 1); return; }
     g.fillRect(x + 1, y, w - 2, h); g.fillStyle = c; g.fillRect(x, y, 1, h); g.fillRect(x + w - 1, y, 1, h); if (z.tipo === 'col') for (let i = 0; i < 8; i++) g.fillRect(x - 3 + ((i * 7) % (w + 6)), y + h - 1 - ((i * 5) % 9), 1, 2);
@@ -447,7 +469,7 @@ function pintarTextos(g, G, esc, cx, cy) {
     txt(nome, sx(o.x), sy(o.y - 104), 8 * u * 1.3, '#F2E9D0', 'center');
     if (sem) txt(sem.fases.filter(f => cm.feitas[sem.id + ':' + f.n]).length + '/5', sx(o.x), sy(o.y - 122), 8 * u, '#C9B88A', 'center');
   }
-  for (const z of G.zonas) if (z.tipo === 'faixa' && z.aviso > 0) txt(z.baixo ? 'PULE' : 'FIQUE NO CHÃO', sx(z.x + z.w / 2), sy(z.baixo ? z.y - 14 : z.y + z.h + 30), 8 * u * 1.5, '#fff', 'center');
+  for (const z of G.zonas) if (z.tipo === 'faixa' && z.aviso > 0 && !z.amigo) txt(z.baixo ? 'PULE' : 'FIQUE NO CHÃO', sx(z.x + z.w / 2), sy(z.baixo ? z.y - 14 : z.y + z.h + 30), 8 * u * 1.5, '#fff', 'center');
   // HUD
   const base = Math.max(13, Math.round(e * 6)), x0 = 30 * e;
   const xg = 52 * e; txt(String(Math.floor(G.char.data.gold)), xg + base * 0.9, 24 * e, base, '#FFE08A'); g.fillStyle = '#17121f'; g.beginPath(); g.arc(xg + base * 0.3, 24 * e - base * 0.33, base * 0.42, 0, TAU); g.fill(); g.fillStyle = '#F2C14E'; g.beginPath(); g.arc(xg + base * 0.3, 24 * e - base * 0.33, base * 0.3, 0, TAU); g.fill();

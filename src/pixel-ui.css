@@ -268,3 +268,15 @@ html.remake .panel.esquema h2 { margin: 0 0 4px; }
 .esq-pad { font-size: 15px; }
 @media (max-width: 620px) { .esq-opcoes { grid-template-columns: 1fr; } .esq-desenho { min-height: 70px; } }
 @media (max-width: 900px) { html.remake .panel.dialog { width: max(380px, calc(100% - 300px)) !important; } }
+
+/* ---------- raridades: arsenal da Jael, relíquias e achados ---------- */
+html.remake .rar-titulo { margin: 14px 0 4px; font-size: 18px; letter-spacing: .08em; text-shadow: 0 2px 0 #05060B; }
+html.remake .cm-rel[class*="rar-"] { border-left: 4px solid var(--rar, #C9CCDA) !important; }
+html.remake .cm-rel.rar-epica { background-image: linear-gradient(90deg, rgba(201, 155, 255, .12), transparent 60%) !important; }
+html.remake .cm-rel.rar-lendaria { background-image: linear-gradient(90deg, rgba(255, 201, 74, .18), transparent 65%) !important; animation: rar-brilho 2.6s ease-in-out infinite; }
+@keyframes rar-brilho { 50% { box-shadow: 0 0 0 1px rgba(255, 201, 74, .55), 0 0 14px rgba(255, 201, 74, .25); } }
+html.remake .panel.dialog.achado-rara .dlg-head h3 { color: #6FB4FF !important; }
+html.remake .panel.dialog.achado-epica .dlg-head h3 { color: #C99BFF !important; text-shadow: 0 0 10px rgba(201, 155, 255, .6), 0 2px 0 #05060B !important; }
+html.remake .panel.dialog.achado-lendaria .dlg-head h3 { color: #FFC94A !important; text-shadow: 0 0 14px rgba(255, 201, 74, .8), 0 2px 0 #05060B !important; animation: rar-nome 1.8s ease-in-out infinite; }
+@keyframes rar-nome { 50% { filter: brightness(1.3); } }
+@media (prefers-reduced-motion: reduce) { html.remake .cm-rel.rar-lendaria, html.remake .panel.dialog.achado-lendaria .dlg-head h3 { animation: none; } }
