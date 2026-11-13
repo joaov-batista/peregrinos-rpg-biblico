@@ -43,7 +43,7 @@ export function atualizarHeroi(G, dt) {
   const emDash = p.dashT > 0;
 
   // ---- Vigília: erguer a lâmpada. Os primeiros instantes são a defesa perfeita. ----
-  const podeLamp = !preso && !emDash && !p.atk && p.orando <= 0;
+  const podeLamp = !preso && !emDash && p.orando <= 0; // a lâmpada fica erguida enquanto se golpeia
   if (c.lampP && podeLamp) { p.vig = p.vigCd > 0 ? 0.09 : (hab.escudo ? 0.3 : 0.22); p.vigCd = 0.75; sfx('click'); }
   p.lamp = c.lamp && podeLamp;
   if (p.vig > 0) p.vig -= dt;
@@ -102,7 +102,7 @@ export function atualizarHeroi(G, dt) {
 
   // ---- golpes ----
   if (c.atk) p.atkBuf = 0.13;
-  if (p.atkBuf > 0 && p.atkCd <= 0 && !p.lamp && !preso && !emDash && p.orando <= 0) {
+  if (p.atkBuf > 0 && p.atkCd <= 0 && !preso && !emDash && p.orando <= 0) {
     // virar na hora do golpe: o direcional manda; sem ele, o lado do cursor do mouse. Golpes seguidos não prendem mais o peregrino num lado só.
     if (!emDash && p.travaX <= 0) { if (c.mx) p.face = Math.sign(c.mx); else if (c.ladoMouse) p.face = c.ladoMouse; }
     // oito direções: para os lados, para cima, para baixo (no ar quica; no chão é rasteira) e as diagonais
@@ -141,7 +141,7 @@ export function atualizarHeroi(G, dt) {
   }
   // Ataque mira: segurar o golpe carrega; ao soltar, o golpe sai só na direção apontada. Pede muito azeite e demora a voltar.
   if (p.miraCd > 0) p.miraCd -= dt;
-  const livre = !p.lamp && !preso && p.orando <= 0 && !G.investidaMira && !G.quedaMira;
+  const livre = !preso && p.orando <= 0 && !G.investidaMira && !G.quedaMira;
   if (c.atkSeg && livre) {
     p.segGolpe = (p.segGolpe || 0) + dt;
     if (p.miraCd > 0 || p.oleo < MIRA_CUSTO) { p.carga = 0; if (p.segGolpe > 0.45 && !p.avisoMira) { p.avisoMira = true; G.textoEm(p.x, p.y - 64, p.miraCd > 0 ? 'ataque mira: ainda não' : 'ataque mira pede ' + MIRA_CUSTO + ' de azeite', '#C9B88A', 12); } }
