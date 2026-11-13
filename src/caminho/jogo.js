@@ -4,6 +4,7 @@
 import { rand, clamp, lerp, TAU, pick, shuffle, weekId, h } from '../util.js';
 import { input, wasd } from '../input.js';
 import { anguloMira, passoMira, tiroEspecial, estourar, MIRA_CARGA } from './mira.js';
+import { passoGetsemani, encontro, lerBiblia } from './getsemani.js';
 import { config } from '../config.js';
 import { sfx, music, audio } from '../audio.js';
 import { vibrar } from '../gamepad.js';
@@ -91,11 +92,11 @@ export class Caminho {
   equiparArma() { const base = ARMAS[this.tipoArma] || ARMAS.espada, alt = ARMAS_ALT[this.tipoArma]?.[this.cm.armaAlt?.[this.char.cls]]; this.arma = alt ? { ...base, ...alt } : base; }
   get dif() { return DIFICULDADES[this.cm.dif] || DIFICULDADES.provacao; }
   tem(rel) { return this.cm.eq.includes(rel) || (RELIQUIAS[rel]?.passiva && this.cm.reliquias.includes(rel)); }
-  vidaMax() { return Math.max(3, 5 + (this.hab.couraca ? 2 : 0) + Math.floor(this.cm.mana / 3) + (this.tem('osso_bronze') ? 1 : 0) + this.dif.vidas); }
-  oleoMax() { return this.tem('odre_novo') ? 132 : 99; }
+  vidaMax() { return Math.max(3, 5 + (this.cm.getsemaniDom === 'folego' ? 1 : 0) + (this.hab.couraca ? 2 : 0) + Math.floor(this.cm.mana / 3) + (this.tem('osso_bronze') ? 1 : 0) + this.dif.vidas); }
+  oleoMax() { return (this.tem('odre_novo') ? 132 : 99) + (this.cm.getsemaniDom === 'azeite' ? 22 : 0); }
   espacos() { return 3 + (this.cm.reliquias.includes('coroa_restituida') ? 1 : 0) + (this.cm.reliquias.includes('perola_preco') ? 1 : 0); }
   temDom(id) { const d = DONS[id], ds = this.cm.dons || {}; if (!d) return false; return d.exige ? d.exige.every(x => this.temDom(x)) && !!ds.lingua : (ds[id] || 0) >= (d.partes || 1); }
-  danoBase() { return (this.esp > 0 ? 2 : 1) * 10 * (1 + Math.min(0.6, (this.char.level - 1) * 0.03)) * (1 + [0, 0.12, 0.24, 0.36, 0.5][this.cm.fio || 0]); }
+  danoBase() { return (this.cm.getsemaniDom === 'forca' ? 1.08 : 1) * (this.esp > 0 ? 2 : 1) * 10 * (1 + Math.min(0.6, (this.char.level - 1) * 0.03)) * (1 + [0, 0.12, 0.24, 0.36, 0.5][this.cm.fio || 0]); }
   raioLuz() { const o = this.p.oleo / this.oleoMax(), b = (this.tem('lamparina_abismo') ? 150 : 105) + o * 95; return b * (1 + this.p.lampA * 0.6); }
 
   resize() {
@@ -125,6 +126,7 @@ export class Caminho {
   /* ================= Áreas ================= */
   entrar(id, o = {}) {
     const def = areaDef(id), cm = this.cm;
+    if (id === 'getsemani' && cm.getsemani) { def.tema = 'getsemani2'; def.sub = 'A manhã seguinte'; } // depois do encontro, o jardim amanhece vazio
     this.area = id; this.def = def; this.tm = tema(def.tema);
     const N = this.N = gerarNivel(def);
     if (def.fase?.tema === 'conves') this.fazerBarco(N); // a travessia para Társis: o convés tem vãos por onde o mar entra
@@ -134,6 +136,11 @@ export class Caminho {
     cm.selos[id] = cm.selos[id] || []; cm.est[id] = cm.est[id] || []; cm.seg[id] = cm.seg[id] || [];
     // objetos da área
     this.objs = N.objs.filter(ob => !(ob.tipo === 'segredo' && cm.seg[id].includes(ob.n)));
+    if (id === 'getsemani') { // depois do encontro, Jesus e os discípulos já não estão; fica o livro sobre a pedra
+      if (cm.getsemani) { this.objs = this.objs.filter(ob => ob.tipo !== 'jesus' && ob.tipo !== 'discipulo'); const pd = this.objs.find(ob => ob.tipo === 'rocha'); if (pd) this.objs.push({ tipo: 'biblia', x: pd.x, y: pd.y - 26, luz: 90 }); }
+      else { for (const ob of this.objs) if (ob.tipo === 'jesus') { ob.pose = 'ora'; ob.vira = 1; ob.h = 44; ob.luz = 130; }
+        if (!o.quieto) setTimeout(() => { if (this.area === 'getsemani' && !this.cm.getsemani) this.ui.dialog({ nome: 'Getsêmani', texto: 'A trilha termina num jardim de oliveiras. O ar é outro. As estrelas não estão onde deveriam estar.\n\nLá embaixo, as muralhas de uma cidade que você só conhecia das páginas: Jerusalém. É noite de Páscoa.\n\nVocê não está mais no seu tempo.', acoes: [{ label: 'Seguir entre as oliveiras' }], cls: 'fala-narra', voz: false }); }, 1600); }
+    }
     for (const ob of this.objs) {
       if (ob.tipo === 'rolo') { ob.feito = cm.selos[id].includes(ob.n); ob.luz = 110; }
       if (ob.tipo === 'estacao') { ob.dados = def.estacoes[ob.n]; ob.feito = cm.est[id].includes(ob.dados.id); ob.luz = 90; }
@@ -209,6 +216,7 @@ export class Caminho {
   }
 
   lerControles() {
+    if (this.cena) { this.ctl = { mx: this.cenaMx || 0, my: 0 }; for (const k of ['dodge', 'attack', 'dash', 'lock', 'defend', 'botija', 'item1', 'skill', 'interact', 'item2', 'menu', 'escape', 'map']) input.consume(k); return; } // numa cena, o peregrino não se move sozinho
     const m = input.move(), c = this.ctl = {};
     c.mx = Math.abs(m.x) > 0.3 ? Math.sign(m.x) : 0; c.my = Math.abs(m.y) > 0.45 ? Math.sign(m.y) : 0;
     c.pulo = input.consume('dodge'); c.puloSeg = input.isHeld('dodge');
@@ -243,13 +251,14 @@ export class Caminho {
       if (this.puxao && !p.dashT) p.x += Math.sign(this.puxao.x - p.x) * this.puxao.f * dt * (Math.abs(this.puxao.x - p.x) > 30 ? 1 : 0);
       if (this.tem('cinto_compaixao') && p.orando > 0) p.orando += dt * 0.45;
       atualizarHeroi(this, dt);
+      if (this.area === 'getsemani') passoGetsemani(this, dt);
       this.dons(dt);
       if (p.acoite) { p.acoite.t += dt; if (p.acoite.t > p.acoite.dur) p.acoite = null; }
       if (p.investida > 0) { p.investida -= dt; this.golpear(caixa({ ...p, w: 46 }), this.danoBase() * 2.4, this.investidaAtk); }
     }
     // a lâmpada revela
     if (p.lamp) this.revelar();
-    if (p.lamp && !this.cm.trilha) for (const ob of this.objs) if (ob.oculto && Math.hypot(ob.x - p.x, ob.y - p.y) < 260) { this.cm.trilha = true; this.salvar(); sfx('level'); this.efeito('coleta', ob.x, ob.y - 40); this.textoEm(ob.x, ob.y - 110, 'uma trilha escondida!', '#B8F0C8', 14); }
+    if (p.lamp) for (const ob of this.objs) if (ob.oculto && !this.achou(ob) && Math.hypot(ob.x - p.x, ob.y - p.y) < 260) { this.achou(ob, true); this.salvar(); sfx('level'); this.efeito('coleta', ob.x, ob.y - 40); this.textoEm(ob.x, ob.y - 110, ob.chave === 'getsemani' ? 'uma passagem entre as oliveiras…' : 'uma trilha escondida!', '#B8F0C8', 14); }
     for (let i = 0; i < N.revel.length; i++) if (N.revel[i] > 0) N.revel[i] -= dt;
     this.simular(dt);
     passoMira(this, dt); if (this.riscos) { for (const r of this.riscos) r.t -= dt; this.riscos = this.riscos.filter(r => r.t > 0); }
@@ -981,16 +990,20 @@ export class Caminho {
     this.objs = this.objs.filter(ob => !ob.fora);
     this.perto = perto;
     this.ui.setInteract(perto && input.touch ? perto.rot : null);
-    if (perto && this.ctl.interagir) this.usar(perto);
+    if (perto && this.ctl.interagir && !this.cena) this.usar(perto);
   }
   rotulo(ob) {
     switch (ob.tipo) {
       case 'rolo': return ob.feito ? 'Reler o rolo' : ob.trava > this.T || !this.roloLivre(ob) ? null : 'Ler o rolo';
       case 'estacao': return ob.feito ? null : ob.dados.nome;
       case 'npc': return 'Falar';
+      case 'jesus': return this.cena || this.cm.getsemani ? null : 'Aproximar-se';
+      case 'discipulo': return 'Olhar';
+      case 'biblia': return 'Ler';
+      case 'lagar': return 'Olhar';
       case 'casa': return 'Bater à porta';
       case 'ebenezer': return 'Descansar';
-      case 'portal': return ob.oculto && !this.cm.trilha ? null : 'Entrar';
+      case 'portal': return ob.oculto && !this.achou(ob) ? null : 'Entrar';
       case 'saida': return 'Seguir caminho';
       case 'retorno': return 'Voltar ao Refúgio';
       case 'querubim': case 'porta-pecado': return 'Olhar';
@@ -1026,6 +1039,10 @@ export class Caminho {
         break;
       }
       case 'npc': case 'casa': await this.falar(ob); break;
+      case 'jesus': await encontro(this, ob); break;
+      case 'biblia': await lerBiblia(this); break;
+      case 'lagar': await this.ui.dialog({ nome: 'O lagar', texto: 'Uma pedra redonda sobre outra, e uma trave de madeira para girá-la. As azeitonas são esmagadas aqui, e o azeite escorre pela canaleta.\n\nÉ o mesmo azeite das lâmpadas.', acoes: [{ label: 'Continuar' }], voz: false }); break;
+      case 'discipulo': await this.ui.dialog({ nome: ob.nome, texto: { Pedro: 'Pedro dorme sentado, a mão ainda perto da espada. Ele prometeu que nunca o negaria (Mt 26:35).', Tiago: 'Tiago dorme com a cabeça sobre os joelhos. Os olhos dele estavam carregados (Mt 26:43).', 'João': 'João dorme encostado na oliveira. Anos depois, ele escreverá: "Deus é amor" (1Jo 4:8).' }[ob.nome] || 'Dorme.', acoes: [{ label: 'Deixar dormir' }], voz: false }); break;
       case 'ebenezer': {
         const primeira = !cm.ebenezer;
         cm.ebenezer = { area: this.area }; if (!this.luta && this.souDono()) this.povoar(); p.vida = p.vidaMax; p.oleo = Math.max(p.oleo, OLEO_USO); this.usouSelo = this.usouCepa = false; sfx('heal'); this.fx.anel(ob.x, ob.y - 30, '#FFE9A8', 120); this.salvar();
@@ -1037,7 +1054,9 @@ export class Caminho {
         break;
       }
       case 'portal':
-        if (ob.area === 'floresta') await this.ui.dialog({ nome: ob.rotulo, texto: 'Entre as últimas oliveiras, a luz mostrou uma trilha que ninguém mais vê. Do outro lado, uma floresta escura, e lá no fundo, dizem, um jardim guardado por um querubim e uma porta que respira.\n\nSem a lâmpada erguida, ali não se enxerga o chão.', acoes: [{ label: 'Seguir a trilha', fn: () => this.entrar('floresta') }, { label: 'Agora não' }] });
+        if (ob.area === 'getsemani') await this.ui.dialog({ nome: ob.rotulo, texto: this.cm.getsemani ? 'O caminho entre as oliveiras, de volta ao jardim onde ele orou.' : 'A lâmpada mostrou um vão entre duas oliveiras velhas, tão velhas que parecem de outro tempo.\n\nDo outro lado, um cheiro de azeite e de terra molhada. E uma voz, muito baixa, orando.', acoes: [{ label: 'Atravessar', fn: () => this.entrar('getsemani') }, { label: 'Agora não' }], voz: false });
+        else if (ob.area === 'floresta' && this.area === 'getsemani') await this.ui.dialog({ nome: ob.rotulo, texto: 'O caminho de volta à floresta escura, e ao seu tempo.', acoes: [{ label: 'Voltar', fn: () => this.entrar('floresta', { portal: 'getsemani' }) }, { label: 'Ficar mais um pouco' }], voz: false });
+        else if (ob.area === 'floresta') await this.ui.dialog({ nome: ob.rotulo, texto: 'Entre as últimas oliveiras, a luz mostrou uma trilha que ninguém mais vê. Do outro lado, uma floresta escura, e lá no fundo, dizem, um jardim guardado por um querubim e uma porta que respira.\n\nSem a lâmpada erguida, ali não se enxerga o chão.', acoes: [{ label: 'Seguir a trilha', fn: () => this.entrar('floresta') }, { label: 'Agora não' }] });
         else if (ob.area) await this.ui.dialog({ nome: ob.rotulo, texto: ob.area === 'treino' ? 'Um pátio de areia para medir forças com os peregrinos da sua sala. Aqui os golpes de um ferem o outro, mas ninguém perde nada ao cair.\n\nSozinho, serve para treinar os golpes.' : 'As grades se fecham e os vícios vêm em ondas, cada vez mais. Cada onda vencida vale denários.\n\nSua melhor marca: ' + (cm.recorde || 0) + ' ondas.', acoes: [{ label: 'Entrar', fn: () => this.entrar(ob.area) }, { label: 'Agora não' }] });
         else if (ob.semana) escolherFase(this, semanaDe(ob.semana));
         else {
@@ -1153,6 +1172,8 @@ export class Caminho {
     }
   }
 
+  // passagens que só a lâmpada mostra: uma vez achadas, ficam à vista
+  achou(ob, marcar) { const k = ob.chave || 'trilha', cm = this.cm; if (marcar) { if (k === 'trilha') cm.trilha = true; else (cm.achados = cm.achados || {})[k] = true; } return k === 'trilha' ? !!cm.trilha : !!cm.achados?.[k]; }
   menu(aba) {
     if (this.ui.blocking) return;
     if (aba === 'mapa' && !this.temMapa()) return this.ui.toast('Você ainda não tem um mapa. Fale com o Velho Peregrino, na praça do Refúgio.', 4500);

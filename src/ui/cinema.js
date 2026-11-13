@@ -1,10 +1,9 @@
 // Player das cutscenes (content/cinematicas.js): cenário animado em canvas, personagens, câmera lenta (Ken Burns),
-// faixas de cinema, título, legenda que acompanha a narração e o áudio do ElevenLabs (public/narracao/*.mp3).
-// Sem o mp3, usa a voz do navegador (pt-BR) e, sem ela, só a legenda com tempo de leitura.
+// faixas de cinema, título e a legenda que se escreve com o estalo das letras, sobre a música (sem narração gravada).
 // Toque/clique/Enter/A avança uma cena; "Pular" (Esc/B) encerra.
 import { h, rand, clamp, lerp, easeOut, ell, hash, TAU } from '../util.js';
 import { config } from '../config.js';
-import { audio, sfx } from '../audio.js';
+import { audio, sfx, teclaTexto } from '../audio.js';
 import { pintarCena, pintarFiguras, alturaPessoa, alturaChefe } from './cinema-arte.js';
 import { CINEMAS, segmentos } from '../content/cinematicas.js';
 
@@ -33,13 +32,13 @@ export function montarCinema(panel, close, id, opts = {}) {
   // pré-carrega os mp3 de cada trecho
   for (const s of segs) {
     s.ok = null;
-    if (!vol || def.narracao === false) { s.ok = false; continue; }
+    if (true) { s.ok = false; continue; } // sem narração gravada: só música, texto que se escreve e o estalo das letras
     const a = new Audio('/narracao/' + s.arquivo + '.mp3'); a.preload = 'auto'; a.volume = vol;
     a.addEventListener('loadedmetadata', () => { s.ok = isFinite(a.duration) && a.duration > 0; }, { once: true });
     a.addEventListener('error', () => { s.ok = false; }, { once: true });
     s.audio = a;
   }
-  const tts = vol && config.vozNavegador !== false && 'speechSynthesis' in window ? vozPt() : null;
+  const tts = null; // a voz do aparelho também saiu: o texto fala por si
 
   let raf = 0, last = performance.now(), T = 0, acabou = false, saindo = 0, errou = false;
   let si = -1, ci = -1, cenaT = 0, modo = 'timer', est = 4, falou = false, espera = 0;
@@ -143,7 +142,7 @@ export function montarCinema(panel, close, id, opts = {}) {
       if (modo === 'mp3') { const k = s.cenas.indexOf(ci), ini = s.inicios[k], fimK = s.inicios[k + 1] ?? s.audio.duration; prog = (s.audio.currentTime - ini) / Math.max(0.5, fimK - ini); }
       else prog = cenaT / (modo === 'tts' ? est * 0.9 : est * 0.7);
       const n = Math.ceil(clamp(prog * 1.25 + 0.04, 0, 1) * full.length);
-      if (legenda.textContent.length !== n) legenda.textContent = full.slice(0, n);
+      if (legenda.textContent.length !== n) { if (n > legenda.textContent.length && /\S/.test(full[n - 1] || '')) teclaTexto('cinema'); legenda.textContent = full.slice(0, n); }
     }
     if (acabou) { saindo += dt; if (saindo > 0.6) { encerrar(); close(); return; } }
     // um erro de desenho num plano não pode travar a cutscene: avisa no console e segue

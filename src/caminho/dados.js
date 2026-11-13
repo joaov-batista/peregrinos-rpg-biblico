@@ -98,6 +98,8 @@ export const TEMAS = {
   terraco: t(['#151028', '#4A2E5E', '#E0A060'], '#2C2040', '#1D152C', '#100B19', '#F1C96A', '#FFD67A', 'muralha', 'estrela', 0.35, { perigo: 'vento' }),
   campo: t(['#0A1420', '#1E3440', '#587860'], '#172B30', '#0F1E22', '#081214', '#A9C7A0', '#A9D6E8', 'arvores', 'orvalho', 0.6),
   floresta: t(['#04090C', '#0B1E1C', '#1E3A32'], '#0C1D1A', '#081412', '#040A09', '#8FB89A', '#B8F0C8', 'arvores', 'vagalume', 0.86),
+  getsemani: t(['#04061A', '#0E1638', '#27305C'], '#111733', '#0B1026', '#060913', '#9AA6C8', '#E8E2C8', 'arvores', 'vagalume', 0.8),
+  getsemani2: t(['#1C2244', '#7A6A8A', '#F2C9A0'], '#3A3456', '#262240', '#151226', '#F1E2C0', '#FFE9A8', 'arvores', 'folha', 0.18),
   aurora: t(['#1A1C3A', '#7A5A7A', '#FFD9A0'], '#3A3050', '#252038', '#141020', '#FFE2B0', '#FFE9A8', 'colunas', 'vagalume', 0.2),
   ela: t(['#141C22', '#3F5A52', '#C9B88A'], '#253B38', '#182826', '#0C1615', '#C9C4A2', '#E5C58A', 'dunas', 'po', 0.3),
   ermo: t(['#1C140E', '#5A3C24', '#D9A060'], '#3A2818', '#261A10', '#140D08', '#D5BA88', '#D5BA88', 'dunas', 'areia', 0.3),
@@ -186,6 +188,16 @@ export function areaDef(id) {
   if (id === 'refugio') return { id, nome: 'Refúgio', sub: 'A última aldeia acesa', tema: 'refugio', planta: REFUGIO, seed: 'refugio', paz: true, aberto: true };
   if (id === 'treino') return { id, nome: 'Arena de treino', sub: 'Ferro com ferro se afia (Pv 27:17)', tema: 'ela', seed: id, extra: true, pvp: true,
     planta: [{ papel: 'inicio', tiles: ['....====............====....', '............................', '..........========..........', '............................', '............................'] }] };
+  if (id === 'getsemani') return { id, nome: 'Getsêmani', sub: 'A noite antes da cruz', tema: 'getsemani', seed: id, paz: true, aberto: true, floresta: true, planta: [
+    { papel: 'inicio', nome: 'O lagar de azeite', tiles: ['............................'], objs: [
+      { tipo: 'portal', col: 3, area: 'floresta', rotulo: 'De volta à floresta' }, planta(6, 'oliveira'), { tipo: 'lagar', col: 13 }, planta(18, 'oliveira'), planta(23, 'cipreste'), planta(27, 'oliveira'),
+      { tipo: 'escrito', col: 13, lin: 11, txt: 'Getsêmani: em hebraico, "prensa de azeite"' }, { tipo: 'ave', col: 22, lin: 16 }] },
+    { papel: 'vila', nome: 'O jardim', tiles: ['............................'], objs: [
+      planta(2, 'oliveira'), { tipo: 'discipulo', col: 5, nome: 'Tiago', look: { skin: '#C68B59', hair: '#2B1A10', tunic: '#5E6A4A', cape: '#6B5A3A', style: 'curto', beard: true } },
+      { tipo: 'discipulo', col: 7, nome: 'Pedro', look: { skin: '#A0673E', hair: '#3A2314', tunic: '#497A80', cape: 'none', style: 'cacheado', beard: true, body: 'forte' } },
+      { tipo: 'discipulo', col: 9, nome: 'João', look: { skin: '#D9A273', hair: '#6B4423', tunic: '#7A5A8A', cape: 'none', style: 'longo', beard: false } },
+      planta(12, 'oliveira'), planta(16, 'oliveira'), { tipo: 'rocha', col: 21 }, { tipo: 'jesus', col: 21 }, planta(26, 'oliveira'), planta(28, 'cipreste')] }
+  ] };
   if (id === 'floresta') return { id, nome: 'A Floresta Escura', sub: 'Só a lâmpada mostra o caminho', tema: 'floresta', seed: id, paz: true, aberto: true, floresta: true, planta: [
     { papel: 'inicio', nome: 'Orla da floresta', tiles: ['..................~~~~......', '............................', '............................', '...........~~~~.............', '............................', '............................', '....====....................', '............................'], objs: [
       { tipo: 'retorno', col: 3 }, planta(7, 'cipreste'), planta(10, 'oliveira'), planta(16, 'cipreste'), planta(21, 'oliveira'), planta(25, 'cipreste'), { tipo: 'ave', col: 6, lin: 10 }, { tipo: 'escrito', col: 20, lin: 7, txt: '"Ainda que eu ande pelo vale da sombra da morte, não temerei mal nenhum" (Sl 23:4)' }] },
@@ -194,7 +206,8 @@ export function areaDef(id) {
       { tipo: 'fruto', col: 6, lin: 9 }, { tipo: 'fruto', col: 20, lin: 9 }, { tipo: 'escrito', col: 14, lin: 9, txt: '"Lâmpada para os meus pés é a tua palavra, e luz para o meu caminho" (Sl 119:105)' }] },
     { papel: 'vila', nome: 'A clareira do jardim', tiles: ['............................'], objs: [
       planta(2, 'cipreste'), planta(5, 'oliveira'), { tipo: 'porta-pecado', col: 10 }, planta(14, 'cipreste'), { tipo: 'querubim', col: 20 }, planta(25, 'oliveira'), planta(28, 'cipreste'),
-      { tipo: 'escrito', col: 15, lin: 10, txt: '"O pecado jaz à porta; o seu desejo será contra ti, mas a ti cumpre dominá-lo" (Gn 4:7)' }] }
+      { tipo: 'escrito', col: 15, lin: 10, txt: '"O pecado jaz à porta; o seu desejo será contra ti, mas a ti cumpre dominá-lo" (Gn 4:7)' },
+      { tipo: 'portal', col: 27, area: 'getsemani', rotulo: 'Entre as oliveiras', oculto: true, chave: 'getsemani' }] }
   ] };
   if (id === 'desafio') return { id, nome: 'Desafio das ondas', sub: 'Quantas você aguenta?', tema: 'tribunal', seed: id, extra: true, desafio: true,
     planta: [{ papel: 'inicio', tiles: ['....=====..........=====....', '............................', '...........======...........', '............................', '............................'] }] };

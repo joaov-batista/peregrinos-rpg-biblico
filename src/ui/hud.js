@@ -1,7 +1,7 @@
 import { MISSION_PATH, WORLD_NPCS } from '../data/npcs.js';
 // Interface dentro do jogo: HUD, diálogos, quiz, lojas, menu, ranking e telas de vitória/derrota.
 import { $, h, fmt, shuffle, clamp } from '../util.js';
-import { sfx, audio, setMuted, initAudio, setVolumes } from '../audio.js';
+import { sfx, audio, setMuted, initAudio, setVolumes, murmurio, teclaTexto } from '../audio.js';
 import { input } from '../input.js';
 import { net, ONLINE } from '../net.js';
 import { ITEMS, SLOTS, SLOT_NOMES, RARIDADE, itemCor, statLine, STATS, statVal, efeitos, porCategoria } from '../data/items.js';
@@ -324,13 +324,14 @@ export function createHud(onExit) {
   ui.cinema = (id, opts) => modal((p, close) => montarCinema(p, close, id, opts), { cls: 'cinema', dismiss: false });
 
   /* ---------- Diálogo ---------- */
-  ui.dialog = ({ nome, look, texto, acoes }) => modal((p, close) => {
-    p.classList.add('dialog');
+  ui.dialog = ({ nome, look, texto, acoes, cls, voz }) => modal((p, close) => {
+    p.classList.add('dialog'); if (cls) p.classList.add(cls);
+    if (voz !== false) murmurio(nome, Math.round((texto || '').length / 22) + 2);
     const head = h('div', { class: 'dlg-head' }, look !== undefined ? portrait(look) : '', h('h3', {}, nome));
     const fala = h('p', { class: 'dlg-text' }, texto); p.append(head, fala);
     if (document.documentElement.classList.contains('remake') && texto && texto.length > 30 && !matchMedia('(prefers-reduced-motion: reduce)').matches) { // a fala se escreve; um toque mostra tudo
       let i = 0; fala.style.minHeight = '3em'; const escrita = document.createTextNode(''), resto = h('span', { style: 'visibility:hidden' }, texto); fala.replaceChildren(escrita, resto);
-      const tudo = () => { clearInterval(tk); fala.textContent = texto; }, tk = setInterval(() => { if (!fala.isConnected) return clearInterval(tk); i = Math.min(texto.length, i + 3); escrita.data = texto.slice(0, i); resto.textContent = texto.slice(i); if (i >= texto.length) tudo(); }, 16);
+      const tudo = () => { clearInterval(tk); fala.textContent = texto; }, lento = cls === 'fala-jesus' || cls === 'fala-narra', passo = cls === 'fala-jesus' ? 1 : lento ? 2 : 3, tk = setInterval(() => { if (!fala.isConnected) return clearInterval(tk); i = Math.min(texto.length, i + passo); if (/[^\s]/.test(texto[i - 1] || '')) teclaTexto(nome); escrita.data = texto.slice(0, i); resto.textContent = texto.slice(i); if (i >= texto.length) tudo(); }, lento ? 34 : 16);
       fala.addEventListener('pointerdown', tudo, { once: true });
     }
     const row = h('div', { class: 'btn-row' });
@@ -816,7 +817,7 @@ export function createHud(onExit) {
       ['vibrar', '📳 Vibração', 'O controle (ou o celular) treme ao levar dano e na defesa perfeita.'],
       ['atmosfera', '🌫 Atmosfera', 'Névoa, partículas, luz e cor por região. Desligue se o celular ficar lento.'],
       ['cinemas', '🎬 Cutscenes', 'Cenas narradas no começo do jogo, antes das fases, dos chefes e das missões (cada uma toca uma vez).'],
-      ['vozNavegador', '🗣 Voz do aparelho', 'Quando uma cutscene ainda não tem narração gravada, o aparelho lê a legenda em voz alta.']
+      ['murmurio', '🗣 Vozes dos personagens', 'Cada personagem murmura ao falar, e o texto estala ao se escrever.']
     ];
     const list = h('div', { class: 'fase-list' });
     for (const [k, nome, desc] of opcoes) list.append(h('div', { class: 'fase-row cfg' }, h('div', {}, h('b', {}, nome), h('small', {}, desc)),

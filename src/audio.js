@@ -142,3 +142,37 @@ function pad() {
   };
   toca(); musicTimer = setInterval(toca, 4800);
 }
+
+// ---- vozes: cada personagem "fala" um murmúrio curto ao abrir a fala (como nos jogos de texto), e o texto estala ao se escrever ----
+const VOZES = { // tom (Hz), timbre e ritmo por quem fala; os demais ganham um tom tirado do nome
+  'Jesus': { f: 128, ond: 'sine', ritmo: 0.16, vol: 0.09, calmo: true },
+  'Uma jumenta': { f: 210, ond: 'sawtooth', ritmo: 0.11, vol: 0.05 },
+  'Velho Peregrino': { f: 118, ond: 'triangle', ritmo: 0.13, vol: 0.08 }
+};
+function vozDe(nome = '') {
+  const base = Object.keys(VOZES).find(k => nome.startsWith(k)); if (base) return VOZES[base];
+  let h = 0; for (const c of nome) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const fem = /a\b|Lídia|Dorcas|Priscila|Marta|Maria|viúva|Moradora|Trabalhadora|Jael/.test(nome);
+  return { f: (fem ? 205 : 120) + (h % 60), ond: ['triangle', 'square', 'triangle', 'sawtooth'][h % 4], ritmo: 0.085 + (h % 5) * 0.012, vol: 0.055 };
+}
+export function murmurio(nome, silabas = 4) {
+  if (!AC || audio.muted || config.murmurio === false) return;
+  const v = vozDe(nome), n = Math.max(2, Math.min(8, silabas));
+  for (let i = 0; i < n; i++) {
+    const t = AC.currentTime + i * v.ritmo + Math.random() * 0.02, f = v.f * (1 + (Math.random() - 0.5) * (v.calmo ? 0.08 : 0.28)) * (i === n - 1 ? 0.86 : 1);
+    const o = AC.createOscillator(), o2 = AC.createOscillator(), filtro = AC.createBiquadFilter(), g = AC.createGain();
+    o.type = v.ond; o2.type = 'sine'; o.frequency.setValueAtTime(f, t); o.frequency.linearRampToValueAtTime(f * (v.calmo ? 0.97 : 0.9 + Math.random() * 0.2), t + v.ritmo);
+    o2.frequency.setValueAtTime(f * 2.01, t);
+    filtro.type = 'bandpass'; filtro.frequency.setValueAtTime(600 + Math.random() * 900, t); filtro.Q.value = 2.2; // a "vogal" muda a cada sílaba
+    const dur = v.ritmo * (v.calmo ? 1.15 : 0.9);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v.vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(filtro); o2.connect(filtro); filtro.connect(g); g.connect(sfxGain || master);
+    o.start(t); o2.start(t); o.stop(t + dur + 0.03); o2.stop(t + dur + 0.03);
+  }
+}
+let ultimaTecla = 0;
+export function teclaTexto(nome) { // um estalo baixinho enquanto o texto se escreve
+  if (!AC || audio.muted || config.murmurio === false) return;
+  const agora = AC.currentTime; if (agora - ultimaTecla < 0.045) return; ultimaTecla = agora;
+  const v = vozDe(nome); tone(v.f * 3 * (0.95 + Math.random() * 0.1), 0, 0.03, 'triangle', 0.018);
+}

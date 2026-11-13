@@ -207,3 +207,19 @@ html.remake .card.auth .tabs { border-radius: 0; background: none; padding: 0; b
   html.remake .card.auth label { font-size: 15px; gap: 2px; } html.remake .card.auth input, html.remake .abertura .card.auth input { padding: 6px 10px; font-size: 17px !important; }
   html.remake .abertura .card.auth:has(input) .btn.gold { min-height: 36px; font-size: 19px !important; margin: 2px 4px 4px; } html.remake .form-msg { min-height: 0; font-size: 15px; }
 }
+
+/* ---------- Getsêmani ---------- */
+html.remake .panel.fala-jesus { border-image: none !important; border: 0 !important; background: linear-gradient(180deg, rgba(20, 18, 30, .97), rgba(10, 10, 18, .98)); box-shadow: 0 0 0 2px #05060B, 0 0 0 4px #E8C873, 0 0 0 6px #05060B, 0 0 40px rgba(255, 233, 168, .25), 0 8px 0 rgba(0, 0, 0, .45); }
+html.remake .panel.fala-jesus .dlg-head h3 { color: #FFF4CF; text-shadow: 0 0 10px rgba(255, 233, 168, .6), 2px 2px 0 #05060B; letter-spacing: .08em; }
+html.remake .panel.fala-jesus .dlg-text { color: #FFF8E6; font-size: 24px; line-height: 1.45; }
+html.remake .panel.fala-jesus .portrait { box-shadow: 0 0 0 2px #05060B, 0 0 0 4px #E8C873, 0 0 0 6px #05060B, 0 0 18px rgba(255, 233, 168, .45); }
+html.remake .panel.fala-narra .dlg-head h3 { color: #9AA6C8; font-size: 18px; } html.remake .panel.fala-narra .dlg-text { color: #D9DCEA; }
+html.remake .modal.oracao-fundo { background: radial-gradient(ellipse at 50% 60%, rgba(30, 26, 50, .55), rgba(2, 3, 8, .94) 70%); place-items: center; }
+html.remake .panel.oracao { background: none !important; border: 0 !important; border-image: none !important; box-shadow: none !important; width: min(760px, 92vw); text-align: center; padding: 10px; }
+.oracao-texto { min-height: 4.5em; font-size: 26px; line-height: 1.5; color: #F1E9D2; text-shadow: 0 2px 0 #05060B; animation: oracaoEntra 1.4s ease-out; white-space: pre-line; cursor: pointer; }
+.oracao-texto.jesus { color: #FFE9A8; text-shadow: 0 0 14px rgba(255, 233, 168, .5), 0 2px 0 #05060B; }
+.oracao-texto.narra { color: #9AA6C8; font-size: 22px; }
+.panel.oracao small { display: block; min-height: 1.4em; margin: 12px 0 18px; color: #C9B88A; font-size: 18px; letter-spacing: .08em; }
+.panel.oracao .btn-row { justify-content: center; flex-wrap: wrap; gap: 10px; }
+@keyframes oracaoEntra { from { opacity: 0; filter: blur(2px); } to { opacity: 1; filter: none; } }
+@media (max-height: 480px) { .oracao-texto { font-size: 19px; min-height: 3em; } html.remake .panel.fala-jesus .dlg-text { font-size: 18px; } }

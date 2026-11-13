@@ -208,12 +208,21 @@ export function vulto(base, c) { fantasma.b.set(base.b); return fantasma.tinge(c
 
 // Personagem parado (NPCs e prévias): sem arma, de frente para "vira"
 const npcs = new Map();
-export function quadroPessoa(look, Tm, chave) {
+// poses: 'ora' (de joelhos, mãos juntas, cabeça baixa), 'olha' (de joelhos, olhando para quem chega), 'dorme' (sentado, cabeça caída),
+// 'anda' (passo), 'mao' (de pé, a mão estendida). Sem pose: de pé, respirando.
+const POSES = {
+  ora: r => ({ bob: 0, incl: 1, agacha: 4, joelho: true, pf: { x: 4, y: 0 }, pt: { x: -4, y: 0 }, mao: { x: 6, y: -17 + r }, ang: -1.1, lamp: null, cabX: 1, cabY: 1 + r, respira: r }),
+  olha: r => ({ bob: 0, incl: 0, agacha: 4, joelho: true, pf: { x: 4, y: 0 }, pt: { x: -4, y: 0 }, mao: { x: 5, y: -14 }, ang: 1.4, lamp: null, cabX: 0, cabY: 0, respira: r }),
+  dorme: r => ({ bob: 0, incl: 3, agacha: 7, joelho: true, pf: { x: 6, y: 0 }, pt: { x: -2, y: 0 }, mao: { x: 5, y: -9 }, ang: 1.6, lamp: null, cabX: 2, cabY: 3, respira: r }),
+  anda: (r, f) => ({ bob: f % 2, incl: 1, agacha: 0, pf: { x: [4, 1, -2, 1][f], y: f === 1 ? -1 : 0 }, pt: { x: [-2, 1, 4, 1][f], y: f === 3 ? -1 : 0 }, mao: null, ang: 1.3, lamp: null, cabX: 0, cabY: 0, respira: 0 }),
+  mao: r => ({ bob: r, incl: 0, agacha: 0, pf: { x: 2, y: 0 }, pt: { x: -2, y: 0 }, mao: { x: 11, y: -18 }, ang: -0.2, lamp: null, cabX: 1, cabY: 0, respira: r })
+};
+export function quadroPessoa(look, Tm, chave, pose) {
   let e = npcs.get(chave); if (!e) npcs.set(chave, e = { s: new Sprite(48, 44), f: -1 });
-  const f = Math.floor(Tm * 2.2 + (chave.length % 4)) % 4;
-  if (e.f !== f) {
-    e.f = f; const r = f >= 2 ? 1 : 0, C = CORPOS[look?.body] || CORPOS.medio;
-    pintarHumano(e.s.limpa(), 24, 40, { look, cls: look?.cls, P: { bob: r, incl: 0, agacha: 0, pf: { x: 2, y: 0 }, pt: { x: -2, y: 0 }, mao: null, ang: 1.2, lamp: null, cabX: 0, cabY: 0, respira: r }, semArma: true, semLampiao: true, t: Tm, capa: look?.cape && look.cape !== 'none' ? [0, 1, 2, 3, 4, 5].map(i => ({ x: -2 - i * 0.5 - (r && i > 2 ? 0.5 : 0), y: -C.q - C.t + 2 + i * 2.6 })) : null });
+  const f = Math.floor(Tm * (pose === 'anda' ? 7 : pose === 'ora' || pose === 'dorme' ? 1.1 : 2.2) + (chave.length % 4)) % 4;
+  if (e.f !== f || e.pose !== pose) {
+    e.f = f; e.pose = pose; const r = f >= 2 ? 1 : 0, C = CORPOS[look?.body] || CORPOS.medio;
+    pintarHumano(e.s.limpa(), 24, 40, { look, cls: look?.cls, P: POSES[pose] ? POSES[pose](r, f) : { bob: r, incl: 0, agacha: 0, pf: { x: 2, y: 0 }, pt: { x: -2, y: 0 }, mao: null, ang: 1.2, lamp: null, cabX: 0, cabY: 0, respira: r }, semArma: true, semLampiao: true, t: Tm, capa: look?.cape && look.cape !== 'none' ? [0, 1, 2, 3, 4, 5].map(i => ({ x: -2 - i * 0.5 - (r && i > 2 ? 0.5 : 0), y: -C.q - C.t + 2 + i * 2.6 })) : null });
     e.s.contorno(TINTA);
   }
   return e.s;

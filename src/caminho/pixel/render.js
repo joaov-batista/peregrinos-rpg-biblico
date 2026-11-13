@@ -16,6 +16,7 @@ import { quadroHeroi, quadroPessoa, vulto, AX, AY } from './humano.js';
 import { quadroChefe } from './chefespx.js';
 import { cenaPixel, pintarFundoPixel, pintarSalasPixel, pintarBlocosPixel, pintarLuzPixel, TL, mistura, pontilha } from './mundo.js';
 import { pintarEfeitos } from './efeitos.js';
+import { JESUS_LOOK } from '../getsemani.js';
 
 export const FONTE = '"Pixelify Sans", "Alegreya Sans", monospace';
 const baixa = document.createElement('canvas'), bg = baixa.getContext('2d');
@@ -83,6 +84,27 @@ function pintarObjeto(g, o, G, x, y, Tm) {
           for (const [bx, by, rx, ry, R2] of [[12, 28, 11, 9, F2], [37, 26, 10, 9, F2], [24, 20, 15, 12, F], [18, 22, 8, 7, F], [32, 18, 8, 7, F]]) s.bola(bx, by, rx, ry, R2, 0.4, -0.75);
           for (let i = 0; i < 26; i++) { const xx = 4 + (i * 37) % 40, yy = 10 + (i * 23) % 26; if (s.le(xx, yy)) s.px(xx, yy, F[4]); } } });
       carimbar(g, sp, x, y, 24, 71); return true; }
+    case 'jesus': { // de joelhos sobre a pedra; uma luz mansa em volta, que não ofusca
+      const al = o.alfa ?? 1; if (al <= 0) return true; const yy = y - (o.pose === 'ora' || o.pose === 'olha' ? 14 : 14);
+      g.globalAlpha = 0.16 * al; g.fillStyle = '#FFF1BE'; for (let r = 30; r > 8; r -= 7) { for (let a = 0; a < 40; a++) { const an = a / 40 * TAU; if ((a + Math.floor(Tm * 3)) % 2) g.fillRect(Math.round(x + Math.cos(an) * r), Math.round(yy - 22 + Math.sin(an) * r * 0.9), 1, 1); } }
+      g.globalAlpha = 0.07 * al; g.fillRect(x - 3, 0, 6, yy - 30); // um raio do alto (Lc 22:43)
+      g.globalAlpha = al; carimbar(g, quadroPessoa(JESUS_LOOK, Tm, 'jesus-' + (o.pose || 'pe'), o.pose), x, yy, 24, 40, o.vira || 1); g.globalAlpha = 1; return true; }
+    case 'discipulo': carimbar(g, quadroPessoa(o.look, Tm, 'disc-' + o.nome, 'dorme'), x, y, 24, 40, 1);
+      if (Math.floor(Tm * 1.2 + o.x) % 3 === 0) { g.fillStyle = '#9AA6C8'; const zy = y - 34 - Math.floor((Tm * 6) % 6); g.fillRect(x + 8, zy, 3, 1); g.fillRect(x + 10, zy + 1, 1, 1); g.fillRect(x + 9, zy + 2, 1, 1); g.fillRect(x + 8, zy + 3, 3, 1); } return true;
+    case 'rocha': { const sp = sprObj('rocha-getsemani', 56, 22, s => { const R = rampa('#6E6A78'); s.bola(28, 14, 26, 9, R, 0.3, -0.8); s.bola(16, 15, 12, 6, R, 0.3, -0.8); s.ret(4, 18, 48, 4, R[1]); for (let i = 0; i < 18; i++) s.px(6 + (i * 13) % 44, 10 + (i * 7) % 9, R[3]); const M = rampa('#3F6A4A'); for (let i = 0; i < 9; i++) s.px(5 + i * 5, 20 - (i % 2), M[2]); });
+      carimbar(g, sp, x, y, 28, 21); return true; }
+    case 'lagar': { const sp = sprObj('lagar', 72, 46, s => { const P = rampa('#8E8A98'), M = rampa('#6B4A2E'), A = rampa('#C9B23A');
+        s.bola(36, 38, 32, 7, P, 0.3, -0.6); s.ret(6, 38, 60, 7, P[1]); s.ret(10, 37, 52, 2, P[3]); // a bacia
+        for (let yy = 0; yy < 26; yy++) { const lg = Math.round(Math.sqrt(Math.max(0, 169 - (yy - 13) ** 2))); s.ret(36 - 4, 10 + yy, 8, 1, yy % 5 ? P[2] : P[1]); s.px(32, 10 + yy, P[0]); s.px(39, 10 + yy, P[3]); } // a mó de pé
+        s.bola(36, 23, 5, 13, P, 0.2, -0.6); s.ret(4, 20, 64, 4, M[2]); s.ret(4, 20, 64, 1, M[4]); s.ret(34, 18, 4, 8, M[1]); // a trave
+        s.ret(64, 40, 8, 3, A[2]); s.ret(68, 42, 3, 3, A[3]); for (let i = 0; i < 6; i++) s.px(14 + i * 8, 34 - (i % 2), rampa('#3F5A3A')[2]); }); // o azeite na canaleta e azeitonas
+      carimbar(g, sp, x, y, 36, 45); return true; }
+    case 'biblia': { const b = Math.floor(Tm * 1.5) % 2; g.globalAlpha = 0.18; g.fillStyle = '#FFE9A8'; g.fillRect(x - 14, y - 16, 28, 16); g.globalAlpha = 1;
+      g.fillStyle = '#17121f'; g.fillRect(x - 12, y - 8, 24, 8); g.fillStyle = '#6B2E2E'; g.fillRect(x - 11, y - 3, 22, 3); g.fillStyle = '#F1E9D2'; g.fillRect(x - 10, y - 8, 9, 5); g.fillRect(x + 1, y - 8, 9, 5); g.fillStyle = '#C9B88A'; for (let i = 0; i < 3; i++) { g.fillRect(x - 9, y - 7 + i * 1.5, 7, 1); g.fillRect(x + 2, y - 7 + i * 1.5, 7, 1); }
+      g.fillStyle = '#B8423A'; g.fillRect(x, y - 8, 1, 7); if (b) { g.fillStyle = '#FFF1BE'; g.fillRect(x - 1, y - 12, 2, 2); } return true; }
+    case 'tocha': { const f = Math.floor(Tm * 10 + (o.fase || 0) * 5) % 2, bx = x, by = y; // um soldado contra a luz da tocha
+      g.fillStyle = '#05060B'; g.fillRect(bx - 4, by - 34, 9, 34); g.fillRect(bx - 3, by - 40, 7, 6); g.fillRect(bx - 5, by - 42, 11, 3); g.fillRect(bx + 4, by - 30, 6, 2); g.fillRect(bx + 8, by - 44, 2, 16);
+      g.fillStyle = '#FF8A2A'; g.fillRect(bx + 7, by - 50 + f, 4, 6); g.fillStyle = '#FFD86A'; g.fillRect(bx + 8, by - 48 + f, 2, 3); g.globalAlpha = 0.15; g.fillStyle = '#FF8A2A'; g.fillRect(bx - 10, by - 60, 30, 40); g.globalAlpha = 1; return true; }
     case 'cenario': { const q = o.qual, f2 = Math.floor(Tm * 8) % 2;
       if (q === 'forja') { g.fillStyle = '#17121f'; g.fillRect(x + 14, y - 46, 30, 46); g.fillRect(x + 22, y - 62, 10, 16); g.fillStyle = '#4A4658'; g.fillRect(x + 15, y - 45, 28, 44); g.fillRect(x + 23, y - 61, 8, 15); g.fillStyle = '#17121f'; g.fillRect(x + 20, y - 26, 18, 20); g.fillStyle = f2 ? '#FF8A2A' : '#FFD86A'; g.fillRect(x + 22, y - 22, 14, 14); g.fillStyle = '#C9281F'; g.fillRect(x + 22, y - 12, 14, 5); g.fillStyle = '#17121f'; g.fillRect(x - 30, y - 14, 20, 14); g.fillRect(x - 34, y - 20, 28, 7); g.fillStyle = '#7F8C9C'; g.fillRect(x - 33, y - 19, 26, 5); g.fillRect(x - 28, y - 13, 16, 12); g.fillStyle = '#C3DCEA'; g.fillRect(x - 33, y - 19, 26, 1); if (f2) { g.fillStyle = '#FFE26B'; g.fillRect(x + 28, y - 66 - (Math.floor(Tm * 5) % 5), 1, 1); g.fillRect(x + 25, y - 70, 1, 1); } }
       else if (q === 'arca') { // a mini arca de Noé, com os bichos espiando
@@ -178,7 +200,7 @@ export function renderPixel(G) {
 
   pintarFundoPixel(g, G, C, vw, vh, cx, cy);
   pintarSalasPixel(g, G, C, vw, vh, cx, cy);
-  for (const o of G.objs) { const x = X(o.x); if (x < -60 || x > vw + 60) continue; if (o.oculto && !G.cm.trilha) { const k = G.p.lampA * clamp(1 - (Math.hypot(o.x - G.p.x, o.y - G.p.y) - 200) / 160, 0, 1); if (k < 0.05) continue; g.globalAlpha = k; } if (!pintarObjeto(g, o, G, x, Y(o.y), Tm)) antigo(() => desenharObjeto(g, o, G)); g.globalAlpha = 1; }
+  for (const o of G.objs) { const x = X(o.x); if (x < -60 || x > vw + 60) continue; if (o.oculto && !G.achou(o)) { const k = G.p.lampA * clamp(1 - (Math.hypot(o.x - G.p.x, o.y - G.p.y) - 200) / 160, 0, 1); if (k < 0.05) continue; g.globalAlpha = k; } if (!pintarObjeto(g, o, G, x, Y(o.y), Tm)) antigo(() => desenharObjeto(g, o, G)); g.globalAlpha = 1; }
   if (G.def.mundo && G.N.arena) pintarArenaTema(g, G, X, Y, Tm);
   pintarBlocosPixel(g, G, C, vw, vh, cx, cy);
   // avisos de golpe: áreas pontilhadas que fecham até o impacto
@@ -420,7 +442,7 @@ function pintarTextos(g, G, esc, cx, cy) {
     if (!fora) { seta(x, y + pula - u, 0, 1, '#17121f'); seta(x, y + pula - 2 * u, 0, 1, '#FFD23F'); txt(ob.rot, x, y + pula - 8 * u, 8 * u * 1.6, '#FFE9A8', 'center'); }
     else { const esq = x < m, ax = esq ? m : W2 - m, ay = Math.min(g.canvas.height - 90 * u, Math.max(90 * u, sy(ob.y - 60))); seta(ax + (esq ? -pula : pula) + (esq ? -u : u), ay, esq ? -1 : 1, 0, '#17121f'); seta(ax + (esq ? -pula : pula), ay, esq ? -1 : 1, 0, '#FFD23F'); txt('missão', ax + (esq ? 16 * u : -16 * u), ay + 4 * u, 8 * u * 2, '#FFE9A8', esq ? 'left' : 'right'); } } }
   if (G.perto && !input.touch) { const o = G.perto; txt((document.body.classList.contains('pad') ? 'Y' : wasd() ? 'F' : 'E') + ' · ' + o.rot, sx(o.x), sy(o.y - (o.tipo === 'npc' ? 80 : o.tipo === 'portal' || o.tipo === 'saida' || o.tipo === 'retorno' ? 142 : 104)), 8 * u * 1.4, '#F2E9D0', 'center'); }
-  for (const o of G.objs) if ((o.tipo === 'portal' || o.tipo === 'saida' || o.tipo === 'retorno') && Math.abs(o.x - p.x) < 900 && !(o.oculto && !cm.trilha)) {
+  for (const o of G.objs) if ((o.tipo === 'portal' || o.tipo === 'saida' || o.tipo === 'retorno') && Math.abs(o.x - p.x) < 900 && !(o.oculto && !G.achou(o))) {
     const sem = o.semana ? TODAS.find(s => s.id === o.semana) : null, nome = o.tipo === 'saida' ? 'Seguir' : o.tipo === 'retorno' ? 'Refúgio' : o.rotulo ? o.rotulo : sem ? sem.estudo : MUNDO[o.mundo].nome;
     txt(nome, sx(o.x), sy(o.y - 104), 8 * u * 1.3, '#F2E9D0', 'center');
     if (sem) txt(sem.fases.filter(f => cm.feitas[sem.id + ':' + f.n]).length + '/5', sx(o.x), sy(o.y - 122), 8 * u, '#C9B88A', 'center');
