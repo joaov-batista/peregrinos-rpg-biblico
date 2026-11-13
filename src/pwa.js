@@ -69,8 +69,28 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
   };
   if (document.readyState === 'complete') void register();
   else addEventListener('load', register, { once: true });
-  const check = () => { if (navigator.onLine && !document.hidden) registration?.update().catch(() => {}); };
-  setInterval(check, 5 * 60000);
+  // Rede de segurança: pergunta ao servidor qual é a versão publicada. Se o worker não trocar sozinho em um minuto
+  // (download travado, aparelho que ficou dias fechado), apaga o worker e o cache do jogo e recarrega. O progresso fica salvo.
+  const versaoDoWorker = () => new Promise(ok => { const w = navigator.serviceWorker.controller; if (!w) return ok(null); const ch = new MessageChannel(), t = setTimeout(() => ok(null), 1500); ch.port1.onmessage = e => { clearTimeout(t); ok(e.data?.id || null); }; w.postMessage('VERSION', [ch.port2]); });
+  let pendente = 0;
+  const conferir = async () => {
+    if (!navigator.onLine || document.hidden) return;
+    try {
+      const publicada = (await (await fetch('/version.json?t=' + Date.now(), { cache: 'no-store' })).json()).id, minha = await versaoDoWorker();
+      if (!publicada || !minha || publicada === minha) { pendente = 0; return; }
+      registration?.update().catch(() => {});
+      if (!pendente) { pendente = Date.now(); setTimeout(conferir, 65000); return; }
+      if (Date.now() - pendente > 60000) { // não trocou sozinho: recomeça do zero
+        pendente = 0; for (let i = 0; i < 240 && window.__game?.running && window.__game.luta; i++) await new Promise(r => setTimeout(r, 1000));
+        try { await Promise.race([window.__game?.save?.(), new Promise(r => setTimeout(r, 3000))]); } catch { /* segue */ }
+        for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+        for (const k of await caches.keys()) if (k.startsWith('peregrinos-offline-')) await caches.delete(k);
+        location.reload();
+      }
+    } catch { /* sem rede: tenta depois */ }
+  };
+  const check = () => { if (navigator.onLine && !document.hidden) { registration?.update().catch(() => {}); void conferir(); } };
+  setInterval(check, 2 * 60000); setTimeout(check, 8000);
   addEventListener('online', check);
   document.addEventListener('visibilitychange', check);
 }

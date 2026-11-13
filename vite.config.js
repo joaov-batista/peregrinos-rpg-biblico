@@ -3,7 +3,7 @@ import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { createHash } from 'node:crypto';
 
-// O worker só instala uma versão quando TODOS os arquivos dela estão no aparelho.
+// O worker instala uma versão quando o essencial dela está no aparelho; a narração vem depois, sem travar a atualização.
 let outputDir = 'dist';
 export default defineConfig({
   plugins: [{
@@ -24,9 +24,12 @@ export default defineConfig({
       const template = await readFile('public/sw.js', 'utf8'); hash.update(template);
       for (const file of files) { hash.update(file); hash.update(await readFile(file)); }
       const urls = files.map(f => '/' + relative(root, f).replaceAll('\\', '/'));
+      const id = hash.digest('hex').slice(0, 16);
       await writeFile(join(root, 'sw.js'), template
-        .replace('__BUILD_ID__', hash.digest('hex').slice(0, 16))
+        .replace('__BUILD_ID__', id)
         .replace('/* PRECACHE */ []', JSON.stringify(urls)));
+      // a página pergunta por este arquivo (sem cache) para saber se saiu versão nova, mesmo que o worker trave
+      await writeFile(join(root, 'version.json'), JSON.stringify({ id }));
     }
   }]
 });

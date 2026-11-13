@@ -1,25 +1,39 @@
 const CACHE = 'peregrinos-offline-__BUILD_ID__';
 const CORE = /* PRECACHE */ [];
 
+const VERSAO = CACHE.slice('peregrinos-offline-'.length);
+const PESADO = path => path.startsWith('/narracao/') || /\.(mp4|webm|mp3|wav|ogg)$/.test(path);
+const ESSENCIAL = CORE.filter(p => !PESADO(p)), EXTRA = CORE.filter(PESADO);
+// o que não mudou de nome (narração, ícones) vem da versão anterior, sem baixar de novo
+async function deOutra(path) { for (const k of await caches.keys()) if (k.startsWith('peregrinos-offline-') && k !== CACHE) { const hit = await (await caches.open(k)).match(path); if (hit) return hit; } return null; }
+async function guardar(cache, path, tentativas = 2) {
+  const velho = PESADO(path) || !path.startsWith('/assets/') ? null : await deOutra(path); // assets têm hash no nome: o mesmo nome é o mesmo arquivo
+  if (velho) return cache.put(path, velho);
+  for (let i = 0; i < tentativas; i++) { try { const r = await fetch(new Request(path, { cache: 'reload' })); if (r.ok) return cache.put(path, r); } catch { /* tenta de novo */ } }
+  throw new Error('falhou: ' + path);
+}
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
-    const cache = await caches.open(CACHE);
-    // Poucas transferências simultâneas: inclui narração e todos os assets com hash.
-    const todo = [...CORE];
-    const results = await Promise.allSettled(Array.from({ length: 4 }, async () => {
-      while (todo.length) await cache.add(new Request(todo.shift(), { cache: 'reload' }));
-    }));
+    const cache = await caches.open(CACHE), todo = [...ESSENCIAL];
+    // só o essencial (página, código, imagens) precisa estar inteiro para a versão nova assumir
+    const results = await Promise.allSettled(Array.from({ length: 6 }, async () => { while (todo.length) await guardar(cache, todo.shift()); }));
     const failed = results.find(r => r.status === 'rejected');
     if (failed) { await caches.delete(CACHE); throw failed.reason; }
     await self.skipWaiting(); // a versão nova assume assim que termina de baixar; a página salva e recarrega
   })());
 });
+// a narração e os vídeos entram aos poucos, depois que a versão nova já está valendo
+async function baixarExtras() {
+  const cache = await caches.open(CACHE);
+  for (const path of EXTRA) { if (await cache.match(path)) continue; const velho = await deOutra(path); if (velho) { await cache.put(path, velho); continue; } try { await guardar(cache, path, 1); } catch { /* fica para a próxima */ } }
+}
 self.addEventListener('message', event => {
   if (event.data === 'ACTIVATE') self.skipWaiting();
+  if (event.data === 'VERSION') event.ports[0]?.postMessage({ id: VERSAO });
   if (event.data === 'OFFLINE_STATUS') event.waitUntil((async () => {
     const keys = await (await caches.open(CACHE)).keys();
     const paths = new Set(keys.map(req => new URL(req.url).pathname));
-    event.ports[0]?.postMessage({ ready: CORE.length > 0 && CORE.every(path => paths.has(path)) });
+    event.ports[0]?.postMessage({ ready: ESSENCIAL.length > 0 && ESSENCIAL.every(path => paths.has(path)) });
   })());
 });
 self.addEventListener('activate', event => {
@@ -28,6 +42,7 @@ self.addEventListener('activate', event => {
     const keys = (await caches.keys()).filter(k => k.startsWith('peregrinos-offline-') && k !== CACHE);
     await Promise.all(keys.slice(0, -2).map(k => caches.delete(k)));
     await self.clients.claim();
+    baixarExtras(); // sem esperar: não segura a ativação
   })());
 });
 
