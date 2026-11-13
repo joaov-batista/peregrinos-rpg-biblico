@@ -52,6 +52,15 @@ async function players(ids) {
   return out;
 }
 
+// canal de retransmissão para as salas do Caminho, quando a ligação direta (WebRTC) não atravessa a rede
+export function canalRetransmissao(nome) {
+  if (!sb) return null;
+  const ch = sb.channel(nome, { config: { broadcast: { self: false, ack: false } } });
+  return { ch, enviar: payload => ch.send({ type: 'broadcast', event: 'm', payload }), ouvir: fn => ch.on('broadcast', { event: 'm' }, ({ payload }) => fn(payload)),
+    pronto: () => new Promise((ok, erro) => { const t = setTimeout(() => erro(new Error('O retransmissor não respondeu.')), 9000); ch.subscribe(st => { if (st === 'SUBSCRIBED') { clearTimeout(t); ok(); } else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT') { clearTimeout(t); erro(new Error('O retransmissor recusou a sala.')); } }); }),
+    fechar: () => { try { sb.removeChannel(ch); } catch { /* já fechado */ } } };
+}
+
 export const net = {
   user: null,
   lastError: '',

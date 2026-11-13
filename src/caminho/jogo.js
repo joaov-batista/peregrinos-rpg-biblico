@@ -37,10 +37,11 @@ const PASSOS = [ // t: [toque, controle, teclado]; alvo: o botão de toque que p
   { id: 'passo', titulo: 'Passo pronto', alvo: 'lock', t: ['PASSO', 'RT', 'C', 'Shift'], txt: 'Atravessa o perigo. Demora a voltar.' },
   { id: 'golpe', titulo: 'Golpe', alvo: 'attack', t: ['GOLPE', 'X', 'Z ou X', 'clique do mouse'], txt: 'Segurando para baixo, bate baixo.' },
   { id: 'descer', titulo: 'Descer', t: ['puxe para baixo', '↓', '↓', 'S'], txt: 'Numa plataforma de madeira, segure para baixo.' },
-  { id: 'luz', titulo: 'Lâmpada: luz', alvo: 'defend', t: ['segure LÂMPADA', 'segure LB', 'segure D', 'segure E'], txt: 'A luz mostra o que está escondido.' },
+  { id: 'luz', titulo: 'Lâmpada: luz', alvo: 'defend', t: ['segure LÂMPADA', 'segure LB', 'segure D', 'segure E'], txt: 'Erga a lâmpada e olhe para cima: uma ponte escondida e um versículo aparecem. A luz mostra o que a sombra cobre.' },
   { id: 'vigilia', titulo: 'Lâmpada: defesa', alvo: 'defend', t: ['LÂMPADA na hora', 'LB na hora', 'D na hora', 'E na hora'], txt: 'Aperte quando o dardo chegar. É a sua única defesa.' },
-  { id: 'azeite', titulo: 'Azeite', t: ['jarro no alto', 'jarro no alto', 'jarro no alto'], txt: 'Golpes certos e defesas enchem o jarro.' },
-  { id: 'orar', titulo: 'Orar', alvo: 'botija', t: ['segure ORAR', 'segure B', 'segure A', 'segure Q'], txt: 'Parado: gasta azeite e devolve um fôlego.' }
+  { id: 'azeite', titulo: 'Azeite', t: ['jarro no alto', 'jarro no alto', 'jarro no alto', 'jarro no alto'], txt: 'Golpes certos e defesas enchem o jarro.' },
+  { id: 'mira', titulo: 'Ataque mira', alvo: 'attack', t: ['segure GOLPE e arraste o dedo', 'segure X e aponte com o analógico', 'segure Z, aponte com as setas e solte', 'segure o clique, aponte e solte'], txt: 'Espere a linha dourada, aponte e solte. Gasta 66 de azeite: seu jarro foi cheio para treinar.' },
+  { id: 'orar', titulo: 'Orar', alvo: 'botija', t: ['segure ORAR', 'segure B', 'segure A', 'segure Q'], txt: 'Você perdeu dois fôlegos. Fique parado e ore: gasta azeite e devolve um fôlego.' }
 ];
 
 const caixa = e => ({ x: e.x - e.w / 2, y: e.y - e.h, w: e.w, h: e.h });
@@ -211,6 +212,8 @@ export class Caminho {
     c.orar = input.isHeld('botija') || input.isHeld('item1'); input.consume('botija'); input.consume('item1');
     c.verso = input.consume('skill'); c.interagir = input.consume('interact');
     c.mira = anguloMira(this, input);
+    // com o mouse, o golpe vai para o lado do cursor (sem precisar andar para virar)
+    c.ladoMouse = input.mouseAim && !input.touch && !document.body.classList.contains('pad') && Math.abs(Math.cos(c.mira)) > 0.25 ? Math.sign(Math.cos(c.mira)) : 0;
     if (input.consume('menu') || input.consume('escape')) this.menu();
     if (input.consume('map')) this.menu('mapa');
     c.dom = input.consume('item2'); for (const a of ['mount', 'chat']) input.consume(a);
@@ -749,14 +752,21 @@ export class Caminho {
     const el = this.tutEl || (this.tutEl = document.body.appendChild(h('div', { id: 'cmTut' })));
     el.hidden = !!this.luta || this.ui.blocking;
     if (this.tutVisto !== v.tut + ':' + modo) { this.tutVisto = v.tut + ':' + modo; document.querySelectorAll('.tut-alvo').forEach(x => x.classList.remove('tut-alvo')); if (s.alvo && modo === 0) document.querySelector(`[data-act="${s.alvo}"]`)?.classList.add('tut-alvo');
-      el.replaceChildren(h('small', {}, 'Primeiros passos · ' + (v.tut + 1) + ' de ' + PASSOS.length), h('b', {}, s.titulo), h('span', { class: 'kbd' }, s.t[modo]), h('p', {}, s.txt), h('i', {}, ...PASSOS.map((_, i) => h('u', { class: i < v.tut ? 'ok' : i === v.tut ? 'on' : '' })))); el.classList.remove('entra'); void el.offsetWidth; el.classList.add('entra'); }
+      el.replaceChildren(h('small', {}, 'Primeiros passos · ' + (v.tut + 1) + ' de ' + PASSOS.length), h('b', {}, s.titulo), h('span', { class: 'kbd' }, s.t[modo] ?? s.t[2]), h('p', {}, s.txt), h('i', {}, ...PASSOS.map((_, i) => h('u', { class: i < v.tut ? 'ok' : i === v.tut ? 'on' : '' })))); el.classList.remove('entra'); void el.offsetWidth; el.classList.add('entra'); }
+    if (this.tutIni !== v.tut) { this.tutIni = v.tut; // o que cada passo prepara ao começar
+      if (s.id === 'luz' && this.area === 'refugio') { const tx = Math.floor(p.x / T), ty = Math.floor(p.y / T) - 4;
+        for (let k = -2; k <= 3; k++) { const x = tx + (p.face || 1) * 2 + k; if (tileEm(this.N, x, ty) === VAZIO) this.N.tiles[ty * this.N.w + x] = OCULTO; }
+        this.objs.push({ tipo: 'escrito', x: (tx + (p.face || 1) * 2.5) * T, y: (ty - 1) * T, txt: '"Lâmpada para os meus pés é a tua palavra" (Sl 119:105)' }); }
+      if (s.id === 'mira') { p.oleo = Math.max(p.oleo, this.oleoMax()); p.miraCd = 0; }
+      if (s.id === 'orar') { this.tutVida = p.vida = Math.max(1, p.vidaMax - 2); p.oleo = Math.max(p.oleo, OLEO_USO * 2); this.textoEm(p.x, p.y - 70, '-2 fôlegos', '#E07A6E', 13); }
+    }
     if (s.id === 'andar') this.tutAndou = (this.tutAndou || 0) + Math.abs(p.vx) * dt;
     if (s.id === 'vigilia' && this.area === 'refugio' && !p.morto) { // dardos de treino: não ferem, só ensinam o tempo
       this.tutDardo = (this.tutDardo || 1.2) - dt;
       if (this.tutDardo <= 0) { this.tutDardo = 2.4; const d = p.face || 1; this.tiros.push({ x: p.x + d * 430, y: p.y - 28, vx: -d * 300, vy: 0, r: 7, vida: 3, cor: '#E8D9A8', tipo: 'bola', treino: true, fura: true }); }
     }
-    const feito = { andar: this.tutAndou > 220, pular: !p.chao && p.pulos <= 0 && p.vy < 0, passo: p.dashT > 0, golpe: !!p.atk, descer: p.desce > 0 || this.tutT > 9, rasteiro: (p.rasteiro && p.dashT > 0) || this.tutT > 12, luz: p.lampA > 0.8 && this.tutT > 2.5, vigilia: this.tutParry, orar: p.orando > 0.5 || this.tutT > 14, azeite: this.tutT > 8 }[s.id];
-    if (feito && this.tutT > 0.8) { v.tut++; this.tutT = 0; this.tutParry = false; sfx('right'); if (v.tut >= PASSOS.length) { this.ui.toast('Você sabe caminhar. O primeiro portal leva a Corinto.', 5000); this.salvar(); } }
+    const feito = { andar: this.tutAndou > 220, pular: !p.chao && p.pulos <= 0 && p.vy < 0, passo: p.dashT > 0, golpe: !!p.atk, descer: p.desce > 0 || this.tutT > 9, rasteiro: (p.rasteiro && p.dashT > 0) || this.tutT > 12, luz: p.lampA > 0.8 && this.tutT > 2.5, vigilia: this.tutParry, orar: p.vida > (this.tutVida ?? p.vidaMax), azeite: this.tutT > 8, mira: p.miraCd > 3.5 }[s.id];
+    if (feito && this.tutT > 0.8) { v.tut++; this.tutT = 0; this.tutParry = false; sfx('right'); if (v.tut >= PASSOS.length) { this.ui.toast(this.temMapa() ? 'Você sabe caminhar. Siga a seta dourada até a sua missão.' : 'Você sabe caminhar. Fale com o Velho Peregrino: ele tem um mapa para você.', 5000); this.salvar(); } }
   }
 
   /* ================= Emboscadas ================= */

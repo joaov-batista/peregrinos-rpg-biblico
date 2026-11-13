@@ -292,6 +292,19 @@ function pintarTiro(g, t, x, y, Tm) {
   if (t.tipo === 'lanca') { const d = Math.sign(t.vx); g.fillStyle = '#17121f'; g.fillRect(x - d * 16 - (d < 0 ? 0 : 0), y - 1, 22, 3); g.fillStyle = '#A0662A'; g.fillRect(Math.min(x - d * 16, x + d * 4), y, 20, 1); g.fillStyle = '#EEF6FB'; for (let k = 0; k < 6; k++) g.fillRect(x + d * (4 + k), y - Math.floor((5 - k) / 2), 1, 1 + (5 - k - ((5 - k) % 2 ? 1 : 0)));
     for (let k = 1; k <= 5; k++) { g.globalAlpha = 0.5 - k * 0.08; g.fillStyle = '#FFE08A'; g.fillRect(x - d * (16 + k * 5), y, 4, 1); } g.globalAlpha = 1; return; }
   if (t.tipo === 'onda') { const d = Math.sign(t.vx); for (let yy = -r * 1.5; yy <= r * 1.5; yy++) { const lg = Math.round(Math.sqrt(Math.max(0, 1 - Math.pow(yy / (r * 1.5), 2))) * 5); g.fillStyle = '#FFE08A'; g.fillRect(x + d * (lg - 3), y + yy, 3, 1); g.fillStyle = '#fff'; g.fillRect(x + d * lg, y + yy, 1, 1); } return; }
+  if (!t.amigo) { // os dardos dos vícios e dos chefes: bolas de energia que pulsam, com aura, faíscas em órbita e um rastro que ondula
+    const C = /^#[0-9a-f]{6}$/i.test(t.cor || '') ? t.cor : '#C79BFF', claro = mistura(C, '#FFFFFF', 0.55), escuro = mistura(C, '#05060B', 0.5), sem = (t.x * 7 + t.y * 3) % 6.28;
+    const R = r + (Math.floor(Tm * 14 + sem) % 3 === 0 ? 1 : 0), vel = Math.hypot(t.vx, t.vy) || 1, ux = t.vx / vel, uy = t.vy / vel, F = Math.floor(Tm * 24 + sem);
+    for (let k = 6; k >= 1; k--) { const on = Math.sin(Tm * 18 + k * 1.1 + sem) * k * 0.45, rr = Math.max(1, Math.round(R * (1 - k / 7.5))), cx2 = Math.round(x - ux * k * 2.6 - uy * on), cy2 = Math.round(y - uy * k * 2.6 + ux * on);
+      g.globalAlpha = 0.75 - k * 0.1; g.fillStyle = k > 3 ? escuro : C; g.fillRect(cx2 - rr, cy2 - rr + 1, rr * 2, rr * 2 - 2); g.fillRect(cx2 - rr + 1, cy2 - rr, rr * 2 - 2, rr * 2); }
+    g.globalAlpha = 0.35; g.fillStyle = C; const A = R + 3; for (let yy = -A; yy <= A; yy++) for (let xx = -A; xx <= A; xx++) { const d2 = xx * xx + yy * yy; if (d2 <= A * A && d2 > (R + 1) * (R + 1) && (xx + yy + F) % 2 === 0) g.fillRect(x + xx, y + yy, 1, 1); }
+    g.globalAlpha = 1;
+    const disco = (rr, c) => { g.fillStyle = c; for (let yy = -rr; yy <= rr; yy++) { const lg = Math.round(Math.sqrt(Math.max(0, rr * rr - yy * yy))); g.fillRect(x - lg, y + yy, lg * 2 || 1, 1); } };
+    disco(R + 1, '#17121f'); disco(R, C); disco(Math.max(1, Math.round(R * 0.62)), claro);
+    g.fillStyle = '#FFFFFF'; g.fillRect(x - 1 + Math.round(ux), y - 1, 2, 2); g.fillRect(x - Math.round(R * 0.45), y - Math.round(R * 0.5), 1, 1);
+    for (let k = 0; k < 3; k++) { const an = Tm * 9 * (k % 2 ? -1 : 1) + k * 2.094 + sem, rr = R + 2 + (k === 1 ? 1 : 0); g.fillStyle = k === 2 ? '#FFFFFF' : claro; g.fillRect(Math.round(x + Math.cos(an) * rr), Math.round(y + Math.sin(an) * rr * 0.85), 1, 1); }
+    if (F % 9 === 0) { g.fillStyle = claro; let ax = x + R, ay = y; for (let i = 0; i < 4; i++) { ax += 1; ay += i % 2 ? -1 : 1; g.fillRect(ax, ay, 1, 1); } } // estalo de energia
+    return; }
   // rastro e núcleo
   const vx = t.vx / 60 / PX, vy = t.vy / 60 / PX;
   for (let k = 1; k <= 4; k++) { g.globalAlpha = 0.6 - k * 0.12; g.fillStyle = t.amigo ? '#FFE9A8' : t.cor; const rr = Math.max(1, r - k); g.fillRect(Math.round(x - vx * k * 1.6 - rr / 2), Math.round(y - vy * k * 1.6 - rr / 2), rr, rr); }
@@ -387,7 +400,7 @@ function pintarTextos(g, G, esc, cx, cy) {
   const sx = wx => (wx / PX - cx) * e, sy = wy => (wy / PX - cy) * e;
   for (const t of G.textos) { const x = t.fixo ? t.fixo.x : t.x, y = t.fixo ? t.fixo.y - t.fixo.h - 16 : t.y; g.globalAlpha = Math.min(1, t.t * 2); txt(t.txt, sx(x), sy(y), Math.round(t.tam * 0.62 * e / 1.3), t.cor, 'center'); }
   g.globalAlpha = 1;
-  for (const o of G.outros) txt(o.nome, sx(o.corpo.x), sy(o.corpo.y - 68), 8 * u * 1.5, '#BFE3D8', 'center');
+  for (const o of G.outros) { txt(o.nome, sx(o.corpo.x), sy(o.corpo.y - 68), 8 * u * 1.5, '#BFE3D8', 'center'); const n = Math.max(0, Math.ceil(o.corpo.vida || 0)), mx = o.corpo.vidaMax || 5; for (let i = 0; i < mx; i++) { const xx = sx(o.corpo.x) + (i - mx / 2) * 4 * u, yy = sy(o.corpo.y - 82); g.fillStyle = '#17121f'; g.fillRect(xx - u, yy - u, 4 * u, 4 * u); g.fillStyle = i < n ? '#FF9A3C' : '#4A4658'; g.fillRect(xx, yy, 2 * u, 2 * u); } }
   // ataque mira: a linha de pontaria enquanto carrega e os riscos de luz dos golpes soltos
   if (p.carga >= 0.5 && G.ctl?.mira != null && !p.morto) { const a = G.ctl.mira, ux = Math.cos(a), uy = Math.sin(a), q = Math.max(4, 4 * u), f = Math.floor(G.T * 20);
     for (let d = 26; d < 330; d += 10) { if ((Math.floor(d / 10) + f) % 4 === 0) continue; g.fillStyle = d > 290 ? '#FFFFFF' : '#FFD23F'; g.globalAlpha = 1 - d / 600; g.fillRect(Math.round(sx(p.x + ux * d) - q / 2), Math.round(sy(p.y - 26 + uy * d) - q / 2), q, q); }
@@ -395,6 +408,7 @@ function pintarTextos(g, G, esc, cx, cy) {
   for (const r of G.riscos || []) { const k = r.t / r.max, n = Math.max(6, Math.round(Math.hypot(r.x1 - r.x0, r.y1 - r.y0) / 6)), gr = Math.max(1, Math.round(r.g * u * (0.4 + k * 0.6))), nx = -(r.y1 - r.y0), ny = r.x1 - r.x0, nl = Math.hypot(nx, ny) || 1;
     for (let i = 0; i <= n; i++) { const q = i / n; if (q > 1 - (1 - k) * 0.5 && !r.chicote) continue; const on = r.chicote ? Math.sin(q * 9 + k * 12) * 14 * (1 - q) * k : 0, x = sx(r.x0 + (r.x1 - r.x0) * q + nx / nl * on), y = sy(r.y0 + (r.y1 - r.y0) * q + ny / nl * on);
       g.globalAlpha = Math.min(1, k * 1.6); g.fillStyle = r.cor; g.fillRect(Math.round(x - gr), Math.round(y - gr), gr * 2, gr * 2); if (gr > 1) { g.fillStyle = '#FFFFFF'; g.fillRect(Math.round(x - gr / 2), Math.round(y - gr / 2), gr, gr); } } g.globalAlpha = 1; }
+  for (const o of G.objs) if (o.tipo === 'escrito') { const k = clamp(G.p.lampA * 1.4 - Math.max(0, Math.hypot(o.x - p.x, o.y - p.y) - 260) / 120, 0, 1); if (k > 0.02) { g.globalAlpha = k; txt(o.txt, sx(o.x), sy(o.y), 8 * u * 1.5, '#FFE9A8', 'center'); g.globalAlpha = 1; } }
   { const ob = G.objetivo?.(); if (ob && !G.ui.blocking) { // a missão: seta dourada sobre o alvo, ou na borda da tela apontando para ele
     const x = sx(ob.x), y = sy(ob.y - 132), W2 = g.canvas.width, m = 40 * u, pula = Math.round(Math.sin(G.T * 6) * 3 * u), fora = x < m || x > W2 - m;
     g.fillStyle = '#17121f'; const seta = (ax, ay, dx, dy, c) => { g.fillStyle = c; for (let i = 0; i < 5; i++) { const lg = (5 - i) * 2 * u; if (dy) g.fillRect(ax - lg / 2, ay + i * 2 * u * dy, lg, 2 * u); else g.fillRect(ax + i * 2 * u * dx, ay - lg / 2, 2 * u, lg); } };
@@ -414,6 +428,13 @@ function pintarTextos(g, G, esc, cx, cy) {
   if (cm.sacola) txt('sacola caída: ' + cm.sacola.gold, x0 + base * 4, lin, base * 0.8, '#C9B88A');
   if (def.fase) { lin += base * 1.25; const rol = cm.selos[G.area].length; txt('ROLOS ' + rol + '/3' + (def.estacoes ? '   DECISÕES ' + cm.est[G.area].length + '/' + def.estacoes.length : '') + (G.N.portaAberta && !G.venceu ? '   PORTA ABERTA' : ''), 7 * e, lin, base * 0.9, rol >= 3 ? '#FFE9A8' : '#E6E0CF'); }
   if (G.peso) { lin += base * 1.2; txt('PESO DE MAMOM ×' + G.peso, 7 * e, lin, base * 0.8, '#FFD23F'); }
+  // companheiros da sala (mesmo PC ou de fora): a vida de cada um, sempre à vista
+  const chamas = (x, y, n, max, q) => { for (let i = 0; i < max; i++) { const vivo = i < n, xx = x + i * q * 3.2; g.fillStyle = '#17121f'; g.fillRect(xx - q * 0.2, y - q * 2.6, q * 2.4, q * 3); g.fillStyle = vivo ? '#FF9A3C' : '#4A4658'; g.fillRect(xx, y - q * 2.4, q * 2, q * 2.6); g.fillStyle = vivo ? '#FFD86A' : '#5E5A6E'; g.fillRect(xx + q * 0.5, y - q * 1.6, q, q * 1.6); if (vivo) { g.fillStyle = '#FFFBE6'; g.fillRect(xx + q * 0.7, y - q * 0.9, q * 0.6, q * 0.6); } } };
+  if (G.mp) { const q = Math.max(3, Math.round(base * 0.34));
+    for (const c of G.mp.lista()) { lin += base * 1.7; const n = Math.max(0, Math.ceil(c.vida || 0)), mx = c.vidaMax || 5;
+      txt(c.nome || 'Peregrino', 7 * e, lin, base * 1.1, n > 0 ? '#BFE3D8' : '#E07A6E'); g.font = `600 ${base * 1.1}px ${FONTE}`; const lx = 7 * e + g.measureText(c.nome || 'Peregrino').width + base * 0.6;
+      chamas(lx, lin, n, mx, q); if (c.area !== G.area) txt(c.onde, lx + mx * q * 3.2 + base * 0.4, lin, base * 0.7, '#8C93AD'); } }
+
   if (G.chefe) { const b = G.chefe; txt(b.d.nome.toUpperCase(), v.W * d / 2, 15 * e, base * 0.95, '#F4D9A0', 'center'); }
   if (G.dicaTxt && !G.luta) { // primeiros passos: uma faixa no rodapé
     const q = G.dicaTxt, W = v.W * d, H = v.H * d, tam = Math.max(12, Math.round(base * 0.82)), larg = Math.min(W * (input.touch ? 0.42 : 0.6), 560 * d), x = input.touch ? W * 0.5 - larg * 0.5 - W * 0.04 : W / 2 - larg / 2;

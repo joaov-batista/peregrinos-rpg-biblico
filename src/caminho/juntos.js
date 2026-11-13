@@ -45,48 +45,96 @@ function copia(o, nivel = 0) {
   return r;
 }
 
-/* ---------- transporte: PeerJS (internet) ou BroadcastChannel (abas do mesmo aparelho, usado nos testes) ---------- */
+/* ---------- transporte ----------
+   1) PeerJS (WebRTC direto, com STUN e TURN para atravessar roteadores e redes de celular);
+   2) se a ligação direta não abrir, um retransmissor pelo Supabase Realtime (mais lento, mas passa por qualquer rede);
+   3) BroadcastChannel (abas do mesmo aparelho, sem internet: ?redelocal e os testes).
+   O anfitrião escuta nos três ao mesmo tempo; o convidado tenta o direto e, se falhar, o retransmissor. */
+const ICE = { iceServers: [
+  { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] },
+  { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp', 'turns:openrelay.metered.ca:443'], username: 'openrelayproject', credential: 'openrelayproject' }
+] };
+// um "barramento" de mensagens endereçadas (de, para): serve ao BroadcastChannel e ao retransmissor
+function barramento(bus, anfitriao, t) {
+  const uid = anfitriao ? 'anfitriao' : 'c' + Math.random().toString(36).slice(2, 9), cons = new Map();
+  const con = para => ({ send: d => bus.enviar({ de: uid, para, d }), close: () => bus.enviar({ de: uid, para, fim: 1 }), via: bus.via });
+  let pronto;
+  bus.ouvir(m => {
+    if (!m || m.para !== uid) return;
+    if (anfitriao) {
+      if (m.abre) { const c = con(m.de); cons.set(m.de, c); c.send({ t: 'ok' }); t.entra(c); return; }
+      const c = cons.get(m.de); if (!c) return;
+      if (m.fim) { cons.delete(m.de); t.sai(c); } else t.msg(c, m.d);
+    } else if (m.fim) t.sai(); else if (m.d?.t === 'ok') pronto?.(); else t.msg(null, m.d);
+  });
+  return {
+    abrir: ms => new Promise((ok, erro) => { pronto = ok; bus.enviar({ de: uid, para: 'anfitriao', abre: 1 }); setTimeout(() => erro(new Error('Sala não encontrada.')), ms); }),
+    con: anfitriao ? null : con('anfitriao'),
+    fechar: () => { if (anfitriao) for (const c of cons.values()) c.close(); else con('anfitriao').close(); }
+  };
+}
+async function retransmissor(nome) {
+  const { canalRetransmissao } = await import('../net.js'), r = canalRetransmissao(nome);
+  if (!r) return null;
+  await r.pronto();
+  const ouvintes = []; r.ouvir(m => { for (const f of ouvintes) f(m); });
+  return { via: 'retransmissor', enviar: m => r.enviar(m), ouvir: f => ouvintes.push(f), fechar: r.fechar };
+}
 async function ligar(codigo, anfitriao, local, t) {
   const nome = PREFIXO + codigo;
   if (local) {
-    const ch = new BroadcastChannel(nome), uid = anfitriao ? 'anfitriao' : 'c' + Math.random().toString(36).slice(2, 9), cons = new Map();
-    const con = para => ({ send: d => ch.postMessage({ de: uid, para, d }), close: () => ch.postMessage({ de: uid, para, fim: 1 }) });
-    let pronto;
-    ch.onmessage = ev => {
-      const m = ev.data; if (m.para !== uid) return;
-      if (anfitriao) {
-        if (m.abre) { const c = con(m.de); cons.set(m.de, c); c.send({ t: 'ok' }); t.entra(c); return; }
-        const c = cons.get(m.de); if (!c) return;
-        if (m.fim) { cons.delete(m.de); t.sai(c); } else t.msg(c, m.d);
-      } else if (m.fim) t.sai(); else if (m.d?.t === 'ok') pronto?.(); else t.msg(null, m.d);
-    };
-    if (!anfitriao) {
-      const p = new Promise((ok, erro) => { pronto = ok; setTimeout(() => erro(new Error('Sala não encontrada.')), 1500); });
-      ch.postMessage({ de: uid, para: 'anfitriao', abre: 1 }); await p;
-    }
-    const fim = () => { if (anfitriao) for (const c of cons.values()) c.close(); else con('anfitriao').close(); ch.close(); };
+    const ch = new BroadcastChannel(nome), ouvintes = [];
+    ch.onmessage = ev => { for (const f of ouvintes) f(ev.data); };
+    const b = barramento({ via: 'local', enviar: m => ch.postMessage(m), ouvir: f => ouvintes.push(f) }, anfitriao, t);
+    if (!anfitriao) await b.abrir(1500);
+    const fim = () => { b.fechar(); ch.close(); };
     addEventListener('pagehide', fim, { once: true });
-    return { con: anfitriao ? null : con('anfitriao'), fechar: fim };
+    return { con: b.con, fechar: fim, via: 'local' };
   }
-  const { Peer } = await import('peerjs');
-  const peer = anfitriao ? new Peer(nome) : new Peer();
-  await new Promise((ok, erro) => {
-    peer.on('open', ok);
-    peer.on('error', e => erro(new Error(e.type === 'unavailable-id' ? 'Esse código já está em uso. Tente abrir de novo.' : e.type === 'peer-unavailable' ? 'Sala não encontrada. Confira o código e se o anfitrião está com a sala aberta.' : 'Sem conexão com o serviço de salas. Confira a internet.')));
-    setTimeout(() => erro(new Error('O serviço de salas não respondeu.')), 15000);
-  });
   if (anfitriao) {
-    peer.on('connection', c => { c.on('open', () => t.entra(c)); c.on('data', d => t.msg(c, d)); c.on('close', () => t.sai(c)); c.on('error', () => t.sai(c)); });
-    peer.on('disconnected', () => { try { peer.reconnect(); } catch { /* a sala segue para quem já entrou */ } });
-    return { con: null, fechar: () => peer.destroy() };
+    // o retransmissor fica escutando junto, para quem não conseguir a ligação direta
+    let rel = null, relB = null; retransmissor(nome).then(r => { if (r) { rel = r; relB = barramento(r, true, t); } }).catch(() => null);
+    const { Peer } = await import('peerjs');
+    let peer = null;
+    try {
+      peer = new Peer(nome, { config: ICE, debug: 0 });
+      await new Promise((ok, erro) => {
+        peer.on('open', ok);
+        peer.on('error', e => erro(new Error(e.type === 'unavailable-id' ? 'Esse código já está em uso. Tente abrir de novo.' : 'Sem conexão com o serviço de salas. Confira a internet.')));
+        setTimeout(() => erro(new Error('O serviço de salas não respondeu.')), 12000);
+      });
+    } catch (e) {
+      if (e.message.includes('em uso')) throw e;
+      try { peer?.destroy(); } catch { /* nada */ } peer = null;
+      for (let i = 0; i < 20 && !rel; i++) await new Promise(r => setTimeout(r, 250)); // sem o serviço direto, a sala vive só no retransmissor
+      if (!rel) throw e;
+    }
+    if (peer) {
+      peer.on('connection', c => { c.on('open', () => t.entra(c)); c.on('data', d => t.msg(c, d)); c.on('close', () => t.sai(c)); c.on('error', () => t.sai(c)); });
+      peer.on('disconnected', () => { try { peer.reconnect(); } catch { /* a sala segue para quem já entrou */ } });
+      peer.on('error', () => { /* um convidado que falhou não derruba a sala */ });
+    }
+    return { con: null, via: peer ? 'direto' : 'retransmissor', fechar: () => { try { peer?.destroy(); } catch { /* nada */ } try { relB?.fechar(); rel?.fechar(); } catch { /* nada */ } } };
   }
-  const c = peer.connect(nome, { reliable: true, serialization: 'json' });
-  await new Promise((ok, erro) => {
-    c.on('open', ok); peer.on('error', e => erro(new Error(e.type === 'peer-unavailable' ? 'Sala não encontrada. Confira o código e se o anfitrião está com a sala aberta.' : 'Não foi possível entrar na sala.')));
-    setTimeout(() => erro(new Error('A sala não respondeu.')), 15000);
-  });
-  c.on('data', d => t.msg(null, d)); c.on('close', () => t.sai()); c.on('error', () => t.sai());
-  return { con: c, fechar: () => peer.destroy() };
+  // convidado: primeiro a ligação direta; se não abrir em alguns segundos, o retransmissor
+  let falha = null;
+  try {
+    const { Peer } = await import('peerjs');
+    const peer = new Peer({ config: ICE, debug: 0 });
+    await new Promise((ok, erro) => { peer.on('open', ok); peer.on('error', e => erro(e)); setTimeout(() => erro(new Error('tempo')), 9000); });
+    const c = peer.connect(nome, { reliable: true, serialization: 'json' });
+    await new Promise((ok, erro) => { c.on('open', ok); peer.on('error', e => erro(e)); setTimeout(() => erro(new Error('tempo')), 9000); });
+    c.on('data', d => t.msg(null, d)); c.on('close', () => t.sai()); c.on('error', () => t.sai());
+    peer.on('error', () => { /* depois de aberta, quem cuida é o 'close' */ });
+    return { con: c, via: 'direto', fechar: () => peer.destroy() };
+  } catch (e) { falha = e; }
+  const rel = await retransmissor(nome).catch(() => null);
+  if (rel) {
+    const b = barramento(rel, false, t);
+    try { await b.abrir(6000); return { con: b.con, via: 'retransmissor', fechar: () => { b.fechar(); rel.fechar(); } }; }
+    catch { rel.fechar(); }
+  }
+  throw new Error(falha?.type === 'peer-unavailable' || !rel ? 'Sala não encontrada. Confira o código e se o anfitrião está com a sala aberta (e com o jogo na tela).' : 'A sala não respondeu. Confira a internet dos dois aparelhos e tente de novo.');
 }
 
 export class Juntos {
@@ -196,9 +244,10 @@ export class Juntos {
     else { this.semDono += dt; if (this.semDono > 0.5 && la.every(p => p.id > this.eu || this.semDono > 1.5)) { this.souDono = true; this.semDono = 0; } }
     if (!this.souDono) for (const e of G.inimigos) if (e.sx != null) { e.x = damp(e.x, e.sx, 24, dt); e.y = damp(e.y, e.sy, 24, dt); }
     if (!this.pares.size) return;
-    if ((this.tE -= dt) <= 0) { this.tE = 0.05; this.enviar(this.estado()); }
+    const calmo = this.rede?.via === 'retransmissor' || this.rede?.con?.via === 'retransmissor';
+    if ((this.tE -= dt) <= 0) { this.tE = calmo ? 0.09 : 0.05; this.enviar(this.estado()); }
     if ((this.tI -= dt) <= 0) { this.tI = 5; this.enviar({ t: 'inf', ...this.info() }); }
-    if (this.souDono && la.length && (this.tW -= dt) <= 0) { this.tW = 0.066; this.enviar(this.mundo()); }
+    if (this.souDono && la.length && (this.tW -= dt) <= 0) { this.tW = calmo ? 0.12 : 0.066; this.enviar(this.mundo()); }
   }
   estado() {
     const G = this.G, p = G.eu, o = { t: 'e', a: G.area, dn: this.souDono ? 1 : 0, au: G.ui.blocking ? 1 : 0 };

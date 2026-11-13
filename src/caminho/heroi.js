@@ -61,7 +61,8 @@ export function atualizarHeroi(G, dt) {
   const alvo = p.orando > 0 ? 0 : c.mx * VEL * lento;
   if (!preso && !emDash && p.travaX <= 0) p.vx = aprox(p.vx, alvo, (p.chao ? 2700 : 1750) * dt);
   if (preso && p.chao) p.vx = aprox(p.vx, 0, 900 * dt);
-  if (c.mx && !p.atk && !preso && !emDash && p.travaX <= 0) p.face = Math.sign(c.mx);
+  if (c.mx && !preso && !emDash && p.travaX <= 0 && (!p.atk || arma.duplo)) { // a adaga é leve: dá para virar no meio do golpe, e o segundo corte já sai para o novo lado
+    p.face = Math.sign(c.mx); if (p.atk && !p.atk.segundo) p.atk.face = p.face; }
 
   // ---- pular / deslizar na parede ----
   p.buf = c.pulo ? 0.13 : p.buf - dt;
@@ -102,6 +103,8 @@ export function atualizarHeroi(G, dt) {
   // ---- golpes ----
   if (c.atk) p.atkBuf = 0.13;
   if (p.atkBuf > 0 && p.atkCd <= 0 && !p.lamp && !preso && !emDash && p.orando <= 0) {
+    // virar na hora do golpe: o direcional manda; sem ele, o lado do cursor do mouse. Golpes seguidos não prendem mais o peregrino num lado só.
+    if (!emDash && p.travaX <= 0) { if (c.mx) p.face = Math.sign(c.mx); else if (c.ladoMouse) p.face = c.ladoMouse; }
     // oito direções: para os lados, para cima, para baixo (no ar quica; no chão é rasteira) e as diagonais
     const dir = c.my < -0.5 ? (c.mx ? 'diagC' : 'cima') : c.my > 0.5 ? (p.chao ? 'rasteira' : c.mx ? 'diagB' : 'baixo') : 'lado';
     const [ux, uy] = DIRS[dir], tiro = arma.tiro && dir !== 'baixo' ? arma.tiro : null, cor = hab.espada ? 'luz' : arma.cor;

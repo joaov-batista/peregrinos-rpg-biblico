@@ -14,7 +14,7 @@ const KEYMAP_HK = { ArrowUp: 'dodge', KeyZ: 'attack', KeyX: 'attack', KeyC: 'das
 const KEYMAP_WASD = { KeyW: 'dodge', Space: 'dodge', ShiftLeft: 'dash', ShiftRight: 'dash', KeyQ: 'botija', KeyE: 'defend', KeyF: 'interact', Enter: 'interact',
   KeyR: 'item2', KeyJ: 'attack', KeyK: 'skill', Tab: 'map', KeyM: 'map', KeyI: 'menu', Escape: 'escape' };
 const MOVE_WASD = { KeyW: [0, -1], KeyS: [0, 1], KeyA: [-1, 0], KeyD: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
-export const wasd = () => config.esquema === 'wasd';
+export const wasd = () => config.esquema !== 'setas'; // WASD + mouse é o padrão; setas + Z X C fica como opção
 const base = () => wasd() ? KEYMAP_WASD : KEYMAP_HK;
 const moveHK = () => wasd() ? MOVE_WASD : MOVE_HK;
 // teclas escolhidas pelo jogador (menu › Ajustes › Teclas): { ação: código da tecla }
