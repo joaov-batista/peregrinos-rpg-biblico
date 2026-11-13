@@ -141,7 +141,7 @@ export function atualizarHeroi(G, dt) {
   }
   // Ataque mira: segurar o golpe carrega; ao soltar, o golpe sai só na direção apontada. Pede muito azeite e demora a voltar.
   if (p.miraCd > 0) p.miraCd -= dt;
-  const livre = !preso && p.orando <= 0 && !G.investidaMira && !G.quedaMira;
+  const livre = !preso && p.orando <= 0 && !G.investidaMira && !G.quedaMira && !G.agarre;
   if (c.atkSeg && livre) {
     p.segGolpe = (p.segGolpe || 0) + dt;
     if (p.miraCd > 0 || p.oleo < MIRA_CUSTO) { p.carga = 0; if (p.segGolpe > 0.45 && !p.avisoMira) { p.avisoMira = true; G.textoEm(p.x, p.y - 64, p.miraCd > 0 ? 'ataque mira: ainda não' : 'ataque mira pede ' + MIRA_CUSTO + ' de azeite', '#C9B88A', 12); } }
