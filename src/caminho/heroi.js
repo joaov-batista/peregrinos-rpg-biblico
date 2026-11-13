@@ -5,7 +5,45 @@ import { sfx } from '../audio.js';
 import { vibrar } from '../gamepad.js';
 import { drawWeapon } from '../game/character-art.js';
 import { T } from './nivel.js';
-import { mover, paredeAoLado, tocaEspinho } from './corpo.js';
+import { mover, paredeAoLado, tocaEspinho, solido } from './corpo.js';
+
+// GOLPE DO PASSO: passo + golpe. Cada arma tem o seu, e ele muda se o passo foi a rasteira (chão) ou o passo em pé (ar).
+const GOLPE_PASSO = {
+  espada: { chao: 'Corte que sobe', ar: 'Giro da espada' }, adaga: { chao: 'Corte nos tendões', ar: 'Mergulho das adagas' },
+  lanca: { chao: 'Estocada corrida', ar: 'Lança que desce' }, chicote: { chao: 'Laço nos pés', ar: 'Roda do chicote' },
+  cajado: { chao: 'Rastro de brasas', ar: 'Brasas que caem' }, trombeta: { chao: 'Onda rasteira', ar: 'Anel do shofar' },
+  funda: { chao: 'Pedra rasteira', ar: 'Pedrada do alto' }
+};
+function golpeDoPasso(G, p, arma) {
+  const tipo = G.tipoArma || 'espada', modo = p.dashModo || (p.chao ? 'chao' : 'ar'), f = p.dashDir || p.face, base = G.danoBase() * arma.d * 1.5;
+  const atk = (dir = 'lado') => ({ dir, hits: new Set(), carga: true });
+  const bate = (x, y, w, h, d = base, dir) => G.golpear({ x: x - w / 2, y: y - h / 2, w, h }, d, atk(dir));
+  const tiro = o => G.tiros.push({ x: p.x + f * 16, y: p.y - 26, vx: 0, vy: 0, r: 8, amigo: true, vida: 0.8, cor: '#FFF1BE', tipo: 'pedra', dano: base * 0.8, ...o });
+  p.dashGolpe = true; p.atkBuf = 0; p.atkCd = 0.42; p.face = f; sfx('swing'); G.tremor(3);
+  G.textoEm(p.x, p.y - 66, GOLPE_PASSO[tipo]?.[modo] || 'golpe do passo', '#E8D9B0', 11);
+  // a animação: a rasteira levanta num golpe para cima; o passo no ar fecha num golpe de lado. A caixa é a deste golpe.
+  const anim = (dir, dur = 0.22) => { p.atk = { t: 0, dur, dir, face: f, hits: new Set(), n: p.combo++, semCaixa: true }; };
+  const fim = () => { p.dashT = 0; p.dashFim = 0; };
+  if (modo === 'chao') {
+    if (tipo === 'espada') { fim(); anim('cima'); p.vy = -460; p.chao = false; G.efeito(G.hab.espada ? 'cima_luz' : 'corteCima', p.x, p.y, f, { gruda: p, vel: 1.2 }); bate(p.x + f * 20, p.y - 60, 90, 120, base * 1.3, 'cima'); }
+    else if (tipo === 'adaga') { p.dashT = Math.max(p.dashT, 0.18); anim('rasteira', 0.18); for (let i = 0; i < 3; i++) setTimeout(() => { if (!G.running) return; G.efeito('corteAdaga', p.x + f * 20, p.y + 10, i % 2 ? -f : f, { vel: 1.5 }); G.golpear({ x: p.x - 30 + f * 20, y: p.y - 30, w: 60, h: 30 }, base * 0.6, atk()); sfx('swing'); }, i * 60); }
+    else if (tipo === 'lanca') { fim(); anim('lado', 0.26); p.vx = f * 380; G.efeito('estocadaLonga', p.x, p.y, f, { gruda: p, vel: 1.2 }); bate(p.x + f * 80, p.y - 28, 150, 34, base * 1.4); }
+    else if (tipo === 'chicote') { fim(); anim('rasteira', 0.24); G.risco(p.x, p.y - 10, p.x + f * 150, p.y - 8, '#C98A4E', 3, true); G.efeito('estalo', p.x + f * 150, p.y + 16, f);
+      for (const e of G.inimigos) if (e.kind === 'vicio' && e.hp > 0 && !e.morrendo && Math.abs(e.y - p.y) < 40 && (e.x - p.x) * f > 0 && Math.abs(e.x - p.x) < 170) { G.atingir(e, base, p.x, atk()); e.stun = Math.max(e.stun, 1.2); if (G.souDono()) { e.vx = -f * 260; e.vy = -200; e.chao = false; } G.textoEm(e.x, e.y - e.h - 6, 'derrubado!', '#E8C873', 11); }
+      for (const e of G.inimigos) if (e.kind === 'chefe' && e.hp > 0 && Math.abs(e.x - p.x) < 170 && (e.x - p.x) * f > 0) G.atingir(e, base, p.x, atk()); }
+    else if (tipo === 'cajado') { anim('rasteira', 0.2); for (let i = 0; i < 4; i++) G.zonas.push({ tipo: 'col', x: p.x - f * i * 40, w: 40, aviso: 0.02 + i * 0.05, dur: 0.6, cor: '#FF8A2A', amigo: base * 0.5, y0: p.y - 40, y1: p.y + 4 }); G.efeito('corteFogo', p.x, p.y + 14, f, { vel: 1.3 }); }
+    else if (tipo === 'trombeta') { fim(); anim('rasteira', 0.22); G.efeito('corteSom', p.x, p.y + 14, f, { vel: 1.3 }); tiro({ y: p.y - 12, vx: f * 560, r: 12, r0: 12, max: 0.9, vida: 0.9, tipo: 'som', fura: true, cor: '#BFF0F8', dano: base }); }
+    else { fim(); anim('rasteira', 0.2); for (let i = 0; i < 3; i++) tiro({ y: p.y - 10, vx: f * (760 + i * 90), vy: -20 + i * 10, r: 6, vida: 0.7, g: 0, brilho: true, dano: base * 0.7 }); sfx('shoot'); }
+  } else {
+    if (tipo === 'espada') { fim(); anim('lado', 0.26); G.efeito(G.hab.espada ? 'corteLuz' : 'giro', p.x, p.y - 10, f, { gruda: p }); bate(p.x, p.y - 28, 130, 110, base * 1.2); p.vy = -160; }
+    else if (tipo === 'adaga') { fim(); anim('diagB', 0.3); p.vx = f * 520; p.vy = 820; G.efeito('corteAdaga', p.x + f * 20, p.y + 20, f, { vel: 1.4 }); p.mergulho = 0.35; }
+    else if (tipo === 'lanca') { fim(); anim('baixo', 0.3); p.vy = 1100; p.vx = f * 120; G.efeito('baixo_bronze', p.x, p.y, f, { gruda: p, dy: 24 }); p.mergulho = 0.5; }
+    else if (tipo === 'chicote') { fim(); anim('lado', 0.3); for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; G.risco(p.x, p.y - 28, p.x + Math.cos(a) * 110, p.y - 28 + Math.sin(a) * 110, '#C98A4E', 2, true); } G.efeito('giroRoxo', p.x, p.y - 4, f, { gruda: p }); bate(p.x, p.y - 28, 220, 200, base * 0.9); p.vy = -120; }
+    else if (tipo === 'cajado') { fim(); anim('diagB', 0.24); for (let i = -1; i <= 1; i++) tiro({ vx: f * 260 + i * 160, vy: 520, r: 10, tipo: 'fogo', cor: '#FF8A2A', vida: 1, dano: base * 0.8 }); sfx('shoot'); p.vy = -120; }
+    else if (tipo === 'trombeta') { fim(); anim('lado', 0.24); G.fx.anel(p.x, p.y - 28, '#BFF0F8', 150); G.efeito('giroSom', p.x, p.y - 6, f, { gruda: p }); bate(p.x, p.y - 28, 220, 200, base * 0.9); for (const e of G.inimigos) if (e.kind === 'vicio' && Math.hypot(e.x - p.x, e.y - p.y) < 130 && G.souDono()) { e.vx = Math.sign(e.x - p.x) * 360; e.vy = -220; e.chao = false; } }
+    else { fim(); anim('diagB', 0.2); for (let i = 0; i < 3; i++) tiro({ vx: f * (420 + i * 80), vy: 520 + i * 60, r: 6, vida: 0.8, g: 400, brilho: true, dano: base * 0.7 }); sfx('shoot'); p.vy = -200; }
+  }
+}
 
 // Todo peregrino nasce com salto duplo, passo pronto (com espera longa) e a vigília, que só defende no tempo certo.
 export const VEL = 276, GRAV = 2050, PULO = 700, QUEDA = 920, OLEO_USO = 33;
@@ -91,12 +129,23 @@ export function atualizarHeroi(G, dt) {
     p.dashT = 0.19; p.dashCd = p.dashMax = hab.calcados ? 0.6 : 1.4; p.dashDir = c.mx ? Math.sign(c.mx) : p.face; p.face = p.dashDir;
     if (!p.chao) p.dashAr = false; p.atk = null; p.lamp = false; sfx('dodge');
     // passo rasteiro (para baixo + passo): passa por baixo do golpe e atravessa o adversário sem ser ferido
-    p.rasteiro = c.my > 0.35 && !!G.cm.tec?.rasteiro; // técnica ensinada por Benaia, no pátio das provas if (p.rasteiro) { p.inv = Math.max(p.inv, 0.42); p.dashT = 0.26; G.textoEm(p.x, p.y - 62, 'passo rasteiro', '#BFD6E8', 11); } G.fx.po(p.x, p.y - 4, 6, '#E8E2C8');
+    // no chão, o passo é uma RASTEIRA: o peregrino desliza quase deitado, passa por baixo do que vem na altura do peito e
+    // atravessa o adversário. No ar é um passo em pé, de corpo reto. Nos dois, ninguém fere com o próprio corpo.
+    p.dashModo = p.chao ? 'chao' : 'ar'; p.dashGolpe = false; p.rasteiro = p.dashModo === 'chao';
+    if (p.rasteiro) { p.dashT = 0.26; p.h = 22; if (G.cm.tec?.rasteiro) p.inv = Math.max(p.inv, 0.32); } /* com a técnica de Benaia, nem o golpe baixo pega */
+    G.fx.po(p.x, p.y - 4, 6, '#E8E2C8');
   }
   if (p.dashT > 0) {
-    p.dashT -= dt; p.vx = p.dashDir * 600; p.vy = 0;
-    p.rastro.push({ x: p.x, y: p.y, t: 0.22, face: p.face });
+    p.dashT -= dt; p.vx = p.dashDir * (p.dashModo === 'chao' ? 560 : 600); p.vy = 0;
+    p.rastro.push({ x: p.x, y: p.y, t: 0.22, face: p.face, baixo: p.dashModo === 'chao' });
+    if (p.dashModo === 'chao' && Math.random() < dt * 40) G.fx.po(p.x - p.dashDir * 8, p.y - 2, 1, '#C9D2C4');
+    if (p.dashT <= 0) p.dashFim = 0.12; // um respiro depois do passo: o golpe ainda sai como golpe do passo
   } else p.vy = Math.min(QUEDA, p.vy + GRAV * dt);
+  if (p.dashFim > 0) p.dashFim -= dt;
+  // de pé de novo depois da rasteira, se houver espaço acima da cabeça
+  if (p.h < 54 && !(p.dashT > 0)) { const livreCima = [-p.w / 2 + 2, p.w / 2 - 2].every(dx => !solido(N, Math.floor((p.x + dx) / T), Math.floor((p.y - 54) / T))); if (livreCima) p.h = 54; }
+  // ---- golpe do passo: passo + golpe faz um golpe próprio de cada arma (um por passo) ----
+  if (c.atk && !p.dashGolpe && (p.dashT > 0 || p.dashFim > 0) && !preso && p.orando <= 0 && !G.investidaMira && !G.agarre) golpeDoPasso(G, p, arma);
   for (const r of p.rastro) r.t -= dt;
   while (p.rastro.length && p.rastro[0].t <= 0) p.rastro.shift();
 
@@ -156,6 +205,13 @@ export function atualizarHeroi(G, dt) {
   // ---- física ----
   const noAr = !p.chao, vyAntes = p.vy;
   mover(N, p, dt);
+  // o mergulho (adaga e lança no ar): fere o que estiver embaixo na descida e estoura ao tocar o chão
+  if (p.mergulho > 0) {
+    p.mergulho -= dt; p.inv = Math.max(p.inv, 0.08);
+    G.golpear({ x: p.x - 26, y: p.y - 30, w: 52, h: 50 }, G.danoBase() * arma.d * 1.4, p.mergAtk || (p.mergAtk = { dir: 'baixo', hits: new Set(), carga: true }));
+    if (p.chao) { p.mergulho = 0; G.tremor(8); G.efeito('baque', p.x, p.y); G.fx.anel(p.x, p.y - 8, '#E8D9B0', 90); sfx('hit'); G.golpear({ x: p.x - 80, y: p.y - 60, w: 160, h: 64 }, G.danoBase() * arma.d * 1.2, { dir: 'cima', hits: new Set(), carga: true }); }
+    if (p.mergulho <= 0) p.mergAtk = null;
+  }
   if (p.chao) {
     if (noAr && vyAntes > 260) { p.sq = clamp(1 - vyAntes / 2600, 0.7, 0.9); G.fx.po(p.x, p.y, vyAntes > 600 ? 9 : 4, '#C9D2C4'); sfx('step'); }
     p.pulos = hab.asas ? 2 : 1; p.dashAr = true; p.tAr = 0;

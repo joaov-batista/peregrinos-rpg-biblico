@@ -296,7 +296,7 @@ export class Caminho {
           for (let i = 0; i < r.n; i++) { const a = r.a + i * TAU / r.n, ux = Math.cos(a), uy = Math.sin(a), px = p.x - cx, py = p.y - 19 - cy, t = clamp(px * ux + py * uy, 30, r.len); if (Math.hypot(px - ux * t, py - uy * t) < 15) { this.ferirHeroi(1, e); break; } }
         }
       }
-      if (e.hp > 0 && !e.morrendo && !(e.alpha < 0.5) && (e.kind !== 'vicio' || e.vista > 0.5) && toca(caixa(p), encolhe(caixa(e), e.kind === 'chefe' ? 0.72 : 0.8))) {
+      if (!(p.dashT > 0) && !(p.mergulho > 0) && e.hp > 0 && !e.morrendo && !(e.alpha < 0.5) && (e.kind !== 'vicio' || e.vista > 0.5) && toca(caixa(p), encolhe(caixa(e), e.kind === 'chefe' ? 0.72 : 0.8))) { // no passo, o corpo atravessa o adversário
         const r = this.ferirHeroi(1, e);
         if (r === true && e.ai === 'ladrao' && !e.fugindo) { const q = Math.min(this.char.data.gold, 15); this.char.data.gold -= q; e.roubo = q; e.fugindo = 5; if (q) this.textoEm(p.x, p.y - 50, '−' + q + ' denários!', '#FFD23F'); }
       }
@@ -1108,7 +1108,7 @@ export class Caminho {
       case 'samuel': return trocarVocacao(this);
       case 'dorcas': return guardaRoupa(this);
       case 'mestre': { cm.tec = cm.tec || {};
-        if (!cm.tec.rasteiro) return this.ui.dialog({ nome: ob.nome, look: ob.look, texto: 'Ferro com ferro se afia (Pv 27:17).\n\nPosso lhe ensinar o PASSO RASTEIRO: para baixo + passo. Você desliza por baixo do golpe e atravessa o adversário sem ser ferido.\n\nCusta 400 denários. Você tem ' + Math.floor(c.data.gold) + '.', acoes: [c.data.gold >= 400 ? { label: 'Aprender', fn: () => { c.data.gold -= 400; cm.tec.rasteiro = 1; sfx('level'); this.salvar(); this.ui.toast('Aprendido: PASSO RASTEIRO (para baixo + passo).', 6000); } } : { label: 'Ainda não tenho' }, { label: 'Agora não' }] });
+        if (!cm.tec.rasteiro) return this.ui.dialog({ nome: ob.nome, look: ob.look, texto: 'Ferro com ferro se afia (Pv 27:17).\n\nTodo passo no chão já é uma rasteira: passa por baixo do que vem na altura do peito. Posso lhe ensinar o PASSO FIRME: na rasteira, nem o golpe baixo o fere.\n\nCusta 400 denários. Você tem ' + Math.floor(c.data.gold) + '.', acoes: [c.data.gold >= 400 ? { label: 'Aprender', fn: () => { c.data.gold -= 400; cm.tec.rasteiro = 1; sfx('level'); this.salvar(); this.ui.toast('Aprendido: PASSO FIRME. Na rasteira, nenhum golpe o fere.', 6000); } } : { label: 'Ainda não tenho' }, { label: 'Agora não' }] });
       }
       // falls through
       case 'mestre2': texto = 'Ferro com ferro se afia; assim o homem afia o rosto do seu amigo (Pv 27:17).\n\nA arena é para os peregrinos da mesma sala medirem forças. O desafio das ondas é para quem quer saber até onde aguenta. Melhor marca sua: ' + (cm.recorde || 0) + ' ondas.'; break;

@@ -42,7 +42,8 @@ export function poseDe(p, Tm, corpo) {
   if (p.orando > 0) { P.agacha = 4; P.incl = 1; P.cabY = 1; P.cabX = 1; P.pf = { x: 4, y: 0 }; P.pt = { x: -4, y: 0 }; P.joelho = true; P.mao = { x: 5, y: -13 }; P.ang = 1.57; P.lamp = { x: 6, y: -16 }; return ajusta(P, corpo); }
   if (p.dashT > 0 && p.rasteiro) { P.incl = -5; P.agacha = 9; P.cabY = 2; P.pf = { x: 9, y: -1 }; P.pt = { x: 4, y: 0 }; P.mao = { x: -6, y: -8 }; P.ang = 2.9; return ajusta(P, corpo); } // rasteira: desliza quase deitado, pés na frente
   if (p.atk?.dir === 'rasteira') { P.agacha = 7; P.incl = 3; P.cabY = 1; P.pf = { x: 5, y: 0 }; P.pt = { x: -5, y: 0 }; P.joelho = true; P.mao = { x: 9, y: -6 }; P.ang = 1.75; return ajusta(P, corpo); } // golpe agachado
-  if (p.dashT > 0) { P.incl = 4; P.agacha = 1; P.pf = { x: 5, y: -2 }; P.pt = { x: -7, y: -1 }; P.mao = { x: -5, y: -14 }; P.ang = 2.7; return ajusta(P, corpo); }
+  if (p.dashT > 0) { P.incl = 0; P.agacha = 0; P.cabY = -1; P.pf = { x: 2, y: -1 }; P.pt = { x: -2, y: -1 }; P.mao = { x: -4, y: -18 }; P.ang = 2.2; return ajusta(P, corpo); } // passo no ar: em pé, de corpo reto, deslizando no vento
+  if (p.h < 40 && p.chao) { P.agacha = 8; P.incl = -2; P.cabY = 2; P.pf = { x: 6, y: 0 }; P.pt = { x: -4, y: 0 }; P.joelho = true; P.mao = { x: 4, y: -8 }; P.ang = 1.6; return ajusta(P, corpo); } // ainda agachado, sob um teto baixo
   if (!p.chao) {
     if (p.desliza) { P.pf = { x: 2, y: -4 }; P.pt = { x: 1, y: -1 }; P.incl = -1; P.mao = { x: 3, y: -24 }; P.ang = -1.2; }
     else if (p.vy < -60) { P.pf = { x: 3, y: -5 }; P.pt = { x: -3, y: -1 }; P.incl = 1; P.mao = { x: 5, y: -16 }; P.ang = 0.5; }
