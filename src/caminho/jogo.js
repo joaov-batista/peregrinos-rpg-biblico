@@ -1053,7 +1053,8 @@ export class Caminho {
       }
       case 'poco': p.oleo = this.oleoMax(); p.vida = Math.min(p.vidaMax, p.vida + 1); sfx('heal'); this.efeito('cura', p.x, p.y); this.ui.toast('"Quem beber da água que eu lhe der nunca mais terá sede" (Jo 4:14). Azeite cheio.', 5000); break;
       case 'retorno': this.entrar('refugio', { portal: d.sem?.id || d.mundo || d.id }); break;
-      case 'querubim': this.ovo('querubim', 'Um querubim e uma espada flamejante guardam o caminho da árvore da vida (Gn 3:24). Por aqui não se volta: o caminho de volta é outro.'); await this.ui.dialog({ nome: 'A leste do jardim', texto: 'A espada de fogo se revolve sem ruído. Atrás dela, um verde que você nunca viu e de que, estranhamente, sente saudade.\n\n"E pôs querubins ao oriente do jardim do Éden" (Gn 3:24).', acoes: [{ label: 'Recuar' }] }); break;
+      case 'querubim': this.ovo('querubim', 'Um querubim e uma espada flamejante guardam o caminho da árvore da vida (Gn 3:24). Por aqui não se volta: o caminho de volta é outro.'); await this.ui.dialog({ nome: 'O querubim', texto: 'A espada de fogo se revolve sem ruído. Atrás dela, um verde que você nunca viu e de que, estranhamente, sente saudade.\n\n"E pôs querubins ao oriente do jardim do Éden, e uma espada flamejante que se revolvia, para guardar o caminho da árvore da vida" (Gn 3:24).', acoes: [{ label: 'Falar com o querubim' }] });
+        await this.ui.dialog({ nome: 'O querubim', texto: 'Eu guardo a passagem para o Jardim. Em breve ela se abrirá, e você poderá entrar.\n\nMas ainda não, peregrino. A sua jornada ainda é longa: há páginas que você não leu e sombras que ainda não venceu.\n\n"Ao vencedor, dar-lhe-ei que se alimente da árvore da vida, que está no paraíso de Deus" (Ap 2:7).', acoes: [{ label: 'Seguir o caminho' }] }); break;
       case 'porta-pecado': await this.portaDoPecado(ob); break;
     }
   }
