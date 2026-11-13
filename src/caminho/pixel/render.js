@@ -178,7 +178,7 @@ export function renderPixel(G) {
 
   pintarFundoPixel(g, G, C, vw, vh, cx, cy);
   pintarSalasPixel(g, G, C, vw, vh, cx, cy);
-  for (const o of G.objs) { const x = X(o.x); if (x < -60 || x > vw + 60) continue; if (!pintarObjeto(g, o, G, x, Y(o.y), Tm)) antigo(() => desenharObjeto(g, o, G)); }
+  for (const o of G.objs) { const x = X(o.x); if (x < -60 || x > vw + 60) continue; if (o.oculto && !G.cm.trilha) { const k = G.p.lampA * clamp(1 - (Math.hypot(o.x - G.p.x, o.y - G.p.y) - 200) / 160, 0, 1); if (k < 0.05) continue; g.globalAlpha = k; } if (!pintarObjeto(g, o, G, x, Y(o.y), Tm)) antigo(() => desenharObjeto(g, o, G)); g.globalAlpha = 1; }
   if (G.def.mundo && G.N.arena) pintarArenaTema(g, G, X, Y, Tm);
   pintarBlocosPixel(g, G, C, vw, vh, cx, cy);
   // avisos de golpe: áreas pontilhadas que fecham até o impacto
@@ -419,8 +419,8 @@ function pintarTextos(g, G, esc, cx, cy) {
     g.fillStyle = '#17121f'; const seta = (ax, ay, dx, dy, c) => { g.fillStyle = c; for (let i = 0; i < 5; i++) { const lg = (5 - i) * 2 * u; if (dy) g.fillRect(ax - lg / 2, ay + i * 2 * u * dy, lg, 2 * u); else g.fillRect(ax + i * 2 * u * dx, ay - lg / 2, 2 * u, lg); } };
     if (!fora) { seta(x, y + pula - u, 0, 1, '#17121f'); seta(x, y + pula - 2 * u, 0, 1, '#FFD23F'); txt(ob.rot, x, y + pula - 8 * u, 8 * u * 1.6, '#FFE9A8', 'center'); }
     else { const esq = x < m, ax = esq ? m : W2 - m, ay = Math.min(g.canvas.height - 90 * u, Math.max(90 * u, sy(ob.y - 60))); seta(ax + (esq ? -pula : pula) + (esq ? -u : u), ay, esq ? -1 : 1, 0, '#17121f'); seta(ax + (esq ? -pula : pula), ay, esq ? -1 : 1, 0, '#FFD23F'); txt('missão', ax + (esq ? 16 * u : -16 * u), ay + 4 * u, 8 * u * 2, '#FFE9A8', esq ? 'left' : 'right'); } } }
-  if (G.perto && !input.touch) { const o = G.perto; txt((document.body.classList.contains('pad') ? 'Y' : wasd() ? 'F' : 'E') + ' · ' + o.rot, sx(o.x), sy(o.y - (o.tipo === 'npc' ? 80 : 104)), 8 * u * 1.4, '#F2E9D0', 'center'); }
-  for (const o of G.objs) if ((o.tipo === 'portal' || o.tipo === 'saida' || o.tipo === 'retorno') && Math.abs(o.x - p.x) < 900) {
+  if (G.perto && !input.touch) { const o = G.perto; txt((document.body.classList.contains('pad') ? 'Y' : wasd() ? 'F' : 'E') + ' · ' + o.rot, sx(o.x), sy(o.y - (o.tipo === 'npc' ? 80 : o.tipo === 'portal' || o.tipo === 'saida' || o.tipo === 'retorno' ? 142 : 104)), 8 * u * 1.4, '#F2E9D0', 'center'); }
+  for (const o of G.objs) if ((o.tipo === 'portal' || o.tipo === 'saida' || o.tipo === 'retorno') && Math.abs(o.x - p.x) < 900 && !(o.oculto && !cm.trilha)) {
     const sem = o.semana ? TODAS.find(s => s.id === o.semana) : null, nome = o.tipo === 'saida' ? 'Seguir' : o.tipo === 'retorno' ? 'Refúgio' : o.rotulo ? o.rotulo : sem ? sem.estudo : MUNDO[o.mundo].nome;
     txt(nome, sx(o.x), sy(o.y - 104), 8 * u * 1.3, '#F2E9D0', 'center');
     if (sem) txt(sem.fases.filter(f => cm.feitas[sem.id + ':' + f.n]).length + '/5', sx(o.x), sy(o.y - 122), 8 * u, '#C9B88A', 'center');

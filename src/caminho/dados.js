@@ -97,6 +97,7 @@ export const TEMAS = {
   arvore: t(['#07141A', '#12383A', '#3F7A62'], '#12302E', '#0C211F', '#061312', '#9FD0A0', '#B8E6A0', 'arvores', 'folha', 0.55),
   terraco: t(['#151028', '#4A2E5E', '#E0A060'], '#2C2040', '#1D152C', '#100B19', '#F1C96A', '#FFD67A', 'muralha', 'estrela', 0.35, { perigo: 'vento' }),
   campo: t(['#0A1420', '#1E3440', '#587860'], '#172B30', '#0F1E22', '#081214', '#A9C7A0', '#A9D6E8', 'arvores', 'orvalho', 0.6),
+  floresta: t(['#04090C', '#0B1E1C', '#1E3A32'], '#0C1D1A', '#081412', '#040A09', '#8FB89A', '#B8F0C8', 'arvores', 'vagalume', 0.86),
   aurora: t(['#1A1C3A', '#7A5A7A', '#FFD9A0'], '#3A3050', '#252038', '#141020', '#FFE2B0', '#FFE9A8', 'colunas', 'vagalume', 0.2),
   ela: t(['#141C22', '#3F5A52', '#C9B88A'], '#253B38', '#182826', '#0C1615', '#C9C4A2', '#E5C58A', 'dunas', 'po', 0.3),
   ermo: t(['#1C140E', '#5A3C24', '#D9A060'], '#3A2818', '#261A10', '#140D08', '#D5BA88', '#D5BA88', 'dunas', 'areia', 0.3),
@@ -160,7 +161,7 @@ const REFUGIO = [
     { tipo: 'npc', col: 27, id: 'samuel', nome: 'Samuel, o que unge', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#D2CFBB', cape: '#55516D', style: 'longo', beard: true } }, { tipo: 'ave', col: 24, lin: 12 }] },
   // o olival: figos, sombra e a caravana que às vezes traz algo raro
   { cx: 5, nome: 'Olival', papel: 'vila', tiles: sala([12, 8, 11], [9, 13, 16], [12, 18, 21]), objs: [
-    planta(4, 'oliveira'), planta(10, 'oliveira'), planta(15, 'palmeira'), planta(20, 'oliveira'), planta(26, 'cipreste'), { tipo: 'cenario', col: 23, qual: 'banca' },
+    planta(4, 'oliveira'), planta(10, 'oliveira'), planta(15, 'palmeira'), planta(20, 'oliveira'), planta(25, 'cipreste'), { tipo: 'cenario', col: 23, qual: 'banca' }, { tipo: 'portal', col: 28, area: 'floresta', rotulo: 'Trilha escondida', oculto: true },
     { tipo: 'fruto', col: 4, lin: 14 }, { tipo: 'fruto', col: 10, lin: 11 }, { tipo: 'fruto', col: 15, lin: 8 }, { tipo: 'fruto', col: 20, lin: 11 },
     { tipo: 'npc', col: 23, nome: 'Mercador', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#7A5A2E', cape: '#3F2E4F', style: 'turbante', beard: true } },
     { tipo: 'poco', col: 7 }, povo(13, 4, { skin: '#C68B59', hair: '#D9D2C5', tunic: '#5B4E66', cape: 'none', style: 'veu' }), { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
@@ -185,6 +186,16 @@ export function areaDef(id) {
   if (id === 'refugio') return { id, nome: 'Refúgio', sub: 'A última aldeia acesa', tema: 'refugio', planta: REFUGIO, seed: 'refugio', paz: true, aberto: true };
   if (id === 'treino') return { id, nome: 'Arena de treino', sub: 'Ferro com ferro se afia (Pv 27:17)', tema: 'ela', seed: id, extra: true, pvp: true,
     planta: [{ papel: 'inicio', tiles: ['....====............====....', '............................', '..........========..........', '............................', '............................'] }] };
+  if (id === 'floresta') return { id, nome: 'A Floresta Escura', sub: 'Só a lâmpada mostra o caminho', tema: 'floresta', seed: id, paz: true, aberto: true, floresta: true, planta: [
+    { papel: 'inicio', nome: 'Orla da floresta', tiles: ['..................~~~~......', '............................', '............................', '...........~~~~.............', '............................', '............................', '....====....................', '............................'], objs: [
+      { tipo: 'retorno', col: 3 }, planta(7, 'cipreste'), planta(10, 'oliveira'), planta(16, 'cipreste'), planta(21, 'oliveira'), planta(25, 'cipreste'), { tipo: 'ave', col: 6, lin: 10 }, { tipo: 'escrito', col: 20, lin: 7, txt: '"Ainda que eu ande pelo vale da sombra da morte, não temerei mal nenhum" (Sl 23:4)' }] },
+    { papel: 'vila', nome: 'Mata fechada', tiles: ['....~~~~..........~~~~......', '............................', '............................', '.........~~~~...............', '............................', '............................', '...~~~~...........====......', '............................'], objs: [
+      planta(3, 'oliveira'), planta(6, 'cipreste'), planta(9, 'cipreste'), planta(13, 'oliveira'), planta(17, 'cipreste'), planta(20, 'cipreste'), planta(24, 'oliveira'), planta(27, 'cipreste'),
+      { tipo: 'fruto', col: 6, lin: 9 }, { tipo: 'fruto', col: 20, lin: 9 }, { tipo: 'escrito', col: 14, lin: 9, txt: '"Lâmpada para os meus pés é a tua palavra, e luz para o meu caminho" (Sl 119:105)' }] },
+    { papel: 'vila', nome: 'A clareira do jardim', tiles: ['............................'], objs: [
+      planta(2, 'cipreste'), planta(5, 'oliveira'), { tipo: 'porta-pecado', col: 10 }, planta(14, 'cipreste'), { tipo: 'querubim', col: 20 }, planta(25, 'oliveira'), planta(28, 'cipreste'),
+      { tipo: 'escrito', col: 15, lin: 10, txt: '"O pecado jaz à porta; o seu desejo será contra ti, mas a ti cumpre dominá-lo" (Gn 4:7)' }] }
+  ] };
   if (id === 'desafio') return { id, nome: 'Desafio das ondas', sub: 'Quantas você aguenta?', tema: 'tribunal', seed: id, extra: true, desafio: true,
     planta: [{ papel: 'inicio', tiles: ['....=====..........=====....', '............................', '...........======...........', '............................', '............................'] }] };
   if (id.startsWith('mundo:')) {

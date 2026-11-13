@@ -161,7 +161,8 @@ export function gerarNivel(def) {
     (c.itens || []).forEach((it, i) => { const p = c._ped[i] || { x: (ox + (c.papel === 'inicio' ? 9 + i * 3 : 8 + i * 12)) * T + 16, y: (oy + 16) * T }; N.objs.push({ ...it, x: p.x, y: p.y, cel: c }); });
     if (c.papel === 'ebenezer') N.objs.push({ tipo: 'ebenezer', x: c._ped[0].x, y: c._ped[0].y, cel: c });
     for (const o of c.objs || []) N.objs.push({ ...o, x: (ox + o.col) * T + 16, y: (oy + (o.lin ?? 16)) * T, cel: c });
-    if (c.ceu) N.luzes.push({ x: (ox + 2) * T + 16, y: (oy + 13) * T, r: 170, poste: (oy + 16) * T }, { x: (ox + 17) * T + 16, y: (oy + 13) * T, r: 170, poste: (oy + 16) * T });
+    if (c.ceu && def.floresta) { /* na floresta não há postes: a luz é a da lâmpada */ }
+    else if (c.ceu) N.luzes.push({ x: (ox + 2) * T + 16, y: (oy + 13) * T, r: 170, poste: (oy + 16) * T }, { x: (ox + 17) * T + 16, y: (oy + 13) * T, r: 170, poste: (oy + 16) * T });
     else if (!c.deco) N.luzes.push({ x: (ox + 6) * T, y: (oy + 9) * T, r: 150 }, { x: (ox + 24) * T, y: (oy + 9) * T, r: 150 }); // os salões com cenário próprio têm tochas e vitrais no fundo
   }
   // remove vícios e vasos que ficaram dentro de parede, e segredos sem chão

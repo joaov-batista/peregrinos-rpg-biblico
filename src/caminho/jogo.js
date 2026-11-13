@@ -149,7 +149,7 @@ export class Caminho {
     let pos = N.inicio;
     const eb = this.objs.find(ob => ob.tipo === 'ebenezer');
     if (o.ebenezer && cm.ebenezer?.area === id && eb) pos = { x: eb.x - 40, y: eb.y };
-    else if (o.portal) { const pt = this.objs.find(ob => ob.tipo === 'portal' && (ob.semana === o.portal || ob.mundo === o.portal)); if (pt) pos = { x: pt.x, y: pt.y }; }
+    else if (o.portal) { const pt = this.objs.find(ob => ob.tipo === 'portal' && (ob.semana === o.portal || ob.mundo === o.portal || ob.area === o.portal)); if (pt) pos = { x: pt.x, y: pt.y }; }
     const antigo = this.p;
     this.p = this.eu = novoHeroi(pos.x, pos.y - 1, this.vidaMax());
     this.p.oleo = o.manter && antigo ? antigo.oleo : Math.min(this.oleoMax(), OLEO_USO);
@@ -249,6 +249,7 @@ export class Caminho {
     }
     // a lâmpada revela
     if (p.lamp) this.revelar();
+    if (p.lamp && !this.cm.trilha) for (const ob of this.objs) if (ob.oculto && Math.hypot(ob.x - p.x, ob.y - p.y) < 260) { this.cm.trilha = true; this.salvar(); sfx('level'); this.efeito('coleta', ob.x, ob.y - 40); this.textoEm(ob.x, ob.y - 110, 'uma trilha escondida!', '#B8F0C8', 14); }
     for (let i = 0; i < N.revel.length; i++) if (N.revel[i] > 0) N.revel[i] -= dt;
     this.simular(dt);
     passoMira(this, dt); if (this.riscos) { for (const r of this.riscos) r.t -= dt; this.riscos = this.riscos.filter(r => r.t > 0); }
@@ -989,7 +990,7 @@ export class Caminho {
       case 'npc': return 'Falar';
       case 'casa': return 'Bater à porta';
       case 'ebenezer': return 'Descansar';
-      case 'portal': return 'Entrar';
+      case 'portal': return ob.oculto && !this.cm.trilha ? null : 'Entrar';
       case 'saida': return 'Seguir caminho';
       case 'retorno': return 'Voltar ao Refúgio';
       case 'querubim': case 'porta-pecado': return 'Olhar';
@@ -1036,7 +1037,8 @@ export class Caminho {
         break;
       }
       case 'portal':
-        if (ob.area) await this.ui.dialog({ nome: ob.rotulo, texto: ob.area === 'treino' ? 'Um pátio de areia para medir forças com os peregrinos da sua sala. Aqui os golpes de um ferem o outro, mas ninguém perde nada ao cair.\n\nSozinho, serve para treinar os golpes.' : 'As grades se fecham e os vícios vêm em ondas, cada vez mais. Cada onda vencida vale denários.\n\nSua melhor marca: ' + (cm.recorde || 0) + ' ondas.', acoes: [{ label: 'Entrar', fn: () => this.entrar(ob.area) }, { label: 'Agora não' }] });
+        if (ob.area === 'floresta') await this.ui.dialog({ nome: ob.rotulo, texto: 'Entre as últimas oliveiras, a luz mostrou uma trilha que ninguém mais vê. Do outro lado, uma floresta escura, e lá no fundo, dizem, um jardim guardado por um querubim e uma porta que respira.\n\nSem a lâmpada erguida, ali não se enxerga o chão.', acoes: [{ label: 'Seguir a trilha', fn: () => this.entrar('floresta') }, { label: 'Agora não' }] });
+        else if (ob.area) await this.ui.dialog({ nome: ob.rotulo, texto: ob.area === 'treino' ? 'Um pátio de areia para medir forças com os peregrinos da sua sala. Aqui os golpes de um ferem o outro, mas ninguém perde nada ao cair.\n\nSozinho, serve para treinar os golpes.' : 'As grades se fecham e os vícios vêm em ondas, cada vez mais. Cada onda vencida vale denários.\n\nSua melhor marca: ' + (cm.recorde || 0) + ' ondas.', acoes: [{ label: 'Entrar', fn: () => this.entrar(ob.area) }, { label: 'Agora não' }] });
         else if (ob.semana) escolherFase(this, semanaDe(ob.semana));
         else {
           const m = MUNDO[ob.mundo], falta = (m.pede.pedras && cm.pedras < m.pede.pedras) || (m.pede.hab && !cm.hab[m.pede.hab]);
@@ -1050,7 +1052,7 @@ export class Caminho {
         break;
       }
       case 'poco': p.oleo = this.oleoMax(); p.vida = Math.min(p.vidaMax, p.vida + 1); sfx('heal'); this.efeito('cura', p.x, p.y); this.ui.toast('"Quem beber da água que eu lhe der nunca mais terá sede" (Jo 4:14). Azeite cheio.', 5000); break;
-      case 'retorno': this.entrar('refugio', { portal: d.sem?.id || d.mundo }); break;
+      case 'retorno': this.entrar('refugio', { portal: d.sem?.id || d.mundo || d.id }); break;
       case 'querubim': this.ovo('querubim', 'Um querubim e uma espada flamejante guardam o caminho da árvore da vida (Gn 3:24). Por aqui não se volta: o caminho de volta é outro.'); await this.ui.dialog({ nome: 'A leste do jardim', texto: 'A espada de fogo se revolve sem ruído. Atrás dela, um verde que você nunca viu e de que, estranhamente, sente saudade.\n\n"E pôs querubins ao oriente do jardim do Éden" (Gn 3:24).', acoes: [{ label: 'Recuar' }] }); break;
       case 'porta-pecado': await this.portaDoPecado(ob); break;
     }
@@ -1073,7 +1075,7 @@ export class Caminho {
         }
         texto = n === 1 ? 'Então ainda há quem carregue uma lâmpada.\n\nO Livro não foi queimado, peregrino: foi esquecido. Cada página que ninguém lê, a sombra cobre — e o que a sombra cobre ganha corpo. Mamom, a Mentira, o Pavor… são páginas não lidas andando por aí.\n\n"Lâmpada para os meus pés é a tua palavra" (Sl 119:105). Leia, entenda, e a luz volta.'
           : hab < 6 ? 'Comece por Corinto, no primeiro portal. Cada sombra de lá guarda uma peça da Armadura de Deus (Ef 6): com elas você alcança o que hoje não alcança.\n\nPeças vestidas: ' + hab + ' de 6.\n\nE lembre: a lâmpada não serve só para ver. Erga-a no instante do golpe.'
-            : 'Armadura completa… "depois de terdes vencido tudo, permanecei inabaláveis" (Ef 6:13).\n\nOs gigantes esperam na Cripta, debaixo do bairro. E o Salão dos Rolos sempre terá páginas para reler.';
+            : 'Armadura completa… "depois de terdes vencido tudo, permanecei inabaláveis" (Ef 6:13).\n\nOs gigantes esperam na Cripta, debaixo do bairro.\n\nE no fim do olival, onde as oliveiras acabam, erga a lâmpada. Há uma trilha que só a luz mostra.';
         break;
       }
       case 'lidia': return loja(this);
