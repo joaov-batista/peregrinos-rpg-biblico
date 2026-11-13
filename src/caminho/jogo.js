@@ -5,6 +5,7 @@ import { rand, clamp, lerp, TAU, pick, shuffle, weekId, h } from '../util.js';
 import { input, wasd } from '../input.js';
 import { anguloMira, passoMira, tiroEspecial, estourar, MIRA_CARGA } from './mira.js';
 import { passoGetsemani, encontro, lerBiblia } from './getsemani.js';
+import { VILA, falaDaVila } from '../content/vila.js';
 import { config } from '../config.js';
 import { sfx, music, audio } from '../audio.js';
 import { vibrar } from '../gamepad.js';
@@ -997,6 +998,7 @@ export class Caminho {
       case 'rolo': return ob.feito ? 'Reler o rolo' : ob.trava > this.T || !this.roloLivre(ob) ? null : 'Ler o rolo';
       case 'estacao': return ob.feito ? null : ob.dados.nome;
       case 'npc': return 'Falar';
+      case 'morador': return ob.nome ? 'Falar' : null;
       case 'jesus': return this.cena || this.cm.getsemani ? null : 'Aproximar-se';
       case 'discipulo': return 'Olhar';
       case 'biblia': return 'Ler';
@@ -1038,7 +1040,7 @@ export class Caminho {
         else { this.char.data.stats.quizErr++; this.err++; }
         break;
       }
-      case 'npc': case 'casa': await this.falar(ob); break;
+      case 'npc': case 'casa': case 'morador': ob.parado = 2.5; await this.falar(ob); break;
       case 'jesus': await encontro(this, ob); break;
       case 'biblia': await lerBiblia(this); break;
       case 'lagar': await this.ui.dialog({ nome: 'O lagar', texto: 'Uma pedra redonda sobre outra, e uma trave de madeira para girá-la. As azeitonas são esmagadas aqui, e o azeite escorre pela canaleta.\n\nÉ o mesmo azeite das lâmpadas.', acoes: [{ label: 'Continuar' }], voz: false }); break;
@@ -1111,8 +1113,7 @@ export class Caminho {
       // falls through
       case 'mestre2': texto = 'Ferro com ferro se afia; assim o homem afia o rosto do seu amigo (Pv 27:17).\n\nA arena é para os peregrinos da mesma sala medirem forças. O desafio das ondas é para quem quer saber até onde aguenta. Melhor marca sua: ' + (cm.recorde || 0) + ' ondas.'; break;
       case 'zaqueu':
-        if (this.ovo('zaqueu', 'Zaqueu subiu num sicômoro para ver Jesus — e desceu depressa (Lc 19:4-6).')) { c.data.gold += 60; texto = 'Você subiu até aqui só para me ver? Eu subi para ver outro.\n\n"Zaqueu, desce depressa, pois me convém ficar hoje em tua casa."\n\nTome: metade do que tenho dou aos pobres. (+60 denários)'; }
-        else texto = 'Se defraudei alguém, restituo quatro vezes mais. Hoje houve salvação nesta casa (Lc 19:8-9).';
+        texto = falaDaVila('zaqueu', n); if (this.ovo('zaqueu', 'Zaqueu subiu num sicômoro para ver Jesus — e desceu depressa (Lc 19:4-6).')) { c.data.gold += 60; texto += '\n\nTome: metade do que tenho dou aos pobres. (+60 denários)'; }
         break;
       case 'jumenta':
         if (n < 3) texto = '…\n\n(Ela olha para você. Parece que ia dizer alguma coisa.)';
@@ -1120,7 +1121,7 @@ export class Caminho {
         else texto = 'Nem todo mundo que fala vê. Nem todo mundo que vê fala.';
         break;
       case 'mateus': return banco(this);
-      case 'escriba': texto = n === 1 ? 'Sou Esdras. Eu dispus o meu coração a buscar a Lei do Senhor, a cumpri-la e a ensiná-la (Ed 7:10).\n\nCada arco deste salão é uma página do Livro. A de cima de cada portal diz quantas partes você já leu. Comece pela esquerda.' : 'Leram no livro, na Lei de Deus, claramente, dando o sentido, para que entendessem o que se lia (Ne 8:8).'; break;
+      case 'escriba': texto = falaDaVila('escriba', n); break;
       case 'nicodemos':
         if (this.ovo('nicodemos', 'Nicodemos veio ter com Jesus de noite (Jo 3:2).')) { p.oleo = this.oleoMax(); texto = 'Você também desce aqui escondido? Eu vim de noite, para ninguém me ver perguntando.\n\n"Como pode um homem nascer, sendo velho?" Ele me respondeu: "O que é nascido da carne é carne; o que é nascido do Espírito é espírito" (Jo 3:4-6).\n\nLeve azeite. A cisterna guarda mais do que água.'; }
         else texto = n % 2 ? '"Quem pratica a verdade vem para a luz" (Jo 3:21). Demorei, mas subi. Levei mirra e aloés quando ninguém mais quis aparecer (Jo 19:39).' : 'Deus amou o mundo de tal maneira que deu o seu Filho unigênito (Jo 3:16). Ouvi isso primeiro, no escuro, antes de virar a frase que todos sabem.';
@@ -1142,8 +1143,8 @@ export class Caminho {
         if ((cm.oleiroT || 0) < Date.now()) { cm.oleiroT = Date.now() + 20 * 60000; c.data.gold += 15; texto = '"Como o barro na mão do oleiro, assim sois vós na minha mão" (Jr 18:6).\n\nO vaso que se estragou eu não jogo fora: torno a fazer outro, como me parece bem (Jr 18:4).\n\nVocê anda quebrando muito vaso por aí. Tome 15 denários e quebre com mais respeito.'; }
         else texto = 'O barro ainda está na roda. Volte mais tarde; vaso bom não se faz com pressa (Jr 18:3-4).';
         break;
-      case 'saul': texto = cm.chefes.golias ? 'Saul feriu os seus milhares… e você, o gigante. (1Sm 18:7)' : 'O filisteu desafia as fileiras há quarenta dias (1Sm 17:16). Ninguém desce ao vale.\n\nUm pastor uma vez escolheu cinco pedras lisas do ribeiro. Você tem ' + cm.pedras + ' de 5: procure-as nos cantos escondidos de Corinto — a lâmpada mostra onde.'; break;
-      default: if (ob.nome === 'Mercador') return mercador(this, ob); texto = ob.falas ? ob.falas[(n - 1) % ob.falas.length] : '…';
+      case 'saul': texto = n % 3 === 1 && n > 1 ? null : falaDaVila('saul', n); if (texto) break; texto = cm.chefes.golias ? 'Saul feriu os seus milhares… e você, o gigante. (1Sm 18:7)' : 'O filisteu desafia as fileiras há quarenta dias (1Sm 17:16). Ninguém desce ao vale.\n\nUm pastor uma vez escolheu cinco pedras lisas do ribeiro. Você tem ' + cm.pedras + ' de 5: procure-as nos cantos escondidos de Corinto — a lâmpada mostra onde.'; break;
+      default: if (ob.nome === 'Mercador') return mercador(this, ob); if (VILA[ob.id]?.conversa) { texto = falaDaVila(ob.id, n); break; } texto = ob.falas ? ob.falas[(n - 1) % ob.falas.length] : '…';
     }
     await this.ui.dialog({ nome: ob.nome, look: ob.look, texto, acoes: [{ label: 'Continuar' }] });
   }
@@ -1174,6 +1175,8 @@ export class Caminho {
 
   // passagens que só a lâmpada mostra: uma vez achadas, ficam à vista
   achou(ob, marcar) { const k = ob.chave || 'trilha', cm = this.cm; if (marcar) { if (k === 'trilha') cm.trilha = true; else (cm.achados = cm.achados || {})[k] = true; } return k === 'trilha' ? !!cm.trilha : !!cm.achados?.[k]; }
+  // o que o lojista diz ao abrir a loja: uma fala por visita, girando
+  balcao(id, padrao) { const k = 'b-' + id, n = this.cm.falas[k] = (this.cm.falas[k] || 0) + 1; return falaDaVila(id, n, 'balcao') || padrao; }
   menu(aba) {
     if (this.ui.blocking) return;
     if (aba === 'mapa' && !this.temMapa()) return this.ui.toast('Você ainda não tem um mapa. Fale com o Velho Peregrino, na praça do Refúgio.', 4500);

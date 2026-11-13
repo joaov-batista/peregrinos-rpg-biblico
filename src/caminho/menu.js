@@ -249,7 +249,7 @@ export function loja(G) {
         h('span', { class: 'cm-ico' }, iconeItem('mana', 26)), h('div', {}, h('b', {}, 'Porção de maná — ' + preco + ' denários'), h('small', {}, (cm.manaLoja || 0) >= 3 ? 'Acabou. O resto está escondido pelo caminho.' : 'A cada três porções, um fôlego a mais. (' + (3 - (cm.manaLoja || 0)) + ' à venda)'))));
     };
     p.append(h('div', { class: 'p-head' }, h('h3', {}, 'Lídia, vendedora de púrpura'), h('button', { class: 'x', onclick: () => close(), 'aria-label': 'Fechar' }, '✕')),
-      h('p', {}, '"O Senhor lhe abriu o coração" (At 16:14). Minha casa é sua casa, peregrino. O que posso lhe oferecer para o caminho?'), lista);
+      h('p', { class: 'fala-balcao' }, G.balcao('lidia', '"O Senhor lhe abriu o coração" (At 16:14). Minha casa é sua casa, peregrino. O que posso lhe oferecer para o caminho?')), lista);
     desenha();
   }, { wide: true });
 }
@@ -268,7 +268,7 @@ export function armeiro(G) {
           h('span', { class: 'cm-ico' }, tem ? '✓' : '◆'), h('div', {}, h('b', {}, a.nome + (atual === id ? ' (em uso)' : tem ? ' (sua)' : ' — ' + a.preco + ' denários')), h('small', {}, a.desc + ' · ' + a.ref)))); }
     };
     p.append(h('div', { class: 'p-head' }, h('h3', {}, 'Jael, a armeira'), h('button', { class: 'x', onclick: () => close(), 'aria-label': 'Fechar' }, '✕')),
-      h('p', {}, 'Uma estaca e um martelo já resolveram uma guerra (Jz 4:21). Arma boa é a que combina com a mão. Compre uma vez e troque quando quiser.'), lista);
+      h('p', { class: 'fala-balcao' }, G.balcao('armeiro', 'Uma estaca e um martelo já resolveram uma guerra (Jz 4:21). Arma boa é a que combina com a mão. Compre uma vez e troque quando quiser.')), lista);
     desenha();
   }, { wide: true });
 }
@@ -285,7 +285,7 @@ export function guardaRoupa(G) {
       return h('div', { class: 'gr-linha' }, h('b', {}, nome), h('button', { class: 'btn sm', onclick: () => muda(-1), 'aria-label': nome + ': anterior' }, '‹'), txt ? h('span', {}, txt) : h('i', { class: 'gr-cor', style: 'background:' + (v === 'none' ? 'transparent' : v) }), h('button', { class: 'btn sm', onclick: () => muda(1), 'aria-label': nome + ': próximo' }, '›')); };
     const desenha = () => { ops.replaceChildren(linha('Na cabeça', ACESS, 'acessorio', v => v[1]), linha('Capa', CAPAS, 'cape', v => v === 'none' ? 'Sem capa' : null), linha('Túnica', TUNICAS, 'tunic'), linha('Cabelo', LOOK_OPTIONS.style, 'style', v => v.nome), linha('Cor do cabelo', LOOK_OPTIONS.hair, 'hair'), linha('Corpo', LOOK_OPTIONS.body, 'body', v => v.nome), linha('Pele', LOOK_OPTIONS.skin, 'skin')); pinta(); };
     p.append(h('div', { class: 'p-head' }, h('h3', {}, 'Dorcas, a costureira'), h('button', { class: 'x', onclick: () => { G.salvar(); close(); }, 'aria-label': 'Fechar' }, '✕')),
-      h('p', {}, 'As viúvas mostravam as túnicas e os vestidos que eu fazia (At 9:39). Escolha com calma; aqui não se paga nada.'), h('div', { class: 'gr' }, cv, ops),
+      h('p', { class: 'fala-balcao' }, G.balcao('dorcas', 'As viúvas mostravam as túnicas e os vestidos que eu fazia (At 9:39). Escolha com calma; aqui não se paga nada.')), h('div', { class: 'gr' }, cv, ops),
       h('div', { class: 'btn-row' }, h('button', { class: 'btn gold', onclick: () => { G.salvar(); close(); } }, 'Vestir')));
     desenha();
   }, { wide: true });
@@ -303,7 +303,7 @@ export function petShop(G) {
           h('span', { class: 'cm-ico' }, tem ? '✓' : '◆'), h('div', {}, h('b', {}, a.nome + (cm.pet === id ? ' (com você)' : tem ? ' (seu)' : ' — ' + a.preco + ' denários')), h('small', {}, a.desc + ' · ' + a.ref)))); }
     };
     p.append(h('div', { class: 'p-head' }, h('h3', {}, 'Noé, criador de animais'), h('button', { class: 'x', onclick: () => close(), 'aria-label': 'Fechar' }, '✕')),
-      h('p', {}, 'De tudo o que vive, dois de cada espécie entraram comigo (Gn 6:19). Estes aqui eu criei para acompanhar gente de caminho. Não são baratos: bicho bom dá trabalho.'), lista);
+      h('p', { class: 'fala-balcao' }, G.balcao('noe', 'De tudo o que vive, dois de cada espécie entraram comigo (Gn 6:19). Estes aqui eu criei para acompanhar gente de caminho. Não são baratos: bicho bom dá trabalho.')), lista);
     desenha();
   }, { wide: true });
 }
@@ -315,7 +315,7 @@ export function trocarVocacao(G) {
     for (const [id, C] of Object.entries(CLASSES)) lista.append(h('button', { class: 'fase-row cm-rel' + (c.cls === id ? ' on' : ''), onclick: () => { c.cls = id; G.tipoArma = C.arma || 'espada'; G.equiparArma(); const b = document.querySelector('[data-act="skill"]'); if (b) b.dataset.name = C.skill?.nome || 'Verso'; sfx('level'); G.salvar(); close(); G.ui.toast('Agora você caminha como ' + C.nome + '.', 4000); } },
       h('span', { class: 'cm-ico' }, c.cls === id ? '✓' : '·'), h('div', {}, h('b', {}, C.nome + (c.cls === id ? ' (a sua)' : '')), h('small', {}, (C.arma || 'espada') + ' · especial: ' + (C.skill?.nome || 'Verso') + ' · ' + (C.ref || '')))));
     p.append(h('div', { class: 'p-head' }, h('h3', {}, 'Samuel, o que unge'), h('button', { class: 'x', onclick: () => close(), 'aria-label': 'Fechar' }, '✕')),
-      h('p', {}, 'O Senhor não vê como vê o homem (1Sm 16:7). O chamado é um só; o jeito de servir pode mudar. Escolha a vocação com que quer caminhar agora; a armadura, as relíquias e o que você aprendeu ficam.'), lista);
+      h('p', { class: 'fala-balcao' }, G.balcao('samuel', 'O Senhor não vê como vê o homem (1Sm 16:7). O chamado é um só; o jeito de servir pode mudar. Escolha a vocação com que quer caminhar agora; a armadura, as relíquias e o que você aprendeu ficam.')), lista);
   }, { wide: true });
 }
 // Simão: pesca de barquinho. Lançar, esperar o puxão, e recolher mantendo a linha na faixa certa.
@@ -334,7 +334,7 @@ export function banco(G) {
         linha('Guardar 100', 'Do que está na bolsa.', 100, g >= 1), linha('Guardar tudo', g + ' denários vão para a arca.', g, g >= 1),
         linha('Retirar 100', 'De volta para a bolsa.', -100, b >= 1), linha('Retirar tudo', b + ' denários voltam com você.', -b, b >= 1)); };
     p.append(h('div', { class: 'p-head' }, h('h3', {}, 'A Casa do Tesouro'), h('button', { class: 'x', onclick: () => close(), 'aria-label': 'Fechar' }, '✕')),
-      h('p', {}, 'Eu me sentava na coletoria quando ele passou e disse: "Segue-me" (Mt 9:9). Hoje conto moedas dos outros sem ficar com nenhuma. O que você guardar aqui não cai no chão quando você cair.'), lista);
+      h('p', { class: 'fala-balcao' }, G.balcao('mateus', 'Eu me sentava na coletoria quando ele passou e disse: "Segue-me" (Mt 9:9). Hoje conto moedas dos outros sem ficar com nenhuma.') + ' O que você guardar aqui não cai no chão quando você cair.'), lista);
     desenha();
   }, { wide: true });
 }
@@ -348,14 +348,14 @@ export function forja(G) {
         h('span', { class: 'cm-ico' }, i < fio ? '✓' : String(i + 1)), h('div', {}, h('b', {}, f.nome + (i < fio ? '' : ' — ' + f.preco + ' denários')), h('small', {}, f.desc + (i > fio ? ' (forje o anterior primeiro)' : ''))))));
     };
     p.append(h('div', { class: 'p-head' }, h('h3', {}, 'Tubalcaim, o ferreiro'), h('button', { class: 'x', onclick: () => close(), 'aria-label': 'Fechar' }, '✕')),
-      h('p', {}, 'Bronze e ferro eu conheço desde antes do dilúvio (Gn 4:22). A mão é sua; o fio, eu melhoro. Vale para qualquer arma: espada, funda, cajado, o que você carrega.'), lista);
+      h('p', { class: 'fala-balcao' }, G.balcao('ferreiro', 'Bronze e ferro eu conheço desde antes do dilúvio (Gn 4:22). A mão é sua; o fio, eu melhoro. Vale para qualquer arma: espada, funda, cajado, o que você carrega.')), lista);
     desenha();
   }, { wide: true });
 }
 // O Mercador da primeira página: às vezes traz uma raridade; quase sempre, não.
 export function mercador(G, ob) {
   const c = G.char, cm = G.cm, id = G.mercadorTem, R = id && !cm.reliquias.includes(id) ? RELIQUIAS[id] : null;
-  if (!R) return G.ui.dialog({ nome: 'Mercador', look: ob.look, texto: 'Hoje não tenho nada que valha o seu caminho, peregrino. Só ídolos de prata, e esses eu não lhe vendo.\n\nVolte outra hora. Às vezes chega um navio de Társis com coisa rara.', acoes: [{ label: 'Voltar depois' }] });
+  if (!R) return G.ui.dialog({ nome: 'Mercador', look: ob.look, texto: G.balcao('mercador', '') + '\n\nHoje não tenho nada que valha o seu caminho. Só ídolos de prata, e esses eu não lhe vendo. Volte outra hora: às vezes chega um navio de Társis com coisa rara.', acoes: [{ label: 'Voltar depois' }] });
   const pode = c.data.gold >= R.raro;
   return G.ui.dialog({ nome: 'Mercador', look: ob.look, texto: 'Chegou um navio de Társis. Tenho UMA coisa, e não sei quando volto a ter.\n\n' + R.nome.toUpperCase() + ' · ' + R.ref + '\n' + R.desc + '\n\nPreço: ' + R.raro + ' denários. Você tem ' + Math.floor(c.data.gold) + '.',
     acoes: [pode ? { label: 'Comprar', fn: () => { c.data.gold -= R.raro; G.mercadorTem = null; G.ganhar(id); G.salvar(); } } : { label: 'Não tenho o bastante' }, { label: 'Agora não' }] });

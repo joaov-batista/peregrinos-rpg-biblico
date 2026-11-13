@@ -178,6 +178,6 @@ export function pesca(G) {
     const laco = agora => { if (!vivo || !cv.isConnected) return; const dt = Math.min(0.05, (agora - ultimo) / 1000); ultimo = agora; try { passo(dt); pinta(agora / 1000); } catch (e) { console.error(e); } requestAnimationFrame(laco); };
     requestAnimationFrame(laco); pintaAlbum();
     p.append(h('div', { class: 'p-head' }, h('h3', {}, 'Simão, o pescador'), h('button', { class: 'x', onclick: fechar, 'aria-label': 'Fechar' }, '✕')),
-      h('p', { class: 'muted' }, '"Sobre a tua palavra, lançarei as redes" (Lc 5:5). Os peixes grandes e os raros andam no fundo.'), cv, msg, h('div', { class: 'btn-row' }, botao), album);
+      h('p', { class: 'fala-balcao' }, G.balcao('pedro', '"Sobre a tua palavra, lançarei as redes" (Lc 5:5).') + ' Os peixes grandes e os raros andam no fundo.'), cv, msg, h('div', { class: 'btn-row' }, botao), album);
   }, { wide: true });
 }

@@ -1,4 +1,5 @@
 import { FALAS } from '../content/falas-caminho.js';
+import { VILA } from '../content/vila.js';
 // Dados do Caminho: a Armadura de Deus (habilidades), as relíquias, os temas das áreas e o mapa do mundo.
 import { TODAS } from '../content/index.js';
 import { DECISOES_CORINTO } from '../content/decisoes-corinto.js';
@@ -133,7 +134,7 @@ const REFUGIO = [
     { tipo: 'npc', col: 10, id: 'velho', nome: 'Velho Peregrino', look: velho },
     { tipo: 'npc', col: 17, id: 'pedro', nome: 'Simão, o pescador', look: { skin: '#A0673E', hair: '#3A2314', tunic: '#497A80', cape: 'none', style: 'cacheado', beard: true, body: 'forte' } },
     { tipo: 'npc', col: 26, id: 'jumenta', nome: 'Uma jumenta', bicho: 'jumenta' },
-    povo(19, 3, { skin: '#C68B59', hair: '#6B4423', tunic: '#497A80', cape: 'none', style: 'rabo' }), { tipo: 'ave', col: 9, lin: 16 }, { tipo: 'ave', col: 22, lin: 13 }] },
+    { ...povo(19, 3, VILA.rode.look), id: 'rode', nome: VILA.rode.nome }, { tipo: 'ave', col: 9, lin: 16 }, { tipo: 'ave', col: 22, lin: 13 }] },
   // a rua do mercado; no meio dela, a escada que desce ao Salão dos Rolos
   { cx: 1, nome: 'Mercado', papel: 'vila', desce: true, tiles: sala([10, 22, 26], [13, 19, 23]), objs: [
     planta(2, 'palmeira'), { tipo: 'cenario', col: 5, qual: 'banca' }, { tipo: 'cenario', col: 8, qual: 'forja' }, { tipo: 'cenario', col: 14, qual: 'descida', rotulo: 'Salão dos Rolos' },
@@ -145,14 +146,14 @@ const REFUGIO = [
     { tipo: 'cenario', col: 6, qual: 'armas' }, { tipo: 'cenario', col: 13, qual: 'tear' }, { tipo: 'cenario', col: 20, qual: 'arca' }, planta(27, 'oliveira'),
     { tipo: 'npc', col: 6, id: 'armeiro', nome: 'Jael, a armeira', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5E4A3A', cape: '#713E49', style: 'trancas', body: 'forte' } },
     { tipo: 'npc', col: 13, id: 'dorcas', nome: 'Dorcas, a costureira', look: { skin: '#E3B48C', hair: '#6B4423', tunic: '#A18C61', cape: '#C8C9BC', style: 'veu' } },
-    povo(17, 4, { skin: '#C68B59', hair: '#3A2314', tunic: '#874D4C', cape: 'none', style: 'turbante', beard: true }),
+    { ...povo(17, 4, VILA.bartimeu.look), id: 'bartimeu', nome: VILA.bartimeu.nome },
     { tipo: 'npc', col: 20, id: 'noe', nome: 'Noé, criador de animais', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#4C665E', cape: '#877451', style: 'longo', beard: true } },
     { tipo: 'vaso', col: 10 }, { tipo: 'vaso', col: 26 }, { tipo: 'ave', col: 5, lin: 12 }, { tipo: 'ave', col: 23, lin: 12 }] },
   // o bairro: casas de teto plano (dá para andar por cima), a estalagem e o oleiro
   { cx: 3, nome: 'Bairro', papel: 'vila', tiles: sala([13, 3, 6], [13, 10, 13], [10, 15, 17], [13, 19, 22]), objs: [
     casa(4, 'estalagem', 'Estalagem do caminho'), planta(8, 'palmeira'), casa(11, 'marta', 'Casa de Marta e Maria'), planta(16, 'oliveira'), casa(20, 'oleiro', 'Casa do oleiro'), planta(27, 'cipreste'),
     { tipo: 'vaso', col: 24 }, { tipo: 'vaso', col: 25 }, { tipo: 'vaso', col: 26 },
-    povo(8, 5, { skin: '#A0673E', hair: '#1C120A', tunic: '#4C665E', cape: 'none', style: 'coque' }), povo(16, 3, { skin: '#E3B48C', hair: '#B8863B', tunic: '#686078', cape: '#394F62', style: 'longo' }),
+    { ...povo(8, 5, VILA.rute.look), id: 'rute', nome: VILA.rute.nome }, { ...povo(16, 3, VILA.eutico.look), id: 'eutico', nome: VILA.eutico.nome },
     { tipo: 'ave', col: 5, lin: 13 }, { tipo: 'ave', col: 16, lin: 10 }, { tipo: 'ave', col: 21, lin: 13 }] },
   // o pátio das provas; a escada do meio desce à cisterna
   { cx: 4, nome: 'Pátio das provas', papel: 'vila', desce: true, tiles: sala([12, 22, 26]), objs: [
@@ -165,8 +166,8 @@ const REFUGIO = [
   { cx: 5, nome: 'Olival', papel: 'vila', tiles: sala([12, 8, 11], [9, 13, 16], [12, 18, 21]), objs: [
     planta(4, 'oliveira'), planta(10, 'oliveira'), planta(15, 'palmeira'), planta(20, 'oliveira'), planta(25, 'cipreste'), { tipo: 'cenario', col: 23, qual: 'banca' }, { tipo: 'portal', col: 28, area: 'floresta', rotulo: 'Trilha escondida', oculto: true },
     { tipo: 'fruto', col: 4, lin: 14 }, { tipo: 'fruto', col: 10, lin: 11 }, { tipo: 'fruto', col: 15, lin: 8 }, { tipo: 'fruto', col: 20, lin: 11 },
-    { tipo: 'npc', col: 23, nome: 'Mercador', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#7A5A2E', cape: '#3F2E4F', style: 'turbante', beard: true } },
-    { tipo: 'poco', col: 7 }, povo(13, 4, { skin: '#C68B59', hair: '#D9D2C5', tunic: '#5B4E66', cape: 'none', style: 'veu' }), { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
+    { tipo: 'npc', col: 23, id: 'mercador', nome: 'Mercador', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#7A5A2E', cape: '#3F2E4F', style: 'turbante', beard: true } },
+    { tipo: 'poco', col: 7 }, { ...povo(13, 4, VILA.ana.look), id: 'ana', nome: VILA.ana.nome }, { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
   // ---- o subsolo ----
   { cx: 1, cy: 1, nome: 'Salão dos Rolos', deco: 'biblioteca', papel: 'vila', tiles: sala(), objs: [...TODAS.map((s, i) => ({ tipo: 'portal', col: [4, 8, 22, 26, 3, 27][i % 6], semana: s.id })),
     { tipo: 'npc', col: 19, id: 'escriba', nome: 'Esdras, o escriba', look: { skin: '#D9A273', hair: '#E3DED2', tunic: '#55516D', cape: '#C9B88A', style: 'longo', beard: true } }] },
