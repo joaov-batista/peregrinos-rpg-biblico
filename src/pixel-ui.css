@@ -223,3 +223,48 @@ html.remake .panel.oracao { background: none !important; border: 0 !important; b
 .panel.oracao .btn-row { justify-content: center; flex-wrap: wrap; gap: 10px; }
 @keyframes oracaoEntra { from { opacity: 0; filter: blur(2px); } to { opacity: 1; filter: none; } }
 @media (max-height: 480px) { .oracao-texto { font-size: 19px; min-height: 3em; } html.remake .panel.fala-jesus .dlg-text { font-size: 18px; } }
+
+/* ---------- conversas sem caixa: o texto embaixo, sobre um véu leve, e o cenário à vista (por último, vence o resto) ---------- */
+/* no alto da tela, como uma página iluminada: o chão, onde ficam os personagens, fica livre */
+html.remake .modal:has(> .panel.dialog) { place-items: start center !important; padding: max(10px, env(safe-area-inset-top, 0px)) 0 0 !important; background: linear-gradient(180deg, rgba(3, 4, 9, .74) 0%, rgba(3, 4, 9, .5) 22%, transparent 42%) !important; background-image: linear-gradient(180deg, rgba(3, 4, 9, .74) 0%, rgba(3, 4, 9, .5) 22%, transparent 42%) !important; }
+html.remake .panel.dialog { width: min(760px, calc(100% - 32px)) !important; max-height: 34vh !important; overflow: auto; background: none !important; border: 0 !important; border-image: none !important; box-shadow: none !important; padding: 4px 8px !important; text-align: center !important; }
+html.remake .panel.dialog .portrait { display: none; }
+html.remake .panel.dialog .dlg-head { justify-content: center; margin: 0 0 6px; padding: 0 0 6px; gap: 0; }
+html.remake .panel.dialog .dlg-head::after { content: none !important; display: none !important; }
+html.remake .panel.dialog .dlg-head::before { content: ""; display: block !important; position: static; width: 190px; height: 19px; margin: 0 auto 2px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20'%3E%3Cg fill='none' stroke='%23ECE6D2' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M100 3l5 7-5 7-5-7z' fill='%23ECE6D2'/%3E%3Cpath d='M90 10H58c-7 0-9-7-4-8 4-1 6 4 2 5M110 10h32c7 0 9-7 4-8-4-1-6 4-2 5'/%3E%3Cpath d='M58 10c-10 0-14 6-22 6-6 0-8-5-4-6M142 10c10 0 14 6 22 6 6 0 8-5 4-6'/%3E%3Cpath d='M36 16C24 16 18 10 6 10M164 16c12 0 18-6 30-6' stroke-width='1.1' opacity='.7'/%3E%3Ccircle cx='84' cy='6' r='1.4' fill='%23ECE6D2'/%3E%3Ccircle cx='116' cy='6' r='1.4' fill='%23ECE6D2'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat; filter: drop-shadow(0 1px 0 #05060B); opacity: .92; }
+html.remake .panel.dialog .dlg-head { flex-direction: column; align-items: center; }
+html.remake .panel.dialog::after { content: ""; display: block; width: 120px; height: 12px; margin: 6px auto 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20'%3E%3Cg fill='none' stroke='%23ECE6D2' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M100 3l5 7-5 7-5-7z' fill='%23ECE6D2'/%3E%3Cpath d='M90 10H58c-7 0-9-7-4-8 4-1 6 4 2 5M110 10h32c7 0 9-7 4-8-4-1-6 4-2 5'/%3E%3Cpath d='M58 10c-10 0-14 6-22 6-6 0-8-5-4-6M142 10c10 0 14 6 22 6 6 0 8-5 4-6'/%3E%3Cpath d='M36 16C24 16 18 10 6 10M164 16c12 0 18-6 30-6' stroke-width='1.1' opacity='.7'/%3E%3Ccircle cx='84' cy='6' r='1.4' fill='%23ECE6D2'/%3E%3Ccircle cx='116' cy='6' r='1.4' fill='%23ECE6D2'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat; opacity: .55; filter: drop-shadow(0 1px 0 #05060B); }
+html.remake .panel.dialog .dlg-head h3 { font-size: 19px !important; letter-spacing: .12em !important; color: #E8C873 !important; text-shadow: 0 2px 0 #05060B, 0 0 8px rgba(0, 0, 0, .9) !important; }
+html.remake .panel.dialog .dlg-text { text-align: left !important; font-size: 21px !important; line-height: 1.35 !important; color: #F4F1E6 !important; text-shadow: 0 2px 0 #05060B, 0 0 6px #05060B, 0 0 14px rgba(0, 0, 0, .85) !important; min-height: 0 !important; margin: 0 auto 4px; max-width: 680px; width: fit-content; }
+html.remake .panel.dialog .btn-row { justify-content: center; gap: 4px 18px; margin-top: 6px; flex-wrap: wrap; }
+html.remake .panel.dialog .btn-row .btn { background: none !important; box-shadow: none !important; border: 0 !important; color: #C9CCDA !important; text-shadow: 0 2px 0 #05060B, 0 0 8px #05060B !important; font-size: 19px !important; min-height: 32px; padding: 2px 10px 2px 22px; position: relative; margin: 0; }
+html.remake .panel.dialog .btn-row .btn::before { content: ""; position: absolute; left: 6px; top: 50%; width: 6px; height: 6px; margin-top: -3px; transform: rotate(45deg); background: #E8C873; opacity: 0; }
+html.remake .panel.dialog .btn-row .btn:hover, html.remake .panel.dialog .btn-row .btn:focus-visible, html.remake body.pad .panel.dialog .btn-row .btn:focus { color: #FFE9A8 !important; background: none !important; box-shadow: none !important; outline: 0; }
+html.remake .panel.dialog .btn-row .btn:hover::before, html.remake .panel.dialog .btn-row .btn:focus-visible::before, html.remake body.pad .panel.dialog .btn-row .btn:focus::before, html.remake .panel.dialog .btn-row .btn:focus::before { opacity: 1; }
+html.remake .panel.dialog .btn-row .btn.gold::after { display: none; }
+/* Jesus: o mesmo jeito, com uma luz mansa no nome e no texto */
+html.remake .panel.dialog.fala-jesus { background: none !important; box-shadow: none !important; }
+html.remake .panel.dialog.fala-jesus .dlg-head h3 { color: #FFF4CF !important; text-shadow: 0 0 12px rgba(255, 233, 168, .75), 0 2px 0 #05060B !important; }
+html.remake .panel.dialog.fala-jesus .dlg-text { color: #FFF8E6 !important; text-shadow: 0 0 10px rgba(255, 233, 168, .35), 0 2px 0 #05060B, 0 0 6px #05060B !important; }
+html.remake .panel.dialog.fala-narra .dlg-head { display: none; } html.remake .panel.dialog.fala-narra .dlg-text { color: #D9DCEA !important; font-style: normal; }
+@media (max-height: 480px) { html.remake .panel.dialog { max-height: 46vh !important; } html.remake .panel.dialog .dlg-text { font-size: 17px !important; } html.remake .panel.dialog .dlg-head h3 { font-size: 15px !important; } html.remake .panel.dialog .btn-row .btn { font-size: 16px !important; min-height: 28px; } }
+
+/* ---------- escolha de controles (primeira partida no computador) ---------- */
+html.remake .panel.esquema { text-align: center; width: min(760px, calc(100% - 24px)); }
+html.remake .panel.esquema h2 { margin: 0 0 4px; }
+.esq-opcoes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0 10px; }
+.esq-card { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 12px 12px; cursor: pointer; font: inherit; color: #E9E4D4; background: rgba(10, 12, 22, .75); border: 3px solid #3B4766; box-shadow: inset 0 0 0 2px #141826; text-align: center; }
+.esq-card b { font-size: 24px; color: #E8C873; letter-spacing: .04em; }
+.esq-card ul { list-style: none; margin: 0; padding: 0; font-size: 17px; line-height: 1.35; color: #C9CCDA; }
+.esq-card:hover, .esq-card:focus, .esq-card:focus-visible { border-color: #E8C873; outline: 0; background: rgba(40, 32, 14, .7); transform: translateY(-2px); }
+.esq-desenho { display: flex; align-items: center; justify-content: center; gap: 18px; min-height: 92px; }
+.esq-tecla { display: inline-grid; place-items: center; width: 34px; height: 34px; font-size: 20px; color: #F4F1E6; background: #2E3854; border: 2px solid #0B0E18; box-shadow: inset 0 -4px 0 #1B2133, inset 0 2px 0 #4A5878; }
+.esq-wasd { display: grid; grid-template-columns: repeat(3, 34px); gap: 4px; }
+.esq-wasd .esq-tecla:nth-child(2), .esq-setas .esq-tecla:first-child { color: #E8C873; }
+.esq-setas { display: grid; grid-template-columns: repeat(3, 34px); gap: 4px; } .esq-setas .esq-tecla:first-child { grid-column: 2; } .esq-setas .esq-tecla:nth-child(2) { grid-column: 1; }
+.esq-zxc { display: flex; gap: 4px; }
+.esq-mouse { position: relative; width: 44px; height: 66px; border: 3px solid #4A5878; border-radius: 22px 22px 18px 18px; background: #1B2133; overflow: hidden; }
+.esq-mouse i { position: absolute; top: 0; width: 50%; height: 26px; border-bottom: 3px solid #4A5878; } .esq-mouse i:first-child { left: 0; border-right: 2px solid #4A5878; background: #8E6A2A; } .esq-mouse i:last-child { right: 0; background: #3F5A8A; }
+.esq-pad { font-size: 15px; }
+@media (max-width: 620px) { .esq-opcoes { grid-template-columns: 1fr; } .esq-desenho { min-height: 70px; } }
+@media (max-width: 900px) { html.remake .panel.dialog { width: max(380px, calc(100% - 300px)) !important; } }

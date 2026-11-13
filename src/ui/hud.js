@@ -330,7 +330,7 @@ export function createHud(onExit) {
     const head = h('div', { class: 'dlg-head' }, look !== undefined ? portrait(look) : '', h('h3', {}, nome));
     const fala = h('p', { class: 'dlg-text' }, texto); p.append(head, fala);
     if (document.documentElement.classList.contains('remake') && texto && texto.length > 30 && !matchMedia('(prefers-reduced-motion: reduce)').matches) { // a fala se escreve; um toque mostra tudo
-      let i = 0; fala.style.minHeight = '3em'; const escrita = document.createTextNode(''), resto = h('span', { style: 'visibility:hidden' }, texto); fala.replaceChildren(escrita, resto);
+      let i = 0; const escrita = document.createTextNode(''), resto = h('span', { style: 'visibility:hidden' }, texto); fala.replaceChildren(escrita, resto);
       const tudo = () => { clearInterval(tk); fala.textContent = texto; }, lento = cls === 'fala-jesus' || cls === 'fala-narra', passo = cls === 'fala-jesus' ? 1 : lento ? 2 : 3, tk = setInterval(() => { if (!fala.isConnected) return clearInterval(tk); i = Math.min(texto.length, i + passo); if (/[^\s]/.test(texto[i - 1] || '')) teclaTexto(nome); escrita.data = texto.slice(0, i); resto.textContent = texto.slice(i); if (i >= texto.length) tudo(); }, lento ? 34 : 16);
       fala.addEventListener('pointerdown', tudo, { once: true });
     }

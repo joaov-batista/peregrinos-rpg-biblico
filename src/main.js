@@ -2,7 +2,7 @@ import './styles.css';
 import './art-direction.css';
 import './pwa.js';
 import './ui/offlineStatus.js';
-import { $ } from './util.js';
+import { $, h } from './util.js';
 import { initInput, input } from './input.js';
 import { initZoom } from './zoom.js';
 import { initAudio } from './audio.js';
@@ -14,6 +14,7 @@ import './caminho/caminho.css';
 import './remake.css';
 import './pixel-ui.css';
 import { createHud } from './ui/hud.js';
+import { config, setConfig } from './config.js';
 import { showAuth, showSelect, showCreator, hideScreens } from './ui/screens.js';
 
 const canvas = $('cv');
@@ -41,6 +42,7 @@ async function play(char, modo) {
     if (!acquired) { ui.toast('Este personagem já está aberto em outra aba. Feche a outra partida para jogar aqui.', 6000); return; }
   }
   hideScreens();
+  if (modo !== 'classico' && !CLASSICO) await escolherControles();
   ui.show(true);
   input.clear();
   // O Caminho (remake em vista lateral) é o jogo; o mundo aberto antigo continua em "Clássico" (ou com ?classico na URL).
@@ -62,6 +64,27 @@ async function play(char, modo) {
   });
   // personagem novo: prólogo narrado (content/cinematicas.js), depois os controles e as boas-vindas
   if (novo || !viu) setTimeout(async () => { if (novo) await game.cinema('prologo'); await ui.controles(); try { localStorage.setItem('peregrinos.controles', '1'); } catch {} boasVindas(); }, 600);
+}
+
+// No computador, a primeira partida pergunta como se quer jogar: WASD + mouse ou setas. No celular (toque) e nas telas
+// divididas (cada uma com seu controle) não há o que escolher. Depois, dá para trocar em ☰ › Ajustes.
+function escolherControles() {
+  const q = new URLSearchParams(location.search);
+  if (config.esquemaEscolhido || matchMedia('(pointer: coarse)').matches || q.has('quadro') || q.has('pad')) return Promise.resolve();
+  const tecla = (t, larga) => h('span', { class: 'esq-tecla' + (larga ? ' larga' : '') }, t);
+  const cartao = (id, titulo, desenho, linhas) => h('button', { class: 'esq-card', 'data-esquema': id, onclick: e => e.currentTarget.closest('.modal')._escolhe(id) },
+    h('b', {}, titulo), h('div', { class: 'esq-desenho' }, ...desenho), h('ul', {}, ...linhas.map(l => h('li', {}, l))));
+  return ui.modal((p, close) => {
+    p.classList.add('esquema');
+    p.closest('.modal')._escolhe = id => { setConfig('esquema', id); setConfig('teclas', {}); setConfig('esquemaEscolhido', true); close(id); };
+    p.append(h('h2', {}, 'Como você quer jogar?'), h('p', { class: 'muted' }, 'Escolha o jeito de segurar o cajado. Dá para trocar depois em ☰ › Ajustes.'),
+      h('div', { class: 'esq-opcoes' },
+        cartao('wasd', 'Teclado + mouse', [h('div', { class: 'esq-wasd' }, tecla('Q'), tecla('W'), tecla('E'), tecla('A'), tecla('S'), tecla('D')), h('span', { class: 'esq-mouse' }, h('i', {}), h('i', {}))],
+          ['A D andam · W ou Espaço pula', 'Mouse esquerdo golpeia, direito solta o especial', 'Q ora · E ergue a lâmpada · F fala', 'Shift é o passo · o mouse mira']),
+        cartao('setas', 'Só o teclado (setas)', [h('div', { class: 'esq-setas' }, tecla('↑'), tecla('←'), tecla('↓'), tecla('→')), h('div', { class: 'esq-zxc' }, tecla('Z'), tecla('X'), tecla('C'))],
+          ['Setas andam · ↑ pula', 'Z ou X golpeia · S solta o especial', 'A ora · D ergue a lâmpada · E fala', 'C é o passo · as setas miram'])),
+      h('p', { class: 'muted esq-pad' }, 'Tem um controle? É só ligar e apertar qualquer botão: ele funciona com qualquer uma das duas.'));
+  }, { dismiss: false, wide: true });
 }
 
 function exitToSelect() {
