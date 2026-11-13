@@ -5,7 +5,7 @@ import { sfx } from '../audio.js';
 import { T, CW, CH } from './nivel.js';
 import { solido } from './corpo.js';
 
-export const MIRA_CUSTO = 66, MIRA_ESPERA = 5, MIRA_CARGA = 0.5;
+export const MIRA_CUSTO = 40, MIRA_ESPERA = 5, MIRA_CARGA = 0.5;
 const rand = (a, b) => a + Math.random() * (b - a);
 export const MIRA_NOME = { guerreiro: 'Investida do valente', zelote: 'Três cortes', profeta: 'Chuva de fogo', pastor: 'Rajada do ribeiro', levita: 'Brado de Jericó', juiz: 'Açoite de Sangar', valente: 'Queda da lança' };
 
