@@ -104,6 +104,12 @@ export class Caminho {
     this.dpr = dpr; this.vista.W = W; this.vista.H = H; this.vista.Z = clamp(H / (CH * T), 0.3, 8);
   }
 
+  // Evento de todos (cena, pergunta em grupo): na tela dividida, só um quadro o mostra, a tela vira uma e qualquer controle responde.
+  async emGeral(fn) {
+    const q = new URLSearchParams(location.search).get('quadro'), dividida = q !== null && parent !== window;
+    if (dividida) { parent.postMessage({ peregrinosGeral: { q: +q, on: true } }, location.origin); document.body.classList.add('evento-geral'); }
+    try { return await fn(); } finally { if (dividida) { document.body.classList.remove('evento-geral'); parent.postMessage({ peregrinosGeral: { q: +q, on: false } }, location.origin); } }
+  }
   async cinema(id, forcar = false, remoto = false) {
     const vistas = this.char.data.cinemas;
     if (!CINEMAS[id] || (!forcar && (vistas.includes(id) || config.cinemas === false))) return false;
@@ -111,7 +117,7 @@ export class Caminho {
     if (!remoto) this.mp?.ev('cin', { id }); // juntos, a história aparece para todos de uma vez
     if (!vistas.includes(id)) vistas.push(id);
     const antes = audio.modo, chaveAntes = audio.chave; music('cinema');
-    await this.ui.cinema(id, { look: this.char.look });
+    await this.emGeral(() => this.ui.cinema(id, { look: this.char.look }));
     if (this.running) music(antes, chaveAntes);
     return true;
   }
@@ -197,7 +203,7 @@ export class Caminho {
     if (!this.running) return;
     const dt = Math.min(0.033, (now - this.last) / 1000); this.last = now;
     // um erro num quadro não pode parar o jogo (nem a sala, para quem joga junto)
-    try { if (!document.hidden) { if (!this.ui.blocking) this.update(dt); else if (this.mp) this.updateAusente(dt); this.mp?.tick(dt); this.telaJunta(dt); } this.render(); }
+    try { if (!document.hidden) { if (!this.ui.blocking && !this.pausaGeral) this.update(dt); else if (this.mp) this.updateAusente(dt); this.mp?.tick(dt); this.telaJunta(dt); } this.render(); }
     catch (e) { this.p = this.eu || this.p; if (!this.erroVisto) { this.erroVisto = true; console.error('[caminho]', e); } }
     this.raf = requestAnimationFrame(t => this.loop(t));
   }
@@ -305,12 +311,15 @@ export class Caminho {
     if (this.quadro == null) {
       const q = new URLSearchParams(location.search).get('quadro');
       this.quadro = q !== null && parent !== window ? +q : -1;
-      if (this.quadro >= 0) addEventListener('message', e => { if (e.origin === location.origin && e.data && 'peregrinosJuntas' in e.data) this.juntas = !!e.data.peregrinosJuntas; });
+      if (this.quadro >= 0) addEventListener('message', e => { if (e.origin !== location.origin || !e.data) return; const d = e.data;
+        if ('peregrinosJuntas' in d) this.juntas = !!d.peregrinosJuntas;
+        if ('peregrinosPausa' in d) this.pausaGeral = !!d.peregrinosPausa;
+        if (d.peregrinosVidas) this.vidasTela = d.peregrinosVidas.filter(v => v.q !== this.quadro); });
     }
     if (this.quadro < 0 || (this.tQuadro = (this.tQuadro || 0) - dt) > 0) return;
     this.tQuadro = 0.15;
     const p = this.eu, v = this.vista;
-    parent.postMessage({ peregrinosPos: { q: this.quadro, a: this.area, x: Math.round(p.x), y: Math.round(p.y), vw: Math.round(v.W / v.Z), hp: Math.max(0, Math.ceil(p.vida)), max: p.vidaMax, nome: this.char.name || '', livre: !this.ui.blocking && !p.morto && this.fade < 0.5 } }, location.origin);
+    parent.postMessage({ peregrinosPos: { q: this.quadro, a: this.area, x: Math.round(p.x), y: Math.round(p.y), vw: Math.round(v.W / v.Z), hp: Math.max(0, Math.ceil(p.vida)), max: p.vidaMax, oleo: Math.round(p.oleo / this.oleoMax() * 100), nome: this.char.name || '', livre: !this.ui.blocking && !p.morto && this.fade < 0.5 } }, location.origin);
   }
   meioDoGrupo() { const hs = [this.eu, ...(this.mp ? this.mp.naArea().map(o => o.h) : [])]; let x0 = Infinity, x1 = -Infinity; for (const h of hs) { x0 = Math.min(x0, h.x); x1 = Math.max(x1, h.x); } return { x: (x0 + x1) / 2 }; }
   get outros() { const r = []; if (this.mp) for (const o of this.mp.naArea()) if (!o.h.morto) r.push({ corpo: o.h, look: o.look, cls: o.cls, arma: o.arma, hab: o.hab, nome: o.nome }); return r; }
@@ -867,7 +876,8 @@ export class Caminho {
     }
   }
   // cada peregrino responde no próprio aparelho; os acertos e a revisão são de cada um
-  async perguntaDoChefe(b, pacote) {
+  async perguntaDoChefe(b, pacote) { return this.emGeral(() => this.perguntaDoChefeJa(b, pacote)); }
+  async perguntaDoChefeJa(b, pacote) {
     const st = this.char.data.stats; let ok;
     if (pacote.acc) { ok = await this.ui.verseBattle(pacote.acc, pacote.falsas); if (ok && !this.char.data.verses.includes(pacote.acc.ref)) this.char.data.verses.push(pacote.acc.ref); }
     else { ok = await this.ui.quiz({ ...pacote.q, tempo: 10, fb: ['Está escrito! O chefe vacila por um instante.', 'O chefe se fortalece com o seu engano.'] }, 'ESTÁ ESCRITO · ' + b.d.nome); this.revisao(pacote.q, ok); }
@@ -1063,7 +1073,7 @@ export class Caminho {
         }
         texto = n === 1 ? 'Então ainda há quem carregue uma lâmpada.\n\nO Livro não foi queimado, peregrino: foi esquecido. Cada página que ninguém lê, a sombra cobre — e o que a sombra cobre ganha corpo. Mamom, a Mentira, o Pavor… são páginas não lidas andando por aí.\n\n"Lâmpada para os meus pés é a tua palavra" (Sl 119:105). Leia, entenda, e a luz volta.'
           : hab < 6 ? 'Comece por Corinto, no primeiro portal. Cada sombra de lá guarda uma peça da Armadura de Deus (Ef 6): com elas você alcança o que hoje não alcança.\n\nPeças vestidas: ' + hab + ' de 6.\n\nE lembre: a lâmpada não serve só para ver. Erga-a no instante do golpe.'
-            : 'Armadura completa… "depois de terdes vencido tudo, permanecei inabaláveis" (Ef 6:13).\n\nHá uma porta no fim da aldeia que nenhuma espada abre. Você vai entender quando chegar lá.';
+            : 'Armadura completa… "depois de terdes vencido tudo, permanecei inabaláveis" (Ef 6:13).\n\nOs gigantes esperam na Cripta, debaixo do bairro. E o Salão dos Rolos sempre terá páginas para reler.';
         break;
       }
       case 'lidia': return loja(this);
@@ -1088,6 +1098,7 @@ export class Caminho {
         else texto = 'Nem todo mundo que fala vê. Nem todo mundo que vê fala.';
         break;
       case 'mateus': return banco(this);
+      case 'escriba': texto = n === 1 ? 'Sou Esdras. Eu dispus o meu coração a buscar a Lei do Senhor, a cumpri-la e a ensiná-la (Ed 7:10).\n\nCada arco deste salão é uma página do Livro. A de cima de cada portal diz quantas partes você já leu. Comece pela esquerda.' : 'Leram no livro, na Lei de Deus, claramente, dando o sentido, para que entendessem o que se lia (Ne 8:8).'; break;
       case 'nicodemos':
         if (this.ovo('nicodemos', 'Nicodemos veio ter com Jesus de noite (Jo 3:2).')) { p.oleo = this.oleoMax(); texto = 'Você também desce aqui escondido? Eu vim de noite, para ninguém me ver perguntando.\n\n"Como pode um homem nascer, sendo velho?" Ele me respondeu: "O que é nascido da carne é carne; o que é nascido do Espírito é espírito" (Jo 3:4-6).\n\nLeve azeite. A cisterna guarda mais do que água.'; }
         else texto = n % 2 ? '"Quem pratica a verdade vem para a luz" (Jo 3:21). Demorei, mas subi. Levei mirra e aloés quando ninguém mais quis aparecer (Jo 19:39).' : 'Deus amou o mundo de tal maneira que deu o seu Filho unigênito (Jo 3:16). Ouvi isso primeiro, no escuro, antes de virar a frase que todos sabem.';

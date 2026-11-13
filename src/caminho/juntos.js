@@ -13,6 +13,7 @@ import { novoChefe } from './chefes.js';
 import { areaDef } from './dados.js';
 import { CLASSES } from '../data/classes.js';
 
+const TELA = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('tela') || '' : '';
 const LETRAS = 'ACDEFGHJKLMNPQRTUVWXY34679', PREFIXO = 'peregrinos-caminho-', MAX = 4;
 export const novoCodigo = () => Array.from({ length: 5 }, () => LETRAS[Math.random() * LETRAS.length | 0]).join('');
 export const limparCodigo = s => (s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
@@ -143,7 +144,9 @@ export class Juntos {
     this.tE = 0; this.tW = 0; this.tI = 0; this.semDono = 0; this.fxN = 0; this.seq = (Math.random() * 9e5 | 0) * 1000;
     this.gastos = new Map(); this.mortos = new Set(); this.cons = new Map(); this.mudo = false; this.resp = null;
   }
-  info() { const c = this.G.char; return { nome: c.name, look: c.look || {}, cls: c.cls, hab: this.G.hab }; }
+  info() { const c = this.G.char; return { nome: c.name, look: c.look || {}, cls: c.cls, hab: this.G.hab, tela: TELA }; }
+  // o par joga no mesmo aparelho (outro quadro da tela dividida): eventos de todos não se repetem no meu quadro
+  irmao(id) { return !!TELA && this.pares.get(id)?.tela === TELA; }
 
   static async abrir(G, codigo, local) {
     const mp = new Juntos(G); mp.anfitriao = true; mp.codigo = codigo; mp.local = local;
@@ -172,8 +175,8 @@ export class Juntos {
       let id = 1; const usados = new Set(this.cons.values()); while (usados.has(id)) id++;
       if (id >= MAX) { manda(c, { t: 'cheio' }); return; }
       this.cons.set(c, id);
-      manda(c, { t: 'bem', id, pares: [{ id: 0, ...this.info() }, ...[...this.pares.values()].map(p => ({ id: p.id, nome: p.nome, look: p.look, cls: p.cls, hab: p.hab }))] });
-      const ch = { t: 'ch', de: id, nome: m.nome, look: m.look, cls: m.cls, hab: m.hab };
+      manda(c, { t: 'bem', id, pares: [{ id: 0, ...this.info() }, ...[...this.pares.values()].map(p => ({ id: p.id, nome: p.nome, look: p.look, cls: p.cls, hab: p.hab, tela: p.tela }))] });
+      const ch = { t: 'ch', de: id, nome: m.nome, look: m.look, cls: m.cls, hab: m.hab, tela: m.tela };
       for (const [o, oid] of this.cons) if (oid !== id) manda(o, ch);
       this.receber(ch); return;
     }
@@ -203,7 +206,7 @@ export class Juntos {
 
   chegou(id, m, quieto) {
     const h = novoHeroi(0, 0, 5); h.a = null; h.tx = 0; h.ty = 0; h.novo = true;
-    this.pares.set(id, { id, nome: m.nome || 'Peregrino', look: m.look || {}, cls: m.cls, hab: m.hab || {}, arma: CLASSES[m.cls]?.arma || 'espada', h, visto: 0 });
+    this.pares.set(id, { id, nome: m.nome || 'Peregrino', look: m.look || {}, cls: m.cls, hab: m.hab || {}, tela: m.tela || '', arma: CLASSES[m.cls]?.arma || 'espada', h, visto: 0 });
     if (!quieto) this.G.ui.toast((m.nome || 'Um peregrino') + ' chegou para caminhar junto.', 4000);
   }
   saiu(id) { const p = this.pares.get(id); if (!p) return; this.pares.delete(id); this.G.ui.toast(p.nome + ' deixou a sala.', 3500); }
@@ -308,7 +311,7 @@ export class Juntos {
     const G = this.G;
     for (let rodada = 0; rodada < 3; rodada++) {
       this.resp = new Map(); this.ev('vq', { q, titulo, fb });
-      G.ui.quiz(fb ? { ...q, fb, tempo: 10 } : { ...q, tempo: 10 }, titulo + ' · VOTAÇÃO').then(ok => { this.resp?.set(this.eu, ok); G.ui.toast('Voto dado. Esperando os outros…', 2500); });
+      G.emGeral(() => G.ui.quiz(fb ? { ...q, fb, tempo: 10 } : { ...q, tempo: 10 }, titulo + ' · VOTAÇÃO')).then(ok => { this.resp?.set(this.eu, ok); G.ui.toast('Voto dado. Esperando os outros…', 2500); });
       const t0 = performance.now();
       while (G.running && G.mp === this) { const faltam = [this.eu, ...this.naArea().map(p => p.id)].filter(id => !this.resp.has(id)); if (!faltam.length || performance.now() - t0 > 75000) break; await new Promise(r => setTimeout(r, 200)); }
       const vals = [...(this.resp?.values() || [])].filter(v => typeof v === 'boolean'), sim = vals.filter(Boolean).length, nao = vals.length - sim; this.resp = null;
@@ -323,7 +326,7 @@ export class Juntos {
     switch (m.t) {
       case 'ch': if (!par && m.de !== this.eu) this.chegou(m.de, m); return;
       case 'sx': this.saiu(m.id); return;
-      case 'inf': if (par) { par.nome = m.nome; par.look = m.look || {}; par.cls = m.cls; par.hab = m.hab || {}; par.arma = CLASSES[m.cls]?.arma || 'espada'; } return;
+      case 'inf': if (par) { par.tela = m.tela || ''; par.nome = m.nome; par.look = m.look || {}; par.cls = m.cls; par.hab = m.hab || {}; par.arma = CLASSES[m.cls]?.arma || 'espada'; } return;
       case 'e': {
         if (!par) return;
         const h = par.h, { t, de, x, y, ...r } = m; Object.assign(h, r); h.atk = m.atk || null; h.ts = m.ts || null; h.tx = x; h.ty = y;
@@ -343,11 +346,11 @@ export class Juntos {
       case 'tb': if (this.souDono && G.chefe && !G.chefe.morrendo) G.chefeSeFortalece(G.chefe, par.nome); break;
       case 'mo': { if (this.mortos.has(m.id)) break; const e = ini(m.id); this.mortos.add(m.id); if (e && !e.sumiu) { e.hp = 0; G.matar(e); G.inimigos = G.inimigos.filter(x => x !== e); } break; }
       case 'cc': { const b = ini(m.id) || G.chefe; if (b && !b.fora) { b.remoto = true; G.chefeCaiu(b); } break; }
-      case 'qz': { const b = ini(m.b) || G.chefe; if (!b || G.ui.blocking) { this.ev('qr', { ok: null }); break; } G.perguntaDoChefe(b, m.p).then(ok => this.ev('qr', { ok })); break; }
+      case 'qz': { const b = ini(m.b) || G.chefe; if (!b || G.ui.blocking || this.irmao(m.de)) { this.ev('qr', { ok: null }); break; } G.perguntaDoChefe(b, m.p).then(ok => this.ev('qr', { ok })); break; }
       case 'qr': this.resp?.set(m.de, m.ok); break;
-      case 'cin': G.cinema(m.id, true, true); break;
+      case 'cin': if (!this.irmao(m.de)) G.cinema(m.id, true, true); break;
       case 'vn': G.soprar(+m.d || 2, +m.f || 0, String(m.tx || '').slice(0, 40), true); break;
-      case 'vq': if (G.ui.blocking) { this.ev('vr', { ok: null }); break; } G.ui.quiz(m.fb ? { ...m.q, fb: m.fb, tempo: 10 } : { ...m.q, tempo: 10 }, m.titulo + ' · VOTAÇÃO').then(ok => { this.ev('vr', { ok }); G.ui.toast('Voto dado. Esperando os outros…', 2500); }); break;
+      case 'vq': if (G.ui.blocking || this.irmao(m.de)) { this.ev('vr', { ok: null }); break; } G.emGeral(() => G.ui.quiz(m.fb ? { ...m.q, fb: m.fb, tempo: 10 } : { ...m.q, tempo: 10 }, m.titulo + ' · VOTAÇÃO')).then(ok => { this.ev('vr', { ok }); G.ui.toast('Voto dado. Esperando os outros…', 2500); }); break;
       case 'vr': this.resp?.set(m.de, m.ok); break;
       case 'vt': G.ui.toast('Empate na votação. Conversem: alguém precisa ceder. Votem de novo.', 4500); break;
       case 'vf': G.ui.toast(m.ok ? 'A maioria acertou.' : 'A maioria errou.', 3500); break;
@@ -372,5 +375,5 @@ export class Juntos {
   }
 
   // onde está cada companheiro, para o menu
-  lista() { return [...this.pares.values()].map(p => ({ id: p.id, nome: p.nome, area: p.h.a, onde: p.h.a ? areaDef(p.h.a).nome : '…', vida: p.h.vida, vidaMax: p.h.vidaMax })); }
+  lista() { return [...this.pares.values()].map(p => ({ id: p.id, irmao: !!TELA && p.tela === TELA, nome: p.nome, area: p.h.a, onde: p.h.a ? areaDef(p.h.a).nome : '…', vida: p.h.vida, vidaMax: p.h.vidaMax })); }
 }

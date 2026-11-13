@@ -84,29 +84,40 @@ function montarTelas(n) {
   const sair = document.createElement('button'); sair.textContent = 'Sair da tela dividida'; sair.onclick = () => { location.href = location.pathname; };
   barra.append(info, sair); document.body.append(barra);
   const grade = document.createElement('div'); grade.className = 'telas-grade'; document.body.append(grade);
-  const quadros = [];
-  for (let i = 0; i < n; i++) { const f = document.createElement('iframe'); f.allow = 'gamepad; autoplay; fullscreen'; f.title = 'Jogador ' + (i + 1); if (i === 0) f.src = location.pathname + '?quadro=0&pad=0'; else f.srcdoc = '<body style="margin:0;display:grid;place-items:center;height:100vh;background:#05060B;color:#9096AA;font:600 15px system-ui;text-align:center">Jogador ' + (i + 1) + '<br>aguardando o jogador 1 entrar no jogo…</body>'; grade.append(f); quadros.push(f); }
+  const quadros = [], TELA_ID = Math.random().toString(36).slice(2, 8);
+  for (let i = 0; i < n; i++) { const f = document.createElement('iframe'); f.allow = 'gamepad; autoplay; fullscreen'; f.title = 'Jogador ' + (i + 1); if (i === 0) f.src = location.pathname + '?quadro=0&pad=0&tela=' + TELA_ID; else f.srcdoc = '<body style="margin:0;display:grid;place-items:center;height:100vh;background:#05060B;color:#9096AA;font:600 15px system-ui;text-align:center">Jogador ' + (i + 1) + '<br>aguardando o jogador 1 entrar no jogo…</body>'; grade.append(f); quadros.push(f); }
   // quadros que se juntam: todos na mesma área, perto e sem janela aberta → um quadro só; afastou, divide de novo
   const pos = [], vidas = document.createElement('span'); vidas.className = 'telas-vidas'; barra.insertBefore(vidas, sair);
-  let juntas = false, vwQuadro = 0;
-  const avisa = () => quadros.forEach(f => { try { f.contentWindow?.postMessage({ peregrinosJuntas: juntas }, location.origin); } catch {} });
+  let juntas = false, vwQuadro = 0, geral = null; // geral: o quadro que mostra uma cena ou uma pergunta para todos
+  const manda = m => quadros.forEach(f => { try { f.contentWindow?.postMessage(m, location.origin); } catch {} });
+  const avisa = () => manda({ peregrinosJuntas: juntas || geral != null });
+  const mostra = () => { const um = juntas || geral != null, topo = geral ?? 0; grade.classList.toggle('juntas', um); quadros.forEach((f, i) => { f.style.zIndex = um && i === topo ? 2 : ''; }); if (geral != null) quadros[geral]?.focus(); };
+  // um quadro começou (ou terminou) um evento de todos: a tela vira uma só, a do quadro que o mostra, e os outros esperam
+  addEventListener('message', e => {
+    const d = e.origin === location.origin && e.data?.peregrinosGeral; if (!d) return;
+    // só vale para quem já está no jogo e na mesma área: quem ainda escolhe o peregrino, ou está longe, segue no seu quadro
+    const agora = performance.now(), junto = i => i !== d.q && pos[i] && pos[d.q] && agora - pos[i].t < 2000 && pos[i].a === pos[d.q].a;
+    if (d.on) { if (!quadros.some((_, i) => junto(i))) return; geral = d.q; } else if (geral === d.q) geral = null; else return;
+    mostra(); avisa(); quadros.forEach((f, i) => { if (i !== d.q) try { f.contentWindow?.postMessage({ peregrinosPausa: geral != null && junto(i) }, location.origin); } catch {} });
+  });
   addEventListener('message', e => {
     const d = e.origin === location.origin && e.data?.peregrinosPos; if (!d) return;
     d.t = performance.now(); pos[d.q] = d;
     const vivos = pos.filter(p => p && d.t - p.t < 1500);
     vidas.textContent = vivos.map(p => (p.nome || 'J' + (p.q + 1)) + ' ♥ ' + p.hp + '/' + p.max).join('  ·  ');
+    if ((vidas.tN = (vidas.tN || 0) + 1) % 2) manda({ peregrinosVidas: vivos.map(p => ({ q: p.q, nome: p.nome, hp: p.hp, max: p.max, oleo: p.oleo })) });
     if (!juntas) vwQuadro = pos[0]?.vw || vwQuadro;
     const larg = vwQuadro * (n === 2 ? 2 : 1), xs = vivos.map(p => p.x), ys = vivos.map(p => p.y);
     const dx = Math.max(...xs) - Math.min(...xs), dy = Math.max(...ys) - Math.min(...ys);
     const todos = vivos.length === n && vivos.every(p => p.livre && p.a === vivos[0].a);
     const quer = todos && larg > 0 && (juntas ? dx < larg * 0.8 && dy < 400 : dx < larg * 0.5 && dy < 260);
-    if (quer !== juntas) { juntas = quer; grade.classList.toggle('juntas', juntas); avisa(); }
+    if (quer !== juntas) { juntas = quer; mostra(); avisa(); }
   });
   addEventListener('message', e => {
     if (e.origin !== location.origin || !e.data?.peregrinosSala) return;
     const { peregrinosSala: cod, local } = e.data;
     info.textContent = 'Sala ' + cod + (local ? ' (só neste aparelho: sem internet)' : ' · quem estiver em outro aparelho entra com este código, em Menu › Juntos') + ' · cada quadro usa um controle; o teclado vale para o quadro clicado';
-    quadros.forEach((f, i) => { if (i && !f.dataset.ok) { f.dataset.ok = 1; f.removeAttribute('srcdoc'); f.src = location.pathname + '?quadro=' + i + '&pad=' + i + '&sala=' + cod + (local ? '&redelocal' : ''); } });
+    quadros.forEach((f, i) => { if (i && !f.dataset.ok) { f.dataset.ok = 1; f.removeAttribute('srcdoc'); f.src = location.pathname + '?quadro=' + i + '&pad=' + i + '&tela=' + TELA_ID + '&sala=' + cod + (local ? '&redelocal' : ''); } });
   });
 }
 

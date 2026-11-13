@@ -11,7 +11,7 @@ const KEYMAP_HK = { ArrowUp: 'dodge', KeyZ: 'attack', KeyX: 'attack', KeyC: 'das
   KeyE: 'interact', Enter: 'interact', KeyQ: 'item2', KeyR: 'item2', Tab: 'map', KeyM: 'map', KeyI: 'menu', Escape: 'escape' };
 // Modo WASD + mouse (menu › Ajustes): A D andam, W ou Espaço pula, S abaixa, Q ora, E ergue a lâmpada, Shift é o passo,
 // botão esquerdo do mouse golpeia e o direito solta o especial. F interage, R usa o dom.
-const KEYMAP_WASD = { KeyW: 'dodge', Space: 'dodge', ShiftLeft: 'dash', ShiftRight: 'dash', KeyQ: 'botija', KeyE: 'defend', KeyF: 'interact', Enter: 'interact',
+const KEYMAP_WASD = { KeyW: 'dodge', Space: 'dodge', ArrowUp: 'dodge', ShiftLeft: 'dash', ShiftRight: 'dash', KeyQ: 'botija', KeyE: 'defend', KeyF: 'interact', Enter: 'interact',
   KeyR: 'item2', KeyJ: 'attack', KeyK: 'skill', Tab: 'map', KeyM: 'map', KeyI: 'menu', Escape: 'escape' };
 const MOVE_WASD = { KeyW: [0, -1], KeyS: [0, 1], KeyA: [-1, 0], KeyD: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
 export const wasd = () => config.esquema !== 'setas'; // WASD + mouse é o padrão; setas + Z X C fica como opção

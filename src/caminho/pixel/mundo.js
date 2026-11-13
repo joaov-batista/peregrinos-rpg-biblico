@@ -4,6 +4,7 @@
 import { hash, clamp } from '../../util.js';
 import { T, CW, CH, SOLIDO, PONTE, ESPINHO, OCULTO, FALSA, PORTAO, TRANCA, tileEm, semente } from '../nivel.js';
 import { Sprite, rampa, cor, TINTA, PX } from './raster.js';
+import { fundoSala } from './salas.js';
 
 const TL = T / PX; // 16
 const mistura = (a, b, t) => { const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16), f = (s) => Math.round((pa >> s & 255) * (1 - t) + (pb >> s & 255) * t); return '#' + (f(16) << 16 | f(8) << 8 | f(0)).toString(16).padStart(6, '0'); };
@@ -165,6 +166,7 @@ export function pintarSalasPixel(g, G, C, vw, vh, cx, cy) {
     if (x0 > vw || x0 + salaW < 0 || y0 > vh || y0 + salaH < 0) continue;
     if (cel.ceu) continue; // praça a céu aberto: nada de véu, pilar ou estandarte
     if (N.def.aberto) { g.fillStyle = SUBSOLO; g.fillRect(x0, y0, salaW, salaH); } // o subsolo não deixa ver o céu
+    const fs = cel.deco && fundoSala(cel.deco); if (fs) { g.drawImage(fs, x0, y0); continue; } // salões com cenário próprio
     g.fillStyle = tm.bloco; g.globalAlpha = 0.26; g.fillRect(x0 + TL, y0 + TL, salaW - 2 * TL, salaH - 2 * TL); g.globalAlpha = 1;
     for (let k = 0; k < 3; k++) {
       if (k === 1 && cel.mask & 12) continue;

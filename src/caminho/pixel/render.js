@@ -92,6 +92,10 @@ function pintarObjeto(g, o, G, x, y, Tm) {
         g.fillStyle = '#17121f'; g.fillRect(x - 22, y - 34, 6, 34); g.fillRect(x + 32, y - 34, 6, 34); g.fillRect(x - 24, y - 40, 64, 8); g.fillStyle = '#5A5668'; g.fillRect(x - 21, y - 33, 4, 33); g.fillRect(x + 33, y - 33, 4, 33); g.fillRect(x - 23, y - 39, 62, 6); g.fillStyle = '#7A7688'; g.fillRect(x - 23, y - 39, 62, 1);
         g.fillStyle = f2 ? '#FFD86A' : '#FFB84A'; g.fillRect(x + 6, y - 31, 4, 5); g.fillStyle = '#17121f'; g.fillRect(x + 7, y - 33, 2, 2);
         g.fillStyle = '#FFE9A8'; const b = Math.floor(Tm * 3) % 3; g.fillRect(x + 6, y - 18 + b * 2, 4, 2); g.fillRect(x + 4, y - 14 + b * 2, 8, 2); g.fillRect(x + 7, y - 12 + b * 2, 2, 2); }
+      else if (q === 'balcao') { // o balcão do coletor: tampo de madeira, frente com painéis, moedas e o livro de contas
+        g.fillStyle = '#17121f'; g.fillRect(x - 46, y - 30, 92, 30); g.fillStyle = '#6B4A2E'; g.fillRect(x - 45, y - 26, 90, 25); g.fillStyle = '#8A6A44'; g.fillRect(x - 47, y - 31, 94, 6); g.fillStyle = '#A8865A'; g.fillRect(x - 47, y - 31, 94, 1);
+        g.fillStyle = '#4A3524'; for (let i = 0; i < 4; i++) g.fillRect(x - 40 + i * 22, y - 21, 16, 17); g.fillStyle = '#5A4030'; for (let i = 0; i < 4; i++) g.fillRect(x - 39 + i * 22, y - 20, 14, 15);
+        g.fillStyle = '#E8D9B0'; g.fillRect(x - 36, y - 36, 18, 5); g.fillStyle = '#B8423A'; g.fillRect(x - 28, y - 36, 1, 5); g.fillStyle = f2 ? '#FFD23F' : '#E8B830'; for (let i = 0; i < 3; i++) g.fillRect(x + 16 + i * 7, y - 34 - (i % 2) * 2, 5, 3 + (i % 2) * 2); }
       else if (q === 'cofre') { // a arca do tesouro e a mesa do coletor
         g.fillStyle = '#17121f'; g.fillRect(x - 30, y - 30, 40, 30); g.fillRect(x + 40, y - 18, 34, 18); g.fillStyle = '#6B4A2E'; g.fillRect(x - 29, y - 22, 38, 21); g.fillStyle = '#8A6A44'; g.fillRect(x - 29, y - 29, 38, 7); g.fillStyle = '#C9A63C'; g.fillRect(x - 29, y - 23, 38, 2); g.fillRect(x - 22, y - 29, 3, 28); g.fillRect(x - 2, y - 29, 3, 28); g.fillRect(x - 12, y - 20, 5, 6);
         g.fillStyle = '#5A3E28'; g.fillRect(x + 41, y - 17, 32, 3); g.fillRect(x + 43, y - 14, 3, 14); g.fillRect(x + 68, y - 14, 3, 14); g.fillStyle = f2 ? '#FFD23F' : '#E8B830'; for (let i = 0; i < 4; i++) g.fillRect(x + 46 + i * 6, y - 20 - (i % 2) * 2, 4, 3 + (i % 2) * 2); }
@@ -409,6 +413,7 @@ function pintarTextos(g, G, esc, cx, cy) {
     for (let i = 0; i <= n; i++) { const q = i / n; if (q > 1 - (1 - k) * 0.5 && !r.chicote) continue; const on = r.chicote ? Math.sin(q * 9 + k * 12) * 14 * (1 - q) * k : 0, x = sx(r.x0 + (r.x1 - r.x0) * q + nx / nl * on), y = sy(r.y0 + (r.y1 - r.y0) * q + ny / nl * on);
       g.globalAlpha = Math.min(1, k * 1.6); g.fillStyle = r.cor; g.fillRect(Math.round(x - gr), Math.round(y - gr), gr * 2, gr * 2); if (gr > 1) { g.fillStyle = '#FFFFFF'; g.fillRect(Math.round(x - gr / 2), Math.round(y - gr / 2), gr, gr); } } g.globalAlpha = 1; }
   for (const o of G.objs) if (o.tipo === 'escrito') { const k = clamp(G.p.lampA * 1.4 - Math.max(0, Math.hypot(o.x - p.x, o.y - p.y) - 260) / 120, 0, 1); if (k > 0.02) { g.globalAlpha = k; txt(o.txt, sx(o.x), sy(o.y), 8 * u * 1.5, '#FFE9A8', 'center'); g.globalAlpha = 1; } }
+  for (const c of G.N.celulas) if (c.deco && c.nome) { const meio = c.deco === 'biblioteca' || c.deco === 'cisterna' ? 104 : 240, x = sx(c.cx * 30 * 32 + meio * 2), y = sy((c.cy * 17) * 32 + 64); if (x > -300 && x < g.canvas.width + 300) txt(c.nome, x, y, 8 * u * 2.2, '#FFE9A8', 'center'); }
   { const ob = G.objetivo?.(); if (ob && !G.ui.blocking) { // a missão: seta dourada sobre o alvo, ou na borda da tela apontando para ele
     const x = sx(ob.x), y = sy(ob.y - 132), W2 = g.canvas.width, m = 40 * u, pula = Math.round(Math.sin(G.T * 6) * 3 * u), fora = x < m || x > W2 - m;
     g.fillStyle = '#17121f'; const seta = (ax, ay, dx, dy, c) => { g.fillStyle = c; for (let i = 0; i < 5; i++) { const lg = (5 - i) * 2 * u; if (dy) g.fillRect(ax - lg / 2, ay + i * 2 * u * dy, lg, 2 * u); else g.fillRect(ax + i * 2 * u * dx, ay - lg / 2, 2 * u, lg); } };
@@ -430,8 +435,9 @@ function pintarTextos(g, G, esc, cx, cy) {
   if (G.peso) { lin += base * 1.2; txt('PESO DE MAMOM ×' + G.peso, 7 * e, lin, base * 0.8, '#FFD23F'); }
   // companheiros da sala (mesmo PC ou de fora): a vida de cada um, sempre à vista
   const chamas = (x, y, n, max, q) => { for (let i = 0; i < max; i++) { const vivo = i < n, xx = x + i * q * 3.2; g.fillStyle = '#17121f'; g.fillRect(xx - q * 0.2, y - q * 2.6, q * 2.4, q * 3); g.fillStyle = vivo ? '#FF9A3C' : '#4A4658'; g.fillRect(xx, y - q * 2.4, q * 2, q * 2.6); g.fillStyle = vivo ? '#FFD86A' : '#5E5A6E'; g.fillRect(xx + q * 0.5, y - q * 1.6, q, q * 1.6); if (vivo) { g.fillStyle = '#FFFBE6'; g.fillRect(xx + q * 0.7, y - q * 0.9, q * 0.6, q * 0.6); } } };
-  if (G.mp) { const q = Math.max(3, Math.round(base * 0.34));
-    for (const c of G.mp.lista()) { lin += base * 1.7; const n = Math.max(0, Math.ceil(c.vida || 0)), mx = c.vidaMax || 5;
+  const comp = [...(G.vidasTela || []).map(v => ({ nome: v.nome, vida: v.hp, vidaMax: v.max, area: G.area })), ...(G.mp ? G.mp.lista().filter(c => !(c.irmao && G.vidasTela)) : [])];
+  if (comp.length) { const q = Math.max(3, Math.round(base * 0.34));
+    for (const c of comp) { lin += base * 1.7; const n = Math.max(0, Math.ceil(c.vida || 0)), mx = c.vidaMax || 5;
       txt(c.nome || 'Peregrino', 7 * e, lin, base * 1.1, n > 0 ? '#BFE3D8' : '#E07A6E'); g.font = `600 ${base * 1.1}px ${FONTE}`; const lx = 7 * e + g.measureText(c.nome || 'Peregrino').width + base * 0.6;
       chamas(lx, lin, n, mx, q); if (c.area !== G.area) txt(c.onde, lx + mx * q * 3.2 + base * 0.4, lin, base * 0.7, '#8C93AD'); } }
 

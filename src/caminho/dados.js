@@ -164,19 +164,18 @@ const REFUGIO = [
     { tipo: 'fruto', col: 4, lin: 14 }, { tipo: 'fruto', col: 10, lin: 11 }, { tipo: 'fruto', col: 15, lin: 8 }, { tipo: 'fruto', col: 20, lin: 11 },
     { tipo: 'npc', col: 23, nome: 'Mercador', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#7A5A2E', cape: '#3F2E4F', style: 'turbante', beard: true } },
     { tipo: 'poco', col: 7 }, povo(13, 4, { skin: '#C68B59', hair: '#D9D2C5', tunic: '#5B4E66', cape: 'none', style: 'veu' }), { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
-  { cx: 6, nome: 'Portão do Éden', papel: 'vila', tiles: sala(), objs: [planta(3, 'cipreste'), planta(6, 'cipreste'), { tipo: 'porta-pecado', col: 10 }, planta(14, 'oliveira'), { tipo: 'querubim', col: 20 }, planta(25, 'cipreste')] },
   // ---- o subsolo ----
-  { cx: 1, cy: 1, nome: 'Salão dos Rolos', papel: 'vila', tiles: sala(), objs: [...TODAS.map((s, i) => ({ tipo: 'portal', col: [4, 9, 21, 26, 7, 23][i % 6], semana: s.id })),
-    povo(19, 2, { skin: '#D9A273', hair: '#E3DED2', tunic: '#55516D', cape: '#C9B88A', style: 'longo', beard: true })] },
-  { cx: 2, cy: 1, nome: 'Casa do Tesouro', papel: 'vila', tiles: sala([12, 20, 25]), objs: [
-    { tipo: 'cenario', col: 11, qual: 'cofre' }, { tipo: 'npc', col: 14, id: 'mateus', nome: 'Mateus, o coletor', look: { skin: '#C68B59', hair: '#2B1A10', tunic: '#3F5A4A', cape: '#C9A63C', style: 'curto', beard: true } },
-    { tipo: 'vaso', col: 5 }, { tipo: 'vaso', col: 6 }, { tipo: 'vaso', col: 22, lin: 12 }, { tipo: 'vaso', col: 24, lin: 12 }] },
-  { cx: 3, cy: 1, nome: 'Cripta dos Gigantes', papel: 'vila', tiles: sala(), objs: [
-    { tipo: 'npc', col: 4, id: 'saul', nome: 'Rei Saul', look: saul },
-    { tipo: 'portal', col: 9, mundo: 'golias' }, { tipo: 'portal', col: 17, mundo: 'behemote' }, { tipo: 'portal', col: 25, mundo: 'leviata' }] },
-  { cx: 4, cy: 1, nome: 'Cisterna', papel: 'vila', tiles: sala([12, 3, 7]), objs: [
-    { tipo: 'npc', col: 22, id: 'nicodemos', nome: 'Nicodemos', look: { skin: '#D9A273', hair: '#D9D2C5', tunic: '#343F51', cape: '#6B5A8C', style: 'turbante', beard: true } },
-    { tipo: 'poco', col: 8 }, { tipo: 'vaso', col: 4, lin: 12 }, { tipo: 'vaso', col: 6, lin: 12 }, { tipo: 'vaso', col: 25 }, { tipo: 'vaso', col: 26 }] }
+  { cx: 1, cy: 1, nome: 'Salão dos Rolos', deco: 'biblioteca', papel: 'vila', tiles: sala(), objs: [...TODAS.map((s, i) => ({ tipo: 'portal', col: [4, 8, 22, 26, 3, 27][i % 6], semana: s.id })),
+    { tipo: 'npc', col: 19, id: 'escriba', nome: 'Esdras, o escriba', look: { skin: '#D9A273', hair: '#E3DED2', tunic: '#55516D', cape: '#C9B88A', style: 'longo', beard: true } }] },
+  { cx: 2, cy: 1, nome: 'Casa do Tesouro', deco: 'tesouro', papel: 'vila', tiles: sala(), objs: [
+    { tipo: 'cenario', col: 14, qual: 'balcao' }, { tipo: 'npc', col: 15, id: 'mateus', nome: 'Mateus, o coletor', look: { skin: '#C68B59', hair: '#2B1A10', tunic: '#3F5A4A', cape: '#C9A63C', style: 'curto', beard: true } },
+    { tipo: 'cenario', col: 6, qual: 'cofre' }, { tipo: 'vaso', col: 10 }, { tipo: 'vaso', col: 11 }] },
+  { cx: 3, cy: 1, nome: 'Cripta dos Gigantes', deco: 'cripta', papel: 'vila', tiles: sala(), objs: [
+    { tipo: 'portal', col: 6, mundo: 'golias' }, { tipo: 'portal', col: 15, mundo: 'behemote' }, { tipo: 'portal', col: 24, mundo: 'leviata' },
+    { tipo: 'npc', col: 11, id: 'saul', nome: 'Rei Saul', look: saul }] },
+  { cx: 4, cy: 1, nome: 'Cisterna', deco: 'cisterna', papel: 'vila', tiles: sala([10, 3, 7], [10, 22, 26]), objs: [
+    { tipo: 'npc', col: 24, id: 'nicodemos', nome: 'Nicodemos', look: { skin: '#D9A273', hair: '#D9D2C5', tunic: '#343F51', cape: '#6B5A8C', style: 'turbante', beard: true } },
+    { tipo: 'poco', col: 7 }, { tipo: 'vaso', col: 4, lin: 10 }, { tipo: 'vaso', col: 6, lin: 10 }, { tipo: 'vaso', col: 23, lin: 10 }, { tipo: 'vaso', col: 26, lin: 10 }] }
 ];
 
 export function semanaDe(id) { return TODAS.find(s => s.id === id); }

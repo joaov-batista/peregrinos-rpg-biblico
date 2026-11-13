@@ -222,4 +222,5 @@ html.remake .char-card .col { grid-template-columns: 1fr; min-width: 170px; }
 .telas-grade { position: relative; }
 .telas-grade.juntas iframe { position: absolute; inset: 0; z-index: 0; }
 .telas-grade.juntas iframe:first-child { z-index: 1; }
+.telas-grade.juntas iframe[style*="z-index: 2"] { z-index: 2; }
 .telas-vidas { color: #E9E6DC; white-space: nowrap; font-variant-numeric: tabular-nums; }

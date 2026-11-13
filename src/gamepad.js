@@ -18,7 +18,7 @@ export function botaoDe(acao) { const m = mapaPad(); return Object.keys(m).find(
 // espera o próximo botão apertado em qualquer controle ligado
 export function proximoBotao(ms = 6000) { return new Promise(ok => { const t0 = performance.now(); let solto = false; const olha = () => { const l = [...(navigator.getGamepads?.() || [])].filter(Boolean); let ap = -1; for (const g of l) g.buttons.forEach((b, i) => { if (b.pressed || b.value > 0.5) ap = i; }); if (ap < 0) solto = true; else if (solto) return ok(ap); if (performance.now() - t0 > ms) return ok(null); requestAnimationFrame(olha); }; olha(); }); }
 let padAtivo = -1;
-const meuControle = () => { const l = [...(navigator.getGamepads?.() || [])].filter(Boolean); if (PAD_FIXO != null) return l[PAD_FIXO]; for (const g of l) if (g.buttons.some(b => b.pressed) || Math.hypot(g.axes[0] || 0, g.axes[1] || 0) > 0.5) padAtivo = g.index; return l.find(g => g.index === padAtivo) || l[0]; }; // fora da tela dividida, vale o controle que foi usado por último
+const meuControle = () => { const l = [...(navigator.getGamepads?.() || [])].filter(Boolean); if (PAD_FIXO != null && !document.body.classList.contains('evento-geral')) return l[PAD_FIXO]; /* num evento de todos (cena, pergunta em grupo), qualquer controle responde */ for (const g of l) if (g.buttons.some(b => b.pressed) || Math.hypot(g.axes[0] || 0, g.axes[1] || 0) > 0.5) padAtivo = g.index; return l.find(g => g.index === padAtivo) || l[0]; }; // fora da tela dividida, vale o controle que foi usado por último
 const ZONA = 0.22; // zona morta dos analógicos
 let antes = [], nav = { t: 0, dir: null };
 export const pad = { conectado: false, nome: '' };
