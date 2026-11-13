@@ -565,109 +565,422 @@ function fumacaBase(g, x, y, w, T, cor = '#030203') {
   for (let i = 0; i < 9; i++) { const k = i / 8 - 0.5; g.beginPath(); g.ellipse(x + k * w + Math.sin(T * 0.8 + i) * 8, y - 10 + Math.sin(T * 1.3 + i * 2) * 6, w * 0.22, w * 0.1, 0, 0, TAU); g.fill(); }
   g.restore();
 }
-const CHEFES = {
-  satanas(g, S, T) {
-    const asa = (sd) => {
-      g.save(); g.scale(sd, 1); g.beginPath(); g.moveTo(S * 0.08, -S * 0.72);
-      g.quadraticCurveTo(S * 0.5, -S * 1.25, S * 1.05, -S * 1.05);
-      const pts = [[0.95, -0.82], [1.0, -0.62], [0.78, -0.6], [0.82, -0.36], [0.6, -0.4], [0.62, -0.16], [0.4, -0.26], [0.2, -0.5]];
-      for (const [px, py] of pts) g.lineTo(S * px, S * py + Math.sin(T * 1.2 + px * 5) * S * 0.01);
-      g.closePath(); g.fill(); g.restore();
-    };
-    g.fillStyle = '#040102'; const ab = Math.sin(T * 0.8) * 0.03; g.save(); g.rotate(-ab); asa(-1); g.restore(); g.save(); g.rotate(ab); asa(1); g.restore();
-    // corpo/manto e cabeça com chifres
-    g.beginPath(); g.moveTo(-S * 0.1, -S * 0.86); g.quadraticCurveTo(-S * 0.3, -S * 0.4, -S * 0.34, 0); g.lineTo(S * 0.34, 0); g.quadraticCurveTo(S * 0.3, -S * 0.4, S * 0.1, -S * 0.86); g.fill();
-    g.beginPath(); g.ellipse(0, -S * 0.92, S * 0.075, S * 0.09, 0, 0, TAU); g.fill();
-    for (const sd of [-1, 1]) { g.beginPath(); g.moveTo(sd * S * 0.04, -S * 0.98); g.quadraticCurveTo(sd * S * 0.16, -S * 1.12, sd * S * 0.12, -S * 1.24); g.quadraticCurveTo(sd * S * 0.1, -S * 1.1, sd * S * 0.02, -S * 1.0); g.fill(); }
-    olhos(g, 0, -S * 0.92, S * 0.03, S * 0.012, '255,70,30');
-    fumacaBase(g, 0, 0, S * 0.9, T);
-    g.save(); g.globalCompositeOperation = 'screen'; for (let k = 0; k < 18; k++) { const dd = (T * 0.2 + k / 18) % 1; g.fillStyle = `rgba(255,${90 + k * 6},30,${(1 - dd) * 0.9})`; g.beginPath(); g.arc(Math.sin(k * 7 + T) * S * 0.5, -dd * S * 1.2, 1.6, 0, TAU); g.fill(); } g.restore();
-  },
-  mamom(g, S, T) {
-    // montanha de ouro brilhando
-    g.save(); g.globalCompositeOperation = 'screen'; brilho(g, 0, -S * 0.1, S * 0.9, '255,200,90', 0.45); g.restore();
-    g.fillStyle = '#2A1A04'; g.beginPath(); g.moveTo(-S * 0.8, 0); g.quadraticCurveTo(0, -S * 0.5, S * 0.8, 0); g.fill();
-    g.save(); g.globalCompositeOperation = 'screen'; for (let i = 0; i < 40; i++) { const x = (hash(i, 1, 3) - 0.5) * S * 1.3, y = -hash(i, 2, 3) * S * 0.3 * (1 - Math.abs(x) / S), a = 0.4 + 0.6 * Math.abs(Math.sin(T * 2 + i)); g.fillStyle = `rgba(255,214,110,${a})`; g.fillRect(x, y, 2, 2); } g.restore();
-    // a figura sentada, curvada, com coroa
-    g.fillStyle = '#060402';
-    g.beginPath(); g.moveTo(-S * 0.3, -S * 0.25); g.quadraticCurveTo(-S * 0.38, -S * 0.75, -S * 0.08, -S * 0.86); g.quadraticCurveTo(S * 0.3, -S * 0.82, S * 0.34, -S * 0.25); g.closePath(); g.fill();
-    g.beginPath(); g.ellipse(-S * 0.02, -S * 0.9, S * 0.1, S * 0.1, 0, 0, TAU); g.fill();
-    g.beginPath(); g.moveTo(-S * 0.1, -S * 0.96); for (let i = 0; i <= 4; i++) g.lineTo(-S * 0.1 + i * S * 0.05, -S * (i % 2 ? 1.02 : 1.1)); g.lineTo(S * 0.1, -S * 0.96); g.fill();
-    for (const sd of [-1, 1]) { g.beginPath(); g.moveTo(sd * S * 0.28, -S * 0.6); g.quadraticCurveTo(sd * S * 0.55, -S * 0.4, sd * S * 0.48, -S * 0.12); g.lineWidth = S * 0.05; g.strokeStyle = '#060402'; g.stroke(); }
-    olhos(g, -S * 0.02, -S * 0.9, S * 0.035, S * 0.012, '255,214,110');
-  },
-  procrastinacao(g, S, T) {
-    // relógio enorme, rachado
-    g.save(); g.globalCompositeOperation = 'screen'; brilho(g, S * 0.15, -S * 0.75, S * 0.6, '170,210,230', 0.25); g.restore();
-    g.fillStyle = '#C8C4B8'; g.beginPath(); g.arc(S * 0.15, -S * 0.75, S * 0.42, 0, TAU); g.fill();
-    g.strokeStyle = '#1A1A20'; g.lineWidth = S * 0.02; g.stroke();
-    g.fillStyle = '#1A1A20'; g.font = `${Math.round(S * 0.06)}px Cinzel, serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
-    ['XII', 'III', 'VI', 'IX'].forEach((n, i) => { const a = -Math.PI / 2 + i * Math.PI / 2; g.fillText(n, S * 0.15 + Math.cos(a) * S * 0.33, -S * 0.75 + Math.sin(a) * S * 0.33); });
-    g.lineCap = 'round'; g.lineWidth = S * 0.018; g.beginPath(); g.moveTo(S * 0.15, -S * 0.75); g.lineTo(S * 0.15 + Math.cos(T * 0.05) * S * 0.2, -S * 0.75 + Math.sin(T * 0.05) * S * 0.2); g.stroke();
-    g.lineWidth = S * 0.01; g.beginPath(); g.moveTo(S * 0.15, -S * 0.75); g.lineTo(S * 0.15 + Math.cos(T * 0.6) * S * 0.3, -S * 0.75 + Math.sin(T * 0.6) * S * 0.3); g.stroke();
-    g.strokeStyle = 'rgba(30,30,36,.6)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(S * 0.3, -S * 1.12); g.lineTo(S * 0.2, -S * 0.9); g.lineTo(S * 0.28, -S * 0.75); g.stroke();
-    // a sombra deitada, apoiada no relógio
-    g.fillStyle = '#05060A'; g.beginPath(); g.moveTo(-S * 0.7, 0); g.quadraticCurveTo(-S * 0.6, -S * 0.42, -S * 0.25, -S * 0.42); g.quadraticCurveTo(S * 0.1, -S * 0.3, S * 0.5, 0); g.fill();
-    g.beginPath(); g.ellipse(-S * 0.5, -S * 0.42, S * 0.11, S * 0.1, 0, 0, TAU); g.fill();
-    olhos(g, -S * 0.5, -S * 0.42, S * 0.035, S * 0.012, '150,210,230', true);
-  },
-  mentira(g, S, T) {
-    for (const [ox, a] of [[-S * 0.55, 0.35], [S * 0.55, 0.35], [0, 1]]) {
-      g.save(); g.translate(ox, 0); g.globalAlpha *= a;
-      g.fillStyle = '#05030A'; g.beginPath(); g.moveTo(-S * 0.08, -S * 0.86); g.quadraticCurveTo(-S * 0.26, -S * 0.3, -S * 0.22, 0); g.lineTo(S * 0.22, 0); g.quadraticCurveTo(S * 0.26, -S * 0.3, S * 0.08, -S * 0.86); g.fill();
-      g.beginPath(); g.ellipse(0, -S * 0.93, S * 0.09, S * 0.1, 0, 0, TAU); g.fill();
-      // máscara branca sorrindo: a única coisa iluminada
-      g.fillStyle = '#ECE6DA'; g.beginPath(); g.moveTo(-S * 0.065, -S * 0.99); g.quadraticCurveTo(0, -S * 1.03, S * 0.065, -S * 0.99); g.quadraticCurveTo(S * 0.07, -S * 0.88, 0, -S * 0.85); g.quadraticCurveTo(-S * 0.07, -S * 0.88, -S * 0.065, -S * 0.99); g.fill();
-      g.fillStyle = '#05030A'; for (const sd of [-1, 1]) { g.beginPath(); g.ellipse(sd * S * 0.025, -S * 0.95, S * 0.014, S * 0.006, sd * 0.3, 0, TAU); g.fill(); }
-      g.strokeStyle = '#05030A'; g.lineWidth = 1.6; g.beginPath(); g.arc(0, -S * 0.915, S * 0.03, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke();
-      g.restore();
+// Cada chefe é uma sombra com a forma do chefe do jogo: o corpo fica no escuro, tingido da sua cor, com um fio de luz
+// na borda virada para a luz da cena; só o que o define acende (a máscara, a coroa, o olho, a fechadura).
+// Medidas em unidades de S (a altura do chefe): o chão é y = 0 e a cabeça fica perto de y = -1.
+function U(g, S) {
+  const caminho = pts => { g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x * S, y * S) : g.moveTo(x * S, y * S)); };
+  return {
+    el(x, y, rx, ry, rot = 0) { g.beginPath(); g.ellipse(x * S, y * S, Math.max(0.5, rx * S), Math.max(0.5, ry * S), rot, 0, TAU); g.fill(); },
+    pl(...pts) { caminho(pts); g.closePath(); g.fill(); },
+    ln(pts, w) { g.lineWidth = Math.max(1, w * S); g.lineCap = 'round'; g.lineJoin = 'round'; caminho(pts); g.stroke(); },
+    q(x0, y0, cx, cy, x1, y1, w) { g.lineWidth = Math.max(1, w * S); g.lineCap = 'round'; g.beginPath(); g.moveTo(x0 * S, y0 * S); g.quadraticCurveTo(cx * S, cy * S, x1 * S, y1 * S); g.stroke(); },
+    vg(c1, c2, y0 = -1, y1 = 0) { const l = g.createLinearGradient(0, y0 * S, 0, y1 * S); l.addColorStop(0, c1); l.addColorStop(1, c2); return l; },
+    rg(x, y, r, c1, c2) { const l = g.createRadialGradient(x * S, y * S, 0, x * S, y * S, r * S); l.addColorStop(0, c1); l.addColorStop(1, c2); return l; }
+  };
+}
+function acende(g, f) { g.save(); g.globalCompositeOperation = 'screen'; f(); g.restore(); }
+const BUFS = [];
+function buf(i, W, H) { const c = BUFS[i] || (BUFS[i] = document.createElement('canvas')); if (c.width < W || c.height < H) { c.width = Math.max(c.width, W); c.height = Math.max(c.height, H); } const x = c.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-over'; x.globalAlpha = 1; x.clearRect(0, 0, c.width, c.height); return [c, x]; }
+// pinta a sombra num quadro à parte, faz dela uma cópia cor da luz e põe a cópia um pouco deslocada para a luz, atrás
+function sombraComLuz(g, S, T, luz, def) {
+  const W = Math.ceil(S * 3.4), H = Math.ceil(S * 1.6), ox = Math.round(W / 2), oy = Math.round(S * 1.35);
+  const [a, ax] = buf(0, W, H); ax.translate(ox, oy); def.forma(ax, S, T, U(ax, S));
+  const [b, bx] = buf(1, W, H); bx.drawImage(a, 0, 0); bx.globalCompositeOperation = 'source-in'; bx.fillStyle = `rgba(${luz.cor || '255,236,200'},.9)`; bx.fillRect(0, 0, b.width, b.height);
+  const d = Math.max(1.5, S * 0.014), ux = luz.ux ?? 0.6, uy = luz.uy ?? -0.8;
+  // junta tudo num terceiro quadro antes de pôr na cena: assim, quando a figura entra esmaecendo, o fio de luz não vaza pelo corpo
+  const [c, cx] = buf(2, W, H); cx.drawImage(b, ux * d, uy * d); cx.drawImage(b, ux * d * 0.5, uy * d * 0.5); cx.drawImage(a, 0, 0);
+  g.drawImage(c, -ox, -oy);
+  def.luz?.(g, S, T, U(g, S));
+}
+
+const CHEFES_FORMA = {
+  // o rei-cofre: manto aberto até o chão, o corpo redondo de ouro cintado de ferro, a máscara de osso e a coroa que flutua
+  mamom: {
+    forma(g, S, T, u) {
+      const bal = Math.sin(T * 1.6) * 0.012;
+      g.fillStyle = u.vg('#2B1A3C', '#08040C', -0.75); u.pl([-0.26, -0.72], [0.26, -0.72], [0.46 + bal, 0], [-0.48 + bal, 0]);
+      for (let i = 0; i < 14; i++) { const x = -0.48 + i * 0.07 + bal; u.pl([x, -0.01], [x + 0.035, 0.025], [x + 0.07, -0.01]); }
+      g.fillStyle = '#0A0A10'; u.el(-0.11, -0.03, 0.06, 0.035); u.el(0.1, -0.03, 0.06, 0.035);
+      g.fillStyle = u.rg(-0.08, -0.6, 0.4, '#6E5218', '#1A1205'); u.el(0, -0.47, 0.32, 0.25);
+      g.save(); g.beginPath(); g.ellipse(0, -0.47 * S, 0.32 * S, 0.25 * S, 0, 0, TAU); g.clip(); g.strokeStyle = 'rgba(10,6,2,.85)';
+      for (const y of [-0.62, -0.54, -0.46, -0.38, -0.3]) u.ln([[-0.4, y], [0.4, y]], 0.012);
+      u.ln([[-0.11, -0.74], [-0.11, -0.2]], 0.016); u.ln([[0.11, -0.74], [0.11, -0.2]], 0.016); g.restore();
+      g.fillStyle = '#20242E'; u.el(-0.27, -0.66, 0.09, 0.065); u.el(0.27, -0.66, 0.09, 0.065);
+      g.strokeStyle = '#120A18'; const r = Math.sin(T * 2) * 0.01;
+      u.q(-0.32, -0.62, -0.46, -0.52, -0.4, -0.4 + r, 0.055); u.q(0.32, -0.62, 0.46, -0.52, 0.4, -0.4 - r, 0.055);
+      g.fillStyle = '#D8D0BC'; for (const sd of [-1, 1]) for (let k = -1; k <= 1; k++) u.el(sd * 0.4 + k * 0.018, -0.37 + r * sd, 0.009, 0.022);
+      g.fillStyle = '#120A18'; u.el(0, -0.71, 0.05, 0.03);
+    },
+    luz(g, S, T, u) {
+      const p = 0.55 + 0.45 * Math.abs(Math.sin(T * 1.7)); acende(g, () => brilho(g, 0, -0.47 * S, S * 0.12, '255,200,90', 0.5 * p));
+      g.fillStyle = `rgba(255,214,110,${0.6 + 0.4 * p})`; u.el(0, -0.5, 0.018, 0.018); u.pl([-0.012, -0.49], [0.012, -0.49], [0.02, -0.44], [-0.02, -0.44]);
+      for (const sd of [-1, 1]) { const pend = Math.sin(T * 3 + sd) * 0.02; g.strokeStyle = 'rgba(200,160,70,.8)'; g.setLineDash([2, 3]); u.ln([[sd * 0.4, -0.36], [sd * 0.4 + pend, -0.24]], 0.006); g.setLineDash([]); g.fillStyle = '#D9A63C'; u.el(sd * 0.4 + pend, -0.22, 0.026, 0.026); }
+      g.fillStyle = u.vg('#F1EBDA', '#A9A290', -0.88, -0.74); u.el(0, -0.81, 0.07, 0.075); g.fillStyle = '#1A1210'; u.el(-0.027, -0.82, 0.02, 0.016); u.el(0.027, -0.82, 0.02, 0.016); u.pl([-0.03, -0.765], [0.03, -0.765], [0.02, -0.75], [-0.02, -0.75]);
+      olhos(g, 0, -0.82 * S, 0.027 * S, 0.006 * S, '255,210,63');
+      const cb = Math.sin(T * 2.4) * 0.012; g.fillStyle = '#D9A63C'; u.pl([-0.07, -0.92 + cb], [0.07, -0.92 + cb], [0.075, -1.0 + cb], [0.04, -0.95 + cb], [0, -1.02 + cb], [-0.04, -0.95 + cb], [-0.075, -1.0 + cb]);
+      g.fillStyle = '#D0465A'; u.el(0, -0.94 + cb, 0.012, 0.012); acende(g, () => brilho(g, 0, (-0.96 + cb) * S, S * 0.1, '255,200,90', 0.35));
+      for (let i = 0; i < 4; i++) { const a = T * 1.3 + i * 1.57, z = Math.sin(a); if (z < -0.2) continue; g.fillStyle = `rgba(232,190,90,${0.5 + z * 0.5})`; u.el(Math.cos(a) * 0.52, -0.52 + z * 0.07, 0.024, 0.026 - Math.abs(Math.cos(a * 2)) * 0.012); }
     }
-    fumacaBase(g, 0, 0, S * 1.4, T, '#0A0612');
   },
-  imoralidade(g, S, T) {
-    g.save(); g.globalCompositeOperation = 'screen'; brilho(g, 0, -S * 0.5, S * 0.9, '230,90,140', 0.35); g.restore();
-    g.fillStyle = '#0A0206';
-    for (let i = 0; i < 5; i++) { g.beginPath(); g.ellipse(Math.sin(T * 0.8 + i) * S * 0.04, -i * S * 0.12, S * (0.4 - i * 0.05), S * 0.08, 0, 0, TAU); g.fill(); }
-    g.beginPath(); g.moveTo(-S * 0.08, -S * 0.5); g.quadraticCurveTo(-S * 0.12, -S * 0.85, 0, -S * 0.95); g.quadraticCurveTo(S * 0.12, -S * 0.85, S * 0.08, -S * 0.5); g.fill();
-    // véu translúcido
-    g.save(); g.globalAlpha = 0.35; g.fillStyle = '#E87AA0'; g.beginPath(); g.moveTo(-S * 0.14, -S * 0.98); g.quadraticCurveTo(-S * 0.4, -S * 0.5, -S * 0.3 + Math.sin(T) * S * 0.03, -S * 0.2); g.lineTo(S * 0.3 + Math.sin(T + 1) * S * 0.03, -S * 0.2); g.quadraticCurveTo(S * 0.4, -S * 0.5, S * 0.14, -S * 0.98); g.fill(); g.restore();
-    olhos(g, 0, -S * 0.86, S * 0.03, S * 0.01, '255,150,190');
+  // a preguiça: um corpo mole e verde deitado numa poça, de touca de dormir, ao lado da ampulheta
+  procrastinacao: {
+    forma(g, S, T, u) {
+      const resp = Math.sin(T * 1.1) * 0.012;
+      g.fillStyle = '#140C20'; u.el(0.02, -0.02, 0.56, 0.06);
+      g.fillStyle = '#2A1C12'; u.pl([-0.6, -0.9], [-0.36, -0.9], [-0.36, -0.86], [-0.6, -0.86]); u.pl([-0.6, -0.08], [-0.36, -0.08], [-0.36, -0.04], [-0.6, -0.04]);
+      u.pl([-0.59, -0.86], [-0.57, -0.86], [-0.57, -0.08], [-0.59, -0.08]); u.pl([-0.39, -0.86], [-0.37, -0.86], [-0.37, -0.08], [-0.39, -0.08]);
+      g.fillStyle = 'rgba(30,40,46,.85)'; u.pl([-0.56, -0.86], [-0.4, -0.86], [-0.48, -0.47], [-0.4, -0.08], [-0.56, -0.08], [-0.48, -0.47]);
+      g.fillStyle = u.rg(-0.1, -0.5, 0.55, '#3E5A34', '#0E160C'); u.el(-0.04, -0.3, 0.42, 0.28 + resp);
+      g.fillStyle = 'rgba(30,18,40,.55)'; u.el(-0.2, -0.36, 0.05, 0.03); u.el(0.08, -0.2, 0.04, 0.025); u.el(-0.1, -0.14, 0.035, 0.02);
+      g.fillStyle = '#1C2A18'; u.el(0.3, -0.44 + resp, 0.13, 0.11);
+      g.strokeStyle = '#18241A'; u.q(0.36, -0.36, 0.5, -0.3, 0.48, -0.06, 0.05);
+      g.fillStyle = '#2A1C40'; u.pl([0.2, -0.5 + resp], [0.42, -0.53 + resp], [0.24, -0.66], [0.1, -0.76], [0.14, -0.6]);
+      g.fillStyle = '#E8E2D0'; u.el(0.1, -0.77, 0.022, 0.022);
+    },
+    luz(g, S, T, u) {
+      acende(g, () => brilho(g, -0.48 * S, -0.3 * S, S * 0.16, '230,180,90', 0.35));
+      g.fillStyle = 'rgba(232,190,110,.85)'; u.pl([-0.54, -0.82], [-0.42, -0.82], [-0.48, -0.6]); u.pl([-0.48, -0.36], [-0.53, -0.1], [-0.43, -0.1]);
+      const q = (T * 0.9) % 1; g.fillStyle = 'rgba(255,220,140,.9)'; u.el(-0.48, -0.6 + q * 0.5, 0.004, 0.012);
+      olhos(g, 0.33 * S, -0.45 * S, 0.03 * S, 0.008 * S, '170,220,200', true);
+      g.font = `${Math.round(S * 0.07)}px Cinzel, serif`; g.textAlign = 'center';
+      for (let i = 0; i < 3; i++) { const k = (T * 0.3 + i / 3) % 1; g.fillStyle = `rgba(180,215,235,${(1 - k) * 0.8})`; g.fillText('z', (0.42 + k * 0.14 + Math.sin(T + i) * 0.02) * S, (-0.62 - k * 0.3) * S); }
+    }
   },
-  behemote(g, S, T) {
-    const st = Math.sin(T * 1.2) * S * 0.01;
-    g.fillStyle = '#0A0806';
-    for (const lx of [-0.4, -0.18, 0.16, 0.36]) g.fillRect(lx * S - S * 0.06, -S * 0.28 + (lx > 0 ? st : -st), S * 0.12, S * 0.28);
-    g.beginPath(); g.ellipse(0, -S * 0.42, S * 0.62, S * 0.3, 0, 0, TAU); g.fill();
-    for (let i = 0; i < 6; i++) { const px = -S * 0.42 + i * S * 0.16; g.beginPath(); g.moveTo(px - S * 0.07, -S * 0.62); g.lineTo(px, -S * 0.78 - (i % 2) * S * 0.04); g.lineTo(px + S * 0.07, -S * 0.62); g.fill(); }
-    g.beginPath(); g.ellipse(-S * 0.62, -S * 0.44, S * 0.2, S * 0.16, -0.2, 0, TAU); g.fill();
-    g.beginPath(); g.moveTo(-S * 0.72, -S * 0.52); g.quadraticCurveTo(-S * 0.92, -S * 0.78, -S * 0.78, -S * 0.9); g.quadraticCurveTo(-S * 0.82, -S * 0.7, -S * 0.66, -S * 0.56); g.fill();
-    g.lineWidth = S * 0.06; g.strokeStyle = '#0A0806'; g.lineCap = 'round'; g.beginPath(); g.moveTo(S * 0.58, -S * 0.46); g.quadraticCurveTo(S * 0.85, -S * 0.6 + st * 3, S * 0.8, -S * 0.86); g.stroke();
-    olhos(g, -S * 0.66, -S * 0.46, S * 0.04, S * 0.012, '255,140,60');
-    fumacaBase(g, 0, 0, S * 1.6, T, '#3A2414');
+  // a mentira: um manto de capuz roxo com franja e uma máscara redonda; ao lado, as cópias que ela faz de si
+  mentira: {
+    forma(g, S, T, u) { manto(g, S, T, u, 0, 1); },
+    luz(g, S, T, u) {
+      // as cópias (a mentira se multiplica) ficam meio apagadas, sem o fio de luz
+      g.save(); g.globalAlpha *= 0.32; manto(g, S, T, u, -0.5); manto(g, S, T, u, 0.5); g.restore();
+      for (const [ox, a] of [[-0.5, 0.35], [0.5, 0.35], [0, 1]]) {
+        g.save(); g.globalAlpha *= a; g.translate(ox * S, Math.sin(T * 1.4 + ox * 3) * 0.01 * S);
+        g.fillStyle = '#ECE6DA'; u.el(0, -0.83, 0.06, 0.065);
+        g.fillStyle = '#05030A'; u.el(-0.022, -0.85, 0.012, 0.006, -0.3); u.el(0.022, -0.85, 0.012, 0.006, 0.3);
+        g.strokeStyle = '#05030A'; g.lineWidth = 1.6; g.beginPath(); g.arc(0, -0.82 * S, 0.03 * S, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke();
+        g.fillStyle = 'rgba(200,40,60,.85)'; u.pl([0.02, -0.84], [0.03, -0.84], [0.028, -0.8]);
+        g.restore();
+      }
+      fumacaBase(g, 0, 0, S * 1.3, T, '#0A0612');
+    }
   },
-  leviata(g, S, T) {
-    g.fillStyle = '#02070A';
-    for (let i = 0; i < 4; i++) { const x = S * (0.7 - i * 0.42), h = S * (0.25 + i * 0.05); g.beginPath(); g.ellipse(x, Math.sin(T * 1.4 + i) * S * 0.03, h * 0.9, h, 0, Math.PI, 0); g.fill(); }
-    // pescoço e cabeça subindo do mar
-    g.beginPath(); g.moveTo(-S * 0.5, 0); g.quadraticCurveTo(-S * 0.55, -S * 0.7, -S * 0.2, -S * 1.0); g.quadraticCurveTo(S * 0.05, -S * 1.08, S * 0.08, -S * 0.92); g.quadraticCurveTo(-S * 0.18, -S * 0.75, -S * 0.22, 0); g.fill();
-    g.save(); g.globalCompositeOperation = 'screen'; for (let i = 0; i < 7; i++) { const k = i / 6; g.fillStyle = `rgba(94,209,232,${0.5 - k * 0.3})`; g.beginPath(); g.moveTo(-S * (0.5 - k * 0.25), -S * (0.1 + k * 0.8)); g.lineTo(-S * (0.62 - k * 0.25), -S * (0.18 + k * 0.82)); g.lineTo(-S * (0.48 - k * 0.25), -S * (0.2 + k * 0.8)); g.fill(); } g.restore();
-    olhos(g, -S * 0.08, -S * 0.98, S * 0.03, S * 0.012, '127,240,255');
+  // a imoralidade: véu e manto vermelhos, a taça dourada erguida e a cauda de serpente saindo da barra
+  imoralidade: {
+    forma(g, S, T, u) {
+      const c = Math.sin(T * 1.8) * 0.02;
+      g.strokeStyle = '#0E2414'; u.q(-0.12, -0.04, -0.34, 0.0, -0.44 + c, -0.08, 0.05); g.fillStyle = '#0E2414'; u.pl([-0.44 + c, -0.1], [-0.5 + c, -0.13], [-0.45 + c, -0.05]);
+      g.fillStyle = u.vg('#5A1426', '#12040A', -0.95); u.pl([-0.02, -0.96], [0.08, -0.9], [0.12, -0.7], [0.24, 0], [-0.26, 0], [-0.13, -0.7], [-0.1, -0.88]);
+      g.fillStyle = '#3A0C18'; u.pl([-0.02, -0.96], [0.1, -0.86], [0.04, -0.8], [-0.12, -0.84]);
+      g.strokeStyle = '#2A0810'; u.q(0.1, -0.7, 0.22, -0.7, 0.28, -0.76, 0.045);
+      g.fillStyle = '#05020A'; u.el(0.02, -0.84, 0.05, 0.055);
+    },
+    luz(g, S, T, u) {
+      acende(g, () => brilho(g, 0, -0.5 * S, S * 0.6, '230,90,140', 0.2));
+      g.fillStyle = '#D9A63C'; u.pl([0.25, -0.86], [0.33, -0.86], [0.3, -0.8], [0.29, -0.76], [0.31, -0.74], [0.27, -0.74], [0.29, -0.76], [0.28, -0.8]);
+      acende(g, () => brilho(g, 0.29 * S, -0.84 * S, S * 0.09, '255,190,90', 0.6));
+      g.fillStyle = 'rgba(200,40,90,.9)'; u.el(0.29, -0.855, 0.03, 0.008);
+      g.fillStyle = 'rgba(217,166,60,.8)'; u.pl([-0.15, -0.5], [0.15, -0.5], [0.15, -0.485], [-0.15, -0.485]);
+      olhos(g, 0.02 * S, -0.85 * S, 0.022 * S, 0.007 * S, '255,150,190');
+    }
   },
-  golias(g, S, T, luz) {
-    pessoaCine(g, 0, 0, S * 1.1, { tunic: '#4A3E2E', cape: '#2E2A26', beard: true, style: 'curto' }, { t: T }, luz || { x: 480, y: 0, cor: '255,236,200' });
-    g.fillStyle = '#06050A';
-    g.beginPath(); g.ellipse(0, -S * 1.1 * 0.93, S * 0.08, S * 0.07, 0, Math.PI, 0); g.fill(); // elmo
-    g.fillRect(-S * 0.01, -S * 1.12, S * 0.02, S * 0.09);
-    g.lineWidth = S * 0.025; g.strokeStyle = '#06050A'; g.beginPath(); g.moveTo(S * 0.22, -S * 1.25); g.lineTo(S * 0.26, 0); g.stroke(); // lança
-    g.beginPath(); g.moveTo(S * 0.21, -S * 1.25); g.lineTo(S * 0.225, -S * 1.36); g.lineTo(S * 0.24, -S * 1.25); g.fill();
-    g.beginPath(); g.arc(-S * 0.2, -S * 0.55, S * 0.12, 0, TAU); g.fill(); // escudo
+  // o acusador: uma asa de morcego e outra de penas claras, o corpo partido ao meio — o que se disfarça de anjo de luz (2Co 11:14)
+  satanas: {
+    forma(g, S, T, u) {
+      const ab = Math.sin(T * 0.8) * 0.03;
+      g.save(); g.rotate(-ab); g.fillStyle = '#050207'; g.beginPath(); g.moveTo(-0.08 * S, -0.72 * S); g.quadraticCurveTo(-0.5 * S, -1.2 * S, -1.0 * S, -0.98 * S);
+      for (const [px, py] of [[-0.92, -0.78], [-0.94, -0.6], [-0.74, -0.58], [-0.76, -0.36], [-0.56, -0.4], [-0.56, -0.18], [-0.38, -0.28], [-0.18, -0.5]]) g.lineTo(px * S, (py + Math.sin(T * 1.2 + px * 5) * 0.01) * S);
+      g.closePath(); g.fill(); g.strokeStyle = '#1A1020'; for (const [x, y] of [[-0.94, -0.6], [-0.76, -0.36], [-0.56, -0.18]]) u.ln([[-0.1, -0.74], [x, y]], 0.008); g.restore();
+      g.save(); g.rotate(ab); g.fillStyle = '#2E2A26'; g.beginPath(); g.moveTo(0.08 * S, -0.72 * S); g.quadraticCurveTo(0.5 * S, -1.12 * S, 0.95 * S, -0.92 * S);
+      for (let i = 0; i <= 6; i++) { const k = i / 6; g.lineTo((0.95 - k * 0.7) * S, (-0.92 + k * 0.62 + (i % 2) * 0.06) * S); }
+      g.closePath(); g.fill(); g.restore();
+      g.fillStyle = u.vg('#0A060C', '#030204', -0.9); u.pl([-0.09, -0.86], [0.09, -0.86], [0.2, -0.3], [0.26, 0], [-0.26, 0], [-0.2, -0.3]);
+      u.el(0, -0.9, 0.075, 0.085);
+      g.beginPath(); g.moveTo(-0.04 * S, -0.96 * S); g.quadraticCurveTo(-0.16 * S, -1.1 * S, -0.1 * S, -1.24 * S); g.quadraticCurveTo(-0.08 * S, -1.08 * S, 0.0, -0.98 * S); g.fill();
+      g.beginPath(); g.moveTo(0.04 * S, -0.96 * S); g.quadraticCurveTo(0.12 * S, -1.04 * S, 0.1 * S, -1.12 * S); g.quadraticCurveTo(0.07 * S, -1.04 * S, 0.0, -0.98 * S); g.fill();
+    },
+    luz(g, S, T, u) {
+      const ab = Math.sin(T * 0.8) * 0.03;
+      g.save(); g.rotate(ab); g.globalAlpha = 0.75; g.strokeStyle = 'rgba(232,222,196,.85)';
+      for (let i = 0; i <= 6; i++) { const k = i / 6; u.q(0.12, -0.72, 0.4 + k * 0.1, -0.9 + k * 0.3, 0.95 - k * 0.7, -0.92 + k * 0.62, 0.012); }
+      acende(g, () => brilho(g, 0.5 * S, -0.75 * S, S * 0.35, '240,230,200', 0.25)); g.restore();
+      g.save(); g.beginPath(); g.rect(0, -1.3 * S, S, 1.4 * S); g.clip(); g.fillStyle = 'rgba(214,206,186,.82)'; u.pl([-0.09, -0.86], [0.09, -0.86], [0.2, -0.3], [0.26, 0], [-0.26, 0], [-0.2, -0.3]); u.el(0, -0.9, 0.06, 0.07); g.restore();
+      g.fillStyle = 'rgba(60,40,20,.6)'; u.pl([-0.004, -0.86], [0.004, -0.86], [0.004, 0], [-0.004, 0]);
+      olhos(g, 0, -0.91 * S, 0.026 * S, 0.008 * S, '255,70,30');
+      fumacaBase(g, 0, 0, S * 0.9, T);
+      acende(g, () => { for (let k = 0; k < 18; k++) { const dd = (T * 0.2 + k / 18) % 1; g.fillStyle = `rgba(255,${90 + k * 6},30,${(1 - dd) * 0.9})`; g.beginPath(); g.arc(Math.sin(k * 7 + T) * S * 0.5, -dd * S * 1.2, 1.6, 0, TAU); g.fill(); } });
+    }
   },
-  pecado(g, S, T) {
-    g.fillStyle = 'rgba(0,0,0,.96)'; sombraFumaca(g, 0, 0, S, T);
-    olhos(g, 0, -S * 0.72, S * 0.03, S * 0.008, '255,40,60');
+  // a fuga (Jonas): um vulto de capuz que corre, agarrado a uma vela de barco enfunada atrás dele
+  fuga: {
+    forma(g, S, T, u) {
+      const p = Math.sin(T * 6) * 0.04, v = Math.sin(T * 2) * 0.03;
+      g.fillStyle = '#2A251C'; u.pl([0.0, -0.82], [-0.5 + v, -0.6], [-0.56 + v, -0.3], [-0.04, -0.4]);
+      g.strokeStyle = '#1C140C'; u.ln([[0.02, -0.86], [-0.02, -0.34]], 0.014);
+      g.fillStyle = u.vg('#14383E', '#06121A', -0.95); u.pl([0.06, -0.95], [0.14, -0.78], [0.16, -0.42], [-0.08, -0.42], [-0.06, -0.78]);
+      g.strokeStyle = '#0C1E26'; u.ln([[0.0, -0.44], [-0.06 - p, -0.2], [-0.1 - p, -0.02]], 0.05); u.ln([[0.08, -0.44], [0.14 + p, -0.2], [0.18 + p, -0.02]], 0.05);
+      g.fillStyle = '#0A0A10'; u.el(-0.1 - p, -0.01, 0.05, 0.02); u.el(0.2 + p, -0.01, 0.05, 0.02);
+      g.fillStyle = '#081A20'; u.el(0.06, -0.85, 0.07, 0.075); u.pl([0.01, -0.9], [0.06, -1.04], [0.11, -0.9]);
+    },
+    luz(g, S, T, u) {
+      const v = Math.sin(T * 2) * 0.03; g.fillStyle = 'rgba(214,200,170,.38)'; u.pl([0.0, -0.8], [-0.48 + v, -0.6], [-0.53 + v, -0.32], [-0.04, -0.41]);
+      g.fillStyle = 'rgba(200,150,70,.8)'; u.pl([-0.07, -0.62], [0.15, -0.6], [0.15, -0.58], [-0.07, -0.6]);
+      olhos(g, 0.08 * S, -0.85 * S, 0.02 * S, 0.006 * S, '170,240,230');
+    }
   },
-  generico(g, S, T) { g.fillStyle = '#050308'; sombraFumaca(g, 0, 0, S, T); olhos(g, 0, -S * 0.72, S * 0.04, S * 0.012, '255,200,120'); }
+  // o pavor: uma nuvem de tempestade com dentes e olhos amarelos, que chove sobre quem está embaixo
+  pavor: {
+    forma(g, S, T, u) {
+      const f = Math.sin(T * 1.2) * 0.015;
+      g.fillStyle = u.rg(-0.1, -0.85, 0.6, '#3A4256', '#0C0E16');
+      for (const [x, y, r] of [[-0.3, -0.6, 0.2], [0.3, -0.6, 0.2], [-0.14, -0.78, 0.22], [0.15, -0.8, 0.24], [0, -0.62, 0.26], [-0.42, -0.5, 0.12], [0.42, -0.5, 0.12]]) u.el(x, y + f, r, r * 0.85);
+      g.fillStyle = '#0C0E16'; u.pl([-0.44, -0.46 + f], [0.44, -0.46 + f], [0.4, -0.4 + f], [-0.4, -0.4 + f]);
+      g.fillStyle = '#C8CCD8'; for (let i = 0; i < 12; i++) { const x = -0.36 + i * 0.065; u.pl([x, -0.44 + f], [x + 0.05, -0.44 + f], [x + 0.025, -0.39 + f]); }
+    },
+    luz(g, S, T, u) {
+      const f = Math.sin(T * 1.2) * 0.015;
+      g.fillStyle = '#FFD23F'; u.pl([-0.2, -0.66 + f], [-0.06, -0.6 + f], [-0.08, -0.56 + f], [-0.2, -0.6 + f]); u.pl([0.2, -0.66 + f], [0.06, -0.6 + f], [0.08, -0.56 + f], [0.2, -0.6 + f]);
+      acende(g, () => { brilho(g, -0.13 * S, (-0.6 + f) * S, S * 0.08, '255,210,63', 0.6); brilho(g, 0.13 * S, (-0.6 + f) * S, S * 0.08, '255,210,63', 0.6); });
+      g.strokeStyle = 'rgba(170,190,220,.55)'; g.lineWidth = 1.2; g.beginPath();
+      for (let i = 0; i < 16; i++) { const x = -0.4 + ((i * 37) % 80) / 100, k = (T * 1.4 + i * 0.37) % 1, y = -0.36 + k * 0.36; g.moveTo(x * S, y * S); g.lineTo((x - 0.01) * S, (y + 0.05) * S); }
+      g.stroke();
+      if (Math.sin(T * 0.9) > 0.97) acende(g, () => { g.strokeStyle = 'rgba(230,240,255,.9)'; u.ln([[0.1, -0.5], [0.05, -0.34], [0.12, -0.3], [0.04, -0.08]], 0.01); brilho(g, 0, -0.6 * S, S * 0.6, '200,220,255', 0.3); });
+    }
+  },
+  // o desespero: corpo listrado de verde-mar, coroa de algas, braços compridos e uma isca de luz pendurada na testa
+  desespero: {
+    forma(g, S, T, u) {
+      const o = Math.sin(T * 1.5) * 0.02;
+      g.strokeStyle = '#0A221E'; for (const [x1, c] of [[-0.42, -0.22], [-0.24, -0.1], [0.24, 0.1], [0.42, 0.22]]) u.q(0, -0.2, c, -0.02, x1 + o, -0.02, 0.04);
+      g.fillStyle = u.vg('#1A4A44', '#06161A', -0.85, -0.1); u.el(0, -0.46, 0.17, 0.27);
+      g.fillStyle = 'rgba(4,14,16,.7)'; for (const y of [-0.6, -0.5, -0.4, -0.3]) u.el(0, y, 0.165, 0.018);
+      g.strokeStyle = '#0C2A26'; u.q(-0.15, -0.62, -0.3, -0.45, -0.24, -0.16 + o, 0.04); u.q(0.15, -0.62, 0.3, -0.45, 0.24, -0.16 - o, 0.04);
+      g.fillStyle = '#0E302C'; u.el(0, -0.78, 0.11, 0.1);
+      for (let i = -2; i <= 2; i++) u.pl([i * 0.045 - 0.02, -0.84], [i * 0.045 + Math.sin(T * 2 + i) * 0.01, -0.98 - (i % 2 ? 0 : 0.04)], [i * 0.045 + 0.02, -0.84]);
+      g.strokeStyle = '#0E302C'; u.q(0.06, -0.86, 0.2, -1.05, 0.24 + o, -0.94, 0.012);
+    },
+    luz(g, S, T, u) {
+      const o = Math.sin(T * 1.5) * 0.02, x = 0.24 + o, y = -0.92 + Math.sin(T * 2.3) * 0.01;
+      acende(g, () => brilho(g, x * S, y * S, S * 0.16, '180,240,255', 0.7)); g.fillStyle = '#E8FCFF'; u.el(x, y, 0.018, 0.018);
+      olhos(g, 0, -0.79 * S, 0.035 * S, 0.008 * S, '170,240,230', true);
+    }
+  },
+  // a violência: guerreiro barrigudo de elmo, a maça de espinhos lá no alto e o escudo redondo
+  violencia: {
+    forma(g, S, T, u) {
+      const m = Math.sin(T * 1.6) * 0.03;
+      g.fillStyle = '#100A08'; u.pl([-0.14, -0.3], [-0.06, -0.3], [-0.06, -0.04], [-0.14, -0.04]); u.pl([0.06, -0.3], [0.14, -0.3], [0.14, -0.04], [0.06, -0.04]);
+      u.el(-0.11, -0.02, 0.07, 0.03); u.el(0.11, -0.02, 0.07, 0.03);
+      g.fillStyle = '#3A0E0C'; u.pl([-0.2, -0.36], [0.2, -0.36], [0.24, -0.24], [-0.24, -0.24]);
+      g.fillStyle = u.rg(-0.05, -0.56, 0.3, '#4A3420', '#140C06'); u.el(0, -0.5, 0.2, 0.17);
+      g.strokeStyle = '#1C120A'; u.q(-0.16, -0.6, -0.26, -0.78, -0.12 + m, -0.92, 0.05);
+      g.strokeStyle = '#120C08'; u.ln([[-0.12 + m, -0.92], [-0.08 + m, -1.06]], 0.02); g.fillStyle = '#1A1C22'; u.el(-0.07 + m, -1.08, 0.055, 0.055);
+      for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; u.pl([-0.07 + m + Math.cos(a) * 0.05, -1.08 + Math.sin(a) * 0.05], [-0.07 + m + Math.cos(a) * 0.085, -1.08 + Math.sin(a) * 0.085], [-0.07 + m + Math.cos(a + 0.3) * 0.05, -1.08 + Math.sin(a + 0.3) * 0.05]); }
+      g.fillStyle = '#16181E'; u.el(0, -0.74, 0.085, 0.085); u.pl([-0.09, -0.74], [0.09, -0.74], [0.08, -0.66], [-0.08, -0.66]);
+      g.fillStyle = '#20232C'; u.el(0.22, -0.5, 0.13, 0.15);
+    },
+    luz(g, S, T, u) {
+      g.strokeStyle = 'rgba(180,190,210,.6)'; g.lineWidth = 1.5; g.beginPath(); g.ellipse(0.22 * S, -0.5 * S, 0.12 * S, 0.14 * S, 0, -1.9, -0.2); g.stroke();
+      g.fillStyle = 'rgba(200,170,90,.9)'; u.el(0.22, -0.5, 0.022, 0.022);
+      g.fillStyle = 'rgba(30,20,12,1)'; u.pl([-0.07, -0.73], [0.07, -0.73], [0.07, -0.71], [-0.07, -0.71]);
+      olhos(g, 0, -0.75 * S, 0.03 * S, 0.008 * S, '255,90,50');
+    }
+  },
+  // o ressentimento: um verme de anéis que se enrola e sobe, com um galho torto de bandeirolas (as contas que ele guarda)
+  ressentimento: {
+    forma(g, S, T, u) {
+      const o = Math.sin(T * 1.3) * 0.02;
+      g.strokeStyle = '#1E160E'; u.q(-0.34, 0, -0.38, -0.5, -0.2, -0.86, 0.03); u.ln([[-0.2, -0.86], [-0.04, -0.92]], 0.025);
+      g.fillStyle = '#1E160E'; for (const [x, y] of [[-0.36, -0.2], [-0.34, -0.46], [-0.28, -0.68], [-0.12, -0.9]]) u.pl([x, y], [x - 0.08, y - 0.02], [x - 0.04, y + 0.05]);
+      const seg = []; for (let i = 0; i <= 14; i++) { const k = i / 14; seg.push([0.16 - Math.sin(k * 3.2) * 0.14 + (k > 0.7 ? o : 0), -0.05 - k * 0.82]); }
+      for (const [i, [x, y]] of seg.entries()) { g.fillStyle = i % 2 ? '#3A2C22' : '#2A2018'; u.el(x, y, 0.11 - i * 0.002, 0.06); }
+      g.fillStyle = '#2A2018'; u.el(0.16, -0.04, 0.2, 0.06);
+      const [hx, hy] = seg[14]; g.fillStyle = '#3A2C22'; u.el(hx + 0.03, hy - 0.04, 0.1, 0.07);
+    },
+    luz(g, S, T, u) {
+      g.fillStyle = 'rgba(170,150,70,.75)'; for (const [x, y] of [[-0.36, -0.2], [-0.34, -0.46], [-0.28, -0.68], [-0.12, -0.9]]) u.pl([x, y], [x - 0.08, y - 0.02], [x - 0.04, y + 0.05]);
+      const o = Math.sin(T * 1.3) * 0.02, hx = 0.16 - Math.sin(3.2) * 0.14 + o + 0.03, hy = -0.91;
+      olhos(g, (hx + 0.03) * S, hy * S, 0.025 * S, 0.008 * S, '255,120,80');
+    }
+  },
+  // os encantadores do Egito: chapéu alto de estrelas, barba, o cajado de estrela numa mão e o rolo na outra
+  encantadores: {
+    forma(g, S, T, u) {
+      g.fillStyle = u.vg('#1A2250', '#060818', -0.8); u.pl([-0.1, -0.7], [0.1, -0.7], [0.18, 0], [-0.18, 0]);
+      g.fillStyle = '#0C1030'; u.pl([-0.09, -0.74], [0.09, -0.74], [0.02, -1.08]); u.el(0, -0.74, 0.12, 0.025);
+      g.fillStyle = '#0A0C1C'; u.el(0, -0.68, 0.06, 0.06);
+      g.fillStyle = '#B8B4A8'; u.pl([-0.05, -0.65], [0.05, -0.65], [0.0, -0.48]);
+      g.strokeStyle = '#2A1C10'; u.ln([[-0.22, -0.92], [-0.24, 0]], 0.016);
+      g.strokeStyle = '#0E1232'; u.q(-0.08, -0.6, -0.16, -0.52, -0.22, -0.56, 0.04); u.q(0.08, -0.6, 0.18, -0.5, 0.22, -0.52, 0.04);
+      g.fillStyle = '#C8C0A8'; u.pl([0.2, -0.6], [0.28, -0.6], [0.28, -0.5], [0.2, -0.5]);
+    },
+    luz(g, S, T, u) {
+      const tw = 0.6 + 0.4 * Math.sin(T * 4); acende(g, () => brilho(g, -0.22 * S, -0.95 * S, S * 0.12, '255,230,150', 0.7 * tw));
+      g.fillStyle = '#FFE9A8'; for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + T; u.pl([-0.22, -0.95], [-0.22 + Math.cos(a) * 0.05, -0.95 + Math.sin(a) * 0.05], [-0.22 + Math.cos(a + 0.4) * 0.015, -0.95 + Math.sin(a + 0.4) * 0.015]); }
+      g.fillStyle = 'rgba(217,166,60,.9)'; u.pl([-0.11, -0.75], [0.11, -0.75], [0.11, -0.735], [-0.11, -0.735]);
+      for (let i = 0; i < 7; i++) { const x = (hash(i, 4, 1) - 0.5) * 0.28, y = -0.1 - hash(i, 5, 1) * 0.55; g.fillStyle = `rgba(255,233,168,${0.3 + 0.5 * Math.abs(Math.sin(T * 2 + i))})`; u.el(x * (1 + y), y, 0.006, 0.006); }
+      g.fillStyle = 'rgba(255,200,90,.7)'; u.el(0.3, -0.58, 0.02, 0.02);
+      olhos(g, 0, -0.69 * S, 0.022 * S, 0.006 * S, '200,220,255');
+    }
+  },
+  // o jugo: uma canga de madeira viva, de pernas curtas, braços de corrente e um broto teimoso em cima
+  jugo: {
+    forma(g, S, T, u) {
+      const b = Math.sin(T * 2) * 0.01;
+      g.fillStyle = '#120C06'; u.pl([-0.2, -0.24], [-0.1, -0.24], [-0.12, 0], [-0.22, 0]); u.pl([0.1, -0.24], [0.2, -0.24], [0.22, 0], [0.12, 0]);
+      g.fillStyle = u.vg('#4A341C', '#160E06', -0.7, -0.2); u.pl([-0.28, -0.66 + b], [0.28, -0.66 + b], [0.3, -0.22], [-0.3, -0.22]);
+      g.strokeStyle = 'rgba(14,8,4,.8)'; for (const y of [-0.56, -0.44, -0.32]) u.ln([[-0.28, y + b], [0.28, y + b]], 0.006);
+      g.fillStyle = '#2A1C0E'; u.pl([-0.42, -0.72 + b], [0.42, -0.72 + b], [0.42, -0.64 + b], [-0.42, -0.64 + b]);
+      g.fillStyle = '#100A06'; u.el(-0.38, -0.66 + b, 0.05, 0.03); u.el(0.38, -0.66 + b, 0.05, 0.03);
+      g.strokeStyle = '#1A1C22'; g.setLineDash([S * 0.02, S * 0.012]); const s1 = Math.sin(T * 1.7) * 0.03;
+      u.q(-0.34, -0.62, -0.42 + s1, -0.4, -0.36 + s1, -0.16, 0.018); u.q(0.34, -0.62, 0.42 - s1, -0.4, 0.36 - s1, -0.16, 0.018); g.setLineDash([]);
+      g.fillStyle = '#1A1C22'; u.el(-0.36 + s1, -0.13, 0.045, 0.045); u.el(0.36 - s1, -0.13, 0.045, 0.045);
+      g.strokeStyle = '#1C2A12'; u.q(0.02, -0.72 + b, 0.0, -0.8, 0.04, -0.86, 0.012);
+    },
+    luz(g, S, T, u) {
+      const b = Math.sin(T * 2) * 0.01;
+      olhos(g, 0, (-0.44 + b) * S, 0.08 * S, 0.012 * S, '120,255,140');
+      g.fillStyle = '#5E9A3A'; u.el(0.07, -0.87, 0.04, 0.018, -0.5); u.el(0.0, -0.84, 0.03, 0.014, 0.6);
+      g.fillStyle = 'rgba(160,170,190,.6)'; u.el(-0.36 + Math.sin(T * 1.7) * 0.03, -0.14, 0.012, 0.012);
+    }
+  },
+  // Babilônia: o zigurate que fala — degraus, rosto no meio, braços de tijolo e a porta azul de Ishtar embaixo
+  babilonia: {
+    forma(g, S, T, u) {
+      g.fillStyle = u.vg('#4A2E1A', '#140A06', -1.0);
+      const deg = [[0.62, 0, -0.26], [0.46, -0.26, -0.48], [0.3, -0.48, -0.66], [0.17, -0.66, -0.8], [0.08, -0.8, -0.9]];
+      for (const [w, y0, y1] of deg) u.pl([-w, y0], [w, y0], [w, y1], [-w, y1]);
+      g.fillStyle = 'rgba(10,6,4,.7)'; for (const [w, y0, y1] of deg) for (let y = y0; y > y1; y -= 0.04) u.pl([-w, y], [w, y], [w, y - 0.004], [-w, y - 0.004]);
+      g.fillStyle = '#2A180E'; u.pl([-0.015, -0.9], [0.015, -0.9], [0, -1.02]);
+      g.strokeStyle = '#2A1A10'; u.q(-0.46, -0.4, -0.68, -0.3, -0.62, -0.1, 0.07); u.q(0.46, -0.4, 0.68, -0.3, 0.62, -0.1, 0.07);
+      g.fillStyle = '#18100A'; u.pl([-0.14, -0.64], [0.14, -0.64], [0.14, -0.5], [-0.14, -0.5]);
+      g.fillStyle = '#04060C'; u.pl([-0.09, 0], [0.09, 0], [0.09, -0.16], [0, -0.22], [-0.09, -0.16]);
+      g.fillStyle = '#1E2E1A'; for (const x of [-0.5, -0.38, 0.38, 0.5]) u.el(x, -0.28, 0.06, 0.035);
+    },
+    luz(g, S, T, u) {
+      g.strokeStyle = 'rgba(70,130,230,.95)'; g.lineWidth = Math.max(2, S * 0.012); g.beginPath(); g.moveTo(-0.095 * S, 0); g.lineTo(-0.095 * S, -0.16 * S); g.lineTo(0, -0.225 * S); g.lineTo(0.095 * S, -0.16 * S); g.lineTo(0.095 * S, 0); g.stroke();
+      acende(g, () => brilho(g, 0, -0.08 * S, S * 0.14, '70,130,230', 0.45));
+      olhos(g, 0, -0.58 * S, 0.065 * S, 0.014 * S, '255,210,63');
+      const fl = 0.04 + Math.abs(Math.sin(T * 7)) * 0.02; g.fillStyle = '#FF9A3C'; u.pl([-0.02, -1.0], [0.02, -1.0], [0, -1.0 - fl]); acende(g, () => brilho(g, 0, -1.02 * S, S * 0.08, '255,154,60', 0.7));
+      for (const [x, y] of [[-0.3, -0.36], [0.3, -0.36], [-0.18, -0.56], [0.18, -0.56]]) { g.fillStyle = `rgba(255,190,90,${0.5 + 0.4 * Math.sin(T * 3 + x * 9)})`; u.el(x, y, 0.008, 0.012); }
+    }
+  },
+  // a fera de Daniel 7: corpo de leão-urso eriçado de espinhos, manta roxa no lombo e coroas na cabeça
+  fera: {
+    forma(g, S, T, u) {
+      const a = Math.sin(T * 3) * 0.015;
+      g.fillStyle = '#120C08'; for (const [x, s] of [[-0.3, 1], [-0.16, -1], [0.12, 1], [0.26, -1]]) u.pl([x - 0.055, -0.36], [x + 0.055, -0.36], [x + 0.045 + s * a, -0.02], [x - 0.045 + s * a, -0.02]);
+      g.fillStyle = u.rg(0, -0.5, 0.45, '#4A3A28', '#140E08'); u.el(-0.02, -0.4, 0.38, 0.2);
+      g.fillStyle = '#100A06'; for (let i = 0; i < 9; i++) { const x = -0.26 + i * 0.06; u.pl([x - 0.03, -0.56], [x + Math.sin(T * 2 + i) * 0.008, -0.72 - (i % 3) * 0.04], [x + 0.03, -0.56]); }
+      g.fillStyle = '#2A1440'; u.pl([-0.2, -0.56], [0.12, -0.56], [0.14, -0.38], [-0.22, -0.38]);
+      g.fillStyle = '#3A2A1C'; u.el(0.34, -0.5, 0.14, 0.13);
+      g.fillStyle = '#2A1E14'; u.el(0.45, -0.46, 0.07, 0.06);
+      g.strokeStyle = '#120C08'; u.q(-0.36, -0.48, -0.48, -0.5, -0.5, -0.34, 0.025);
+    },
+    luz(g, S, T, u) {
+      g.fillStyle = '#D9A63C'; u.pl([0.28, -0.62], [0.4, -0.62], [0.41, -0.68], [0.37, -0.65], [0.34, -0.7], [0.31, -0.65], [0.27, -0.68]); acende(g, () => brilho(g, 0.34 * S, -0.66 * S, S * 0.08, '255,200,90', 0.5));
+      g.fillStyle = 'rgba(217,166,60,.8)'; u.pl([-0.2, -0.4], [0.13, -0.4], [0.14, -0.38], [-0.22, -0.38]);
+      olhos(g, 0.38 * S, -0.53 * S, 0.03 * S, 0.008 * S, '255,150,60');
+      g.fillStyle = 'rgba(240,230,210,.9)'; u.pl([0.46, -0.42], [0.48, -0.42], [0.47, -0.39]); u.pl([0.5, -0.42], [0.52, -0.42], [0.51, -0.39]);
+    }
+  },
+  // a soberba: um leque de pavão aberto atrás, o manto roxo, o espelho no lugar do rosto e o cetro de ouro
+  soberba: {
+    forma(g, S, T, u) {
+      const ab = Math.sin(T * 0.9) * 0.03;
+      g.strokeStyle = '#0C2A2A'; for (let i = 0; i <= 10; i++) { const a = Math.PI * (1.08 + i * 0.084) + ab * (i - 5) * 0.1; u.ln([[0, -0.82], [Math.cos(a) * 0.36, -0.82 + Math.sin(a) * 0.36]], 0.012); }
+      g.fillStyle = '#0E3030'; for (let i = 0; i <= 10; i++) { const a = Math.PI * (1.08 + i * 0.084) + ab * (i - 5) * 0.1; u.el(Math.cos(a) * 0.36, -0.82 + Math.sin(a) * 0.36, 0.045, 0.045); }
+      g.fillStyle = u.vg('#3A1C50', '#0C0614', -0.75); u.pl([-0.1, -0.74], [0.1, -0.74], [0.22, 0], [-0.22, 0]);
+      for (let i = 0; i < 7; i++) { const x = -0.22 + i * 0.066; u.pl([x, -0.02], [x + 0.033, 0.02], [x + 0.066, -0.02]); }
+      g.fillStyle = '#E8E2D0'; u.pl([-0.12, -0.74], [0.12, -0.74], [0.1, -0.68], [-0.1, -0.68]);
+      g.fillStyle = '#100818'; u.el(0, -0.84, 0.08, 0.1);
+      g.strokeStyle = '#2A1C08'; u.ln([[0.2, -0.78], [0.22, -0.04]], 0.014);
+    },
+    luz(g, S, T, u) {
+      const ab = Math.sin(T * 0.9) * 0.03;
+      for (let i = 0; i <= 10; i++) { const a = Math.PI * (1.08 + i * 0.084) + ab * (i - 5) * 0.1, x = Math.cos(a) * 0.36, y = -0.82 + Math.sin(a) * 0.36; g.fillStyle = 'rgba(217,166,60,.85)'; u.el(x, y, 0.022, 0.022); g.fillStyle = 'rgba(40,120,170,.95)'; u.el(x, y, 0.011, 0.011); }
+      g.fillStyle = u.rg(-0.02, -0.87, 0.1, '#F4FAFF', '#7FA8C8'); u.el(0, -0.84, 0.062, 0.08);
+      acende(g, () => brilho(g, 0, -0.84 * S, S * 0.16, '220,240,255', 0.55 + 0.25 * Math.sin(T * 2)));
+      g.fillStyle = '#D9A63C'; u.el(0.2, -0.8, 0.025, 0.025); u.pl([0.17, -0.82], [0.2, -0.88], [0.23, -0.82]);
+      g.fillStyle = 'rgba(217,166,60,.9)'; u.pl([-0.03, -0.93], [0.03, -0.93], [0.04, -0.97], [0.015, -0.95], [0, -0.98], [-0.015, -0.95], [-0.04, -0.97]);
+    }
+  },
+  // Golias: o gigante de elmo de crista vermelha, barba, couraça de escamas, a lança de tecelão e o escudo
+  golias: {
+    forma(g, S, T, u) {
+      const r = Math.sin(T * 1.2) * 0.008;
+      g.fillStyle = '#120C08'; u.pl([-0.16, -0.36], [-0.04, -0.36], [-0.06, -0.04], [-0.16, -0.04]); u.pl([0.04, -0.36], [0.16, -0.36], [0.16, -0.04], [0.06, -0.04]);
+      g.fillStyle = '#2A0C08'; u.el(-0.11, -0.02, 0.07, 0.03); u.el(0.11, -0.02, 0.07, 0.03);
+      g.fillStyle = '#2A1A10'; u.pl([-0.2, -0.42], [0.2, -0.42], [0.22, -0.3], [-0.22, -0.3]);
+      g.fillStyle = u.rg(-0.04, -0.66, 0.34, '#5A4228', '#160E06'); u.pl([-0.26, -0.8 + r], [0.26, -0.8 + r], [0.21, -0.4], [-0.21, -0.4]);
+      g.fillStyle = 'rgba(12,8,4,.55)'; for (let y = -0.76; y < -0.42; y += 0.045) for (let x = -0.22; x < 0.22; x += 0.05) u.el(x + ((y * 100) % 2 ? 0.025 : 0), y + r, 0.016, 0.01);
+      g.fillStyle = '#1E140C'; u.el(-0.27, -0.76 + r, 0.08, 0.06); u.el(0.27, -0.76 + r, 0.08, 0.06);
+      g.strokeStyle = '#1E140C'; u.ln([[0.28, -0.74 + r], [0.32, -0.56], [0.3, -0.44]], 0.06);
+      g.strokeStyle = '#140C06'; u.ln([[0.34, -1.12], [0.28, 0]], 0.018); g.fillStyle = '#20242C'; u.pl([0.33, -1.12], [0.35, -1.12], [0.37, -1.24], [0.32, -1.24], [0.34, -1.3]);
+      g.fillStyle = '#1A1C22'; u.el(-0.32, -0.56, 0.13, 0.16);
+      g.fillStyle = '#16120C'; u.el(0, -0.88 + r, 0.085, 0.09); g.fillStyle = '#1E2028'; u.el(0, -0.92 + r, 0.09, 0.07); u.pl([-0.09, -0.92 + r], [0.09, -0.92 + r], [0.08, -0.84 + r], [-0.08, -0.84 + r]);
+      g.fillStyle = '#0E0806'; u.pl([-0.06, -0.84 + r], [0.06, -0.84 + r], [0.04, -0.76 + r], [0, -0.74 + r], [-0.04, -0.76 + r]);
+    },
+    luz(g, S, T, u) {
+      const r = Math.sin(T * 1.2) * 0.008;
+      g.fillStyle = '#B8322A'; g.beginPath(); g.moveTo(-0.08 * S, (-0.98 + r) * S); g.quadraticCurveTo(0, (-1.1 + r) * S, 0.1 * S, (-0.98 + r) * S); g.lineTo(0.06 * S, (-0.97 + r) * S); g.quadraticCurveTo(0, (-1.04 + r) * S, -0.06 * S, (-0.96 + r) * S); g.fill();
+      g.strokeStyle = 'rgba(200,210,230,.75)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(0.335 * S, -1.12 * S); g.lineTo(0.34 * S, -1.29 * S); g.stroke(); acende(g, () => brilho(g, 0.34 * S, -1.25 * S, S * 0.05, '220,230,255', 0.5));
+      g.strokeStyle = 'rgba(200,170,110,.7)'; g.beginPath(); g.ellipse(-0.32 * S, -0.56 * S, 0.12 * S, 0.15 * S, 0, -1.8, -0.3); g.stroke(); g.fillStyle = 'rgba(200,170,110,.9)'; u.el(-0.32, -0.56, 0.02, 0.02);
+      olhos(g, 0, (-0.88 + r) * S, 0.03 * S, 0.008 * S, '255,180,120');
+    }
+  },
+  // Beemote (Jó 40): o colosso do rio, corpo de hipopótamo, focinho largo, pernas de coluna e o lombo de calombos
+  behemote: {
+    forma(g, S, T, u) {
+      const st = Math.sin(T * 1.2) * 0.012;
+      g.fillStyle = '#0C100A'; for (const [lx, s] of [[-0.42, 1], [-0.22, -1], [0.16, 1], [0.34, -1]]) { u.pl([lx - 0.07, -0.3], [lx + 0.07, -0.3], [lx + 0.07, -0.02 + s * st], [lx - 0.07, -0.02 + s * st]); }
+      g.fillStyle = u.rg(-0.1, -0.62, 0.7, '#3A4630', '#0C100A'); u.el(-0.04, -0.42, 0.6, 0.3);
+      g.fillStyle = '#2A2A1E'; u.el(-0.05, -0.27, 0.42, 0.08);
+      g.fillStyle = u.rg(0.6, -0.56, 0.26, '#3E4A34', '#0E120C'); u.el(0.58, -0.46, 0.22, 0.18);
+      u.el(0.74, -0.38, 0.13, 0.12);
+      g.fillStyle = '#0C100A'; u.el(0.54, -0.64, 0.04, 0.03); u.el(0.66, -0.62, 0.035, 0.028);
+      g.strokeStyle = '#0C100A'; u.q(-0.62, -0.46, -0.76, -0.42, -0.74, -0.3 + st, 0.04);
+      g.fillStyle = '#1A2016'; for (let i = 0; i < 6; i++) u.el(-0.4 + i * 0.15, -0.7 + Math.abs(i - 2.5) * 0.02, 0.05, 0.035);
+    },
+    luz(g, S, T, u) {
+      g.fillStyle = 'rgba(190,160,90,.7)'; for (let i = 0; i < 6; i++) u.el(-0.4 + i * 0.15, -0.71 + Math.abs(i - 2.5) * 0.02, 0.025, 0.015);
+      g.fillStyle = 'rgba(230,222,200,.9)'; u.pl([0.78, -0.3], [0.8, -0.3], [0.79, -0.25]); u.pl([0.68, -0.29], [0.7, -0.29], [0.69, -0.25]);
+      olhos(g, 0.6 * S, -0.53 * S, 0.035 * S, 0.01 * S, '255,170,70');
+      fumacaBase(g, 0, 0, S * 1.5, T, '#16120C');
+    }
+  },
+  // Leviatã (Jó 41): a serpente do mar, corpo comprido que ondula entre as águas, barbatanas vermelhas e o chifre
+  leviata: {
+    forma(g, S, T, u) {
+      const pts = []; for (let i = 0; i <= 26; i++) { const k = i / 26; pts.push([-0.95 + k * 1.6, -0.3 - Math.sin(k * 7 - T * 1.6) * 0.1 - k * k * 0.5]); }
+      g.fillStyle = '#5A1418'; for (let i = 3; i < 22; i += 3) { const [x, y] = pts[i]; u.pl([x - 0.04, y - 0.05], [x + 0.02, y - 0.17], [x + 0.06, y - 0.05]); }
+      for (const [i, [x, y]] of pts.entries()) { const k = i / 26; g.fillStyle = i % 2 ? '#123A40' : '#0C2A30'; u.el(x, y, 0.05 + k * 0.05, 0.05 + k * 0.05); }
+      const [hx, hy] = pts[26]; g.fillStyle = '#0E3238'; u.el(hx + 0.1, hy - 0.02, 0.15, 0.08, -0.2); u.pl([hx + 0.12, hy + 0.02], [hx + 0.32, hy + 0.04], [hx + 0.16, hy + 0.08]);
+      g.fillStyle = '#C8C0B0'; u.pl([hx + 0.14, hy - 0.08], [hx + 0.3, hy - 0.22], [hx + 0.18, hy - 0.06]);
+      g.fillStyle = '#5A1418'; u.pl([hx - 0.02, hy - 0.06], [hx - 0.1, hy - 0.2], [hx + 0.06, hy - 0.08]);
+      g.fillStyle = '#5A1418'; const [tx, ty] = pts[0]; u.pl([tx, ty], [tx - 0.14, ty - 0.1], [tx - 0.12, ty + 0.08]);
+    },
+    luz(g, S, T, u) {
+      const k = 1, hy = -0.3 - Math.sin(k * 7 - T * 1.6) * 0.1 - 0.5, hx = 0.65;
+      acende(g, () => { for (let i = 0; i < 18; i++) { const kk = i / 18, x = -0.95 + kk * 1.6, y = -0.3 - Math.sin(kk * 7 - T * 1.6) * 0.1 - kk * kk * 0.5; g.fillStyle = `rgba(94,209,232,${0.25 + 0.25 * Math.sin(T * 3 + i)})`; u.el(x, y - 0.02, 0.012, 0.012); } });
+      olhos(g, (hx + 0.12) * S, (hy - 0.04) * S, 0.0001, 0.012 * S, '127,240,255');
+      ondas2(g, S, T);
+    }
+  },
+  pecado: { forma(g, S, T) { g.fillStyle = 'rgba(0,0,0,.96)'; sombraFumaca(g, 0, 0, S, T); }, luz(g, S) { olhos(g, 0, -S * 0.72, S * 0.03, S * 0.008, '255,40,60'); } },
+  generico: { forma(g, S, T) { g.fillStyle = '#050308'; sombraFumaca(g, 0, 0, S, T); }, luz(g, S) { olhos(g, 0, -S * 0.72, S * 0.04, S * 0.012, '255,200,120'); } }
 };
+// o manto de capuz da mentira (o do meio e as cópias)
+function manto(g, S, T, u, ox) {
+  g.save(); g.translate(ox * S, Math.sin(T * 1.4 + ox * 3) * 0.01 * S);
+  g.fillStyle = u.vg('#2E1F4E', '#0A0614', -0.95); u.pl([0, -0.95], [0.1, -0.88], [0.16, -0.6], [0.24, -0.06], [-0.24, -0.06], [-0.16, -0.6], [-0.1, -0.88]);
+  for (let i = 0; i < 8; i++) { const x = -0.24 + i * 0.06; u.pl([x, -0.07], [x + 0.03, 0], [x + 0.06, -0.07]); }
+  g.strokeStyle = '#120A22'; u.q(0.14, -0.66, 0.26, -0.5, 0.25, -0.36, 0.05); u.q(-0.14, -0.66, -0.26, -0.5, -0.25, -0.36, 0.05);
+  g.fillStyle = '#05030A'; u.el(0, -0.83, 0.075, 0.08);
+  g.restore();
+}
+// a espuma do mar em volta do Leviatã
+function ondas2(g, S, T) { g.fillStyle = 'rgba(200,235,245,.35)'; for (let i = 0; i < 24; i++) { const x = (-1 + i / 12) * S, y = Math.sin(T * 2 + i) * 3; g.fillRect(x, y - 2, S * 0.05, 2); } }
+const CHEFES = Object.fromEntries(Object.entries(CHEFES_FORMA).map(([id, def]) => [id, (g, S, T, luz) => sombraComLuz(g, S, T, luz || {}, def)]));
 
 export function pintarCena(g, c, t, T) {
   g.save(); (CENAS[c.cena] || CENAS.noite).pinta(g, t, T, c); g.restore();
@@ -695,7 +1008,8 @@ export function pintarFiguras(g, c, t, T, opts) {
     if (typeof f.p === 'string' && f.p.startsWith('chefe:')) {
       const id = f.p.slice(6), S = alturaChefe(f.s);
       g.translate(x, y); if (f.vira < 0) g.scale(-1, 1);
-      if (CHEFES[id]) CHEFES[id](g, S, T, luz); else { const k = S / 150; g.scale(k, k); drawBoss(g, artes[id] || (artes[id] = { id, r: 40, x: 0, y: -37, hp: 1, max: 1 }), T); }
+      const dx = luz.x - x, dy = luz.y - (y - S * 0.6), dl = Math.hypot(dx, dy) || 1, luzF = { ...luz, ux: dx / dl * (f.vira < 0 ? -1 : 1), uy: dy / dl };
+      if (CHEFES[id]) CHEFES[id](g, S, T, luzF); else { const k = S / 150; g.scale(k, k); drawBoss(g, artes[id] || (artes[id] = { id, r: 40, x: 0, y: -37, hp: 1, max: 1 }), T); }
     } else if (f.perfil) {
       const L = lookDe(f.p, opts) || {}, pele = L.skin ? rgb(L.skin).map(v => Math.round(v * 0.75)).join(',') : '150,95,60';
       perfil(g, x, f.y * VH, VH * 0.26 * (f.s || 1.5), { vira: f.vira || 1, barba: !!L.beard, capuz: L.style === 'veu' || L.style === 'turbante' || f.capuz, pele, fala: f.fala ? Math.abs(Math.sin(T * 9)) * 0.04 : 0 }, luz);
