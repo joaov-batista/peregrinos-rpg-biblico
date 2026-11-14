@@ -29,20 +29,25 @@ function arco(s, x, y, w, h, R, fundo) { // nicho em arco
 function tocha(s, x, y) { const F = rampa('#FF9A3C'); s.ret(x - 1, y, 3, 10, cor('#4A3524')); s.ret(x - 3, y - 2, 7, 3, cor('#2A2A3A')); s.ret(x - 2, y - 7, 5, 5, F[2]); s.ret(x - 1, y - 9, 3, 4, F[3]); s.px(x, y - 11, F[4]); s.ret(x - 1, y - 5, 2, 2, cor('#FFF6C8')); }
 
 const PINTA = {
-  // Salão dos Rolos: estantes de rolos dos dois lados, um vitral no meio, por onde desce a escada
+  // Salão dos Rolos: estantes no alto, um rodapé de madeira com um nicho em arco para cada página (onde fica o portal),
+  // e, no meio, o vitral sobre a escada que sobe ao mercado
   biblioteca(s) {
     parede(s); placa(s, 150, 104);
     const M = rampa('#5A3E28'), P = rampa('#E8D9B0'), FITA = ['#B8423A', '#3F7A9A', '#C9A63C', '#5E8A4A'].map(c => rampa(c)[2]);
-    for (const x0 of [24, 312]) { // estantes
-      s.ret(x0, 56, 144, 192, M[0]); s.ret(x0 + 2, 58, 140, 188, M[1]);
-      for (let r = 0; r < 6; r++) { const y = 62 + r * 31; s.ret(x0 + 2, y + 26, 140, 3, M[3]); s.ret(x0 + 2, y + 29, 140, 1, M[0]);
-        for (let c = 0; c < 13; c++) { const x = x0 + 6 + c * 10.6, d = (r * 13 + c) % 7; if (d === 3) continue; s.bola(x + 4, y + 21, 4, 4, P, 0.4, -0.6); s.ret(x + 3, y + 20, 2, 2, P[0]); s.ret(x, y + 17, 9, 1, FITA[(r + c) % 4]); } }
-      s.ret(x0, 56, 144, 3, M[4]); s.ret(x0, 56, 3, 192, M[3]); s.ret(x0 + 141, 56, 3, 192, M[2]);
+    for (const x0 of [24, 300]) { // estantes (só até a altura do rodapé)
+      s.ret(x0, 50, 156, 128, M[0]); s.ret(x0 + 2, 52, 152, 124, M[1]);
+      for (let r = 0; r < 4; r++) { const y = 56 + r * 30; s.ret(x0 + 2, y + 25, 152, 3, M[3]); s.ret(x0 + 2, y + 28, 152, 1, M[0]);
+        for (let c = 0; c < 14; c++) { const x = x0 + 6 + c * 10.6, d = (r * 13 + c) % 7; if (d === 3) continue; s.bola(x + 4, y + 20, 4, 4, P, 0.4, -0.6); s.ret(x + 3, y + 19, 2, 2, P[0]); s.ret(x, y + 16, 9, 1, FITA[(r + c) % 4]); } }
+      s.ret(x0, 50, 156, 3, M[4]); s.ret(x0, 50, 3, 128, M[3]); s.ret(x0 + 153, 50, 3, 128, M[2]);
     }
-    const V = ['#3F7A9A', '#C9A63C', '#8E3B5E', '#5E8A4A'].map(c => rampa(c)); // vitral em arco
-    arco(s, 196, 50, 88, 120, PEDRA, cor('#0B0E18'));
-    for (let y = 0; y < 110; y += 6) for (let x = 0; x < 80; x += 8) { const k = (x / 8 + y / 6) % 4, px = 200 + x, py = 56 + y; if (Math.hypot(px + 4 - 240, py - 94) < 40 || py > 94) s.ret(px, py, 7, 5, V[k][(x + y) % 3 + 1]); }
-    s.ret(239, 56, 2, 114, cor('#17121f')); s.ret(200, 108, 80, 2, cor('#17121f'));
+    // rodapé de madeira, com um nicho escuro em arco atrás de cada portal (colunas 4, 9, 21 e 26)
+    s.ret(16, 182, W - 32, 74, M[1]); s.ret(16, 182, W - 32, 3, M[4]); s.ret(16, 186, W - 32, 1, M[0]);
+    for (let x = 22; x < W - 22; x += 28) { s.ret(x, 192, 22, 56, M[2]); s.ret(x, 192, 22, 1, M[3]); s.ret(x, 247, 22, 1, M[0]); }
+    for (const col of [4, 9, 21, 26]) { const cx = col * 16 + 8; arco(s, cx - 24, 196, 48, 60, PEDRA, cor('#0B0E18')); s.ret(cx - 18, 186, 36, 6, M[3]); s.ret(cx - 16, 187, 32, 1, rampa('#C9A63C')[3]); }
+    const V = ['#3F7A9A', '#C9A63C', '#8E3B5E', '#5E8A4A'].map(c => rampa(c)); // vitral em arco, sobre a escada
+    arco(s, 196, 40, 88, 120, PEDRA, cor('#0B0E18'));
+    for (let y = 0; y < 110; y += 6) for (let x = 0; x < 80; x += 8) { const k = (x / 8 + y / 6) % 4, px = 200 + x, py = 46 + y; if (Math.hypot(px + 4 - 240, py - 84) < 40 || py > 84) s.ret(px, py, 7, 5, V[k][(x + y) % 3 + 1]); }
+    s.ret(239, 46, 2, 114, cor('#17121f')); s.ret(200, 98, 80, 2, cor('#17121f'));
   },
   // Casa do Tesouro: a porta redonda do cofre, prateleiras com sacos de moedas, a balança pendurada
   tesouro(s) {
@@ -59,14 +64,32 @@ const PINTA = {
     for (const x of [212, 268]) { s.linha(x, 74, x - 10, 98, 1, O[1]); s.linha(x, 74, x + 10, 98, 1, O[1]); s.ret(x - 12, 98, 24, 3, O[3]); }
     s.ret(258, 94, 8, 4, O[4]);
   },
-  // Cripta dos Gigantes: nichos com sarcófagos, o elmo do filisteu, ossos e tochas
+  // Cripta dos Gigantes: três arcos altos até o chão, cada um com o portal de um gigante dentro e o sinal dele no alto
+  // (o elmo de Golias, o chifre do Beemote, a escama do Leviatã); tochas e ossos entre os arcos
   cripta(s) {
     parede(s, ['#121014', '#1A171D', '#231F28', '#2E2934', '#3B3544'].map(cor)); placa(s, 170);
-    const R = ['#121014', '#1A171D', '#2E2934', '#4A4458', '#5E5870'].map(cor), O = rampa('#B8B0A0'), B = rampa('#8A7A5A');
-    for (const x of [60, 200, 340]) { arco(s, x, 64, 80, 150, R, cor('#0A090C'));
-      s.ret(x + 8, 170, 64, 44, B[1]); s.ret(x + 6, 166, 68, 6, B[3]); s.ret(x + 6, 166, 68, 1, B[4]); s.ret(x + 14, 180, 52, 3, B[0]); s.ret(x + 14, 196, 52, 3, B[0]); s.ret(x + 36, 186, 8, 6, B[2]); } // sarcófagos
-    for (const [x, y] of [[30, 240], [150, 236], [300, 242], [430, 238]]) { s.ret(x, y, 12, 3, O[2]); s.bola(x - 2, y + 1, 3, 3, O); s.bola(x + 14, y + 1, 3, 3, O); }
-    for (const x of [44, 178, 318, 440]) tocha(s, x, 90);
+    const R = ['#121014', '#1A171D', '#2E2934', '#4A4458', '#5E5870'].map(cor), O = rampa('#B8B0A0'), B = rampa('#8A7A5A'), BR = rampa('#C98A4A'), E = rampa('#2F8F9A');
+    for (const col of [6, 15, 24]) { const cx = col * 16 + 8; arco(s, cx - 40, 92, 80, 164, R, cor('#0A090C')); s.ret(cx - 44, 248, 88, 8, R[2]); s.ret(cx - 44, 248, 88, 1, R[4]); }
+    // os sinais de cada gigante, gravados em pedra no alto do arco
+    { const cx = 6 * 16 + 8; s.bola(cx, 74, 12, 9, B, 0.4, -0.7); s.ret(cx - 14, 80, 28, 3, B[1]); s.ret(cx - 1, 60, 2, 8, rampa('#B8322A')[3]); s.ret(cx - 6, 74, 12, 2, B[0]); }
+    { const cx = 15 * 16 + 8; s.linha(cx - 10, 84, cx - 4, 64, 3, BR[3]); s.linha(cx + 10, 84, cx + 4, 64, 3, BR[3]); s.ret(cx - 12, 82, 24, 4, BR[1]); }
+    { const cx = 24 * 16 + 8; for (let k = 0; k < 3; k++) s.bola(cx - 8 + k * 8, 72 + (k % 2) * 4, 6, 7, E, 0.4, -0.7); }
+    for (const [x, y] of [[30, 248], [176, 246], [316, 248], [446, 246]]) { s.ret(x, y, 12, 3, O[2]); s.bola(x - 2, y + 1, 3, 3, O); s.bola(x + 14, y + 1, 3, 3, O); }
+    for (const x of [40, 176, 320, 440]) tocha(s, x, 120);
+  },
+  // Salão das Subfases: um corredor de três portas grandes; a primeira, do Vale da Mentira, tem um dragão em mosaico que
+  // se desfaz (é mentira); as outras duas estão seladas com cera, para as jornadas que ainda vêm
+  subfases(s) {
+    parede(s, ['#100C1A', '#171226', '#211A36', '#2C2448', '#3A305C'].map(cor)); placa(s, 170);
+    const R = ['#100C1A', '#171226', '#2C2448', '#4A3E6E', '#6A5A90'].map(cor), D = rampa('#E2463C'), CERA = rampa('#B8322A'), O = rampa('#C9A63C');
+    for (const col of [6, 15, 24]) { const cx = col * 16 + 8; arco(s, cx - 40, 92, 80, 164, R, cor('#07050C')); s.ret(cx - 44, 248, 88, 8, R[2]); s.ret(cx - 44, 248, 88, 1, R[4]); }
+    // o dragão de mosaico sobre a primeira porta, com peças faltando
+    { const cx = 6 * 16 + 8; for (let y = 0; y < 22; y += 3) for (let x = -26; x < 26; x += 3) { const d = Math.abs(x) / 26 + Math.abs(y - 11) / 14; if (d < 1 && (x * 7 + y * 3) % 5 !== 0) s.ret(cx + x, 58 + y, 2, 2, D[(x + y + 40) % 3 + 1]); } s.ret(cx + 14, 62, 2, 2, rampa('#FFD23F')[4]); }
+    // selos de cera nas duas portas fechadas
+    for (const col of [15, 24]) { const cx = col * 16 + 8; s.ret(cx - 34, 140, 68, 3, O[1]); s.ret(cx - 34, 200, 68, 3, O[1]); s.bola(cx, 172, 10, 10, CERA, 0.4, -0.7); s.ret(cx - 3, 170, 6, 4, CERA[0]); s.ret(cx - 1, 166, 2, 12, CERA[0]); }
+    for (const x of [40, 176, 320, 440]) tocha(s, x, 120);
+    // um tapete do chão até a primeira porta
+    s.ret(16, 250, W - 32, 6, cor('#3A1E2A')); for (let x = 16; x < W - 16; x += 8) s.px(x, 252, cor('#8E2E3A'));
   },
   // Cisterna: arcos sobre a água, pingos e limo
   cisterna(s) {

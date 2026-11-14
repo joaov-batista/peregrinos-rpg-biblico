@@ -104,7 +104,11 @@ export const TEMAS = {
   aurora: t(['#1A1C3A', '#7A5A7A', '#FFD9A0'], '#3A3050', '#252038', '#141020', '#FFE2B0', '#FFE9A8', 'colunas', 'vagalume', 0.2),
   ela: t(['#141C22', '#3F5A52', '#C9B88A'], '#253B38', '#182826', '#0C1615', '#C9C4A2', '#E5C58A', 'dunas', 'po', 0.3),
   ermo: t(['#1C140E', '#5A3C24', '#D9A060'], '#3A2818', '#261A10', '#140D08', '#D5BA88', '#D5BA88', 'dunas', 'areia', 0.3),
-  mar: t(['#04101A', '#0C2C40', '#1F6F8B'], '#0C2434', '#081824', '#040D14', '#96DBE0', '#5ED1E8', 'mastros', 'chuva', 0.65)
+  mar: t(['#04101A', '#0C2C40', '#1F6F8B'], '#0C2434', '#081824', '#040D14', '#96DBE0', '#5ED1E8', 'mastros', 'chuva', 0.65),
+  porto: t(['#0E1A30', '#2E4A6A', '#D9A774'], '#1A3048', '#122236', '#0B1622', '#C9D6CF', '#79D9CD', 'mastros', 'vagalume', 0.28),
+  vale: t(['#0A0618', '#241640', '#5A2E5E'], '#1E1232', '#140C24', '#0A0614', '#C9A6E0', '#FF8A5A', 'dunas', 'brasa', 0.62),
+  sardes: t(['#05060C', '#101524', '#2A2438'], '#12141F', '#0C0E17', '#06070C', '#8A8EA6', '#E8C873', 'casas', 'po', 0.86),
+  sardes2: t(['#14203A', '#4A4A6A', '#E0A878'], '#22304A', '#172236', '#0C131F', '#E0D6B8', '#FFE08A', 'casas', 'vagalume', 0.3)
 };
 const TEMA_FASE = { jope: 'jope', conves: 'conves', ventre: 'ventre', ninive: 'ninive', sombra: 'sombra' };
 
@@ -124,6 +128,7 @@ const sala = (...pls) => { const topo = Math.min(15, ...pls.map(p => p[0])), g =
 const casa = (col, id, nome) => ({ tipo: 'casa', col, id, nome });
 const planta = (col, qual) => ({ tipo: 'planta', col, qual });
 const povo = (col, vai, look) => ({ tipo: 'morador', col, vai, look });
+const marca = (g, pts) => { const r = g.map(l => l.split('')), topo = 16 - g.length; for (const [lin, col, ch] of pts) if (r[lin - topo]) r[lin - topo][col - 1] = ch; return r.map(l => l.join('')); };
 
 // O Refúgio: uma aldeia a céu aberto (praças, mercado, bairro, pátio, olival, o portão do Éden) e, por baixo dela,
 // os salões de pedra: o Salão dos Rolos (as páginas do Livro), a Casa do Tesouro, a Cripta dos Gigantes e a cisterna.
@@ -168,19 +173,48 @@ const REFUGIO = [
     { tipo: 'fruto', col: 4, lin: 14 }, { tipo: 'fruto', col: 10, lin: 11 }, { tipo: 'fruto', col: 15, lin: 8 }, { tipo: 'fruto', col: 20, lin: 11 },
     { tipo: 'npc', col: 23, id: 'mercador', nome: 'Mercador', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#7A5A2E', cape: '#3F2E4F', style: 'turbante', beard: true } },
     { tipo: 'poco', col: 7 }, { ...povo(13, 4, VILA.ana.look), id: 'ana', nome: VILA.ana.nome }, { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
+  // o porto: o píer sobre o mar, o barqueiro que leva a Sardes, o pescador e, às vezes, um mercador de além-mar
+  { cx: 6, nome: 'Porto do Refúgio', papel: 'vila', tiles: sala([12, 3, 6]), objs: [
+    planta(2, 'palmeira'), { tipo: 'cenario', col: 5, qual: 'redes' }, { tipo: 'mar', col: 11 },
+    { tipo: 'npc', col: 8, id: 'zebedeu', nome: 'Zebedeu, o pescador', look: { skin: '#A0673E', hair: '#D9D2C5', tunic: '#3F5A6A', cape: 'none', style: 'curto', beard: true, body: 'forte' } },
+    { tipo: 'npc', col: 15, id: 'viajante', nome: 'Mercador de além-mar', look: { skin: '#6B4A2E', hair: '#1C120A', tunic: '#2E5E6A', cape: '#C9A63C', style: 'turbante', beard: true }, vezOutra: true },
+    { tipo: 'npc', col: 22, id: 'barqueiro', nome: 'Jonatã, o barqueiro', look: { skin: '#8A5A3A', hair: '#2B1A10', tunic: '#5A4636', cape: '#3A3456', style: 'cacheado', beard: true } },
+    { tipo: 'barco', col: 26 }, { tipo: 'ave', col: 12, lin: 11 }, { tipo: 'ave', col: 19, lin: 12 }] },
   // ---- o subsolo ----
-  { cx: 1, cy: 1, nome: 'Salão dos Rolos', deco: 'biblioteca', papel: 'vila', tiles: sala(), objs: [...TODAS.map((s, i) => ({ tipo: 'portal', col: [4, 8, 22, 26, 3, 27][i % 6], semana: s.id })),
-    { tipo: 'npc', col: 19, id: 'escriba', nome: 'Esdras, o escriba', look: { skin: '#D9A273', hair: '#E3DED2', tunic: '#55516D', cape: '#C9B88A', style: 'longo', beard: true } }] },
+  { cx: 0, cy: 1, nome: 'Salão das Subfases', deco: 'subfases', papel: 'vila', tiles: sala(), objs: [
+    { tipo: 'portal', col: 6, area: 'vale', rotulo: 'Vale da Mentira' }, { tipo: 'selado', col: 15, rotulo: 'Selado' }, { tipo: 'selado', col: 24, rotulo: 'Selado' },
+    { tipo: 'npc', col: 10, id: 'nata', nome: 'Natã, o profeta', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#3A3456', cape: '#8E2E3A', style: 'longo', beard: true } }] },
+  { cx: 1, cy: 1, nome: 'Salão dos Rolos', deco: 'biblioteca', papel: 'vila', tiles: sala(), objs: [...TODAS.map((s, i) => ({ tipo: 'portal', col: [4, 9, 21, 26][i % 4], semana: s.id })),
+    { tipo: 'npc', col: 18, id: 'escriba', nome: 'Esdras, o escriba', look: { skin: '#D9A273', hair: '#E3DED2', tunic: '#55516D', cape: '#C9B88A', style: 'longo', beard: true } }] },
   { cx: 2, cy: 1, nome: 'Casa do Tesouro', deco: 'tesouro', papel: 'vila', tiles: sala(), objs: [
     { tipo: 'cenario', col: 14, qual: 'balcao' }, { tipo: 'npc', col: 15, id: 'mateus', nome: 'Mateus, o coletor', look: { skin: '#C68B59', hair: '#2B1A10', tunic: '#3F5A4A', cape: '#C9A63C', style: 'curto', beard: true } },
     { tipo: 'cenario', col: 6, qual: 'cofre' }, { tipo: 'vaso', col: 10 }, { tipo: 'vaso', col: 11 }] },
   { cx: 3, cy: 1, nome: 'Cripta dos Gigantes', deco: 'cripta', papel: 'vila', tiles: sala(), objs: [
     { tipo: 'portal', col: 6, mundo: 'golias' }, { tipo: 'portal', col: 15, mundo: 'behemote' }, { tipo: 'portal', col: 24, mundo: 'leviata' },
-    { tipo: 'npc', col: 11, id: 'saul', nome: 'Rei Saul', look: saul }] },
+    { tipo: 'npc', col: 10, id: 'saul', nome: 'Rei Saul', look: saul }] },
   { cx: 4, cy: 1, nome: 'Cisterna', deco: 'cisterna', papel: 'vila', tiles: sala([10, 3, 7], [10, 22, 26]), objs: [
     { tipo: 'npc', col: 24, id: 'nicodemos', nome: 'Nicodemos', look: { skin: '#D9A273', hair: '#D9D2C5', tunic: '#343F51', cape: '#6B5A8C', style: 'turbante', beard: true } },
     { tipo: 'poco', col: 7 }, { tipo: 'vaso', col: 4, lin: 10 }, { tipo: 'vaso', col: 6, lin: 10 }, { tipo: 'vaso', col: 23, lin: 10 }, { tipo: 'vaso', col: 26, lin: 10 }] }
 ];
+
+import { SARDES_POVO, EPAFRAS } from '../content/sardes.js';
+const sombrio = (cor) => ({ skin: ['#C68B59', '#8A5A3A', '#D9A273', '#A0673E'][cor % 4], hair: ['#1C120A', '#3A2314', '#D9D2C5', '#2B1A10'][(cor + 1) % 4], tunic: ['#3A3F4C', '#4A4036', '#3F4A3A', '#4A3A4A'][cor % 4], cape: 'none', style: ['curto', 'veu', 'cacheado', 'turbante'][cor % 4], beard: cor % 2 === 0 });
+const vela = col => ({ tipo: 'vela', col, id: 'v' + col });
+const povoS = (id, col) => ({ tipo: 'npc', col, id: 'sar_' + id, nome: SARDES_POVO[id].nome, look: SARDES_POVO[id].look, palavra: id });
+const SARDES = [
+  { nome: 'O cais de Sardes', papel: 'inicio', tiles: sala([12, 18, 21]), objs: [
+    { tipo: 'mar', col: 1, ate: 8 }, { tipo: 'barco', col: 4, volta: true }, { tipo: 'npc', col: 12, id: 'epafras', nome: EPAFRAS.nome, look: EPAFRAS.look }, { tipo: 'cenario', col: 15, qual: 'quadro' },
+    vela(19), { ...povo(24, 3, sombrio(0)), rua: 0 }, { tipo: 'ebenezer', col: 27 }] },
+  { nome: 'Rua das lamparinas', papel: 'vila', tiles: sala([13, 4, 7], [13, 21, 24]), objs: [
+    vela(3), casa(6, 'sar1', 'Casa fechada'), povoS('onesimo', 10), vela(13), { ...povo(16, 4, sombrio(1)), rua: 1 }, casa(20, 'sar2', 'Casa de Cloé'), povoS('cloe', 24), vela(27)] },
+  { nome: 'O mercado sombrio', papel: 'vila', tiles: sala([12, 9, 12], [12, 17, 20]), objs: [
+    { tipo: 'cenario', col: 5, qual: 'banca' }, { ...povo(5, 2, sombrio(2)), rua: 2 }, vela(10), povoS('tiquico', 14), { tipo: 'cenario', col: 22, qual: 'banca' }, vela(19), povoS('febe', 25), { tipo: 'vaso', col: 27 }] },
+  { nome: 'O bairro baixo', papel: 'vila', tiles: sala([13, 3, 6], [10, 9, 12], [13, 15, 18]), objs: [
+    casa(4, 'sar3', 'Casa de Ninfa'), povoS('ninfa', 8), vela(12), { ...povo(15, 3, sombrio(3)), rua: 3 }, casa(20, 'sar4', 'Casa sem nome'), vela(24), { tipo: 'vaso', col: 26 }, { tipo: 'ebenezer', col: 28 }] },
+  { nome: 'O templo apagado', papel: 'vila', tiles: sala([11, 5, 9], [11, 20, 24]), objs: [
+    { tipo: 'cenario', col: 14, qual: 'templo' }, vela(7), vela(22), { tipo: 'escrito', col: 14, lin: 6, txt: '"Sê vigilante e confirma o restante, que estava para morrer" (Ap 3:2)' }] }
+];
+SARDES.forEach((c, i) => c.objs.forEach(o => { if (o.tipo === 'vela') o.id = 'v' + i + '_' + o.col; }));
 
 export function semanaDe(id) { return TODAS.find(s => s.id === id); }
 
@@ -210,6 +244,19 @@ export function areaDef(id) {
       { tipo: 'escrito', col: 15, lin: 10, txt: '"O pecado jaz à porta; o seu desejo será contra ti, mas a ti cumpre dominá-lo" (Gn 4:7)' },
       { tipo: 'portal', col: 27, area: 'getsemani', rotulo: 'Entre as oliveiras', oculto: true, chave: 'getsemani' }] }
   ] };
+  // o Vale da Mentira: criaturas que não existem. No fim, o Dragão das Mentiras guarda o dom do Espírito da verdade (Jo 16:13).
+  if (id === 'vale') return { id, nome: 'O Vale da Mentira', sub: 'O que assusta aqui não existe', tema: 'vale', seed: id, forca: 1.55,
+    inimigos: ['serpente', 'quimera', 'grifo', 'basilisco', 'dragao'], planta: [
+    { papel: 'inicio', nome: 'A entrada do vale', tiles: sala([12, 6, 10], [12, 18, 22]), objs: [{ tipo: 'retorno', col: 3 }, { tipo: 'ebenezer', col: 14 },
+      { tipo: 'escrito', col: 14, lin: 8, txt: '"Ele é mentiroso e pai da mentira" (Jo 8:44). Tudo o que você vir aqui é invenção.' }] },
+    { papel: 'vila', nome: 'Ninho das serpentes', tiles: marca(sala([12, 4, 9], [9, 12, 17], [12, 20, 25]), [[15, 8, 'e'], [15, 20, 'e'], [11, 6, 'e'], [7, 14, 'f']]), objs: [{ tipo: 'escrito', col: 14, lin: 5, txt: '"Seja o vosso falar: Sim, sim; não, não" (Mt 5:37)' }] },
+    { papel: 'vila', nome: 'Os rochedos do grifo', tiles: marca(sala([13, 3, 7], [10, 9, 13], [7, 15, 19], [10, 21, 25], [13, 26, 28]), [[15, 10, 'e'], [15, 18, 'e'], [6, 17, 'f'], [8, 6, 'f'], [9, 23, 'e']]), objs: [{ tipo: 'vaso', col: 17, lin: 6 }] },
+    { papel: 'vila', nome: 'O pântano do basilisco', tiles: marca(sala([12, 5, 11], [12, 17, 23]), [[15, 9, 'e'], [15, 21, 'e'], [11, 8, 'e'], [8, 15, 'f']]), objs: [{ tipo: 'ebenezer', col: 14 },
+      { tipo: 'escrito', col: 14, lin: 6, txt: '"Conhecereis a verdade, e a verdade vos libertará" (Jo 8:32)' }] },
+    { papel: 'vila', nome: 'O covil do dragão', tiles: sala([12, 3, 7], [9, 11, 18], [12, 22, 26]), objs: [{ tipo: 'escrito', col: 14, lin: 5, txt: '"Quando vier o Espírito da verdade, ele vos guiará a toda a verdade" (Jo 16:13)' }, { tipo: 'covil', col: 21 }] }
+  ] };
+  // Sardes: a cidade quase apagada, do outro lado do mar
+  if (id === 'sardes') return { id, nome: 'Sardes', sub: 'Tens nome de que vives, e estás morto (Ap 3:1)', tema: 'sardes', seed: id, aberto: true, sardes: true, forca: 1.6, planta: SARDES };
   if (id === 'desafio') return { id, nome: 'Desafio das ondas', sub: 'Quantas você aguenta?', tema: 'tribunal', seed: id, extra: true, desafio: true,
     planta: [{ papel: 'inicio', tiles: ['....=====..........=====....', '............................', '...........======...........', '............................', '............................'] }] };
   if (id.startsWith('mundo:')) {

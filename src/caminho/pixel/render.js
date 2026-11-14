@@ -30,6 +30,23 @@ function sprObj(chave, w, h, pinta) { let s = objs.get(chave); if (!s) { s = new
 const CHAMA = [['..y..', '.yY.', '.yYy.', 'yYWYy', '.yYy.'], ['.y...', '.yy..', '.yYy.', 'yYWYy', '.yYy.'], ['...y.', '..yy.', '.yYy.', 'yYWYy', '.yYy.']];
 function chama(g, x, y, Tm, k = 0) { const f = CHAMA[Math.floor(Tm * 9 + k) % 3]; for (let j = 0; j < f.length; j++) for (let i = 0; i < f[j].length; i++) { const c = f[j][i]; if (c !== '.') { g.fillStyle = c === 'W' ? '#FFFBE6' : c === 'Y' ? '#FFD86A' : '#FF9A3C'; g.fillRect(x - 2 + i, y - 4 + j, 1, 1); } } }
 
+function pintarAgua(g, o, G, x, y, Tm) {
+  switch (o.tipo) {
+    // o mar e o píer: a água cobre o chão dali até o fim da sala (ou até "ate"); por cima, as tábuas do píer e as estacas
+    case 'mar': { const cols = (o.ate ? o.ate - o.col + 1 : 29 - o.col) , w = cols * 16, x0 = x - 8, f3 = Tm * 1.6;
+      g.fillStyle = '#0C2434'; g.fillRect(x0, y + 4, w, 20); g.fillStyle = '#123A52'; g.fillRect(x0, y + 2, w, 4);
+      for (let i = 0; i < w; i += 2) { const yy = y + 1 + Math.round(Math.sin(i * 0.15 + f3 * 2) * 1.2); g.fillStyle = (i + Math.floor(f3 * 6)) % 18 < 2 ? '#BFF0F8' : '#2E6B80'; g.fillRect(x0 + i, yy, 2, 1); }
+      g.fillStyle = '#4A3524'; for (let i = 6; i < w; i += 40) g.fillRect(x0 + i, y - 1, 3, 22);
+      g.fillStyle = '#17121f'; g.fillRect(x0, y - 3, w, 4); g.fillStyle = '#8A6A44'; g.fillRect(x0, y - 3, w, 2); g.fillStyle = '#6B4A2E'; for (let i = 0; i < w; i += 9) g.fillRect(x0 + i, y - 3, 1, 3);
+      return true; }
+    case 'barco': { const bal = Math.round(Math.sin(Tm * 1.4) * 1.5), bx = x, by = y + 4 + bal, vira = o.volta ? -1 : 1;
+      g.fillStyle = '#17121f'; g.fillRect(bx - 44, by - 16, 88, 14); g.fillRect(bx - 38, by - 2, 76, 4); g.fillStyle = '#6B4A2E'; g.fillRect(bx - 43, by - 15, 86, 12); g.fillStyle = '#8A6A44'; g.fillRect(bx - 43, by - 15, 86, 2); g.fillStyle = '#4A3524'; for (let i = -36; i < 40; i += 12) g.fillRect(bx + i, by - 12, 1, 9);
+      g.fillStyle = '#17121f'; g.fillRect(bx - 2, by - 70, 4, 56); g.fillStyle = '#5A3E28'; g.fillRect(bx - 1, by - 69, 2, 54);
+      const inf = Math.sin(Tm * 0.9) * 3; g.fillStyle = '#17121f'; g.beginPath(); g.moveTo(bx + 2 * vira, by - 66); g.lineTo(bx + (30 + inf) * vira, by - 40); g.lineTo(bx + 2 * vira, by - 20); g.fill();
+      g.fillStyle = '#E8E2CF'; g.beginPath(); g.moveTo(bx + 3 * vira, by - 63); g.lineTo(bx + (27 + inf) * vira, by - 40); g.lineTo(bx + 3 * vira, by - 23); g.fill(); g.fillStyle = '#C9B88A'; g.fillRect(bx + 3 * vira, by - 44, Math.round(18 * vira), 1);
+      g.fillStyle = Math.floor(Tm * 2) % 2 ? '#FFD86A' : '#FFB84A'; g.fillRect(bx + 36 * vira, by - 24, 3, 3); return true; }
+  }
+}
 function pintarObjeto(g, o, G, x, y, Tm) {
   const tm = G.tm;
   switch (o.tipo) {
@@ -50,6 +67,7 @@ function pintarObjeto(g, o, G, x, y, Tm) {
     case 'segredo': { const f = Math.round(Math.sin(Tm * 3 + o.x) * 2), tipo = o.item === 'pedra' ? 'p' : o.item === 'mana' ? 'm' : 'b', s = sprObj('seg' + tipo, 12, 12, s => { if (tipo === 'p') s.bola(6, 6, 4.5, 3.5, rampa('#B9B4A2')); else if (tipo === 'm') { s.bola(6, 6, 3.5, 3.5, rampa('#F4E6BC')); s.px(5, 4, BRANCO); } else { s.bola(6, 7, 4, 3.5, MADEIRA); s.ret(4, 2, 4, 2, OURO[3]); } }); carimbar(g, s, x, y - 8 + f, 6, 6); if (Math.floor(Tm * 4 + o.x) % 3 === 0) { g.fillStyle = '#fff'; g.fillRect(x + 5, y - 15 + f, 1, 1); g.fillRect(x - 6, y - 5 + f, 1, 1); } return true; }
     case 'sacola': { const s = sprObj('sacola', 12, 13, s => { s.bola(6, 8, 4.5, 4, MADEIRA); s.ret(4, 2, 4, 2, OURO[3]); s.px(6, 8, OURO[4]); }); carimbar(g, s, x, y, 6, 12); if (Math.floor(Tm * 5) % 2) { g.fillStyle = '#FFD23F'; g.fillRect(x - 6, y - 16, 1, 1); g.fillRect(x + 5, y - 13, 1, 1); } return true; }
     case 'morador': { // gente da aldeia, indo e vindo
+      if (o.escondido > G.T) return true; // em Sardes, às vezes o vizinho não era gente
       const vai = (o.vai || 3) * 32, f = Math.sin(Tm * 0.35 + o.x), dx = Math.round(f * vai / PX), parado = Math.abs(Math.cos(Tm * 0.35 + o.x)) < 0.25;
       carimbar(g, quadroPessoa({ ...o.look, cls: null }, parado ? 0 : Tm * 2.2, 'm' + o.x), x + dx, y - (parado ? 0 : Math.floor(Tm * 6) % 2), 24, 40, Math.cos(Tm * 0.35 + o.x) >= 0 ? 1 : -1); return true; }
     case 'ave': { // pombas que levantam voo quando o peregrino chega perto
@@ -105,6 +123,15 @@ function pintarObjeto(g, o, G, x, y, Tm) {
     case 'tocha': { const f = Math.floor(Tm * 10 + (o.fase || 0) * 5) % 2, bx = x, by = y; // um soldado contra a luz da tocha
       g.fillStyle = '#05060B'; g.fillRect(bx - 4, by - 34, 9, 34); g.fillRect(bx - 3, by - 40, 7, 6); g.fillRect(bx - 5, by - 42, 11, 3); g.fillRect(bx + 4, by - 30, 6, 2); g.fillRect(bx + 8, by - 44, 2, 16);
       g.fillStyle = '#FF8A2A'; g.fillRect(bx + 7, by - 50 + f, 4, 6); g.fillStyle = '#FFD86A'; g.fillRect(bx + 8, by - 48 + f, 2, 3); g.globalAlpha = 0.15; g.fillStyle = '#FF8A2A'; g.fillRect(bx - 10, by - 60, 30, 40); g.globalAlpha = 1; return true; }
+    case 'mar': case 'barco': return true; // desenhados depois dos blocos (pintarAgua), por cima do chão
+    // uma vela de rua (lampadário): apagada solta fumaça; acesa, chama e brilho
+    case 'vela': { const aceso = !!G.cm.sar?.velas?.[o.id]; o.luz = aceso ? 130 : 0;
+      g.fillStyle = '#17121f'; g.fillRect(x - 1, y - 30, 3, 30); g.fillRect(x - 6, y - 2, 13, 2); g.fillRect(x - 5, y - 34, 11, 4); g.fillStyle = '#5A5668'; g.fillRect(x, y - 29, 1, 28); g.fillStyle = '#8E8A98'; g.fillRect(x - 4, y - 33, 9, 2);
+      g.fillStyle = '#E8E2CF'; g.fillRect(x - 1, y - 39, 3, 6);
+      if (aceso) { chama(g, x - 2, y - 45, Tm, o.col); g.save(); g.globalAlpha = 0.18 + 0.05 * Math.sin(Tm * 6 + o.col); g.fillStyle = '#FFD98A'; g.fillRect(x - 10, y - 50, 21, 18); g.restore(); }
+      else { g.fillStyle = '#6E6A78'; for (let i = 0; i < 3; i++) { const k = (Tm * 0.6 + i / 3) % 1; g.globalAlpha = (1 - k) * 0.6; g.fillRect(x + Math.round(Math.sin(Tm * 2 + i) * 2), y - 41 - Math.round(k * 14), 1, 2); } g.globalAlpha = 1; }
+      return true; }
+    case 'selado': case 'covil': { if (o.tipo === 'covil') { g.fillStyle = '#E4DFCF'; for (const [dx, dy] of [[-30, 0], [-18, -2], [12, 0], [26, -1], [34, 0]]) { g.fillRect(x + dx, y - 3 + dy, 8, 2); g.fillRect(x + dx - 1, y - 4 + dy, 2, 2); } g.fillStyle = '#8A6A44'; g.fillRect(x - 40, y - 2, 80, 2); } return true; }
     case 'cenario': { const q = o.qual, f2 = Math.floor(Tm * 8) % 2;
       if (q === 'forja') { g.fillStyle = '#17121f'; g.fillRect(x + 14, y - 46, 30, 46); g.fillRect(x + 22, y - 62, 10, 16); g.fillStyle = '#4A4658'; g.fillRect(x + 15, y - 45, 28, 44); g.fillRect(x + 23, y - 61, 8, 15); g.fillStyle = '#17121f'; g.fillRect(x + 20, y - 26, 18, 20); g.fillStyle = f2 ? '#FF8A2A' : '#FFD86A'; g.fillRect(x + 22, y - 22, 14, 14); g.fillStyle = '#C9281F'; g.fillRect(x + 22, y - 12, 14, 5); g.fillStyle = '#17121f'; g.fillRect(x - 30, y - 14, 20, 14); g.fillRect(x - 34, y - 20, 28, 7); g.fillStyle = '#7F8C9C'; g.fillRect(x - 33, y - 19, 26, 5); g.fillRect(x - 28, y - 13, 16, 12); g.fillStyle = '#C3DCEA'; g.fillRect(x - 33, y - 19, 26, 1); if (f2) { g.fillStyle = '#FFE26B'; g.fillRect(x + 28, y - 66 - (Math.floor(Tm * 5) % 5), 1, 1); g.fillRect(x + 25, y - 70, 1, 1); } }
       else if (q === 'arca') { // a mini arca de Noé, com os bichos espiando
@@ -121,6 +148,16 @@ function pintarObjeto(g, o, G, x, y, Tm) {
       else if (q === 'cofre') { // a arca do tesouro e a mesa do coletor
         g.fillStyle = '#17121f'; g.fillRect(x - 30, y - 30, 40, 30); g.fillRect(x + 40, y - 18, 34, 18); g.fillStyle = '#6B4A2E'; g.fillRect(x - 29, y - 22, 38, 21); g.fillStyle = '#8A6A44'; g.fillRect(x - 29, y - 29, 38, 7); g.fillStyle = '#C9A63C'; g.fillRect(x - 29, y - 23, 38, 2); g.fillRect(x - 22, y - 29, 3, 28); g.fillRect(x - 2, y - 29, 3, 28); g.fillRect(x - 12, y - 20, 5, 6);
         g.fillStyle = '#5A3E28'; g.fillRect(x + 41, y - 17, 32, 3); g.fillRect(x + 43, y - 14, 3, 14); g.fillRect(x + 68, y - 14, 3, 14); g.fillStyle = f2 ? '#FFD23F' : '#E8B830'; for (let i = 0; i < 4; i++) g.fillRect(x + 46 + i * 6, y - 20 - (i % 2) * 2, 4, 3 + (i % 2) * 2); }
+      else if (q === 'redes') { g.fillStyle = '#17121f'; g.fillRect(x - 24, y - 46, 3, 46); g.fillRect(x + 22, y - 46, 3, 46); g.fillRect(x - 26, y - 48, 54, 3); g.fillStyle = '#6B4A2E'; g.fillRect(x - 23, y - 45, 1, 44); g.fillRect(x + 23, y - 45, 1, 44);
+        g.fillStyle = '#C9B88A'; for (let i = 0; i < 9; i++) { const sag = Math.round(Math.sin(i / 8 * Math.PI) * 8); for (let k = 0; k < 6; k++) g.fillRect(x - 21 + i * 5, y - 44 + k * 4 + Math.round(sag * k / 6), 1, 3); } for (let k = 0; k < 6; k++) g.fillRect(x - 21, y - 44 + k * 4 + 4, 43, 1);
+        g.fillStyle = '#E2463C'; g.fillRect(x - 8, y - 22, 4, 4); g.fillStyle = '#D9A63C'; g.fillRect(x + 6, y - 18, 4, 4); }
+      else if (q === 'quadro') { g.fillStyle = '#17121f'; g.fillRect(x - 20, y - 46, 40, 30); g.fillRect(x - 17, y - 16, 3, 16); g.fillRect(x + 14, y - 16, 3, 16); g.fillStyle = '#6B4A2E'; g.fillRect(x - 19, y - 45, 38, 28);
+        g.fillStyle = '#E8D9B0'; g.fillRect(x - 15, y - 41, 12, 9); g.fillRect(x + 1, y - 42, 13, 10); g.fillRect(x - 9, y - 29, 14, 9); g.fillStyle = '#8A6A44'; for (const [px, py] of [[-13, -38], [3, -39], [-7, -26]]) g.fillRect(x + px, y + py, 8, 1); g.fillStyle = '#B8423A'; g.fillRect(x - 10, y - 42, 2, 2); g.fillRect(x + 7, y - 43, 2, 2); }
+      else if (q === 'templo') { const luz = G.cm.sar?.feita; g.fillStyle = '#17121f'; g.fillRect(x - 70, y - 96, 140, 96); g.fillRect(x - 78, y - 104, 156, 10); g.beginPath(); g.moveTo(x - 80, y - 104); g.lineTo(x, y - 132); g.lineTo(x + 80, y - 104); g.fill();
+        g.fillStyle = luz ? '#8A8296' : '#3A3644'; g.fillRect(x - 68, y - 94, 136, 94); g.beginPath(); g.moveTo(x - 72, y - 105); g.lineTo(x, y - 128); g.lineTo(x + 72, y - 105); g.fill();
+        g.fillStyle = luz ? '#B8B0C0' : '#4A4658'; for (const cx of [-58, -36, 32, 54]) g.fillRect(x + cx, y - 92, 6, 92);
+        g.fillStyle = luz ? '#FFD98A' : '#0A090C'; g.fillRect(x - 18, y - 60, 36, 60); g.fillRect(x - 14, y - 66, 28, 6);
+        if (luz) { g.save(); g.globalAlpha = 0.25 + 0.08 * Math.sin(Tm * 3); g.fillStyle = '#FFE9A8'; g.fillRect(x - 30, y - 72, 60, 72); g.restore(); for (const dx of [-8, 0, 8]) chama(g, x + dx - 2, y - 72, Tm, dx); } }
       else if (q === 'banca') { g.fillStyle = '#17121f'; g.fillRect(x - 40, y - 52, 3, 52); g.fillRect(x + 22, y - 52, 3, 52); g.fillRect(x - 44, y - 58, 72, 8); g.fillRect(x - 40, y - 16, 64, 16); g.fillStyle = '#7A3F8A'; g.fillRect(x - 43, y - 57, 70, 6); for (let i = 0; i < 9; i++) { g.fillStyle = i % 2 ? '#9A5AB0' : '#5E2C6E'; g.fillRect(x - 43 + i * 8, y - 51, 8, 4 + (i % 2) * 2); } g.fillStyle = '#6B4A2E'; g.fillRect(x - 39, y - 15, 62, 14); for (const [dx, c] of [[-34, '#8E2B45'], [-22, '#7A3F8A'], [-10, '#C9A63C'], [2, '#5E2C6E'], [12, '#B03A6E']]) { g.fillStyle = c; g.fillRect(x + dx, y - 24, 9, 9); g.fillStyle = '#17121f'; g.fillRect(x + dx, y - 16, 9, 1); } }
       else if (q === 'armas') { g.fillStyle = '#17121f'; g.fillRect(x + 16, y - 44, 46, 4); g.fillRect(x + 18, y - 44, 3, 44); g.fillRect(x + 57, y - 44, 3, 44); g.fillStyle = '#6B4A2E'; g.fillRect(x + 17, y - 43, 44, 2); for (const [dx, h2, c] of [[24, 30, '#C3DCEA'], [32, 22, '#A0662A'], [40, 34, '#C3DCEA'], [48, 26, '#C48A4E']]) { g.fillStyle = '#17121f'; g.fillRect(x + dx - 1, y - 41, 4, h2 + 2); g.fillStyle = c; g.fillRect(x + dx, y - 40, 2, h2); g.fillStyle = '#D9A63C'; g.fillRect(x + dx - 1, y - 40 + h2 - 6, 4, 2); } g.fillStyle = '#17121f'; g.fillRect(x + 66, y - 22, 16, 22); g.fillStyle = '#7F8C9C'; g.fillRect(x + 67, y - 21, 14, 14); g.fillStyle = '#D9A63C'; g.fillRect(x + 72, y - 16, 4, 4); }
       else if (q === 'tear') { g.fillStyle = '#17121f'; g.fillRect(x + 16, y - 46, 3, 46); g.fillRect(x + 46, y - 46, 3, 46); g.fillRect(x + 14, y - 48, 37, 4); g.fillRect(x + 14, y - 12, 37, 4); g.fillStyle = '#6B4A2E'; g.fillRect(x + 15, y - 47, 35, 2); g.fillRect(x + 15, y - 11, 35, 2); for (let i = 0; i < 9; i++) { g.fillStyle = ['#C8C9BC', '#713E49', '#394F62'][i % 3]; g.fillRect(x + 20 + i * 3, y - 44, 2, 20 + ((i * 5 + Math.floor(Tm * 2)) % 9)); } g.fillStyle = '#A18C61'; g.fillRect(x + 54, y - 8, 14, 8); g.fillStyle = '#C8C9BC'; g.fillRect(x + 56, y - 14, 10, 6); g.fillStyle = '#713E49'; g.fillRect(x + 58, y - 18, 6, 4); }
@@ -203,6 +240,7 @@ export function renderPixel(G) {
   for (const o of G.objs) { const x = X(o.x); if (x < -60 || x > vw + 60) continue; if (o.oculto && !G.achou(o)) { const k = G.p.lampA * clamp(1 - (Math.hypot(o.x - G.p.x, o.y - G.p.y) - 200) / 160, 0, 1); if (k < 0.05) continue; g.globalAlpha = k; } if (!pintarObjeto(g, o, G, x, Y(o.y), Tm)) antigo(() => desenharObjeto(g, o, G)); g.globalAlpha = 1; }
   if (G.def.mundo && G.N.arena) pintarArenaTema(g, G, X, Y, Tm);
   pintarBlocosPixel(g, G, C, vw, vh, cx, cy);
+  for (const o of G.objs) if (o.tipo === 'mar' || o.tipo === 'barco') pintarAgua(g, o, G, X(o.x), Y(o.y), Tm);
   // avisos de golpe: áreas pontilhadas que fecham até o impacto
   for (const z of G.zonas) pintarZona(g, G, z, X, Y, vw, vh, Tm);
   pintarEfeitos(g, G.fxPx, cx, cy, true);
@@ -223,7 +261,7 @@ export function renderPixel(G) {
       const q = quadroVicio(e, Tm);
       if (!q) { antigo(() => desenharVicio(g, e, Tm)); continue; }
       const tonto = e.stun > 0.25, yy = Y(e.y) + (e.voa ? Math.round(Math.sin(Tm * 3 + (e.art?.ph || 0)) * 2) : 0);
-      if (e.elite) { const cv = q.s.tela(); g.save(); g.translate(X(e.x), yy); g.scale((e.face >= 0 ? 1 : -1) * 1.35, 1.35); g.drawImage(cv, -q.ax, -q.ay); g.restore(); const cy2 = yy - Math.round(e.h / PX) - 4; g.fillStyle = '#F2C14E'; g.fillRect(X(e.x) - 4, cy2, 9, 2); for (const dx of [-4, 0, 4]) g.fillRect(X(e.x) + dx, cy2 - 2, 1, 2); }
+      if (e.elite) { const cv = q.s.tela(), k = e.escDesenho || 1.35; g.save(); g.translate(X(e.x), yy); g.scale((e.face >= 0 ? 1 : -1) * k, k); g.drawImage(cv, -q.ax, -q.ay); g.restore(); const cy2 = yy - Math.round(e.h / PX) - 4; g.fillStyle = '#F2C14E'; g.fillRect(X(e.x) - 4, cy2, 9, 2); for (const dx of [-4, 0, 4]) g.fillRect(X(e.x) + dx, cy2 - 2, 1, 2); }
       else carimbar(g, q.s, X(e.x), yy, q.ax, q.ay, e.face >= 0 ? 1 : -1, e.vista ?? 1);
       if (tonto) for (let i = 0; i < 3; i++) { const a = Tm * 5 + i * 2.09; g.fillStyle = '#FFE9A8'; g.fillRect(X(e.x) + Math.round(Math.cos(a) * 7), yy - Math.round(e.h / PX) - 5 + Math.round(Math.sin(a) * 2), 1, 1); }
     }

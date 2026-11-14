@@ -92,7 +92,10 @@ export function atualizarHeroi(G, dt) {
   // ---- ORAÇÃO + GOLPE: com a oração apertada, o golpe chama o Espírito, que desce e fere tudo em volta (no alto e no chão) ----
   if (p.espCd > 0) p.espCd -= dt;
   if (c.orar && c.atk && !preso && !emDash && !p.lamp && !G.investidaMira && !G.quedaMira) {
-    if (p.espCd > 0 || p.oleo < ESPIRITO_CUSTO) { if (!p.avisoEsp) { p.avisoEsp = 0.8; G.textoEm(p.x, p.y - 64, p.espCd > 0 ? 'o Espírito ainda não (' + Math.ceil(p.espCd) + 's)' : 'a descida do Espírito pede ' + ESPIRITO_CUSTO + ' de azeite', '#C9B88A', 12); } }
+    p.tentouEsp = true;
+    if (!G.cm.espirito) { // a habilidade existe, mas ainda não é sua: o tutorial ensina o jeito, o Vale da Mentira dá o dom
+      if (!(p.avisoEsp > 0)) { p.avisoEsp = 2.5; G.textoEm(p.x, p.y - 70, 'Calma lá!', '#FFE9A8', 14); G.ui.toast('Calma lá: a descida do Espírito existe, mas ainda não é sua. Você precisa descobrir como conquistá-la. Dizem que no fundo do Vale da Mentira, sob o Refúgio, quem vence a maior das mentiras recebe o Espírito da verdade (Jo 16:13).', 8000); G.fx.sobe(p.x, p.y - 20, 8, '#FFE9A8'); }
+    } else if (p.espCd > 0 || p.oleo < ESPIRITO_CUSTO) { if (!p.avisoEsp) { p.avisoEsp = 0.8; G.textoEm(p.x, p.y - 64, p.espCd > 0 ? 'o Espírito ainda não (' + Math.ceil(p.espCd) + 's)' : 'a descida do Espírito pede ' + ESPIRITO_CUSTO + ' de azeite', '#C9B88A', 12); } }
     else espiritoDesce(G);
     c.atk = false; p.atkBuf = 0;
   }
@@ -147,7 +150,7 @@ export function atualizarHeroi(G, dt) {
     G.fx.po(p.x, p.y - 4, 6, '#E8E2C8');
   }
   if (p.dashT > 0) {
-    p.dashT -= dt; p.vx = p.dashDir * (p.dashModo === 'chao' ? 560 : 600); p.vy = 0;
+    p.dashT -= dt; p.vx = p.dashDir * (p.dashModo === 'chao' ? 560 : 600 * (G.tem('vela_paulo') ? 1.4 : 1)); p.vy = 0;
     p.rastro.push({ x: p.x, y: p.y, t: 0.22, face: p.face, baixo: p.dashModo === 'chao' });
     if (p.dashModo === 'chao' && Math.random() < dt * 40) G.fx.po(p.x - p.dashDir * 8, p.y - 2, 1, '#C9D2C4');
     if (p.dashT <= 0) p.dashFim = 0.12; // um respiro depois do passo: o golpe ainda sai como golpe do passo

@@ -17,8 +17,15 @@ export const VICIOS = {
   ira: { ai: 'carga', golpes: 4, vel: 80, r: 16 },
   medo: { ai: 'sombra', golpes: 2, vel: 70, r: 14 },
   orgulho: { ai: 'guarda', golpes: 7, vel: 46, r: 21 },
-  vaidade: { ai: 'atira', golpes: 4, vel: 115, r: 15, leque: 3 }
+  vaidade: { ai: 'atira', golpes: 4, vel: 115, r: 15, leque: 3 },
+  // as criaturas do Vale da Mentira
+  serpente: { ai: 'carga', golpes: 8, vel: 105, r: 17 },
+  quimera: { ai: 'salto', golpes: 8, vel: 110, r: 18 },
+  grifo: { ai: 'voa', golpes: 6, vel: 170, r: 16 },
+  basilisco: { ai: 'guarda', golpes: 10, vel: 50, r: 19 },
+  dragao: { ai: 'atira', golpes: 9, vel: 100, r: 20, leque: 3 }
 };
+export const ehVoador = tipo => VOADOR.has(VICIOS[tipo]?.ai);
 const VOADOR = new Set(['voa', 'atira', 'sombra']);
 
 export function novoVicio(type, x, y, escala = 1) {

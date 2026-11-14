@@ -4,6 +4,7 @@
 import { rand, clamp, lerp, TAU, pick, shuffle, weekId, h } from '../util.js';
 import { input, wasd } from '../input.js';
 import { anguloMira, passoMira, tiroEspecial, estourar, MIRA_CARGA, MIRA_CUSTO } from './mira.js';
+import { aoEntrar, passoNovo, aoMatar, rotuloNovo, usarNovo, falarNovo, objetivoSardes } from './mundonovo.js';
 import { aplicarEspecial, passoEspeciais, sortearArma, sortearReliquia, rarDe, especiaisDe, ESPECIAIS, RARIDADES } from './arsenal.js';
 import { passoGetsemani, encontro, lerBiblia } from './getsemani.js';
 import { VILA, falaDaVila } from '../content/vila.js';
@@ -21,7 +22,7 @@ import { drawPerson } from '../game/character-art.js';
 import { T, CW, CH, gerarNivel, tileEm, ESPINHO, OCULTO, FALSA, VAZIO, TRANCA, SOLIDO, PONTE } from './nivel.js';
 import { solido } from './corpo.js';
 import { novoHeroi, atualizarHeroi, desenharHeroi, ARMAS, OLEO_USO, damp } from './heroi.js';
-import { novoVicio, atualizarVicio, desenharVicio, vulneravel } from './bichos.js';
+import { novoVicio, atualizarVicio, desenharVicio, vulneravel, VICIOS, ehVoador } from './bichos.js';
 import { CHEFES, novoChefe, atualizarChefe, desenharChefe, danoNoChefe } from './chefes.js';
 import { ARMADURA, RELIQUIAS, MUNDO, DIFICULDADES, ARMAS_ALT, DONS, areaDef, novoCaminho, semanaDe } from './dados.js';
 import { tema, pintarFundo, pintarBlocos, pintarEnfeites, pintarLampioes, pintarLuz, corA } from './cena.js';
@@ -44,7 +45,8 @@ const PASSOS = [ // t: [toque, controle, teclado]; alvo: o botão de toque que p
   { id: 'vigilia', titulo: 'Lâmpada: defesa', alvo: 'defend', t: ['LÂMPADA na hora', 'LB na hora', 'D na hora', 'E na hora'], txt: 'Aperte quando o dardo chegar. É a sua única defesa.' },
   { id: 'azeite', titulo: 'Azeite', t: ['jarro no alto', 'jarro no alto', 'jarro no alto', 'jarro no alto'], txt: 'Golpes certos e defesas enchem o jarro.' },
   { id: 'mira', titulo: 'Ataque mira', alvo: 'attack', t: ['segure GOLPE e arraste o dedo', 'segure X e aponte com o analógico', 'segure Z, aponte com as setas e solte', 'segure o clique, aponte e solte'], txt: 'Espere a linha dourada, aponte e solte. Gasta 40 de azeite: seu jarro foi cheio para treinar.' },
-  { id: 'orar', titulo: 'Orar', alvo: 'botija', t: ['segure ORAR', 'segure B', 'segure A', 'segure Q'], txt: 'Você perdeu dois fôlegos. Fique parado e ore: gasta azeite e devolve um fôlego.' }
+  { id: 'orar', titulo: 'Orar', alvo: 'botija', t: ['segure ORAR', 'segure B', 'segure A', 'segure Q'], txt: 'Você perdeu dois fôlegos. Fique parado e ore: gasta azeite e devolve um fôlego.' },
+  { id: 'espirito', titulo: 'A descida do Espírito', alvo: 'botija', t: ['segure ORAR e toque GOLPE', 'segure B e aperte X', 'segure A e aperte Z', 'segure Q e clique'], txt: 'Orando, aperte o golpe: o Espírito desce do céu e fere tudo em volta, no alto e no chão. Experimente.' }
 ];
 
 const caixa = e => ({ x: e.x - e.w / 2, y: e.y - e.h, w: e.w, h: e.h });
@@ -98,7 +100,7 @@ export class Caminho {
   custoVerso() { return OLEO_USO * (this.tem('cantico_novo') ? 0.7 : 1); }
   get dif() { return DIFICULDADES[this.cm.dif] || DIFICULDADES.provacao; }
   tem(rel) { return this.cm.eq.includes(rel) || (RELIQUIAS[rel]?.passiva && this.cm.reliquias.includes(rel)); }
-  vidaMax() { return Math.max(3, 5 + (this.cm.getsemaniDom === 'folego' ? 1 : 0) + (this.hab.couraca ? 2 : 0) + Math.floor(this.cm.mana / 3) + (this.tem('osso_bronze') ? 1 : 0) + this.dif.vidas); }
+  vidaMax() { return Math.max(3, 5 + (this.tem('veste_branca') ? 1 : 0) + (this.cm.getsemaniDom === 'folego' ? 1 : 0) + (this.hab.couraca ? 2 : 0) + Math.floor(this.cm.mana / 3) + (this.tem('osso_bronze') ? 1 : 0) + this.dif.vidas); }
   oleoMax() { return (this.tem('odre_novo') ? 132 : 99) + (this.cm.getsemaniDom === 'azeite' ? 22 : 0) + (this.tem('chifre_azeite') ? 25 : 0); }
   espacos() { return 3 + (this.cm.reliquias.includes('coroa_restituida') ? 1 : 0) + (this.cm.reliquias.includes('perola_preco') ? 1 : 0); }
   temDom(id) { const d = DONS[id], ds = this.cm.dons || {}; if (!d) return false; return d.exige ? d.exige.every(x => this.temDom(x)) && !!ds.lingua : (ds[id] || 0) >= (d.partes || 1); }
@@ -132,6 +134,7 @@ export class Caminho {
   /* ================= Áreas ================= */
   entrar(id, o = {}) {
     const def = areaDef(id), cm = this.cm;
+    if (id === 'sardes' && cm.sar?.feita) def.tema = 'sardes2'; // depois de restaurada, Sardes tem outro céu
     if (id === 'getsemani' && cm.getsemani) { def.tema = 'getsemani2'; def.sub = 'A manhã seguinte'; } // depois do encontro, o jardim amanhece vazio
     this.area = id; this.def = def; this.tm = tema(def.tema); if (this.p && this.tem('mana_deserto')) this.p.oleo = Math.min(this.oleoMax(), this.p.oleo + 12);
     const N = this.N = gerarNivel(def);
@@ -158,10 +161,12 @@ export class Caminho {
     if (cm.sacola?.area === id) this.objs.push({ tipo: 'sacola', x: cm.sacola.x, y: cm.sacola.y, luz: 70 });
     this.mp?.mudouArea(id);
     if (this.souDono()) this.povoar();
+    aoEntrar(this, id);
     // onde o peregrino aparece
     let pos = N.inicio;
     const eb = this.objs.find(ob => ob.tipo === 'ebenezer');
     if (o.ebenezer && cm.ebenezer?.area === id && eb) pos = { x: eb.x - 40, y: eb.y };
+    else if (o.junto) { const ob = this.objs.find(x => x.tipo === o.junto); if (ob) pos = { x: ob.x - 70, y: ob.y }; }
     else if (o.portal) { const pt = this.objs.find(ob => ob.tipo === 'portal' && (ob.semana === o.portal || ob.mundo === o.portal || ob.area === o.portal)); if (pt) pos = { x: pt.x, y: pt.y }; }
     const antigo = this.p;
     this.p = this.eu = novoHeroi(pos.x, pos.y - 1, this.vidaMax());
@@ -198,7 +203,7 @@ export class Caminho {
     const def = this.def;
     this.inimigos = this.inimigos.filter(e => e.kind === 'chefe');
     if (!def.inimigos) return;
-    const esc = 1 + (def.fase?.nivel || 1) * 0.05, voadores = ['distracao', 'duvida', 'medo', 'vaidade'];
+    const esc = (def.forca || 1) * (1 + (def.fase?.nivel || 1) * 0.05), voadores = Object.keys(VICIOS).filter(ehVoador);
     this.N.spawns.forEach((s, i) => { const tipos = def.inimigos.filter(t => !!s.voa === voadores.includes(t)), lista = tipos.length ? tipos : def.inimigos; if (s.cel?.papel === 'ebenezer' || Math.hypot(s.x - this.N.inicio.x, s.y - this.N.inicio.y) < 300 || this.objs.some(o => o.tipo === 'ebenezer' && Math.abs(o.x - s.x) < 260 && Math.abs(o.y - s.y) < 200)) return; // nada nasce em cima da pedra de descanso nem do ponto de chegada
       this.nascer(lista[i % lista.length], s.x, s.y + 14, false, esc).cel = s.cel; });
   }
@@ -268,7 +273,7 @@ export class Caminho {
     for (let i = 0; i < N.revel.length; i++) if (N.revel[i] > 0) N.revel[i] -= dt;
     this.simular(dt);
     passoMira(this, dt); if (this.riscos) { for (const r of this.riscos) r.t -= dt; this.riscos = this.riscos.filter(r => r.t > 0); }
-    this.atualizarTiros(dt); this.atualizarZonas(dt); this.atualizarMoedas(dt); this.atualizarFx(dt); passoEspeciais(this, dt);
+    this.atualizarTiros(dt); this.atualizarZonas(dt); this.atualizarMoedas(dt); this.atualizarFx(dt); passoEspeciais(this, dt); passoNovo(this, dt);
     if (this.pomba && (this.pomba.t += dt) > 1.4) this.pomba = null;
     if (this.pecado) this.atualizarPecado(dt);
     this.clima(dt); this.gatilhos(); this.emboscadas(dt); this.interacoes(); this.tutorial(dt);
@@ -500,11 +505,12 @@ export class Caminho {
   matar(e) {
     const c = this.char, d = e.d;
     e.sumiu = true; if (this.mp && e.nid) { this.mp.mortos.add(e.nid); if (this.mp.souDono) this.mp.ev('mo', { id: e.nid }); } sfx('kill'); this.efeito('sumico', e.x, e.y); this.fx.po(e.x, e.y - e.h / 2, 16, d.cor || '#8E98BE'); this.fx.anel(e.x, e.y - e.h / 2, d.cor || '#fff', 44);
+    aoMatar(this, e);
     if (e.daLuta) return;
     if (this.tem('sal_terra') && Math.random() < 0.3) { this.ganharOleo(10); this.textoEm(e.x, e.y - e.h - 6, '+azeite', '#FFD98A', 10); }
     if (this.tem('vara_florida') && Math.random() < 0.08 && this.p.vida < this.p.vidaMax) { this.p.vida++; sfx('heal'); this.textoEm(this.p.x, this.p.y - 70, '+1 fôlego (amêndoa florida)', '#FFE9A8', 12); }
     if (Math.random() < (e.elite ? 0.08 : 0.006)) this.achado({ comum: 60, rara: 30, epica: e.elite ? 10 : 2 }, false, true);
-    this.soltarMoedas(e.x, e.y - e.h / 2, Math.max(1, Math.round((d.ouro || 4) / 3)) + (e.roubo || 0) + (e.elite ? 12 : 0));
+    this.soltarMoedas(e.x, e.y - e.h / 2, Math.round((Math.max(1, Math.round((d.ouro || 4) / 3)) + (e.elite ? 12 : 0)) * (this.tem('estrela_magos') ? 1.5 : 1)) + (e.roubo || 0));
     c.data.stats.kills++; c.data.kills[e.type] = (c.data.kills[e.type] || 0) + 1; this.xp(d.xp || 8); this.pontos(10);
     if (c.data.kills[e.type] === 1 && d.licao) this.ui.toast(d.nome + ' vencida pela primeira vez: ' + d.licao, 5200);
   }
@@ -663,7 +669,7 @@ export class Caminho {
   // o clima da área também joga: ondas no convés (Jn 1:4), brasas no tribunal, o vento oriental (Jn 4:8)
   clima(dt) {
     let p = this.p; const tipo = this.tm.perigo;
-    if (this.vento) { this.vento.t -= dt; if (!p.morto && p.dashT <= 0) p.x += this.vento.f * dt * (p.chao ? 0.55 : 1) * (p.lamp ? 0.4 : 1); if (Math.random() < dt * 40) this.parts.push({ x: p.x + rand(200, 520), y: p.y - rand(0, 300), vx: this.vento.f * 4, vy: rand(-20, 20), t: 0.6, max: 0.6, r: 1.6, cor: this.tm.acento, g: 0 }); if (this.vento.t <= 0) this.vento = null; }
+    if (this.vento) { this.vento.t -= dt; if (!p.morto && p.dashT <= 0 && !this.tem('ancora_esperanca')) p.x += this.vento.f * dt * (p.chao ? 0.55 : 1) * (p.lamp ? 0.4 : 1); if (Math.random() < dt * 40) this.parts.push({ x: p.x + rand(200, 520), y: p.y - rand(0, 300), vx: this.vento.f * 4, vy: rand(-20, 20), t: 0.6, max: 0.6, r: 1.6, cor: this.tm.acento, g: 0 }); if (this.vento.t <= 0) this.vento = null; }
     if ((!tipo && this.tm.deco !== 'mastros') || (this.luta && this.def.mundo !== 'leviata') || this.venceu || p.morto || this.def.paz || this.def.extra) return; // no barco do Leviatã o mar e as lanças não param
     // em grupo, só o dono da área sorteia o clima: uma rajada só para todos (os outros a recebem pela rede), mirada num peregrino qualquer
     if (this.mp?.acompanhado() && !this.souDono()) return;
@@ -801,7 +807,7 @@ export class Caminho {
       this.tutDardo = (this.tutDardo || 1.2) - dt;
       if (this.tutDardo <= 0) { this.tutDardo = 2.4; const d = p.face || 1; this.tiros.push({ x: p.x + d * 430, y: p.y - 28, vx: -d * 300, vy: 0, r: 7, vida: 3, cor: '#E8D9A8', tipo: 'bola', treino: true, fura: true }); }
     }
-    const feito = { andar: this.tutAndou > 220, pular: !p.chao && p.pulos <= 0 && p.vy < 0, passo: p.dashT > 0, golpe: !!p.atk, descer: p.desce > 0 || this.tutT > 9, rasteiro: (p.rasteiro && p.dashT > 0) || this.tutT > 12, luz: p.lampA > 0.8 && this.tutT > 2.5, vigilia: this.tutParry, orar: p.vida > (this.tutVida ?? p.vidaMax), azeite: this.tutT > 8, mira: p.miraCd > 3.5 }[s.id];
+    const feito = { andar: this.tutAndou > 220, pular: !p.chao && p.pulos <= 0 && p.vy < 0, passo: p.dashT > 0, golpe: !!p.atk, descer: p.desce > 0 || this.tutT > 9, rasteiro: (p.rasteiro && p.dashT > 0) || this.tutT > 12, luz: p.lampA > 0.8 && this.tutT > 2.5, vigilia: this.tutParry, orar: p.vida > (this.tutVida ?? p.vidaMax), azeite: this.tutT > 8, mira: p.miraCd > 3.5, espirito: !!p.tentouEsp || (p.espCd > 0) }[s.id];
     if (feito && this.tutT > 0.8) { v.tut++; this.tutT = 0; this.tutParry = false; sfx('right'); if (v.tut >= PASSOS.length) { this.ui.toast(this.temMapa() ? 'Você sabe caminhar. Siga a seta dourada até a sua missão.' : 'Você sabe caminhar. Fale com o Velho Peregrino: ele tem um mapa para você.', 5000); this.salvar(); } }
   }
 
@@ -849,7 +855,7 @@ export class Caminho {
       this.ui.toast(eco || 'A câmara está livre. Leia o rolo.', eco ? 11000 : 3500); return;
     }
     // próxima onda: mais vícios a cada vez, vindos do chão e do ar
-    const tipos = this.def.inimigos || ['desanimo'], voadores = ['distracao', 'duvida', 'medo', 'vaidade'], n = 3 + e.onda + (this.mp ? this.mp.naArea().length : 0), ox = e.c.cx * CW, oy = e.c.cy * CH, esc = 1 + (f.nivel || 1) * 0.05;
+    const tipos = this.def.inimigos || ['desanimo'], voadores = Object.keys(VICIOS).filter(ehVoador), n = 3 + e.onda + (this.mp ? this.mp.naArea().length : 0), ox = e.c.cx * CW, oy = e.c.cy * CH, esc = 1 + (f.nivel || 1) * 0.05;
     const vazio = (tx, ty) => tileEm(N, tx, ty) === VAZIO, chao = (tx, ty) => { const t = tileEm(N, tx, ty); return t === SOLIDO || t === PONTE; };
     for (let i = 0, feitos = 0, tent = 0; feitos < n && tent < 60; tent++) {
       const tipo = tipos[(e.onda * 2 + i) % tipos.length], voa = voadores.includes(tipo), tx = ox + 3 + Math.floor(rand(0, CW - 6));
@@ -1028,6 +1034,7 @@ export class Caminho {
     if (perto && this.ctl.interagir && !this.cena) this.usar(perto);
   }
   rotulo(ob) {
+    const rn = rotuloNovo(this, ob); if (rn !== undefined) return rn;
     switch (ob.tipo) {
       case 'rolo': return ob.feito ? 'Reler o rolo' : ob.trava > this.T || !this.roloLivre(ob) ? null : 'Ler o rolo';
       case 'estacao': return ob.feito ? null : ob.dados.nome;
@@ -1051,6 +1058,7 @@ export class Caminho {
   async usar(ob) {
     const d = this.def, cm = this.cm, f = d.fase, p = this.p;
     p.vx = 0; sfx('click');
+    if (await usarNovo(this, ob)) return;
     switch (ob.tipo) {
       case 'rolo': {
         const trecho = f.estudo?.[ob.n] ? '\n\n' + f.estudo[ob.n] : '';
@@ -1115,6 +1123,7 @@ export class Caminho {
   }
 
   async falar(ob) {
+    if (await falarNovo(this, ob)) return;
     const cm = this.cm, c = this.char, p = this.p;
     const n = cm.falas[ob.id || ob.nome] = (cm.falas[ob.id || ob.nome] || 0) + 1;
     let texto;
@@ -1220,6 +1229,7 @@ export class Caminho {
   temMapa() { const cm = this.cm; if (!cm.mapa && (Object.keys(cm.feitas).length || Object.keys(cm.hab).length || cm.falas.velho)) cm.mapa = true; return !!cm.mapa; }
   // A missão da vez no Refúgio: o portal da primeira semana com fase por fazer. Na superfície, o alvo é a escada que leva até ele.
   objetivo() {
+    if (this.area === 'sardes') return objetivoSardes(this);
     if (this.area !== 'refugio') return null;
     if (!this.temMapa()) { const v = this.objs.find(o => o.id === 'velho'); return v ? { x: v.x, y: v.y + 40, rot: 'fale com o Velho Peregrino', portal: v } : null; }
     if (this.objT === Math.floor(this.T)) return this.objC; this.objT = Math.floor(this.T);

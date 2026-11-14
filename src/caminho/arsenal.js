@@ -98,14 +98,20 @@ const RELIQ_NOVAS = {
   mana_deserto: { nome: 'Jarro de Maná', icone: '🍯', ref: 'Êxodo 16:33', rar: 'comum', preco: 240, desc: 'Ao entrar numa área, a lâmpada recebe 12 de azeite.' },
   vara_florida: { nome: 'Amêndoa Florida', icone: '🌸', ref: 'Números 17:8', rar: 'epica', desc: 'Vícios vencidos às vezes devolvem um fôlego.' },
   cantico_novo: { nome: 'Cântico Novo', icone: '🎶', ref: 'Salmo 96:1', rar: 'rara', desc: 'O especial da vocação gasta menos azeite.' },
-  pomba_jordao: { nome: 'Pomba do Jordão', icone: '🕊️', ref: 'Mateus 3:16', rar: 'lendaria', desc: 'A descida do Espírito (orar + golpe) volta duas vezes mais depressa e cobre mais chão.' }
+  pomba_jordao: { nome: 'Pomba do Jordão', icone: '🕊️', ref: 'Mateus 3:16', rar: 'lendaria', desc: 'A descida do Espírito (orar + golpe) volta duas vezes mais depressa e cobre mais chão.' },
+  // só o mercador de além-mar traz estas (no porto do Refúgio, de vez em quando)
+  ancora_esperanca: { nome: 'Âncora da Esperança', icone: '⚓', ref: 'Hebreus 6:19', rar: 'epica', porto: 1600, desc: 'Firme e segura: o vento não o empurra.' },
+  vela_paulo: { nome: 'Vela do Navio de Paulo', icone: '⛵', ref: 'Atos 27:40', rar: 'rara', porto: 900, desc: 'O passo no ar vai muito mais longe.' },
+  estrela_magos: { nome: 'Estrela dos Magos', icone: '⭐', ref: 'Mateus 2:10', rar: 'epica', porto: 1800, desc: 'Os vícios vencidos deixam metade a mais de denários.' },
+  // o presente de Sardes, quando a luz volta
+  veste_branca: { nome: 'Veste Branca de Sardes', icone: '🤍', ref: 'Apocalipse 3:5', rar: 'lendaria', desc: 'Um fôlego a mais. "O que vencer será vestido de vestes brancas."' }
 };
 Object.assign(RELIQUIAS, RELIQ_NOVAS);
 // as antigas ganham raridade: as do Mercador são épicas, os prêmios dos gigantes são lendários, as da Lídia são comuns
 const PREMIOS = new Set(Object.values(MUNDO).map(m => m.premio));
 for (const [id, R] of Object.entries(RELIQUIAS)) if (!R.rar) R.rar = PREMIOS.has(id) ? 'lendaria' : R.raro ? 'epica' : R.preco ? 'comum' : 'rara';
 // relíquias que podem cair de chefes e vícios (as de prêmio fixo e as do Mercador ficam de fora)
-export const RELIQ_ACHAVEIS = Object.keys(RELIQ_NOVAS);
+export const RELIQ_ACHAVEIS = Object.keys(RELIQ_NOVAS).filter(id => !RELIQ_NOVAS[id].porto && id !== 'veste_branca');
 
 // sorteia por raridade, com pesos; devolve null se não há nada que falte
 function sorteio(itens, pesos) {

@@ -10,7 +10,13 @@ export const ENEMIES = {
   ira: { nome: 'Ira', lv: 6, hp: 80, atk: 16, def: 3, spd: 90, r: 16, xp: 32, ouro: 10, cor: '#FF5A3C', cor2: '#A4241A', ai: 'charge', licao: 'Irai-vos e não pequeis (Ef 4:26).' },
   medo: { nome: 'Medo', lv: 7, hp: 70, atk: 15, def: 2, spd: 100, r: 14, xp: 36, ouro: 11, cor: '#4B4E6D', cor2: '#1E2036', ai: 'blink', licao: 'Não temas, porque eu sou contigo (Is 41:10).' },
   orgulho: { nome: 'Orgulho', lv: 9, hp: 150, atk: 20, def: 5, spd: 62, r: 22, xp: 60, ouro: 20, cor: '#C79BFF', cor2: '#6E3FB0', ai: 'charge', licao: 'A soberba precede a ruína (Pv 16:18).' },
-  vaidade: { nome: 'Vaidade', lv: 11, hp: 140, atk: 22, def: 6, spd: 105, r: 15, xp: 70, ouro: 22, cor: '#9FE6F0', cor2: '#3A8C99', ai: 'ranged', licao: 'Vaidade de vaidades, tudo é vaidade (Ec 1:2).' }
+  vaidade: { nome: 'Vaidade', lv: 11, hp: 140, atk: 22, def: 6, spd: 105, r: 15, xp: 70, ouro: 22, cor: '#9FE6F0', cor2: '#3A8C99', ai: 'ranged', licao: 'Vaidade de vaidades, tudo é vaidade (Ec 1:2).' },
+  // o Vale da Mentira: criaturas que não existem. Assustam porque parecem reais; caem quando a verdade as encara.
+  serpente: { nome: 'Serpente de duas cabeças', lv: 10, hp: 120, atk: 18, def: 4, spd: 110, r: 17, xp: 50, ouro: 16, cor: '#6FBF8A', cor2: '#2E6A44', ai: 'charge', licao: 'Uma língua dobre não tem uma cabeça só. "Seja o vosso falar: Sim, sim; não, não" (Mt 5:37).' },
+  quimera: { nome: 'Quimera', lv: 11, hp: 130, atk: 19, def: 4, spd: 100, r: 18, xp: 55, ouro: 18, cor: '#D9A65A', cor2: '#7A4A2A', ai: 'hop', licao: 'Feita de pedaços que não combinam, como a mentira. "Deixai a mentira e falai a verdade" (Ef 4:25).' },
+  grifo: { nome: 'Grifo', lv: 11, hp: 90, atk: 17, def: 3, spd: 150, r: 16, xp: 52, ouro: 16, cor: '#C9B88A', cor2: '#6B5A3A', ai: 'hop', licao: 'Mergulha do alto como um boato. "A testemunha falsa não ficará impune" (Pv 19:5).' },
+  basilisco: { nome: 'Basilisco', lv: 12, hp: 170, atk: 20, def: 6, spd: 55, r: 19, xp: 64, ouro: 20, cor: '#8FA05A', cor2: '#3E4A22', ai: 'charge', licao: 'Dizem que o olhar dele petrifica. Só pelas costas. "Conhecereis a verdade, e a verdade vos libertará" (Jo 8:32).' },
+  dragao: { nome: 'Dragão de mentira', lv: 13, hp: 160, atk: 22, def: 5, spd: 95, r: 20, xp: 72, ouro: 24, cor: '#E2463C', cor2: '#7A1E1A', ai: 'ranged', licao: 'Cospe fogo de palavras. "O Espírito da verdade vos guiará a toda a verdade" (Jo 16:13).' }
 };
 
 // Chefes. Os de fase surgem na arena da fase; os de mundo têm "mundo" (onde moram, em tiles) e "respawn".
