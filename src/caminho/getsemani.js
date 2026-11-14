@@ -139,11 +139,11 @@ export async function lerBiblia(G) {
   for (let i = 0; i < paginas.length; i++) await G.ui.dialog({ nome: 'O livro sobre a pedra', texto: paginas[i], acoes: [{ label: i === paginas.length - 1 ? 'Amém' : 'Virar a página' }], cls: 'fala-narra', voz: false });
 }
 
-// o encontro vira cinema: faixas pretas em cima e embaixo, vinheta nas bordas e um zoom lento nos dois
+// o encontro vira cinema: vinheta nas bordas e um zoom lento nos dois (sem faixa embaixo: ela cobria o chão e os pés)
 let enquadra = null;
 function cinema(on, G) {
   let v = document.getElementById('cenaCine');
-  if (!v) { v = document.createElement('div'); v.id = 'cenaCine'; v.innerHTML = '<i class="cc-cima"></i><i class="cc-baixo"></i><i class="cc-veu"></i>'; document.body.append(v); }
+  if (!v) { v = document.createElement('div'); v.id = 'cenaCine'; v.innerHTML = '<i class="cc-cima"></i><i class="cc-veu"></i>'; document.body.append(v); }
   requestAnimationFrame(() => v.classList.toggle('on', on));
   const cv = document.getElementById('cv'); clearInterval(enquadra); enquadra = null;
   if (!on || !cv || matchMedia('(prefers-reduced-motion: reduce)').matches) { if (cv) { cv.style.transform = ''; cv.style.transformOrigin = ''; } return; }

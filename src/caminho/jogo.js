@@ -223,7 +223,7 @@ export class Caminho {
     if (!this.running) return;
     const dt = Math.min(0.033, (now - this.last) / 1000); this.last = now;
     // um erro num quadro não pode parar o jogo (nem a sala, para quem joga junto)
-    try { if (!document.hidden) { if (!this.ui.blocking && !this.pausaGeral) this.update(dt); else if (this.mp) this.updateAusente(dt); this.mp?.tick(dt); this.telaJunta(dt); } this.render(); }
+    try { if (!document.hidden) { if ((!this.ui.blocking || this.cena) && !this.pausaGeral) this.update(dt) /* numa cena o mundo segue vivo por trás das falas; os controles já ficam presos */; else if (this.mp) this.updateAusente(dt); this.mp?.tick(dt); this.telaJunta(dt); } this.render(); }
     catch (e) { this.p = this.eu || this.p; if (!this.erroVisto) { this.erroVisto = true; console.error('[caminho]', e); } }
     this.raf = requestAnimationFrame(t => this.loop(t));
   }
