@@ -59,7 +59,7 @@ export function showAuth(onDone) {
   const quem = emQuadro ? h('p', { class: 'title' }, 'Jogador ' + (nQuadro + 1) + (ONLINE ? ': entre com a sua conta' : '')) : '';
   const juntos = emQuadro ? '' : h('div', { class: 'tela-div' }, h('span', {}, 'Jogar juntos neste aparelho'), ...[2, 3, 4].map(n => h('button', { class: 'btn sm', type: 'button', onclick: () => { location.href = location.pathname + '?telas=' + n; } }, n + ' jogadores')));
   setTimeout(() => scr().querySelector('.screen')?.classList.add('abertura'), 0);
-  screen(logo(), quem, h('p', { class: 'week' }, 'Estudo da semana: ', h('b', {}, SEMANA_ATUAL.titulo), ' · ' + SEMANA_ATUAL.estudo), form, juntos, emQuadro ? '' : installButton(msg));
+  screen(logo(), quem, h('p', { class: 'week' }, 'Estudo da semana: ', h('b', {}, SEMANA_ATUAL.titulo), ' · ' + SEMANA_ATUAL.estudo), form, juntos, emQuadro ? '' : baixarJogo());
 }
 
 // Botão "Instalar app" (aparece só quando dá para instalar)
@@ -68,6 +68,40 @@ function installButton(msg) {
   const sync = () => { b.hidden = pwa.installed; }; // sempre à vista: se o navegador não oferecer a instalação, o botão explica como fazer
   sync(); const off = pwa.onChange(() => b.isConnected ? sync() : off());
   return b;
+}
+
+// Primeira tela: "Baixar o jogo" com um botão para cada aparelho. Computador e Android usam a instalação do navegador
+// (quando ele oferece); senão, e sempre no iPhone, aparece o passo a passo logo abaixo.
+const PASSOS = {
+  pc: ['Abra o jogo no Chrome ou no Edge.', 'Clique no ícone de instalar (⊕) no fim da barra de endereço, ou no menu ⋮ → "Instalar Peregrinos".', 'Confirme em "Instalar". O jogo ganha um atalho na área de trabalho e abre em janela própria.'],
+  android: ['Abra o jogo no Chrome.', 'Toque no menu ⋮ (canto de cima).', 'Escolha "Instalar app" ou "Adicionar à tela inicial" e confirme.', 'Abra pelo ícone do Peregrinos na tela inicial.'],
+  iphone: ['Abra o jogo no Safari.', 'Toque em Compartilhar (□↑), na barra de baixo.', 'Role e toque em "Adicionar à Tela de Início".', 'Toque em "Adicionar" e abra pelo ícone do Peregrinos.']
+};
+function baixarJogo() {
+  const android = /android/i.test(navigator.userAgent), celular = pwa.ios || android;
+  const ajuda = h('div', { class: 'baixar-ajuda', role: 'status', hidden: true });
+  let aberto = '';
+  const mostrar = (qual, titulo) => {
+    if (aberto === qual && !ajuda.hidden) { ajuda.hidden = true; aberto = ''; return; }
+    aberto = qual; ajuda.hidden = false; ajuda.innerHTML = '';
+    ajuda.append(h('b', {}, titulo), h('ol', {}, ...PASSOS[qual].map(p => h('li', {}, p))));
+  };
+  const instalar = async (qual, titulo, aqui) => {
+    sfx('click');
+    if (aqui && pwa.canPrompt) { ajuda.hidden = true; await pwa.install(t => { ajuda.hidden = false; ajuda.innerHTML = ''; ajuda.append(h('b', {}, t)); }); return; }
+    mostrar(qual, titulo);
+  };
+  const b = (qual, rotulo, titulo, aqui) => h('button', { class: 'btn sm', type: 'button', 'data-plat': qual, onclick: () => instalar(qual, titulo, aqui) }, rotulo);
+  const bloco = h('div', { class: 'tela-div baixar' }, h('span', {}, 'Baixar o jogo'),
+    h('div', { class: 'baixar-btns' },
+      b('pc', 'Computador', 'Instalar no computador', !celular),
+      b('android', 'Android', 'Instalar no Android', android),
+      b('iphone', 'iPhone', 'Instalar no iPhone', false)),
+    ajuda);
+  if (pwa.ios) mostrar('iphone', 'Instalar no iPhone'); // no iPhone a instalação é sempre manual: o passo a passo já vem aberto
+  const sync = () => { bloco.hidden = pwa.installed; };
+  sync(); const off = pwa.onChange(() => bloco.isConnected ? sync() : off());
+  return bloco;
 }
 
 function miniPortrait(look, cls, size = 80) {
