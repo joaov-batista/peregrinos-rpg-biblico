@@ -3,7 +3,7 @@ import { h } from '../util.js';
 import { sfx, setMuted, audio } from '../audio.js';
 import { config, setConfig } from '../config.js';
 import { ACOES_TECLA, teclaDe, wasd } from '../input.js';
-import { botaoDe, proximoBotao } from '../gamepad.js';
+import { botaoDe, proximoBotao, preferirControle } from '../gamepad.js';
 import { CINEMAS } from '../content/cinematicas.js';
 import { TODAS } from '../content/index.js';
 import { faseProg } from '../game/player.js';
@@ -190,9 +190,10 @@ export function abrirMenu(G, aba = 'inventario') {
         h('span', { class: 'cm-ico' }, nomeTecla(teclaDe(acao))), h('div', {}, h('b', {}, nome), h('small', {}, 'Toque para trocar a tecla'))));
       teclas.append(h('button', { class: 'btn sm', onclick: () => { setConfig('teclas', {}); desenha(); } }, 'Voltar às teclas de sempre'));
       const modos = h('div', { class: 'cm-abas cfg-modos' },
-        h('button', { class: 'chip-btn' + (wasd() ? '' : ' on'), onclick: () => { setConfig('esquema', 'setas'); setConfig('teclas', {}); desenha(); } }, 'Setas + Z X C'),
-        h('button', { class: 'chip-btn' + (wasd() ? ' on' : ''), onclick: () => { setConfig('esquema', 'wasd'); setConfig('teclas', {}); desenha(); } }, 'WASD + Q E + mouse'));
-      const explica = t(wasd() ? 'A D andam · W ou Espaço pula · S abaixa e desce · botão esquerdo do mouse golpeia · botão direito solta o especial · Q ora · E ergue a lâmpada · Shift é o passo · F lê e fala · R usa o dom.' : 'Setas andam · ↑ pula · Z ou X golpeia · C é o passo · A ora · D ergue a lâmpada · S solta o especial · E lê e fala · Q usa o dom. O mouse também golpeia (esquerdo) e solta o especial (direito).', 'muted');
+        h('button', { class: 'chip-btn' + (!wasd() && config.modoControle !== 'pad' ? ' on' : ''), onclick: () => { setConfig('esquema', 'setas'); setConfig('modoControle', 'teclado'); setConfig('teclas', {}); desenha(); } }, 'Setas + Z X C'),
+        h('button', { class: 'chip-btn' + (wasd() && config.modoControle !== 'pad' ? ' on' : ''), onclick: () => { setConfig('esquema', 'wasd'); setConfig('modoControle', 'teclado'); setConfig('teclas', {}); desenha(); } }, 'WASD + Q E + mouse'),
+        h('button', { class: 'chip-btn' + (config.modoControle === 'pad' ? ' on' : ''), onclick: () => { setConfig('esquema', 'wasd'); setConfig('modoControle', 'pad'); preferirControle(); desenha(); } }, '🎮 Controle'));
+      const explica = t(config.modoControle === 'pad' ? 'Controle: analógico anda · A pula (duas vezes no ar) · X golpeia · RB solta o especial · RT é o passo · B ou LT ora · LB ergue a lâmpada · Y fala · analógico direito mira o ataque mira · Start abre o menu. Troque os botões logo abaixo, em "Controle". O teclado WASD continua valendo.' : wasd() ? 'A D andam · W ou Espaço pula · S abaixa e desce · botão esquerdo do mouse golpeia · botão direito solta o especial · Q ora · E ergue a lâmpada · Shift é o passo · F lê e fala · R usa o dom.' : 'Setas andam · ↑ pula · Z ou X golpeia · C é o passo · A ora · D ergue a lâmpada · S solta o especial · E lê e fala · Q usa o dom. O mouse também golpeia (esquerdo) e solta o especial (direito).', 'muted');
       for (const [id, d] of Object.entries(DIFICULDADES)) out.push(h('button', { class: 'fase-row cm-rel' + (cm.dif === id ? ' on' : ''), onclick: () => { cm.dif = id; sfx('click'); G.p.vidaMax = G.vidaMax(); G.p.vida = Math.min(G.p.vida, G.p.vidaMax); G.salvar(); desenha(); } }, h('div', {}, h('b', {}, d.nome + (cm.dif === id ? ' ✓' : '')), h('small', {}, d.desc))));
       const alterna = (k, nome) => h('button', { class: 'chip-btn' + (config[k] !== false ? ' on' : ''), onclick: () => { setConfig(k, config[k] === false); desenha(); } }, nome + ': ' + (config[k] !== false ? 'ligado' : 'desligado'));
       out.push(h('h4', {}, 'Teclas (teclado)'), modos, explica, t('Ataque mira: segure o golpe até a linha dourada aparecer, aponte e solte. No mouse, aponta o cursor; no controle, o analógico; no teclado, as setas; no celular, arraste o dedo a partir do botão do golpe. Gasta 40 de azeite. No chão, no ar e na parede o golpe muda. Passo + golpe: o golpe do passo da sua arma. Segure a oração e aperte o golpe: o Espírito desce do céu e fere tudo em volta, no alto e no chão (50 de azeite).', 'muted'), teclas);

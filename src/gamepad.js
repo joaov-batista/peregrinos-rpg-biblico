@@ -30,6 +30,7 @@ export function initGamepad() {
   requestAnimationFrame(loop);
 }
 
+export function preferirControle() { usarControle(); }
 function usarControle() { input.touch = false; input.mouseAim = false; document.body.classList.add('pad'); document.body.classList.remove('touch'); }
 
 function ler() {

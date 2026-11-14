@@ -305,3 +305,15 @@ html.remake body.cena-cinema .panel.dialog .dlg-head h3 { font-size: 23px !impor
 @keyframes cena-fala { from { opacity: 0; transform: translateY(8px); filter: blur(2px); } to { opacity: 1; transform: none; filter: none; } }
 @media (max-height: 480px) { html.remake body.cena-cinema .panel.dialog .dlg-text { font-size: 21px !important; } html.remake body.cena-cinema .panel.dialog .btn-row .btn { font-size: 19px !important; } html.remake body.cena-cinema .panel.dialog .dlg-head h3 { font-size: 18px !important; } #cenaCine .cc-cima { height: 9vh; } #cenaCine .cc-baixo { height: 7vh; } }
 @media (prefers-reduced-motion: reduce) { body.cena-cinema canvas#cv { transform: none; } body.cena-cinema .panel.dialog { animation: none; } }
+
+/* a terceira escolha: o controle */
+.esq-opcoes { grid-template-columns: repeat(3, 1fr); }
+html.remake .panel.esquema { width: min(1000px, calc(100% - 24px)); }
+.esq-controle { position: relative; width: 120px; height: 66px; border: 3px solid #0B0E18; border-radius: 30px 30px 40px 40px; background: #2E3854; box-shadow: inset 0 -5px 0 #1B2133, inset 0 3px 0 #4A5878; }
+.esq-controle i { position: absolute; display: grid; place-items: center; font-style: normal; }
+.esq-controle .ec-cruz { left: 16px; top: 22px; width: 22px; height: 22px; background: linear-gradient(#0B0E18, #0B0E18) center / 8px 22px no-repeat, linear-gradient(#0B0E18, #0B0E18) center / 22px 8px no-repeat; }
+.esq-controle .ec-anal { left: 44px; top: 34px; width: 16px; height: 16px; border-radius: 50%; background: #141826; box-shadow: inset 0 -3px 0 #4A5878; }
+.esq-controle .ec-bot { width: 15px; height: 15px; border-radius: 50%; font-size: 11px; color: #F4F1E6; background: #141826; }
+.esq-controle .ec-a { right: 22px; top: 40px; color: #7FD08A; } .esq-controle .ec-b { right: 8px; top: 26px; color: #FF8A7A; } .esq-controle .ec-x { right: 36px; top: 26px; color: #8FB6FF; } .esq-controle .ec-y { right: 22px; top: 12px; color: #FFE08A; }
+.esq-status { display: block; margin-top: 4px; font-size: 14px; color: #C9B88A; } .esq-status.ok { color: #9FE0A6; }
+@media (max-width: 860px) { .esq-opcoes { grid-template-columns: 1fr; } }

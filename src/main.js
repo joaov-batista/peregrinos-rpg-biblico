@@ -6,7 +6,7 @@ import { $, h } from './util.js';
 import { initInput, input } from './input.js';
 import { initZoom } from './zoom.js';
 import { initAudio } from './audio.js';
-import { initGamepad } from './gamepad.js';
+import { initGamepad, preferirControle } from './gamepad.js';
 import { net, ONLINE } from './net.js';
 import { Game } from './game/game.js';
 import { Caminho } from './caminho/jogo.js';
@@ -68,6 +68,7 @@ async function play(char, modo) {
 
 // No computador, a primeira partida pergunta como se quer jogar: WASD + mouse ou setas. No celular (toque) e nas telas
 // divididas (cada uma com seu controle) não há o que escolher. Depois, dá para trocar em ☰ › Ajustes.
+if (config.modoControle === 'pad') addEventListener('gamepadconnected', () => preferirControle(), { once: true });
 function escolherControles() {
   const q = new URLSearchParams(location.search);
   if (config.esquemaEscolhido || matchMedia('(pointer: coarse)').matches || q.has('quadro') || q.has('pad')) return Promise.resolve();
@@ -76,14 +77,18 @@ function escolherControles() {
     h('b', {}, titulo), h('div', { class: 'esq-desenho' }, ...desenho), h('ul', {}, ...linhas.map(l => h('li', {}, l))));
   return ui.modal((p, close) => {
     p.classList.add('esquema');
-    p.closest('.modal')._escolhe = id => { setConfig('esquema', id); setConfig('teclas', {}); setConfig('esquemaEscolhido', true); close(id); };
+    // o controle usa o teclado WASD como reserva (para quem largar o controle no meio); a preferência fica guardada
+    p.closest('.modal')._escolhe = id => { clearInterval(vigia); setConfig('esquema', id === 'controle' ? 'wasd' : id); setConfig('teclas', {}); setConfig('modoControle', id === 'controle' ? 'pad' : 'teclado'); setConfig('esquemaEscolhido', true); if (id === 'controle') preferirControle(); close(id); };
+    const estado = h('small', { class: 'esq-status' }), vigia = setInterval(() => { const gp = [...(navigator.getGamepads?.() || [])].find(Boolean); estado.textContent = gp ? '🎮 Pronto: ' + gp.id.replace(/\(.*\)/, '').trim().slice(0, 40) : 'Nenhum controle ligado: ligue e aperte qualquer botão.'; estado.classList.toggle('ok', !!gp); }, 400);
     p.append(h('h2', {}, 'Como você quer jogar?'), h('p', { class: 'muted' }, 'Escolha o jeito de segurar o cajado. Dá para trocar depois em ☰ › Ajustes.'),
       h('div', { class: 'esq-opcoes' },
         cartao('wasd', 'Teclado + mouse', [h('div', { class: 'esq-wasd' }, tecla('Q'), tecla('W'), tecla('E'), tecla('A'), tecla('S'), tecla('D')), h('span', { class: 'esq-mouse' }, h('i', {}), h('i', {}))],
           ['A D andam · W ou Espaço pula', 'Mouse esquerdo golpeia, direito solta o especial', 'Q ora · E ergue a lâmpada · F fala', 'Shift é o passo · o mouse mira']),
         cartao('setas', 'Só o teclado (setas)', [h('div', { class: 'esq-setas' }, tecla('↑'), tecla('←'), tecla('↓'), tecla('→')), h('div', { class: 'esq-zxc' }, tecla('Z'), tecla('X'), tecla('C'))],
-          ['Setas andam · ↑ pula', 'Z ou X golpeia · S solta o especial', 'A ora · D ergue a lâmpada · E fala', 'C é o passo · as setas miram'])),
-      h('p', { class: 'muted esq-pad' }, 'Tem um controle? É só ligar e apertar qualquer botão: ele funciona com qualquer uma das duas.'));
+          ['Setas andam · ↑ pula', 'Z ou X golpeia · S solta o especial', 'A ora · D ergue a lâmpada · E fala', 'C é o passo · as setas miram']),
+        cartao('controle', 'Controle', [h('div', { class: 'esq-controle' }, h('i', { class: 'ec-cruz' }), h('i', { class: 'ec-anal' }), h('i', { class: 'ec-bot ec-a' }, 'A'), h('i', { class: 'ec-bot ec-b' }, 'B'), h('i', { class: 'ec-bot ec-x' }, 'X'), h('i', { class: 'ec-bot ec-y' }, 'Y'))],
+          ['Analógico anda · A pula · X golpeia', 'RB solta o especial · RT é o passo', 'B ora · LB ergue a lâmpada · Y fala', 'Analógico direito mira']).appendChild(estado).parentNode),
+      h('p', { class: 'muted esq-pad' }, 'Qualquer controle (Xbox, PlayStation, genérico) é reconhecido. Dá para trocar os botões em ☰ › Ajustes.'));
   }, { dismiss: false, wide: true });
 }
 
