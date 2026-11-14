@@ -2,6 +2,7 @@
 // Acontece uma vez só. Depois, o jardim amanhece vazio e fica sobre a pedra um livro aberto contando a manhã seguinte.
 // Tudo aqui é devagar de propósito: a fala se escreve letra a letra, há silêncios, e o jogador escolhe o que dizer.
 import { sfx, music, audio, murmurio, teclaTexto } from '../audio.js';
+import { marco } from '../telemetria.js';
 
 export const JESUS_LOOK = { skin: '#B98A5E', hair: '#3A2314', tunic: '#E6DFCB', cape: '#8E2E3A', style: 'longo', beard: true };
 const NOME_J = 'Jesus';
@@ -116,7 +117,7 @@ export async function encontro(G, J) {
     J.indo = x0 + 40; J.vel = 34; await esperar(2400); J.some = 1; for (const o of G.objs) if (o.tipo === 'tocha') o.vel = -18;
     await esperar(3200);
     await narra(G, 'Você não o vê mais. Só as tochas, descendo o monte em direção à cidade.\n\nE, muito longe, um galo que ainda não cantou.', 'Fechar os olhos');
-    cm.getsemani = true; G.salvar();
+    cm.getsemani = true; G.salvar(); marco('getsemani');
     G.cena = false; G.entrar('getsemani', { quieto: true });
     const pedra = G.objs.find(o => o.tipo === 'rocha'), q = G.p; if (pedra) { q.x = pedra.x - 70; q.y = pedra.y - 1; q.face = 1; q.orando = 0; G.vista.cam.x = q.x - G.vista.W / G.vista.Z / 2; G.prenderCam(); }
     await esperar(1400);

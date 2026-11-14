@@ -65,6 +65,8 @@ self.addEventListener('fetch', event => {
   const req = event.request, url = new URL(req.url);
   // Auth, ranking, Supabase e fontes externas nunca entram no cache do jogo.
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;
+  // o painel de acessos nunca vem do cache do app: sempre do servidor (e nunca vira a tela do jogo)
+  if (new URL(req.url).pathname.startsWith('/painel')) return;
   if (req.mode === 'navigate') {
     event.respondWith(caches.open(CACHE).then(cache => cache.match('/index.html')).then(hit => hit || fetch(req)));
   } else if (CORE.includes(url.pathname)) {

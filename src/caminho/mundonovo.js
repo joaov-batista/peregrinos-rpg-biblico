@@ -8,6 +8,7 @@ import { pesca } from './menu.js';
 import { T, CW, CH, tileEm, VAZIO } from './nivel.js';
 import { TODAS } from '../content/index.js';
 import { SARDES_POVO, EPAFRAS, SARDES_RUA, SARDES_VELAS, SARDES_ABATES } from '../content/sardes.js';
+import { marco } from '../telemetria.js';
 
 const rand = (a, b) => a + Math.random() * (b - a);
 export const PRECO_BARCO = 150;
@@ -29,9 +30,10 @@ export function aoEntrar(G, id, o = {}) {
     G.objs = G.objs.filter(o => !o.vezOutra || G.viajante);
   }
   if (id === 'sardes') {
-    sar(G); luzDaCidade(G); G.sarEst = 'paz'; G.sarT = sar(G).feita ? rand(90, 140) : 22;
+    marco('sardes'); sar(G); luzDaCidade(G); G.sarEst = 'paz'; G.sarT = sar(G).feita ? rand(90, 140) : 22;
     for (const o of G.objs) if (o.tipo === 'morador' && o.rua != null) o.nome = 'Morador de Sardes';
   }
+  if (id === 'vale') marco('vale');
   if (id === 'vale' && G.souDono()) { // o Dragão das Mentiras guarda o fim do vale
     const c = G.objs.find(o => o.tipo === 'covil');
     if (c) { const e = G.nascer('dragao', c.x, c.y - 90, false, 7); e.elite = true; e.escDesenho = 2.1; e.dragaoFinal = true; for (const k of ['r', 'w', 'h']) e[k] *= 1.7; e.irado = 99; e.v = { ...e.v, leque: 5 }; }
@@ -66,7 +68,7 @@ export function aoMatar(G, e) {
   if (e.dragaoFinal) setTimeout(() => G.running && liberarEspirito(G), 900);
 }
 async function liberarEspirito(G) {
-  const cm = G.cm, primeira = !cm.espirito; cm.espirito = true; G.salvar(); sfx('level'); G.clarao = 0.3; G.fx.anel(G.p.x, G.p.y - 30, '#FFF4CF', 320);
+  const cm = G.cm, primeira = !cm.espirito; cm.espirito = true; marco('espirito'); G.salvar(); sfx('level'); G.clarao = 0.3; G.fx.anel(G.p.x, G.p.y - 30, '#FFF4CF', 320);
   const c = G.objs.find(o => o.tipo === 'covil'); if (c && !G.objs.some(o => o.tipo === 'saida')) G.objs.push({ tipo: 'saida', x: c.x + 60, y: c.y, luz: 130 });
   if (!primeira) return G.ui.toast('O dragão se desfaz em fumaça de novo. Nunca existiu.', 4000);
   await G.ui.dialog({ nome: 'O Dragão das Mentiras', texto: 'O dragão estremece, e o fogo dele vira fumaça. Não havia escamas, nem asas, nem nada: só palavras que você tinha acreditado.\n\n"Ele é mentiroso e pai da mentira" (Jo 8:44).', acoes: [{ label: 'Continuar' }], voz: false, cls: 'fala-narra' });
@@ -147,7 +149,7 @@ async function epafras(G, ob) {
   const pronto = nVelas(G) >= SARDES_VELAS && nPalavra(G) >= 5 && s.abates >= SARDES_ABATES;
   if (!pronto) return d(preenche(EPAFRAS.andamento, G));
   await d(EPAFRAS.final);
-  s.feita = true; c.data.gold += 600; G.xp(400); G.pontos(2500); G.def.tema = 'sardes2'; G.tm = { ...G.tm, escuro: 0.3, ceu: ['#14203A', '#4A4A6A', '#E0A878'] }; G.clarao = 0.4; sfx('level'); G.salvar();
+  s.feita = true; marco('sardes_luz'); c.data.gold += 600; G.xp(400); G.pontos(2500); G.def.tema = 'sardes2'; G.tm = { ...G.tm, escuro: 0.3, ceu: ['#14203A', '#4A4A6A', '#E0A878'] }; G.clarao = 0.4; sfx('level'); G.salvar();
   if (!G.cm.reliquias.includes('veste_branca')) await G.ganhar('veste_branca');
   G.ui.toast('+600 denários. Sardes voltou a ter luz.', 5000);
 }

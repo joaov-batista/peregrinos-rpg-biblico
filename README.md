@@ -1,28 +1,42 @@
+# Peregrinos: O Caminho
 
+![Peregrinos: O Caminho](public/og.png)
 
+Um RPG bíblico em pixel art, de ação e aventura em vista lateral, que se joga **no navegador**: no celular (deitado),
+no computador (teclado e mouse) ou com **controle** (Xbox, PlayStation e genéricos). Também dá para instalar como app.
 
+Você é um peregrino que carrega uma lâmpada num mundo onde o Livro foi esquecido. Cada semana traz um estudo bíblico
+em forma de fases: ler os rolos, responder, enfrentar chefes que representam vícios e mentiras — e, no caminho,
+encontros que marcam, como a noite no Getsêmani.
 
+**O que tem hoje**
 
-# Peregrinos — RPG bíblico online
+- Três semanas de campanha (Atos 18 · Jonas · Daniel 4), cada uma com fases, perguntas e chefes próprios.
+- A lâmpada como mecânica central: luz que revela segredos, defesa perfeita e oração.
+- Sete vocações, cada uma com arma, ataque mira (chão, ar e parede), golpe do passo e especial próprios.
+- Arsenal com raridades (comum a lendária), relíquias, efeitos especiais e achados dos chefes.
+- O Refúgio (vila com lojas, banco, pesca e porto), o Vale da Mentira, a cidade de Sardes e segredos escondidos.
+- Jogar junto online (salas) ou na mesma tela, com até 4 jogadores.
+- Contas com progresso salvo na nuvem — ou jogue sem conta, salvando no aparelho.
 
-> **Arte em pixel (prova de conceito):** novo renderizador em pixel art com protagonista humano personalizável, o chefe Mamom, a arena da Ágora, cenários em paralaxe, HUD e efeitos da PixelFX. Veja [docs/ARTE-PIXEL.md](docs/ARTE-PIXEL.md).
+**Para quem vai testar:** o jogo está em teste. Em **☰ › Ajustes › 💬 Dar minha opinião** você manda uma nota e um
+comentário direto para quem faz o jogo.
 
+**Para quem administra:** o painel de acessos (quem joga, até onde chegou, opiniões) fica em `/painel`. Veja como
+ligar e o que é coletado em [docs/PAINEL.md](docs/PAINEL.md).
 
+---
 
-> **O Caminho (remake):** o jogo agora é um metroidvania em vista lateral, com chefes de padrão em fases, a lâmpada como mecânica central (luz, defesa perfeita e oração num só recurso), a Armadura de Deus como progressão e a **semana 3: Daniel 4, o rei que virou fera**. Ler os rolos e responder continua abrindo a porta de cada chefe. Veja [docs/CAMINHO.md](docs/CAMINHO.md). O mundo aberto antigo continua no botão **Clássico**.
+## Documentação técnica
 
-> **Semana 2 · Jonas:** cinco fases sobre os quatro capítulos, 50 perguntas, 15 decisões de estudo e cinco chefes com sprites animados próprios. Semanas independentes e dificuldade por nível, com modos História, Jornada e Desafio. Veja [a campanha e sua validação](docs/JONAS-E-DUNGEONS.md).
+- [O Caminho (remake): estrutura e mecânicas](docs/CAMINHO.md)
+- [Arte em pixel](docs/ARTE-PIXEL.md)
+- [Combate e progressão](docs/COMBATE-E-PROGRESSAO.md)
+- [Jonas e as dungeons](docs/JONAS-E-DUNGEONS.md)
+- [Painel de acessos e segurança](docs/PAINEL.md)
 
-> **Combate e progressão:** chefes com novos golpes, trilha de missões, expedição contra Leviatã e segredos nas fases. Veja [regras, controles e validação](docs/COMBATE-E-PROGRESSAO.md).
-
-> **Revisão visual:** personagens articulados, 10 monstros e 9 chefes redesenhados, movimentos mais fluidos, novas armas e ícones e criação em três etapas. Veja [LEIA-ME-REDESIGN.md](LEIA-ME-REDESIGN.md), as pranchas em `art/` e a prévia `art/movimento-fluido.mp4`.
-
-Um jogo de ação e aventura (estilo MMORPG) focado na Bíblia. Toda semana os **5 Portões** do mundo abrem 5 fases novas baseadas num estudo bíblico.
-
-- Jogue no **PC** (teclado + mouse), com **controle** (Xbox, PlayStation e genéricos) e no **celular deitado** (joystick e botões na tela).
-- Contas, personagens, ranking mundial e outros jogadores aparecendo no mapa com **Supabase**.
-- Hospedagem na **Vercel**.
-- Sem Supabase configurado, o jogo funciona em **modo offline** (salva no navegador).
+O projeto usa **Vite** (JavaScript puro, canvas 2D), **Supabase** (contas, personagens, ranking e o painel) e é
+hospedado na **Vercel**. Sem o Supabase configurado, o jogo funciona em **modo offline** (salva no navegador).
 
 ## Rodar no computador
 

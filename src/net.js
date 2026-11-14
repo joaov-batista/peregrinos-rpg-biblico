@@ -435,3 +435,19 @@ addEventListener('online', () => { void net.flush(); });
 addEventListener('offline', changed);
 setInterval(() => { if (!document.hidden) void net.flush(); }, 20000);
 addEventListener('visibilitychange', () => { if (!document.hidden) void net.flush(); });
+
+// ---- painel de acessos e opiniões (supabase/painel.sql) ----
+// Registra um evento de uso ou uma opinião. Nunca atrapalha o jogo: sem servidor ou sem internet, só não envia.
+export async function inserirUso(tabela, row) {
+  if (!sb || !connected()) return false;
+  try { const { error } = await sb.from(tabela).insert(row); return !error; } catch { return false; }
+}
+export const painelApi = {
+  disponivel: ONLINE,
+  async entrar(email, senha) { const { data, error } = await sb.auth.signInWithPassword({ email, password: senha }); if (error) throw traduz(error); return data.user; },
+  async sair() { await sb.auth.signOut(); },
+  async usuario() { const { data } = await session(); return data?.session?.user || null; },
+  async souAdmin() { const { data, error } = await sb.rpc('sou_admin'); if (error) throw error; return !!data; },
+  async dados(dias = 14) { const { data, error } = await sb.rpc('painel', { dias }); if (error) throw error; return data; },
+  async limpar() { const { data, error } = await sb.rpc('limpar_telemetria'); if (error) throw error; return data; }
+};

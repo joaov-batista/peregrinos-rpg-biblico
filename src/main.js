@@ -16,11 +16,15 @@ import './pixel-ui.css';
 import { createHud } from './ui/hud.js';
 import { config, setConfig } from './config.js';
 import { showAuth, showSelect, showCreator, hideScreens } from './ui/screens.js';
+import { definirJogo } from './estado.js';
+import { iniciarTelemetria, inicioDeJogo } from './telemetria.js';
+import './protecao.js';
 
 const canvas = $('cv');
 initZoom();
 initInput(canvas);
 initGamepad();
+iniciarTelemetria();
 addEventListener('pointerdown', initAudio, { once: true });
 addEventListener('keydown', initAudio, { once: true });
 
@@ -48,14 +52,14 @@ async function play(char, modo) {
   // O Caminho (remake em vista lateral) é o jogo; o mundo aberto antigo continua em "Clássico" (ou com ?classico na URL).
   if (modo !== 'classico' && !CLASSICO) {
     game = new Caminho(canvas, char, ui, exitToSelect);
-    window.__game = game;
+    definirJogo(game); inicioDeJogo();
     return;
   }
   const novo = !char.data.stats.playtime;
   game = new Game(canvas, char, ui);
   ui.attach(game);
   ui.online(ONLINE && net.user && net.connected ? 1 : 0);
-  window.__game = game; // ajuda na depuração pelo console
+  definirJogo(game); inicioDeJogo();
   const viu = (() => { try { return localStorage.getItem('peregrinos.controles') === '1'; } catch { return false; } })();
   const boasVindas = () => novo && ui.dialog({
     nome: 'Bem-vindo, ' + char.name + '!',
@@ -93,7 +97,7 @@ function escolherControles() {
 }
 
 function exitToSelect() {
-  game?.destroy(); releaseCharacter?.(); releaseCharacter = null; game = null; window.__game = null; ui.detach(); ui.show(false);
+  game?.destroy(); releaseCharacter?.(); releaseCharacter = null; game = null; definirJogo(null); ui.detach(); ui.show(false);
   start();
 }
 

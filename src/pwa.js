@@ -1,3 +1,4 @@
+import { jogoAtual } from './estado.js';
 // App instalável (PWA): service worker + botão "Instalar app".
 let deferred = null;
 const listeners = new Set();
@@ -43,8 +44,8 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
   // A versão nova entra sozinha (o service worker se ativa ao terminar de baixar). A página salva e recarrega;
   // no meio de uma luta contra um chefe, espera a luta acabar.
   const recarregar = async () => {
-    for (let i = 0; i < 240 && window.__game?.running && window.__game.luta; i++) await new Promise(r => setTimeout(r, 1000));
-    try { await Promise.race([window.__game?.save?.(), new Promise(r => setTimeout(r, 3000))]); } catch { /* recarrega mesmo assim: o jogo salva sozinho a cada 40 s */ }
+    for (let i = 0; i < 240 && jogoAtual()?.running && jogoAtual().luta; i++) await new Promise(r => setTimeout(r, 1000));
+    try { await Promise.race([jogoAtual()?.save?.(), new Promise(r => setTimeout(r, 3000))]); } catch { /* recarrega mesmo assim: o jogo salva sozinho a cada 40 s */ }
     location.reload();
   };
   navigator.serviceWorker.addEventListener('controllerchange', async () => {
@@ -81,8 +82,8 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
       registration?.update().catch(() => {});
       if (!pendente) { pendente = Date.now(); setTimeout(conferir, 65000); return; }
       if (Date.now() - pendente > 60000) { // não trocou sozinho: recomeça do zero
-        pendente = 0; for (let i = 0; i < 240 && window.__game?.running && window.__game.luta; i++) await new Promise(r => setTimeout(r, 1000));
-        try { await Promise.race([window.__game?.save?.(), new Promise(r => setTimeout(r, 3000))]); } catch { /* segue */ }
+        pendente = 0; for (let i = 0; i < 240 && jogoAtual()?.running && jogoAtual().luta; i++) await new Promise(r => setTimeout(r, 1000));
+        try { await Promise.race([jogoAtual()?.save?.(), new Promise(r => setTimeout(r, 3000))]); } catch { /* segue */ }
         for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
         for (const k of await caches.keys()) if (k.startsWith('peregrinos-offline-')) await caches.delete(k);
         location.reload();

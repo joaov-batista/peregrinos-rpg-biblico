@@ -33,6 +33,8 @@ import { ECOS_CORINTO } from '../content/ecos-corinto.js';
 import { iconePx } from './pixel/icones.js';
 import { aquecerEfeitos, soltar, atualizarEfeitos } from './pixel/efeitos.js';
 import { Juntos, limparCodigo } from './juntos.js';
+import { marco } from '../telemetria.js';
+import { conviteOpiniao } from './opiniao.js';
 
 // Primeiros passos: [toque, controle, teclado]
 const PASSOS = [ // t: [toque, controle, teclado]; alvo: o botão de toque que pisca
@@ -186,7 +188,7 @@ export class Caminho {
   async chegada(def) {
     if (def.fase) { await this.cinema(def.sem.id); await this.cinema(def.sem.id + '-fase-' + def.fase.n); }
     else if (def.id === 'refugio' && !this.cm.visto.intro) {
-      this.cm.visto.intro = 1;
+      this.cm.visto.intro = 1; marco('personagem', { cls: this.char.cls });
       await this.cinema('caminho-prologo');
       this.cm.visto.tut = 0; // os primeiros passos são ensinados fazendo (ver tutorial())
     }
@@ -809,7 +811,7 @@ export class Caminho {
       if (this.tutDardo <= 0) { this.tutDardo = 2.4; const d = p.face || 1; this.tiros.push({ x: p.x + d * 430, y: p.y - 28, vx: -d * 300, vy: 0, r: 7, vida: 3, cor: '#E8D9A8', tipo: 'bola', treino: true, fura: true }); }
     }
     const feito = { andar: this.tutAndou > 220, pular: !p.chao && p.pulos <= 0 && p.vy < 0, passo: p.dashT > 0, golpe: !!p.atk, descer: p.desce > 0 || this.tutT > 9, rasteiro: (p.rasteiro && p.dashT > 0) || this.tutT > 12, luz: p.lampA > 0.8 && this.tutT > 2.5, vigilia: this.tutParry, orar: p.vida > (this.tutVida ?? p.vidaMax), azeite: this.tutT > 8, mira: p.miraCd > 3.5, espirito: !!p.tentouEsp || (p.espCd > 0) }[s.id];
-    if (feito && this.tutT > 0.8) { v.tut++; this.tutT = 0; this.tutParry = false; sfx('right'); if (v.tut >= PASSOS.length) { this.ui.toast(this.temMapa() ? 'Você sabe caminhar. Siga a seta dourada até a sua missão.' : 'Você sabe caminhar. Fale com o Velho Peregrino: ele tem um mapa para você.', 5000); this.salvar(); } }
+    if (feito && this.tutT > 0.8) { v.tut++; this.tutT = 0; this.tutParry = false; sfx('right'); if (v.tut >= PASSOS.length) { marco('tutorial'); this.ui.toast(this.temMapa() ? 'Você sabe caminhar. Siga a seta dourada até a sua missão.' : 'Você sabe caminhar. Fale com o Velho Peregrino: ele tem um mapa para você.', 5000); this.salvar(); } }
   }
 
   /* ================= Emboscadas ================= */
@@ -940,10 +942,10 @@ export class Caminho {
     if (this.mp && !this.temSelos()) { this.ui.toast(b.d.nome + ' caiu, mas a recompensa é de quem leu os três rolos desta página. Leia-os e enfrente-o de novo.', 8000); this.semLutaAte = this.T + 8; return; }
     this.venceu = true; this.N.portaAberta = true;
     this.fx.anel(b.x, b.y - b.h / 2, '#FFE9A8', 260); this.soltarMoedas(b.x, b.y - b.h / 2, 18);
-    cm.chefes[b.id] = (cm.chefes[b.id] || 0) + 1; c.data.stats.bosses = c.data.stats.bosses || {}; c.data.stats.bosses[b.id] = (c.data.stats.bosses[b.id] || 0) + 1;
+    cm.chefes[b.id] = (cm.chefes[b.id] || 0) + 1; marco('chefe:' + b.id); c.data.stats.bosses = c.data.stats.bosses || {}; c.data.stats.bosses[b.id] = (c.data.stats.bosses[b.id] || 0) + 1;
     this.p.vida = this.p.vidaMax;
     await this.ui.dialog({ nome: b.d.nome + ' caiu', texto: b.d.derrota || 'A sombra se desfaz.', acoes: [{ label: 'Amém' }] });
-    if (d.fase) await this.faseCompleta();
+    if (d.fase) { await this.faseCompleta(); conviteOpiniao(this); }
     else if (d.mundo) { const m = MUNDO[d.mundo]; this.xp(300); this.pontos(1500); await this.ganhar(m.premio); }
     // achados: todo chefe pode deixar uma arma da sua vocação e uma relíquia (os gigantes do mundo, mais raras)
     const forte = !!d.mundo || b.id === 'satanas';
@@ -958,6 +960,7 @@ export class Caminho {
     const d = this.def, f = d.fase, sem = d.sem, c = this.char, cm = this.cm;
     const prog = faseProg(c, sem.id), first = !prog[f.n]?.done, secs = Math.round(this.T - this.t0);
     const pts = 500 * f.n + Math.max(0, 900 - secs) + this.ok * 50 - this.err * 25 - this.mortosAqui * 40;
+    if (first) marco('fase:' + sem.id + ':' + f.n);
     prog[f.n] = { done: true, best: Math.max(prog[f.n]?.best || 0, pts), time: Math.min(prog[f.n]?.time || 99999, secs) };
     this.pontos(Math.max(100, first ? pts : Math.round(pts * 0.3))); this.xp(120 * f.n); c.data.gold += first ? 60 * f.n : 15 * f.n;
     if (!c.data.verses.includes(f.versiculo.ref)) c.data.verses.push(f.versiculo.ref);
@@ -1132,7 +1135,7 @@ export class Caminho {
       case 'velho': {
         const hab = Object.keys(cm.hab).length;
         if (!cm.mapa) { // o primeiro encontro: a história, o mapa e onde fica a primeira missão
-          cm.mapa = true; this.salvar();
+          cm.mapa = true; this.salvar(); marco('mapa');
           const tecla = input.touch ? 'o botão do menu (≡) e a aba MAPA' : document.body.classList.contains('pad') ? 'SELECT no controle' : 'M (ou Tab)';
           await this.ui.dialog({ nome: ob.nome, look: ob.look, texto: 'Então ainda há quem carregue uma lâmpada.\n\nO Livro não foi queimado, peregrino: foi esquecido. Cada página que ninguém lê, a sombra cobre, e o que a sombra cobre ganha corpo. Mamom, a Mentira, o Pavor… são páginas não lidas andando por aí.\n\n"Lâmpada para os meus pés é a tua palavra" (Sl 119:105).', acoes: [{ label: 'Por onde começo?' }] });
           sfx('level'); this.efeito('coleta', p.x, p.y - 30);

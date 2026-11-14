@@ -1,6 +1,7 @@
 import { net, ONLINE } from '../net.js';
 import { pwa } from '../pwa.js';
 import { h } from '../util.js';
+import { jogoAtual } from '../estado.js';
 
 const status = h('button', { id: 'offlineStatus', type: 'button', 'aria-live': 'polite' });
 let details = '';
@@ -22,7 +23,7 @@ function update() {
   status.title = details;
 }
 status.onclick = () => {
-  const game = window.__game;
+  const game = jogoAtual();
   if (game?.running) game.ui.dialog({ nome: 'Jogar offline e salvar', texto: details,
     acoes: [{ label: 'Exportar cópia do progresso', fn: async () => { await game.save(); net.exportChar(game.char.id, game.char); } }, { label: 'Entendi' }] });
   else alert(details);

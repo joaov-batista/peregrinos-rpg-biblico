@@ -5,8 +5,18 @@ import { createHash } from 'node:crypto';
 
 // O worker instala uma versão quando o essencial dela está no aparelho; a narração vem depois, sem travar a atualização.
 let outputDir = 'dist';
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // na versão publicada: sem mapas do código-fonte, sem console.log/debugger e sem comentários de licença no pacote
+  build: { sourcemap: false, rollupOptions: { input: { main: 'index.html', painel: 'painel.html' } } },
+  esbuild: mode === 'production' ? { drop: ['console', 'debugger'], legalComments: 'none' } : {},
   plugins: [{
+    // o link de compartilhamento precisa do endereço completo da imagem: vem de VITE_SITE_URL ou do domínio do Vercel
+    name: 'peregrinos-site',
+    transformIndexHtml(html) {
+      const site = (process.env.VITE_SITE_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? 'https://' + process.env.VERCEL_PROJECT_PRODUCTION_URL : '')).replace(/\/$/, '');
+      return html.replaceAll('%SITE%', site);
+    }
+  }, {
     name: 'peregrinos-offline',
     apply: 'build',
     configResolved(config) { outputDir = config.build.outDir; },
@@ -32,4 +42,4 @@ export default defineConfig({
       await writeFile(join(root, 'version.json'), JSON.stringify({ id }));
     }
   }]
-});
+}));

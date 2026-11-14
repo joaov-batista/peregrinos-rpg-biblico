@@ -17,6 +17,7 @@ import { ENEMIES, BOSSES } from '../data/bestiary.js';
 import { VICIOS } from './bichos.js';
 import { quadroVicio } from './pixel/viciospx.js';
 import { iconeItem, iconeArma } from './pixel/icones.js';
+import { abrirOpiniao } from './opiniao.js';
 import { RARIDADES, rarDe, especiaisDe, ESPECIAIS } from './arsenal.js';
 import { quadroChefe } from './pixel/chefespx.js';
 import { CHEFES } from './chefes.js';
@@ -206,6 +207,8 @@ export function abrirMenu(G, aba = 'inventario') {
         t('A arte em pixel é a nova direção do jogo. Chefes e vícios ainda não redesenhados aparecem com a arte antiga reduzida.', 'muted'));
       out.push(h('h4', {}, 'Jogo'), h('div', { class: 'cfg-opts' }, alterna('cinemas', '🎬 Cutscenes'), alterna('tremor', '📳 Tremor da tela'), alterna('numerosDano', '🔢 Números de dano'),
         h('button', { class: 'chip-btn' + (audio.muted ? '' : ' on'), onclick: () => { setMuted(!audio.muted); desenha(); } }, '🔊 Som: ' + (audio.muted ? 'desligado' : 'ligado'))));
+      out.push(h('h4', {}, 'Teste do jogo'), h('div', { class: 'cfg-opts' }, h('button', { class: 'chip-btn on', onclick: () => abrirOpiniao(G) }, '💬 Dar minha opinião'), alterna('telemetria', '📊 Enviar dados de uso')),
+        t('Os dados de uso ajudam a ver até onde as pessoas chegam e onde travam: área do jogo, nível, tempo jogado e tipo de aparelho, com um código aleatório no lugar do seu nome. Nada de senhas nem mensagens.', 'muted'));
       const vistas = (c.data.cinemas || []).filter(id => CINEMAS[id]);
       if (vistas.length) out.push(h('h4', {}, 'Rever cutscenes'), h('div', { class: 'cfg-opts cine-lista' }, vistas.map(id => h('button', { class: 'chip-btn', onclick: () => { close(); G.cinema(id, true); } }, CINEMAS[id].titulo))));
       out.push(h('h4', {}, 'Controles'), t(G.textoControles(), 'muted cm-pre'));

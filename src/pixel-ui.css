@@ -317,3 +317,9 @@ html.remake .panel.esquema { width: min(1000px, calc(100% - 24px)); }
 .esq-controle .ec-a { right: 22px; top: 40px; color: #7FD08A; } .esq-controle .ec-b { right: 8px; top: 26px; color: #FF8A7A; } .esq-controle .ec-x { right: 36px; top: 26px; color: #8FB6FF; } .esq-controle .ec-y { right: 22px; top: 12px; color: #FFE08A; }
 .esq-status { display: block; margin-top: 4px; font-size: 14px; color: #C9B88A; } .esq-status.ok { color: #9FE0A6; }
 @media (max-width: 860px) { .esq-opcoes { grid-template-columns: 1fr; } }
+
+/* a opinião do jogador */
+.opiniao-form textarea { width: 100%; background: #0B0E16; color: #ECE8DC; border: 2px solid #3B4766; border-radius: 4px; padding: 10px; font: 17px/1.4 'Jersey 20', 'Nunito Sans', sans-serif; resize: vertical; margin: 8px 0; }
+.op-estrelas { display: flex; gap: 6px; justify-content: center; margin: 8px 0; }
+.op-estrela { background: none; border: 0; font-size: 40px; line-height: 1; color: #3A4158; cursor: pointer; padding: 2px 4px; text-shadow: 0 2px 0 #05060B; }
+.op-estrela.on { color: #E8C873; } .op-estrela:focus-visible, .op-estrela:hover { color: #FFE08A; outline: none; transform: scale(1.1); }
