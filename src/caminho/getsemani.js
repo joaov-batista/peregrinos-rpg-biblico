@@ -53,7 +53,7 @@ function oracao(G, passos) {
 export async function encontro(G, J) {
   if (G.cm.getsemani || G.cena) return;
   const cm = G.cm, p = G.p, nome = G.char.name || 'peregrino';
-  G.cena = true; G.cenaFoco = J; document.body.classList.add('em-cena'); G.vista.cam.x = (J.x + p.x) / 2 - G.vista.W / G.vista.Z / 2; G.prenderCam(); const musicaAntes = audio.modo, chaveAntes = audio.chave; music('cinema', 'getsemani');
+  G.cena = true; G.cenaFoco = J; document.body.classList.add('em-cena', 'cena-cinema'); cinema(true, G); G.vista.cam.x = (J.x + p.x) / 2 - G.vista.W / G.vista.Z / 2; G.prenderCam(); const musicaAntes = audio.modo, chaveAntes = audio.chave; music('cinema', 'getsemani');
   try {
     await narra(G, 'Ele está de joelhos sobre a pedra, o rosto quase tocando o chão.\n\nO suor cai dele como gotas de sangue (Lc 22:44). Você para. Não sabe se deve chegar perto.', 'Esperar em silêncio');
     await esperar(1600);
@@ -122,7 +122,7 @@ export async function encontro(G, J) {
     await esperar(1400);
     await narra(G, 'Quando você abre os olhos, já é manhã.\n\nO jardim está vazio. Sobre a pedra onde ele orou, alguém deixou um livro aberto.', 'Levantar');
     G.ovo('getsemani', 'Vigiai e orai, para que não entreis em tentação (Mt 26:41).');
-  } finally { G.cena = false; G.cenaFoco = null; document.body.classList.remove('em-cena'); G.cenaCls = false; G.cenaAjoelha = false; G.cenaMx = 0; G.escuroAlvo = 0; if (G.running) music(musicaAntes || 'mundo', chaveAntes); }
+  } finally { G.cena = false; G.cenaFoco = null; document.body.classList.remove('em-cena', 'cena-cinema'); cinema(false); G.cenaCls = false; G.cenaAjoelha = false; G.cenaMx = 0; G.escuroAlvo = 0; if (G.running) music(musicaAntes || 'mundo', chaveAntes); }
 }
 
 export async function lerBiblia(G) {
@@ -136,4 +136,23 @@ export async function lerBiblia(G) {
     'Ele foi ao encontro da cruz para que você — e todos — fossem perdoados.\n\nA cruz foi o preço. O túmulo vazio é a promessa.'
   ];
   for (let i = 0; i < paginas.length; i++) await G.ui.dialog({ nome: 'O livro sobre a pedra', texto: paginas[i], acoes: [{ label: i === paginas.length - 1 ? 'Amém' : 'Virar a página' }], cls: 'fala-narra', voz: false });
+}
+
+// o encontro vira cinema: faixas pretas em cima e embaixo, vinheta nas bordas e um zoom lento nos dois
+let enquadra = null;
+function cinema(on, G) {
+  let v = document.getElementById('cenaCine');
+  if (!v) { v = document.createElement('div'); v.id = 'cenaCine'; v.innerHTML = '<i class="cc-cima"></i><i class="cc-baixo"></i><i class="cc-veu"></i>'; document.body.append(v); }
+  requestAnimationFrame(() => v.classList.toggle('on', on));
+  const cv = document.getElementById('cv'); clearInterval(enquadra); enquadra = null;
+  if (!on || !cv || matchMedia('(prefers-reduced-motion: reduce)').matches) { if (cv) { cv.style.transform = ''; cv.style.transformOrigin = ''; } return; }
+  // o zoom acompanha os dois: o ponto entre Jesus e o peregrino vai para o meio da tela, sem nunca mostrar a borda do quadro
+  const k = 1.45, passo = () => {
+    const J = G.cenaFoco, p = G.p, vv = G.vista; if (!J || !p) return;
+    const W = cv.clientWidth, H = cv.clientHeight, vw = vv.W / vv.Z, vh = vv.H / vv.Z;
+    const ox = ((J.x + p.x) / 2 - vv.cam.x) / vw * W, oy = (p.y - 40 - vv.cam.y) / vh * H;
+    const dx = Math.max(-(k - 1) * (W - ox), Math.min((k - 1) * ox, W * 0.5 - ox)), dy = Math.max(-(k - 1) * (H - oy), Math.min((k - 1) * oy, H * 0.66 - oy));
+    cv.style.transformOrigin = ox + 'px ' + oy + 'px'; cv.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(' + k + ')';
+  };
+  passo(); enquadra = setInterval(passo, 120);
 }

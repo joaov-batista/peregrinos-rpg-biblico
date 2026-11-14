@@ -154,7 +154,12 @@ export function atualizarHeroi(G, dt) {
     p.rastro.push({ x: p.x, y: p.y, t: 0.22, face: p.face, baixo: p.dashModo === 'chao' });
     if (p.dashModo === 'chao' && Math.random() < dt * 40) G.fx.po(p.x - p.dashDir * 8, p.y - 2, 1, '#C9D2C4');
     if (p.dashT <= 0) p.dashFim = 0.12; // um respiro depois do passo: o golpe ainda sai como golpe do passo
-  } else p.vy = Math.min(QUEDA, p.vy + GRAV * dt);
+  } else if (!p.chao && p.carga > 0.12 && !G.investidaMira && !G.quedaMira) {
+    // mirando no ar: o peregrino quase para e cai devagar, para dar tempo de apontar (só ele; o mundo segue no ritmo)
+    if (p.vy < 10) p.vy = damp(p.vy, 30, 9, dt); else p.vy = Math.min(p.vy + GRAV * 0.12 * dt, 95);
+    p.vx *= Math.pow(0.08, dt); p.flutuaMira = true;
+    if (Math.random() < dt * 14) G.parts.push({ x: p.x + rand(-12, 12), y: p.y - rand(4, 44), vx: 0, vy: 22, t: 0.6, max: 0.6, r: 1.2, cor: '#FFE9A8', g: 0 });
+  } else { p.flutuaMira = false; p.vy = Math.min(QUEDA, p.vy + GRAV * dt); }
   if (p.dashFim > 0) p.dashFim -= dt;
   // de pé de novo depois da rasteira, se houver espaço acima da cabeça
   if (p.h < 54 && !(p.dashT > 0)) { const livreCima = [-p.w / 2 + 2, p.w / 2 - 2].every(dx => !solido(N, Math.floor((p.x + dx) / T), Math.floor((p.y - 54) / T))); if (livreCima) p.h = 54; }
