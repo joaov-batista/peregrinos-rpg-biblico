@@ -184,7 +184,8 @@ const REFUGIO = [
   { cx: 0, cy: 1, nome: 'Salão das Subfases', deco: 'subfases', papel: 'vila', tiles: sala(), objs: [
     { tipo: 'portal', col: 6, area: 'vale', rotulo: 'Vale da Mentira' }, { tipo: 'selado', col: 15, rotulo: 'Selado' }, { tipo: 'selado', col: 24, rotulo: 'Selado' },
     { tipo: 'npc', col: 10, id: 'nata', nome: 'Natã, o profeta', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#3A3456', cape: '#8E2E3A', style: 'longo', beard: true } }] },
-  { cx: 1, cy: 1, nome: 'Salão dos Rolos', deco: 'biblioteca', papel: 'vila', tiles: sala(), objs: [...TODAS.map((s, i) => ({ tipo: 'portal', col: [4, 9, 21, 26][i % 4], semana: s.id })),
+  // quatro nichos por andar; a escada dos andares troca as páginas mostradas (toda semana nova cabe sem alongar o salão)
+  { cx: 1, cy: 1, nome: 'Salão dos Rolos', deco: 'biblioteca', papel: 'vila', tiles: sala(), objs: [...[4, 9, 21, 26].map((col, slot) => ({ tipo: 'portal', col, slot })), { tipo: 'cenario', col: 12, qual: 'andares' },
     { tipo: 'npc', col: 18, id: 'escriba', nome: 'Esdras, o escriba', look: { skin: '#D9A273', hair: '#E3DED2', tunic: '#55516D', cape: '#C9B88A', style: 'longo', beard: true } }] },
   { cx: 2, cy: 1, nome: 'Casa do Tesouro', deco: 'tesouro', papel: 'vila', tiles: sala(), objs: [
     { tipo: 'cenario', col: 14, qual: 'balcao' }, { tipo: 'npc', col: 15, id: 'mateus', nome: 'Mateus, o coletor', look: { skin: '#C68B59', hair: '#2B1A10', tunic: '#3F5A4A', cape: '#C9A63C', style: 'curto', beard: true } },

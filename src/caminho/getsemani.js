@@ -53,7 +53,7 @@ function oracao(G, passos) {
 export async function encontro(G, J) {
   if (G.cm.getsemani || G.cena) return;
   const cm = G.cm, p = G.p, nome = G.char.name || 'peregrino';
-  G.cena = true; const musicaAntes = audio.modo, chaveAntes = audio.chave; music('cinema', 'getsemani');
+  G.cena = true; G.cenaFoco = J; document.body.classList.add('em-cena'); G.vista.cam.x = (J.x + p.x) / 2 - G.vista.W / G.vista.Z / 2; G.prenderCam(); const musicaAntes = audio.modo, chaveAntes = audio.chave; music('cinema', 'getsemani');
   try {
     await narra(G, 'Ele está de joelhos sobre a pedra, o rosto quase tocando o chão.\n\nO suor cai dele como gotas de sangue (Lc 22:44). Você para. Não sabe se deve chegar perto.', 'Esperar em silêncio');
     await esperar(1600);
@@ -122,7 +122,7 @@ export async function encontro(G, J) {
     await esperar(1400);
     await narra(G, 'Quando você abre os olhos, já é manhã.\n\nO jardim está vazio. Sobre a pedra onde ele orou, alguém deixou um livro aberto.', 'Levantar');
     G.ovo('getsemani', 'Vigiai e orai, para que não entreis em tentação (Mt 26:41).');
-  } finally { G.cena = false; G.cenaAjoelha = false; G.cenaMx = 0; G.escuroAlvo = 0; if (G.running) music(musicaAntes || 'mundo', chaveAntes); }
+  } finally { G.cena = false; G.cenaFoco = null; document.body.classList.remove('em-cena'); G.cenaCls = false; G.cenaAjoelha = false; G.cenaMx = 0; G.escuroAlvo = 0; if (G.running) music(musicaAntes || 'mundo', chaveAntes); }
 }
 
 export async function lerBiblia(G) {

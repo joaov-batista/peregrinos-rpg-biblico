@@ -4,7 +4,7 @@
 import { rand, clamp, lerp, TAU, pick, shuffle, weekId, h } from '../util.js';
 import { input, wasd } from '../input.js';
 import { anguloMira, passoMira, tiroEspecial, estourar, MIRA_CARGA, MIRA_CUSTO } from './mira.js';
-import { aoEntrar, passoNovo, aoMatar, rotuloNovo, usarNovo, falarNovo, objetivoSardes } from './mundonovo.js';
+import { aoEntrar, passoNovo, aoMatar, rotuloNovo, usarNovo, falarNovo, objetivoSardes, andarDe } from './mundonovo.js';
 import { aplicarEspecial, passoEspeciais, sortearArma, sortearReliquia, rarDe, especiaisDe, ESPECIAIS, RARIDADES } from './arsenal.js';
 import { passoGetsemani, encontro, lerBiblia } from './getsemani.js';
 import { VILA, falaDaVila } from '../content/vila.js';
@@ -161,7 +161,7 @@ export class Caminho {
     if (cm.sacola?.area === id) this.objs.push({ tipo: 'sacola', x: cm.sacola.x, y: cm.sacola.y, luz: 70 });
     this.mp?.mudouArea(id);
     if (this.souDono()) this.povoar();
-    aoEntrar(this, id);
+    aoEntrar(this, id, o);
     // onde o peregrino aparece
     let pos = N.inicio;
     const eb = this.objs.find(ob => ob.tipo === 'ebenezer');
@@ -282,8 +282,9 @@ export class Caminho {
     // câmera
     const v = this.vista, vw = v.W / v.Z, vh = v.H / v.Z;
     if (this.N.barco) this.balanco = Math.sin(this.T * 0.9) * 7 + Math.sin(this.T * 2.3) * 2; else this.balanco = 0; // o navio sobe e desce na tempestade
-    const meio = this.juntas && this.meioDoGrupo();
-    v.cam.x = damp(v.cam.x, (meio ? meio.x : p.x) - vw / 2, 14, dt); v.cam.y = damp(v.cam.y, this.camYAlvo(vh), 6, dt); this.prenderCam();
+    const meio = this.juntas && this.meioDoGrupo(), foco = this.cena && this.cenaFoco && (this.cenaFoco.alfa ?? 1) > 0.2 ? (this.cenaFoco.x + p.x) / 2 : null; // numa cena, a câmera fica entre os dois
+    if (!!this.cena !== this.cenaCls) { this.cenaCls = !!this.cena; document.body.classList.toggle('em-cena', this.cenaCls); } // os controles somem: é quase uma cutscene
+    v.cam.x = damp(v.cam.x, (foco ?? (meio ? meio.x : p.x)) - vw / 2, foco != null ? 4 : 14, dt); v.cam.y = damp(v.cam.y, this.camYAlvo(vh), 6, dt); this.prenderCam();
     this.tremorA = Math.max(0, this.tremorA - dt * 34);
     if (this.chefe) this.ui.bossBar(this.chefe.d.nome, Math.max(0, this.chefe.hp / this.chefe.max), this.chefe.d.titulo, this.chefe.post / 100);
     this.salvaT = (this.salvaT || 0) + dt; if (this.salvaT > 40) { this.salvaT = 0; this.salvar(); }
@@ -1161,6 +1162,8 @@ export class Caminho {
       case 'jumenta':
         if (n < 3) texto = '…\n\n(Ela olha para você. Parece que ia dizer alguma coisa.)';
         else if (this.ovo('jumenta', 'A jumenta de Balaão falou (Nm 22:28).')) { c.data.gold += 22; texto = '"Que te fiz eu, para me espancares já três vezes?"\n\n…Brincadeira. Você só me cutucou. Mas eu já vi um anjo no caminho quando meu dono não viu nada (Nm 22:23). Tome 22 denários, pelo capítulo.'; }
+        else if (!cm.getsemani && n % 3 === 0) texto = 'Posso te contar uma coisa? Mas não ri.\n\nOntem eu vi ELE. O Mestre. De túnica clara e manto vermelho, ajoelhado entre umas oliveiras velhas, lá pros lados da trilha escondida, depois do olival… onde só a lâmpada mostra o caminho.\n\n…Só que não pode ser, né? Ele já subiu ao céu (At 1:9). E ainda não voltou: quando voltar, todo olho o verá (Ap 1:7), não só o de uma jumenta.\n\nAcho que eu tô ficando doida. Jumenta falando já é estranho o bastante.';
+        else if (cm.getsemani && n % 3 === 0) texto = 'Você também viu, não viu? Está no seu rosto.\n\nEu não fiquei doida, então. Ainda bem. Já basta ser uma jumenta que fala.';
         else texto = 'Nem todo mundo que fala vê. Nem todo mundo que vê fala.';
         break;
       case 'mateus': return banco(this);
@@ -1233,10 +1236,11 @@ export class Caminho {
     if (this.area !== 'refugio') return null;
     if (!this.temMapa()) { const v = this.objs.find(o => o.id === 'velho'); return v ? { x: v.x, y: v.y + 40, rot: 'fale com o Velho Peregrino', portal: v } : null; }
     if (this.objT === Math.floor(this.T)) return this.objC; this.objT = Math.floor(this.T);
-    const sem = TODAS.find(s => s.fases.some(f => !this.cm.feitas[s.id + ':' + f.n])), portal = sem && this.objs.find(o => o.tipo === 'portal' && o.semana === sem.id);
+    const sem = TODAS.find(s => s.fases.some(f => !this.cm.feitas[s.id + ':' + f.n])), noAndar = sem && this.objs.find(o => o.tipo === 'portal' && o.semana === sem.id);
+    const escadaAndares = !noAndar && sem && this.objs.find(o => o.tipo === 'cenario' && o.qual === 'andares'), portal = noAndar || escadaAndares; // a página está noutro andar: a seta leva à escada dos andares
     if (!portal) return this.objC = null;
     const andar = y => Math.floor((y - 2) / (CH * T));
-    let alvo = portal, rot = 'missão: ' + sem.estudo;
+    let alvo = portal, rot = noAndar ? 'missão: ' + sem.estudo : 'escada dos andares: ' + (andarDe(sem.id) + 1) + 'º andar';
     if (andar(this.p.y) !== andar(portal.y)) { const esc = this.objs.filter(o => o.tipo === 'cenario' && o.qual === 'descida').sort((a, b) => Math.abs(a.x - portal.x) - Math.abs(b.x - portal.x))[0]; if (esc) { alvo = esc; rot = 'desça aqui: segure para baixo'; } }
     return this.objC = { x: alvo.x, y: alvo.y, rot, portal };
   }

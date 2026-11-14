@@ -334,10 +334,14 @@ export function createHud(onExit) {
       const tudo = () => { clearInterval(tk); fala.textContent = texto; }, lento = cls === 'fala-jesus' || cls === 'fala-narra', passo = cls === 'fala-jesus' ? 1 : lento ? 2 : 3, tk = setInterval(() => { if (!fala.isConnected) return clearInterval(tk); i = Math.min(texto.length, i + passo); if (/[^\s]/.test(texto[i - 1] || '')) teclaTexto(nome); escrita.data = texto.slice(0, i); resto.textContent = texto.slice(i); if (i >= texto.length) tudo(); }, lento ? 34 : 16);
       fala.addEventListener('pointerdown', tudo, { once: true });
     }
-    const row = h('div', { class: 'btn-row' });
-    (acoes && acoes.length ? acoes : [{ label: 'Ok' }]).forEach((a, i) => row.append(h('button', { class: 'btn' + (i === 0 ? ' gold' : ''), onclick: () => { sfx('click'); close(a.label); a.fn && setTimeout(a.fn, 30); } }, a.label)));
+    const row = h('div', { class: 'btn-row' }), lista = acoes && acoes.length ? acoes : [{ label: 'Ok' }];
+    const escolher = a => { sfx('click'); close(a.label); a.fn && setTimeout(a.fn, 30); };
+    lista.forEach((a, i) => row.append(h('button', { class: 'btn' + (i === 0 ? ' gold' : ''), onclick: () => escolher(a) }, a.label)));
     p.append(row);
-  });
+    // tocar em qualquer lugar da tela: primeiro completa o texto; depois, se só há uma resposta, avança (como numa cena)
+    const toque = ev => { if (ev.target.closest('button')) return; if (fala.querySelector('span')) { fala.dispatchEvent(new Event('pointerdown')); return; } if (lista.length === 1) escolher(lista[0]); };
+    setTimeout(() => { const wrap = p.closest('.modal'); wrap?.addEventListener('click', toque); }, 250);
+  }, { dismiss: false });
 
   /* ---------- Caixa de texto (livro de visitas) ---------- */
   ui.pergunta = (titulo, texto, ph = '') => modal((p, close) => {

@@ -6,6 +6,7 @@ import { RELIQUIAS, ARMAS_ALT } from './dados.js';
 import { rarDe, especiaisDe, ESPECIAIS } from './arsenal.js';
 import { pesca } from './menu.js';
 import { T, CW, CH, tileEm, VAZIO } from './nivel.js';
+import { TODAS } from '../content/index.js';
 import { SARDES_POVO, EPAFRAS, SARDES_RUA, SARDES_VELAS, SARDES_ABATES } from '../content/sardes.js';
 
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -21,8 +22,9 @@ const preenche = (txt, G) => txt.replace('{velas}', SARDES_VELAS).replace('{abat
 function luzDaCidade(G) { if (G.area !== 'sardes' || sar(G).feita) return; G.tm = { ...G.tm, escuro: 0.86 - progresso(G) * 0.4 }; }
 
 /* ---------------- ao entrar numa área ---------------- */
-export function aoEntrar(G, id) {
-  if (id === 'refugio') { // o mercador de além-mar só aparece de vez em quando, e cada visita traz outras coisas
+export function aoEntrar(G, id, o = {}) {
+  if (id === 'refugio') {
+    const k = o.portal ? andarDe(o.portal) : null; montarAndar(G, k ?? G.andarRolos ?? proximoAndar(G)); // voltando de uma página, o salão já está no andar dela // o mercador de além-mar só aparece de vez em quando, e cada visita traz outras coisas
     G.viajante = Math.random() < 0.4 ? sortearViajante(G) : null;
     G.objs = G.objs.filter(o => !o.vezOutra || G.viajante);
   }
@@ -77,7 +79,7 @@ export function rotuloNovo(G, ob) {
     case 'vela': return sar(G).velas[ob.id] ? null : 'Reacender (10 de azeite)';
     case 'barco': return ob.volta ? 'Voltar ao Refúgio' : 'Embarcar para Sardes';
     case 'selado': return 'Olhar';
-    case 'cenario': return ob.qual === 'quadro' ? 'Ler o quadro' : undefined;
+    case 'cenario': return ob.qual === 'quadro' ? 'Ler o quadro' : ob.qual === 'andares' ? 'Escada dos andares' : undefined;
   }
   if (ob.tipo === 'portal' && ob.area === 'vale') return 'Entrar';
   return undefined;
@@ -91,6 +93,8 @@ export async function usarNovo(G, ob) {
     G.ui.toast('Vela acesa: ' + nVelas(G) + ' de ' + SARDES_VELAS + '. "Vós sois a luz do mundo" (Mt 5:14).', 3500); return true;
   }
   if (ob.tipo === 'barco' || (ob.tipo === 'npc' && ob.id === 'barqueiro')) { await barco(G, ob); return true; }
+  if (ob.tipo === 'cenario' && ob.qual === 'andares') { await escadaAndares(G, ob); return true; }
+  if (ob.tipo === 'selado' && ob.slot != null) { await G.ui.dialog({ nome: 'Nicho vazio', texto: 'Um nicho de pedra ainda sem página. Toda semana chega um rolo novo, e ele vai morar aqui.', acoes: [{ label: 'Voltar' }], voz: false }); return true; }
   if (ob.tipo === 'selado') { await G.ui.dialog({ nome: 'Porta selada', texto: 'Um selo de cera vermelha, com uma marca que você não conhece.\n\nOutras jornadas virão por aqui. Ainda não é tempo.', acoes: [{ label: 'Voltar' }], voz: false }); return true; }
   if (ob.tipo === 'cenario' && ob.qual === 'quadro') { await G.ui.dialog({ nome: 'O quadro do cais', texto: quadroMissoes(G), acoes: [{ label: 'Fechar' }], voz: false }); return true; }
   if (ob.tipo === 'portal' && ob.area === 'vale') {
@@ -187,4 +191,42 @@ export function objetivoSardes(G) {
   const v = perto(G.objs.filter(o => o.tipo === 'vela' && !s.velas[o.id])), w = perto(G.objs.filter(o => o.palavra && !s.palavra[o.palavra]));
   const alvo = perto([v, w].filter(Boolean)); if (!alvo) return null;
   return { x: alvo.x, y: alvo.y + 40, rot: alvo.tipo === 'vela' ? 'reacenda a vela' : 'leve a Palavra a ' + alvo.nome, portal: alvo };
+}
+
+/* ---------------- os andares do Salão dos Rolos ----------------
+   Quatro nichos por andar. Toda semana nova entra no próximo nicho livre; quando o andar enche, nasce outro. Sempre sobra
+   um nicho selado ("próxima semana"). A escada dos andares leva o peregrino: escolhe o andar e ele vai sozinho. */
+export const POR_ANDAR = 4;
+export const totalAndares = () => Math.ceil((TODAS.length + 1) / POR_ANDAR);
+export function andarDe(semId) { const i = TODAS.findIndex(s => s.id === semId); return i < 0 ? null : Math.floor(i / POR_ANDAR); }
+function proximoAndar(G) { const i = TODAS.findIndex(s => s.fases.some(f => !G.cm.feitas[s.id + ':' + f.n])); return Math.floor((i < 0 ? TODAS.length - 1 : i) / POR_ANDAR); }
+export function montarAndar(G, n) {
+  n = Math.max(0, Math.min(totalAndares() - 1, n)); G.andarRolos = n;
+  for (const o of G.objs) if (o.slot != null) {
+    const sem = TODAS[n * POR_ANDAR + o.slot];
+    if (sem) { o.tipo = 'portal'; o.semana = sem.id; o.rotulo = undefined; o.luz = 80; } else { o.tipo = 'selado'; o.semana = null; o.rotulo = 'Próxima semana'; o.luz = 0; }
+  }
+  const cel = G.N?.celulas.find(c => c.deco === 'biblioteca'); if (cel) cel.nome = 'Salão dos Rolos · andar ' + (n + 1);
+}
+async function escadaAndares(G, ob) {
+  const n = totalAndares(), atual = G.andarRolos ?? 0, feitas = s => s.fases.filter(f => G.cm.feitas[s.id + ':' + f.n]).length;
+  const acoes = [];
+  for (let k = 0; k < n; k++) {
+    const sems = TODAS.slice(k * POR_ANDAR, k * POR_ANDAR + POR_ANDAR), nomes = sems.map(s => s.estudo || s.titulo).join(' · ') || 'nichos à espera';
+    const pend = sems.some(s => feitas(s) < s.fases.length);
+    acoes.push({ label: (k + 1) + 'º andar' + (k === atual ? ' (aqui)' : '') + (pend ? ' ✦' : '') + ' — ' + nomes, fn: () => k !== atual && irAoAndar(G, ob, k) });
+  }
+  acoes.push({ label: 'Ficar' });
+  await G.ui.dialog({ nome: 'Escada dos andares', texto: 'Uma escada de caracol sobe pelo meio das estantes. Cada andar guarda quatro páginas do Livro; o sinal ✦ marca onde ainda há caminho por andar.\n\nEscolha o andar: a escada leva você.', acoes, voz: false });
+}
+async function irAoAndar(G, ob, k) {
+  const p = G.p, esperar = ms => new Promise(r => setTimeout(r, ms));
+  G.cena = true;
+  try {
+    for (let t = 0; t < 120 && Math.abs(ob.x - p.x) > 10; t++) { G.cenaMx = Math.sign(ob.x - p.x); await esperar(30); } // anda até a escada
+    G.cenaMx = 0; p.vx = 0; sfx('step'); await esperar(200);
+    G.fade = 1; sfx('gate'); await esperar(350); // sobe (ou desce) pela escada
+    montarAndar(G, k); p.x = ob.x + 30; G.vista.cam.x = p.x - G.vista.W / G.vista.Z / 2; G.prenderCam();
+    G.textoEm(p.x, p.y - 80, 'Andar ' + (k + 1), '#FFE9A8', 15); G.ui.toast('Salão dos Rolos · andar ' + (k + 1), 2500);
+  } finally { G.cena = false; G.cenaMx = 0; }
 }

@@ -103,7 +103,7 @@ function pintarObjeto(g, o, G, x, y, Tm) {
           for (let i = 0; i < 26; i++) { const xx = 4 + (i * 37) % 40, yy = 10 + (i * 23) % 26; if (s.le(xx, yy)) s.px(xx, yy, F[4]); } } });
       carimbar(g, sp, x, y, 24, 71); return true; }
     case 'jesus': { // de joelhos sobre a pedra; uma luz mansa em volta, que não ofusca
-      const al = o.alfa ?? 1; if (al <= 0) return true; const yy = y - (o.pose === 'ora' || o.pose === 'olha' ? 14 : 14);
+      const al = o.alfa ?? 1; if (al <= 0) return true; const pedra = G.objs.find(r => r.tipo === 'rocha'), sobre = pedra && Math.abs(o.x - pedra.x) < 30, yy = y - (sobre ? 14 : 0); // só fica no alto em cima da pedra; andando, pisa no chão
       g.globalAlpha = 0.16 * al; g.fillStyle = '#FFF1BE'; for (let r = 30; r > 8; r -= 7) { for (let a = 0; a < 40; a++) { const an = a / 40 * TAU; if ((a + Math.floor(Tm * 3)) % 2) g.fillRect(Math.round(x + Math.cos(an) * r), Math.round(yy - 22 + Math.sin(an) * r * 0.9), 1, 1); } }
       g.globalAlpha = 0.07 * al; g.fillRect(x - 3, 0, 6, yy - 30); // um raio do alto (Lc 22:43)
       g.globalAlpha = al; carimbar(g, quadroPessoa(JESUS_LOOK, Tm, 'jesus-' + (o.pose || 'pe'), o.pose), x, yy, 24, 40, o.vira || 1); g.globalAlpha = 1; return true; }
@@ -148,6 +148,13 @@ function pintarObjeto(g, o, G, x, y, Tm) {
       else if (q === 'cofre') { // a arca do tesouro e a mesa do coletor
         g.fillStyle = '#17121f'; g.fillRect(x - 30, y - 30, 40, 30); g.fillRect(x + 40, y - 18, 34, 18); g.fillStyle = '#6B4A2E'; g.fillRect(x - 29, y - 22, 38, 21); g.fillStyle = '#8A6A44'; g.fillRect(x - 29, y - 29, 38, 7); g.fillStyle = '#C9A63C'; g.fillRect(x - 29, y - 23, 38, 2); g.fillRect(x - 22, y - 29, 3, 28); g.fillRect(x - 2, y - 29, 3, 28); g.fillRect(x - 12, y - 20, 5, 6);
         g.fillStyle = '#5A3E28'; g.fillRect(x + 41, y - 17, 32, 3); g.fillRect(x + 43, y - 14, 3, 14); g.fillRect(x + 68, y - 14, 3, 14); g.fillStyle = f2 ? '#FFD23F' : '#E8B830'; for (let i = 0; i < 4; i++) g.fillRect(x + 46 + i * 6, y - 20 - (i % 2) * 2, 4, 3 + (i % 2) * 2); }
+      else if (q === 'andares') { // a escada de caracol dos andares: degraus que sobem até o teto, corrimão de bronze, lanterna e a placa do andar
+        g.fillStyle = '#17121f'; g.fillRect(x - 3, y - 118, 6, 118); g.fillStyle = '#5A3E28'; g.fillRect(x - 2, y - 117, 4, 117);
+        for (let i = 0; i < 12; i++) { const ang = i * 0.9 + Tm * 0.0, lx = Math.round(Math.cos(ang) * 16), yy = y - 6 - i * 9, frente = Math.sin(ang) > 0;
+          g.fillStyle = '#17121f'; g.fillRect(x + Math.min(0, lx) - 1, yy - 1, Math.abs(lx) + 3, 4); g.fillStyle = frente ? '#8A6A44' : '#5A4030'; g.fillRect(x + Math.min(0, lx), yy, Math.abs(lx) + 1, 2); g.fillStyle = '#C9A63C'; g.fillRect(x + lx, yy - 6, 1, 6); }
+        g.fillStyle = '#17121f'; g.fillRect(x + 10, y - 40, 14, 12); g.fillStyle = '#C9A63C'; g.fillRect(x + 11, y - 39, 12, 10); g.fillStyle = '#6B4A2E'; const nA = (G.andarRolos || 0) + 1; for (let i = 0; i < Math.min(nA, 4); i++) g.fillRect(x + 13 + i * 2, y - 36, 1, 4);
+        g.fillStyle = f2 ? '#FFD86A' : '#FFB84A'; g.fillRect(x - 12, y - 58, 4, 5); g.fillStyle = '#17121f'; g.fillRect(x - 11, y - 60, 2, 2);
+        g.fillStyle = '#FFE9A8'; const b = Math.floor(Tm * 3) % 3; g.fillRect(x - 1, y - 128 + b * 2, 3, 2); g.fillRect(x - 3, y - 124 + b * 2, 7, 2); }
       else if (q === 'redes') { g.fillStyle = '#17121f'; g.fillRect(x - 24, y - 46, 3, 46); g.fillRect(x + 22, y - 46, 3, 46); g.fillRect(x - 26, y - 48, 54, 3); g.fillStyle = '#6B4A2E'; g.fillRect(x - 23, y - 45, 1, 44); g.fillRect(x + 23, y - 45, 1, 44);
         g.fillStyle = '#C9B88A'; for (let i = 0; i < 9; i++) { const sag = Math.round(Math.sin(i / 8 * Math.PI) * 8); for (let k = 0; k < 6; k++) g.fillRect(x - 21 + i * 5, y - 44 + k * 4 + Math.round(sag * k / 6), 1, 3); } for (let k = 0; k < 6; k++) g.fillRect(x - 21, y - 44 + k * 4 + 4, 43, 1);
         g.fillStyle = '#E2463C'; g.fillRect(x - 8, y - 22, 4, 4); g.fillStyle = '#D9A63C'; g.fillRect(x + 6, y - 18, 4, 4); }
@@ -496,7 +503,7 @@ function pintarTextos(g, G, esc, cx, cy) {
       g.globalAlpha = Math.min(1, k * 1.6); g.fillStyle = r.cor; g.fillRect(Math.round(x - gr), Math.round(y - gr), gr * 2, gr * 2); if (gr > 1) { g.fillStyle = '#FFFFFF'; g.fillRect(Math.round(x - gr / 2), Math.round(y - gr / 2), gr, gr); } } g.globalAlpha = 1; }
   for (const o of G.objs) if (o.tipo === 'escrito') { const k = clamp(G.p.lampA * 1.4 - Math.max(0, Math.hypot(o.x - p.x, o.y - p.y) - 260) / 120, 0, 1); if (k > 0.02) { g.globalAlpha = k; txt(o.txt, sx(o.x), sy(o.y), 8 * u * 1.5, '#FFE9A8', 'center'); g.globalAlpha = 1; } }
   for (const c of G.N.celulas) if (c.deco && c.nome) { const meio = c.deco === 'biblioteca' || c.deco === 'cisterna' ? 104 : 240, x = sx(c.cx * 30 * 32 + meio * 2), y = sy((c.cy * 17) * 32 + 64); if (x > -300 && x < g.canvas.width + 300) txt(c.nome, x, y, 8 * u * 2.2, '#FFE9A8', 'center'); }
-  { const ob = G.objetivo?.(); if (ob && !G.ui.blocking) { // a missão: seta dourada sobre o alvo, ou na borda da tela apontando para ele
+  { const ob = !G.cena && G.objetivo?.(); if (ob && !G.ui.blocking) { // a missão: seta dourada sobre o alvo, ou na borda da tela apontando para ele
     const x = sx(ob.x), y = sy(ob.y - 132), W2 = g.canvas.width, m = 40 * u, pula = Math.round(Math.sin(G.T * 6) * 3 * u), fora = x < m || x > W2 - m;
     g.fillStyle = '#17121f'; const seta = (ax, ay, dx, dy, c) => { g.fillStyle = c; for (let i = 0; i < 5; i++) { const lg = (5 - i) * 2 * u; if (dy) g.fillRect(ax - lg / 2, ay + i * 2 * u * dy, lg, 2 * u); else g.fillRect(ax + i * 2 * u * dx, ay - lg / 2, 2 * u, lg); } };
     if (!fora) { seta(x, y + pula - u, 0, 1, '#17121f'); seta(x, y + pula - 2 * u, 0, 1, '#FFD23F'); txt(ob.rot, x, y + pula - 8 * u, 8 * u * 1.6, '#FFE9A8', 'center'); }
