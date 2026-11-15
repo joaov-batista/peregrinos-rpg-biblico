@@ -8,9 +8,9 @@ import { C, OX as ox, OY as oy, TINTA } from './kit.js';
 
 const BR = C('#FFFFFF'), ACO = C('#E8ECF4'), ACOE = C('#9AA4B8'), BREU = C('#07060B'), OSSO = C('#D9D4C4'), OSSOE = C('#9A947F'), PALIDO = C('#C9B8A0'), PELE = C('#B98A62'), PELEE = C('#7E5A3E'), PELES = C('#4E3626'), COURO = C('#6B4A2E'), COUROE = C('#3A2A1E');
 const QUEM = {
-  menaem: { H: 40, W: 12, SH: 8, R: 8, m: ['#241A1C', '#3A2A2C', '#523C3A', '#7C6258'].map(C), acento: C('#B8323A'), acentoE: C('#74202A') },
-  eleazar: { H: 56, W: 16, SH: 13, R: 9, m: ['#161C2C', '#232C44', '#34405E', '#5E6E90'].map(C), acento: C('#D9A441'), acentoE: C('#8A6422') },
-  jair: { H: 42, W: 21, SH: 15, R: 10, m: ['#26201A', '#3C3226', '#544632', '#80704E'].map(C), acento: C('#E8E2D0'), acentoE: C('#9A947F') }
+  menaem: { H: 54, W: 12, SH: 8, R: 8, m: ['#241A1C', '#3A2A2C', '#523C3A', '#7C6258'].map(C), acento: C('#B8323A'), acentoE: C('#74202A') },
+  eleazar: { H: 68, W: 16, SH: 13, R: 9, m: ['#161C2C', '#232C44', '#34405E', '#5E6E90'].map(C), acento: C('#D9A441'), acentoE: C('#8A6422') },
+  jair: { H: 56, W: 21, SH: 15, R: 10, m: ['#26201A', '#3C3226', '#544632', '#80704E'].map(C), acento: C('#E8E2D0'), acentoE: C('#9A947F') }
 };
 const lamina = (s, x0, y0, x1, y1, g = 2) => { s.linha(x0, y0, x1, y1, g + 1, ACOE); s.linha(x0, y0, x1, y1, g, ACO); s.linha(x0, y0, x1, y1, 1, BR); };
 
