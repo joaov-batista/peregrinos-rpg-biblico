@@ -7,7 +7,7 @@ export const ARCO = { id: 'lampada', titulo: 'A lâmpada que falta' };
 
 export const CAPITULOS = [
   { id: 'sarepta', n: 1, titulo: 'O azeite que não acaba', ref: '1 Reis 17:8-16', quem: 'velho', quemNome: 'o Velho Peregrino', chefe: 'escassez', tema: 'sarepta', inimigos: ['desanimo', 'preguica', 'ganancia'], forca: 1,
-    lugar: 'Sarepta, no tempo da seca', sala: 0, lamparinas: [4, 16, 24],
+    lugar: 'Sarepta, no tempo da seca', sala: 0, lamparinas: [16, 24],
     pedido: [
       'Você reparou nas lamparinas da praça? Apagadas, todas. Não é descuido: o azeite do Refúgio está acabando.\n\nA viúva da casa ao lado guardava a botija que nunca secou. Guardava. Faz três noites que a botija amanheceu vazia.',
       'Não é a botija que secou, peregrino. É a página.\n\nQuando ninguém lê uma história, a sombra cobre a história, e o que ela guardava para nós vai se apagando aqui. A página da viúva de Sarepta está coberta.',

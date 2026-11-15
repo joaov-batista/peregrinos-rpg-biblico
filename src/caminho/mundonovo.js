@@ -144,6 +144,11 @@ export async function falarNovo(G, ob) {
   const cm = G.cm, p = G.p, c = G.char;
   if (await amizade(G, ob)) return true; // o primeiro papo do dia vale um coração; nos marcos, o morador conta algo
   if (await falaHistoria(G, ob)) return true; // a campanha: pedidos, páginas vivas e a volta
+  if (ob.id?.startsWith?.('zelote')) { // amargurados, cada um aponta para o conselho do seu jeito
+    const k = +ob.id.slice(-1) - 1, n = cm.falas[ob.id] = (cm.falas[ob.id] || 0) + 1, F = cm.zelo ? ZELOTES_DEPOIS : ZELOTES;
+    await G.ui.dialog({ nome: ob.nome, look: ob.look, texto: F[k][(n - 1) % F[k].length], acoes: [{ label: cm.zelo ? 'Paz' : 'Onde fica o conselho?', fn: cm.zelo ? undefined : () => G.ui.toast('O Conselho Zelote: a porta de ferro no Pátio das provas, entre a escada da cisterna e o Desafio das ondas.', 7000) }, { label: 'Seguir caminho' }] });
+    return true;
+  }
   if (ob.id === 'mensageiro') { // pistas leves, uma de cada vez, conforme o que o peregrino já achou; nunca conta o que há no fim
     const n = cm.falas.mensageiro = (cm.falas.mensageiro || 0) + 1, diz = (texto, label = 'Guardar essas palavras') => G.ui.dialog({ nome: ob.nome, look: ob.look, texto, acoes: [{ label }] });
     if (n === 1) {
@@ -193,6 +198,18 @@ async function palavra(G, ob) {
   G.ui.toast('A Palavra foi levada: ' + nPalavra(G) + ' de 5.', 3000);
 }
 
+const ZELOTES = [
+  ['O que foi? Nunca viu um homem esperando?\n\nEu esperei o Reino a vida inteira. Afiei a faca todo dia. E quando o Rei veio, entrou na cidade montado num jumento (Zc 9:9). Num jumento.', 'Meu pai morreu com Judas, o galileu, quando se levantaram contra o censo (At 5:37). "Dispersaram-se todos." Está escrito assim, numa linha. Uma linha para o meu pai.', 'Quer saber de luta de verdade? Os três do conselho. Menaém não erra uma faca desde menino. Ninguém aqui dura contra ele o tempo de um salmo.'],
+  ['Não me olhe com pena. Eu tive zelo. Zelo como o de Fineias, que pegou a lança e resolveu (Nm 25:7-8).\n\nDepois me disseram que zelo sem entendimento não serve (Rm 10:2). Depois. Sempre dizem depois.', 'Um dos nossos largou tudo e foi atrás dele: Simão, o que chamavam Zelote (Lc 6:15). Sentou-se à mesa com um cobrador de impostos. Um COBRADOR. E ficou.\n\nEu nunca entendi. E nunca esqueci.', 'O conselho ainda se reúne, no Pátio das provas. Eleazar carrega a lança que foi do avô. Se você acha que sabe lutar, vá lá. Depois me conte quanto durou.'],
+  ['"O meu reino não é deste mundo. Se fosse, os meus servos pelejariam" (Jo 18:36).\n\nEu estava pronto para pelejar, estrangeiro. Tinha quem pelejasse. Ele não quis.', 'Barrabás era dos nossos, preso por motim (Mc 15:7). Soltaram ele. No lugar dele puseram… você sabe quem.\n\nEu devia ter ficado contente. Faz anos que não consigo.', 'Jair luta de longe, com foice de ceifeiro. Diz que é para lembrar que um dia a seara vai ser ceifada. Ninguém do conselho ri. Vá ver, se tiver coragem: a porta de ferro, no pátio.'],
+  ['Olhando o mar? Eu também. Roma veio por ali.\n\nSabe o que dói? Não foi perder. Foi ele dizer "amai os vossos inimigos" (Mt 5:44) olhando na nossa direção.', 'Pedro puxou a espada no jardim, e cortou a orelha de um (Jo 18:10). Por um instante achei: agora vai. Aí ele curou o homem (Lc 22:51).\n\nCurou o inimigo. Na frente de todo mundo.', 'Três tronos, três armas, uma lei: um de cada vez… até você provar que merece os três. É assim no conselho. Fica no Pátio das provas. Ninguém vai te impedir de entrar.']
+];
+const ZELOTES_DEPOIS = [
+  ['Então é verdade. Menaém errou uma faca.\n\n…Ele entrou num jumento, e você entrou no conselho com uma lâmpada. Talvez eu estivesse esperando o tipo errado de força.'],
+  ['Eleazar baixou a lança do avô para você. Eu vi.\n\nSimão, o Zelote, ficou à mesa com o cobrador de impostos. Pela primeira vez acho que entendo por quê.'],
+  ['"Se o meu reino fosse deste mundo, os meus servos pelejariam." Você pelejou, e venceu, e não ficou com nada do que é nosso.\n\nComeço a achar que o Reino é maior do que a nossa raiva.'],
+  ['Você venceu os três e ninguém morreu. No nosso tempo isso não existia.\n\n"Amai os vossos inimigos." Ainda dói. Mas hoje doeu diferente.']
+];
 const MENSAGEIRO = { skin: '#D9A273', hair: '#F4F1E6', tunic: '#F4F1FF', cape: '#E6E0F4', style: 'longo', beard: false };
 /* ---------------- o mercador de além-mar ---------------- */
 function sortearViajante(G) {

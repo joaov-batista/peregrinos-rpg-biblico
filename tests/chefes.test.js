@@ -77,7 +77,7 @@ test('vícios, salas de chefe e fases: cada um tem o seu, sem repetir', async ()
   const ais = Object.entries(VICIOS).map(([id, v]) => [id, v.ai]);
   for (const [id, ai] of ais) assert.equal(ais.filter(([, a]) => a === ai).length, 1, id + ' divide o comportamento "' + ai + '" com outro vício');
   // cada chefe tem uma sala própria, e nenhuma planta de sala se repete
-  const arenas = Object.entries(CHEFES).map(([id, c]) => [id, c.arena]);
+  const arenas = Object.entries(CHEFES).filter(([, c]) => !c.parte).map(([id, c]) => [id, c.arena]); // os companheiros de um chefe (o Conselho Zelote) lutam na sala dele
   for (const [id, a] of arenas) { assert.ok(ARENAS[a], id + ': sala ' + a + ' não existe'); assert.equal(arenas.filter(([, b]) => b === a).length, 1, id + ' divide a sala ' + a); }
   const plantas = arenas.map(([, a]) => JSON.stringify(ARENAS[a])); assert.equal(new Set(plantas).size, plantas.length, 'duas salas com a mesma planta');
   // cada fase tem o seu perigo e a sua sala marcante, diferentes de todas as outras

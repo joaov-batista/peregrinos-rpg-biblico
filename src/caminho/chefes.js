@@ -15,6 +15,15 @@ import { ESTILOS, desfazer } from './estilos.js';
 const F = (vida, golpes, extra = {}) => ({ vida, golpes, ...extra });
 // golpes: nome → parâmetros; "fn" aponta para o golpe do estilo quando o nome é uma variação (mais forte) do mesmo golpe
 export const CHEFES = {
+  /* ---------- O Conselho Zelote: um, depois dois, depois os três. Uma vida só ---------- */
+  conselho: { vida: 1500, pressa: 0.62, r: 26, arena: 'conselho', voa: 1, vel: 0,
+    golpes: { punhalRasante: { espera: 0.9 }, punhalCadente: { espera: 0.9 }, vaiEVolta: { espera: 1 }, punhaisDaParede: { espera: 1 }, lancaCadente: { espera: 1.5 }, estocadaZelote: { espera: 1.5 }, lancasDaParede: { espera: 1.6 }, giroDaLanca: { espera: 1.6 } },
+    fases: [F(1, ['punhalRasante', 'punhalCadente', 'vaiEVolta', 'punhaisDaParede']), F(0.66, ['lancaCadente', 'estocadaZelote', 'lancasDaParede', 'giroDaLanca'], { grito: 'ELEAZAR! JAIR! DESÇAM!' }), F(0.33, ['lancaCadente', 'estocadaZelote', 'giroDaLanca', 'lancasDaParede'], { grito: 'O CONSELHO INTEIRO!' })],
+    dica: 'Eles só podem ser feridos quando estão na sala. Rasante: pule. Mergulho: saia de baixo e bata quando ele cai. Na parede: desvie e alcance-o no alto. As foices voltam por outra altura. Com dois ou três, não persiga: escolha um e espere a brecha.' },
+  zeloteFoice: { parte: true, vida: 1e7, pressa: 0.62, r: 26, arena: 'conselho', voa: 1, vel: 0,
+    golpes: { foiceRasteira: { espera: 2.2 }, foiceAlta: { espera: 2.2 }, ceifar: { espera: 2 }, foiceCadente: { espera: 2 } }, fases: [F(1, ['foiceRasteira', 'foiceAlta', 'ceifar', 'foiceCadente'])], dica: '' },
+  zelotePunhal: { parte: true, vida: 1e7, pressa: 0.62, r: 26, arena: 'conselho', voa: 1, vel: 0,
+    golpes: { rasgo: { espera: 2.6 }, boteZelote: { espera: 2.6 }, chuvaDePunhais: { espera: 2.8 }, finta: { espera: 2.8 } }, fases: [F(1, ['rasgo', 'boteZelote', 'chuvaDePunhais', 'finta'])], dica: '' },
   /* ---------- A história do peregrino: as sombras das páginas vivas ---------- */
   escassez: { vida: 480, r: 40, arena: 'casebre', vel: 50,
     golpes: { rachaduras: {}, poeira: {}, fome: {}, mirrar: {} },
@@ -110,7 +119,7 @@ const golpeDe = (b, nome) => { const def = b.c.golpes[nome]; return ESTILOS[b.id
 
 export function novoChefe(id, A, dif) {
   const c = CHEFES[id], d = BOSSES[id] || { nome: id };
-  const hp = Math.round(c.vida * dif.hp);
+  const hp = Math.round(c.vida * (c.parte ? 1 : dif.hp));
   return { kind: 'chefe', id, c, d, x: clamp(A.cx + 250, A.x0 + 80, A.x1 - 80), y: A.chao - (c.voa || 0), vx: 0, vy: 0, w: c.r * 1.5, h: c.r * 2.1, r: c.r, hp, max: hp, fase: 0, post: 0, postT: 0, quebrado: 0,
     mov: null, idx: 0, espera: 1.8, flash: 0, face: -1, voa: !!c.voa, exposto: 0, clones: [], furia: 0, semDano: 0, alpha: 1, raios: null, tonto: 0, ultimoGolpe: 0, t: 0, recentes: [], cen: {},
     art: { id, d, r: c.r, x: 0, y: 0, flash: 0, stun: 0, hp, max: hp, spd: c.vel || 60 } };
@@ -161,7 +170,7 @@ export function atualizarChefe(G, b, dt) {
       if (b.espera <= 0) { const nome = escolher(G, b, f); b.mov = { nome, def: c.golpes[nome], t: 0, e: 0 }; b.idx++; }
     } else {
       const m = b.mov, fn = golpeDe(b, m.nome), fim = !fn || fn(G, b, m, dt) || m.t > 12; m.t += dt;
-      if (fim) { b.mov = null; desfazer(G, b); b.espera = (m.def.espera ?? 1.05) * G.dif.ritmo * (c.pressa || 1) * (b.fase ? 0.85 : 1) * (b.furia > 0 ? 0.7 : 1); if (Math.random() < 0.22 + b.fase * 0.12) b.espera = 0.2; } // às vezes emenda um golpe no outro
+      if (fim) { b.mov = null; desfazer(G, b); b.espera = (m.def.espera ?? 1.05) * G.dif.ritmo * (c.pressa || 1) * (b.fase ? 0.85 : 1) * (b.furia > 0 ? 0.7 : 1); if (!c.voa1 && b.id !== 'conselho' && !c.parte && Math.random() < 0.22 + b.fase * 0.12) b.espera = 0.2; } // às vezes emenda um golpe no outro
     }
     // regras passivas
     // quem não é vencido de vez se refaz: a cura é o tempo todo e forte, mas só dentro da barra atual (a que já caiu não volta)

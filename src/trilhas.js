@@ -93,6 +93,9 @@ export const TRILHAS = {
     mel: "1' - 5 1' 3' - 1' 3' 5' - 4' 3' 2' - 1' - | 6 - 3 6 1' - 6 1' 3' - 2' 1' 6 - 1' - | 4 - 1' 4' 6' - 4' 1' 6 - 1' 4' 6' - 4' - | 5' - 2' 7 5 - 7 2' 5' - 4' 2' 7 - 2' -" },
 
   /* ------------------------------ os chefes: cada um com o seu riff ------------------------------ */
+  // o Conselho Zelote: a luta mais dura. Tambores de guerra, um riff que não para
+  conselho: { tom: 4, esc: 'hijaz', bpm: 178, div: 4, voz: 'serra', riff: "1 1 8 1 2 1 8 1 1 1 8 1 4 3 2 1", arp: 'chip', bat: 'guerra', luta: 1, prog: [1, 1, 2, 1, 1, 1, 7, 1],
+    mel: "1' - - 1' 2' - 1' - 5 - - 5 1' - - - | 3' - - 3' 4' - 3' - 1' - - 1' 3' - - - | 2' - - 2' 4' - 2' - 6 - - 6 2' - 4' - | 3' - 2' - 1' - 7 - 1' - - - . . 5 - | 1' - - 1' 2' - 1' - 5 - - 5 1' - - - | 5' - - 5' 4' - 3' - 2' - 3' - 1' - - - | 7 - 2' - 4' - 2' - 7 - 2' - 4' - 6' - | 5' - 4' - 3' - 2' - 1' - - - . . . ." },
   // as sombras das páginas vivas
   escassez: { tom: 2, esc: 'hijaz', bpm: 118, voz: 'flauta', riff: "1 . . 1 . 1 . . 1 . . 1 . 2 1 .", bat: 'tribal', luta: 1, pad: 1, prog: [1, 1, 2, 1],
     mel: "1' - - 2' 1' - 5 - | 3' - - 2' 1' - - - | 2' - 4' - 6 - 2' - | 1' - 7 - 1' . . ." },
@@ -138,7 +141,7 @@ export const TRILHAS = {
     mel: "5' - 3' - 1' - 3' - | 6' - 3' - 1' - 3' - | 7 - 2' - 4' - 2' - | 1' - 3' - 5' - - -" }
 };
 // trilhas que servem a mais de um lugar
-const APELIDOS = { treino: 'bosque', desafio: 'raid', getsemani: 'jardim', getsemani2: 'jardim', ermo: 'sombra', mar: 'conves', porto: 'jope', pecado: 'desespero', dragao: 'mentira', chefe: 'batalha' };
+const APELIDOS = { zeloteFoice: 'conselho', zelotePunhal: 'conselho', zelotes: 'masmorra', treino: 'bosque', desafio: 'raid', getsemani: 'jardim', getsemani2: 'jardim', ermo: 'sombra', mar: 'conves', porto: 'jope', pecado: 'desespero', dragao: 'mentira', chefe: 'batalha' };
 export const trilhaDe = id => TRILHAS[id] || TRILHAS[APELIDOS[id]] || null;
 
 // batidas: k = bumbo, s = caixa, h = chimbal, t = tímpano, m = metal; em semicolcheias (16 por compasso de quatro tempos)

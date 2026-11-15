@@ -15,7 +15,7 @@ export function historiaNoRefugio(G) {
   for (const o of G.objs) o.chama = !!alvo && o.id === alvo;
   G.objs = G.objs.filter(o => !o.daHistoria);
   CAPITULOS.forEach((cp, i) => { if (i < h.cap) for (const col of cp.lamparinas) G.objs.push({ tipo: 'lamparina', daHistoria: true, x: (cp.sala * CW + col) * T + 16, y: 16 * T, luz: 150 }); });
-  if (h.cap >= 3) [[9, 0], [12, 1], [16, 2]].forEach(([col, k]) => G.objs.push({ tipo: 'npc', daHistoria: true, id: 'reuniao' + k, nome: ['Uma moradora', 'Um velho da aldeia', 'Uma criança'][k], x: col * T + 16, y: 16 * T,
+  if (h.cap >= 3) [[15, 0], [18, 1], [23, 2]].forEach(([col, k]) => G.objs.push({ tipo: 'npc', daHistoria: true, id: 'reuniao' + k, nome: ['Uma moradora', 'Um velho da aldeia', 'Uma criança'][k], x: col * T + 16, y: 16 * T,
     look: [{ skin: '#C68B59', hair: '#3A2314', tunic: '#7A5A8A', cape: 'none', style: 'veu' }, { skin: '#A0673E', hair: '#D9D2C5', tunic: '#5E6A4A', cape: 'none', style: 'curto', beard: true }, { skin: '#D9A273', hair: '#6B4423', tunic: '#C9A63C', cape: 'none', style: 'curto' }][k] }));
 }
 // a seta dourada da campanha (só quando não há outra coisa mais urgente a mostrar)

@@ -993,10 +993,100 @@ const carcere = {
   }
 };
 
-export const ESTILOS = { escassez, desprezo, carcere, mamom, procrastinacao, mentira, imoralidade, satanas, fuga, pavor, desespero, violencia, ressentimento, encantadores, jugo, babilonia, fera, soberba, golias, behemote, leviata };
+/* ======================================================================================================
+   O CONSELHO ZELOTE: três lutadores, um de cada vez… e depois todos. Somem entre um golpe e outro (voltam ao trono)
+   e reaparecem já no golpe: rasante pelo chão, mergulho do alto ou arremesso de cima da parede. Só se fere quem está na sala.
+   Menaém (punhais) luta sozinho; depois Eleazar (lança) e Jair (foice) lutam juntos; no fim, os três de uma vez.
+   A vida é uma só, do conselho inteiro: bater em qualquer um deles fere o conselho.
+   ====================================================================================================== */
+const noTrono = (G, b) => { b.alpha = 0; b.vx = 0; b.corre = false; };
+// rasante: aparece num canto, no chão, e cruza a sala inteira. Pule (ou atravesse com o passo)
+function zRasante(G, b, m, dt, o) {
+  const A = G.N.arena;
+  if (m.e === 0) { if (m.t === 0) { m.d = G.p.x > A.cx ? 1 : -1; b.x = m.d > 0 ? A.x0 + 46 : A.x1 - 46; b.y = A.chao; b.face = m.d; b.alpha = 1; G.efeito('sumico', b.x, b.y - 30); sfx('swing'); } b.alpha = 1; prepara(b); if (m.t > av(G, o.tele)) { m.e = 1; sfx('dodge'); } return false; }
+  if (m.e === 1) { ataca(b); b.corre = true; b.x += m.d * vel(G, o.v) * dt; if (Math.random() < dt * 40) G.fx.po(b.x - m.d * 20, b.y - 4, 2, o.cor);
+    if ((m.d > 0 && b.x > A.x1 - 56) || (m.d < 0 && b.x < A.x0 + 56)) { b.x = clamp(b.x, A.x0 + 56, A.x1 - 56); b.corre = false; if (o.volta && !m.voltou) { m.voltou = true; m.e = 3; m.t0 = m.t; } else { m.e = 2; m.t0 = m.t; } } return false; }
+  if (m.e === 3) { prepara(b); b.face = -m.d; if (m.t - m.t0 > av(G, 0.32)) { m.d *= -1; m.e = 1; sfx('dodge'); } return false; } // vira e volta
+  return m.t - m.t0 > o.rec; // fica um instante exposto, sem fôlego
+}
+// mergulho: aparece no alto, em cima de você, e desce reto com a arma
+function zMergulho(G, b, m, dt, o) {
+  const A = G.N.arena;
+  if (m.e === 0) { if (m.t === 0) { b.x = clamp(G.p.x + (o.adianta ? G.p.vx * 0.25 : 0), A.x0 + 40, A.x1 - 40); b.y = A.chao - 236; b.alpha = 1; b.face = Math.sign(G.p.x - b.x) || 1; G.efeito('sumico', b.x, b.y - 30); sfx('magic'); }
+    b.alpha = 1; prepara(b); if (o.segue && m.t < av(G, o.tele) * 0.65) b.x += clamp(G.p.x - b.x, -1, 1) * vel(G, o.segue) * dt;
+    if (!m.marca && m.t > av(G, o.tele) * 0.65) { m.marca = true; zona(G, { tipo: 'circ', x: b.x, y: A.chao - 14, r: 26, aviso: av(G, o.tele) * 0.35 + 0.12, dur: 0.01, cor: o.cor, isca: true }); }
+    if (m.t > av(G, o.tele)) { m.e = 1; sfx('swing'); } return false; }
+  if (m.e === 1) { ataca(b); b.y += vel(G, o.v) * dt; if (b.y >= A.chao) { b.y = A.chao; m.e = 2; m.t0 = m.t; G.tremor(6); G.efeito('pouso', b.x, A.chao); sfx('block'); o.aoCair?.(G, b, m); } return false; }
+  return m.t - m.t0 > o.rec;
+}
+// da parede: agarra-se no alto do lado mais longe de você e arremessa
+function zParede(G, b, m, dt, o) {
+  const A = G.N.arena;
+  if (m.e === 0) { if (m.t === 0) { m.lado = G.p.x > A.cx ? -1 : 1; b.x = m.lado < 0 ? A.x0 + 24 : A.x1 - 24; b.y = A.chao - o.alt; b.face = -m.lado; b.alpha = 1; G.efeito('sumico', b.x, b.y - 30); sfx('swing'); } b.alpha = 1; prepara(b); if (m.t > av(G, o.tele)) { m.e = 1; m.n = 0; m.prox = m.t; } return false; }
+  b.alpha = 1; if (m.prox <= m.t && m.n < o.n) { m.prox = m.t + o.int; m.n++; o.lanca(G, b, m, -m.lado); ataca(b); sfx('shoot'); }
+  return m.n >= o.n && m.t > m.prox + o.rec && (!o.espera || o.espera(G, m));
+}
+// a foice que vai e volta: sai rente a uma altura, perde força, e volta noutra
+const foice = (G, b, m, dir, y0, y1, v) => { const f = bala(G, b.x + dir * 20, y0, 0, 0, { r: 11, cor: '#D9B878', tipo: 'bola', vida: 5, fura: true, fixo: true }); f.vx = dir * vel(G, v); f.zf = { dir, y0, y1, ida: true, x0: f.x, t: 0 }; (m.fs = m.fs || []).push(f); };
+const passoFoices = (G, m, dt) => { const A = G.N.arena; for (const f of m.fs || []) if (vivo(G, f)) { const z = f.zf; z.t += dt; if (z.ida) { f.vx -= z.dir * vel(G, 560) * dt; if (f.vx * z.dir <= 0) z.ida = false; } else { f.vx -= z.dir * vel(G, 760) * dt; f.y += (z.y1 - f.y) * Math.min(1, dt * 5); if ((z.dir > 0 && f.x < A.x0 + 30) || (z.dir < 0 && f.x > A.x1 - 30)) f.vida = 0; } } };
+
+const PUNHAL = '#C9D2E0', LANCA = '#C9B48A', FOICE = '#D9B878';
+const conselho = {
+  // entre os golpes ninguém fica na sala: voltam ao trono
+  mover(G, b, dt) { noTrono(G, b); },
+  // o palco: quem está sentado, quem desceu; os dois companheiros entram na segunda fase, Menaém volta na terceira.
+  // A vida é uma só: o que os companheiros apanham sai da vida do conselho.
+  palco(G, b, dt) {
+    const f = fase(b); b.cen.quem = f ? 'eleazar' : 'menaem'; b.cen.fase = f;
+    if (G.novoParceiro && G.souDono?.() !== false) { b.pars = (b.pars || []).filter(q => G.inimigos.includes(q));
+      if (f >= 1 && !b.pars.some(q => q.id === 'zeloteFoice')) { const q = G.novoParceiro('zeloteFoice'); if (q) { q.espera = 2.6; b.pars.push(q); } }
+      if (f >= 2 && !b.pars.some(q => q.id === 'zelotePunhal')) { const q = G.novoParceiro('zelotePunhal'); if (q) { q.espera = 3.4; b.pars.push(q); } } }
+    for (const q of G.inimigos) if (q.parte && q.hp < q.max) { const d = q.max - q.hp; q.hp = q.max; b.hp -= d; b.flash = 0.1; b.semGolpe = 0; if (b.hp <= 0 && !b.morrendo) { b.x = q.x; b.y = q.y; G.chefeMorre(b); } }
+  },
+  pref: { punhalRasante: G => noAr(G) ? 0.5 : 1.4, punhalCadente: G => noAr(G) ? 1.5 : 1, lancaCadente: G => noAr(G) ? 1.5 : 1, estocadaZelote: G => noAr(G) ? 0.5 : 1.3 },
+  golpes: {
+    /* --- Menaém, os punhais: o mais rápido. Luta sozinho na primeira fase --- */
+    punhalRasante(G, b, m, dt) { return zRasante(G, b, m, dt, { tele: 0.5, v: 920, rec: 0.55, cor: PUNHAL }); },
+    punhalCadente(G, b, m, dt) { return zMergulho(G, b, m, dt, { tele: 0.55, v: 1150, rec: 0.5, cor: PUNHAL }); },
+    vaiEVolta(G, b, m, dt) { return zRasante(G, b, m, dt, { tele: 0.45, v: 860, rec: 0.6, cor: PUNHAL, volta: true }); },
+    punhaisDaParede(G, b, m, dt) { return zParede(G, b, m, dt, { tele: 0.5, alt: 150, n: 3, int: 0.26, rec: 0.45, lanca: (G, b) => bala(G, b.x, b.y - 30, Math.atan2(G.p.y - 22 - (b.y - 30), G.p.x - b.x), vel(G, 560), { r: 5, cor: PUNHAL, tipo: 'lanca', vida: 2.2 }) }); },
+    /* --- Eleazar, a lança: o mais pesado. Entra na segunda fase --- */
+    lancaCadente(G, b, m, dt) { return zMergulho(G, b, m, dt, { tele: 0.62, v: 1250, rec: 0.6, cor: LANCA, adianta: true, aoCair: (G, b) => choque(G, b, LANCA, 300) }); },
+    estocadaZelote(G, b, m, dt) { return zRasante(G, b, m, dt, { tele: 0.68, v: 1180, rec: 0.7, cor: LANCA }); },
+    lancasDaParede(G, b, m, dt) { const A = G.N.arena; return zParede(G, b, m, dt, { tele: 0.55, alt: 120, n: 3, int: 0.42, rec: 0.5, lanca: (G, b, m, dir) => G.tiros.push({ x: b.x, y: A.chao - (m.n % 2 ? 18 : 78), vx: dir * vel(G, 500), vy: 0, r: 7, vida: 3, cor: LANCA, tipo: 'lanca', fixo: true, fura: true }) }); },
+    giroDaLanca(G, b, m, dt) { return zMergulho(G, b, m, dt, { tele: 0.7, v: 1000, rec: 0.75, cor: LANCA, segue: 150, aoCair: (G, b) => zona(G, { tipo: 'circ', x: b.x, y: b.y - 24, r: 112, aviso: av(G, 0.34), dur: 0.2, cor: LANCA }) }); }
+  }
+};
+// Jair, a foice: o que luta de longe. As foices vão e voltam por alturas diferentes
+const zeloteFoice = {
+  mover(G, b, dt) { noTrono(G, b); },
+  palco() {},
+  pref: { foiceRasteira: G => noAr(G) ? 0.6 : 1.4, foiceAlta: G => noAr(G) ? 1.4 : 0.8 },
+  golpes: {
+    foiceRasteira(G, b, m, dt) { passoFoices(G, m, dt); const A = G.N.arena; return zParede(G, b, m, dt, { tele: 0.55, alt: 46, n: 1, int: 0.3, rec: 0.5, lanca: (G, b, m, dir) => foice(G, b, m, dir, A.chao - 16, A.chao - 84, 620), espera: (G, m) => !(m.fs || []).some(f => vivo(G, f)) || m.t > 4.5 }); },
+    foiceAlta(G, b, m, dt) { passoFoices(G, m, dt); const A = G.N.arena; return zParede(G, b, m, dt, { tele: 0.55, alt: 150, n: 2, int: 0.5, rec: 0.5, lanca: (G, b, m, dir) => foice(G, b, m, dir, A.chao - (m.n % 2 ? 90 : 22), A.chao - (m.n % 2 ? 20 : 96), 580), espera: (G, m) => !(m.fs || []).some(f => vivo(G, f)) || m.t > 5.5 }); },
+    ceifar(G, b, m, dt) { return zRasante(G, b, m, dt, { tele: 0.6, v: 840, rec: 0.6, cor: FOICE }); },
+    foiceCadente(G, b, m, dt) { return zMergulho(G, b, m, dt, { tele: 0.6, v: 1050, rec: 0.55, cor: FOICE, adianta: true }); }
+  }
+};
+// Menaém de volta, ferido e furioso, na última fase: três de uma vez
+const zelotePunhal = {
+  mover(G, b, dt) { noTrono(G, b); },
+  palco() {},
+  pref: { rasgo: G => noAr(G) ? 0.5 : 1.3, boteZelote: G => noAr(G) ? 1.5 : 1 },
+  golpes: {
+    rasgo(G, b, m, dt) { return zRasante(G, b, m, dt, { tele: 0.55, v: 900, rec: 0.6, cor: PUNHAL }); },
+    boteZelote(G, b, m, dt) { return zMergulho(G, b, m, dt, { tele: 0.6, v: 1100, rec: 0.55, cor: PUNHAL }); },
+    chuvaDePunhais(G, b, m, dt) { return zParede(G, b, m, dt, { tele: 0.55, alt: 170, n: 4, int: 0.24, rec: 0.5, lanca: (G, b, m) => bala(G, b.x, b.y - 30, Math.atan2(G.p.y - 22 - (b.y - 30), G.p.x - b.x) + (m.n % 2 ? 0.12 : -0.12), vel(G, 520), { r: 5, cor: PUNHAL, tipo: 'lanca', vida: 2.2 }) }); },
+    finta(G, b, m, dt) { return zRasante(G, b, m, dt, { tele: 0.4, v: 780, rec: 0.7, cor: PUNHAL, volta: true }); }
+  }
+};
+
+export const ESTILOS = { conselho, zeloteFoice, zelotePunhal, escassez, desprezo, carcere, mamom, procrastinacao, mentira, imoralidade, satanas, fuga, pavor, desespero, violencia, ressentimento, encantadores, jugo, babilonia, fera, soberba, golias, behemote, leviata };
 
 // o que precisa ser desfeito quando um golpe é interrompido (virada de fase, quebranto, morte)
 export function desfazer(G, b) {
+  if (b.morrendo && b.id === 'conselho') for (const q of G.inimigos) if (q.parte) { q.fora = true; G.efeito?.('sumico', q.x, q.y - 30); } // caiu o conselho: os companheiros se retiram
   b.raios = null; b.encanta = false; G.puxao = null; b.alpha = 1; b.corre = false; b.perigo = false; b.art.lanca = null;
   if (b.cen) { b.cen.amarra = 0; b.cen.laco = 0; b.cen.corrente = null; b.cen.corda = null; b.cen.verme = null; b.cen.nuvem = null; b.cen.estrelas = null; b.cen.vortice = null; b.cen.gira = 0; b.cen.brilho = 0; b.cen.treme = 0; }
 }

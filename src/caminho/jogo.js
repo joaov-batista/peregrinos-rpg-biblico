@@ -196,6 +196,8 @@ export class Caminho {
   }
 
   // a trilha do lugar: cada página, o Refúgio, o bosque, Sardes (apagada ou acesa)… As provas de ondas já começam na trilha de raid.
+  // um companheiro de luta do chefe (o Conselho Zelote): outro corpo na arena, com os seus golpes; a vida é a do chefe principal
+  novoParceiro(id) { const A = this.N.arena; if (!A || !this.luta) return null; const q = novoChefe(id, A, this.dif); q.parte = true; q.alpha = 0; q.hp = q.max = 1e7; this.inimigos.push(q); return q; }
   nomeChefe(id) { return BOSSES[id]?.nome || id; }
   musicaDaArea() { const d = this.def; if (d.desafio) return music('raid'); music(d.paz ? 'mundo' : 'fase', d.treino || d.pvp ? 'bosque' : d.id === 'sardes' && this.cm.sar?.feita ? 'sardes2' : d.tema + (d.fase ? d.fase.n : '')); }
   async chegada(def) {
@@ -263,6 +265,7 @@ export class Caminho {
   update(dt) {
     this.lerControles();
     if (this.p.carga >= MIRA_CARGA && !this.mp?.acompanhado()) dt *= 0.4; // mirando sozinho, o tempo quase para
+    if (this.zeloT > 0) { this.zeloT -= dt; if (this.zeloFim && this.T > this.zeloFim) { this.zeloT = 0; this.zeloFim = 0; } }
     this.fade = Math.max(0, this.fade - dt * 1.6); if (this.invertido > 0) this.invertido -= dt;
     if (this.clarao > 0) this.clarao -= dt; if (this.p.flashT > 0) this.p.flashT -= dt;
     if (this.hitstop > 0) { this.hitstop -= dt; this.atualizarFx(dt * 0.2); atualizarEfeitos(this.fxPx, dt * 0.25); return; }
@@ -493,6 +496,7 @@ export class Caminho {
   }
 
   atingir(e, dano, deX, atk = {}) {
+    if (this.zeloT > 0 && this.T - (this.zeloEm || 0) > 0 && (atk === this.p.atk || atk.arma)) { dano *= 3; if (this.zeloAtk !== atk) { this.zeloAtk = atk; this.zeloFim = this.T + 0.25; this.efeito('critico', e.x, e.y - e.h / 2, 1); sfx('crit'); } } // zelo com entendimento: o contragolpe depois da defesa perfeita
     // os golpes da própria arma (o golpe comum e os tiros dele) levam o efeito especial da arma e das relíquias
     if ((atk === this.p.atk || atk.arma) && !atk.especial) { const hp0 = e.hp, r = this.atingirSo(e, dano, deX, atk); if (r && e.hp < hp0) aplicarEspecial(this, e, dano); return r; }
     return this.atingirSo(e, dano, deX, atk);
@@ -559,7 +563,7 @@ export class Caminho {
       if (origem?.nid && !this.souDono()) this.mp.ev('pa', { id: origem.nid, vx: Math.sign(origem.x - p.x) * 240 });
       if (origem?.kind === 'chefe') this.postura(origem, 26);
       else if (origem?.kind === 'vicio') { origem.stun = 1.5; origem.vx = Math.sign(origem.x - p.x) * 240; origem.aberto = 1.5; }
-      o.aoDefender?.(); this.tutParry = true;
+      o.aoDefender?.(); this.tutParry = true; if (this.cm.zelo) { this.zeloT = 2; this.textoEm(p.x, p.y - 84, 'ZELO!', '#FFD23F', 13); }
       if (this.tem('jarro_gideao')) { this.fx.anel(p.x, p.y - 26, '#FFF4CF', 170); this.clarao = 0.14; for (const e of this.inimigos) if (e.kind === 'vicio' && e.hp > 0 && Math.hypot(e.x - p.x, e.y - p.y) < 170) e.stun = Math.max(e.stun, 1.2); this.textoEm(p.x, p.y - 86, 'o cântaro se quebra!', '#FFF4CF', 11); }
       return 'parry';
     }
@@ -1037,6 +1041,9 @@ export class Caminho {
     await this.ui.dialog({ nome: b.d.nome + ' caiu', texto: b.d.derrota || 'A sombra se desfaz.', acoes: [{ label: 'Amém' }] });
     if (d.fase) { await this.faseCompleta(); conviteOpiniao(this); }
     else if (d.mundo) { const m = MUNDO[d.mundo]; this.xp(300); this.pontos(1500); await this.ganhar(m.premio); }
+    else if (d.conselho) { this.xp(600); this.pontos(3000); const primeira = !cm.zelo; cm.zelo = true; c.data.gold += primeira ? 600 : 150; this.salvar();
+      await this.ui.dialog({ nome: 'Menaém, Eleazar e Jair', texto: 'Os três põem as armas no chão, uma ao lado da outra.\n\n"Nós esperávamos um Messias que viesse como nós: de ferro na mão. Ele veio, e mandou guardar a espada (Mt 26:52). Nunca perdoamos isso."\n\n"Você luta como um de nós, estrangeiro. Mas não pelo que nós lutamos. Talvez seja isso que nos faltou."', acoes: [{ label: 'Continuar' }] });
+      if (primeira) await this.ui.dialog({ nome: 'ZELO COM ENTENDIMENTO', texto: '"Têm zelo de Deus, porém não com entendimento" (Rm 10:2). O seu, agora, tem os dois.\n\nDepois de uma DEFESA PERFEITA, o seu próximo golpe (em até dois segundos) sai com o triplo da força.\n\n+600 denários. Os zelotes da aldeia vão olhar para você de outro jeito.', acoes: [{ label: 'Amém' }], cls: 'achado-lendaria' }); }
     else if (d.historia) { this.xp(200); this.pontos(900); await vencerCapitulo(this); }
     // achados: todo chefe pode deixar uma arma da sua vocação e uma relíquia (os gigantes do mundo, mais raras)
     const forte = !!d.mundo || b.id === 'satanas';
@@ -1199,6 +1206,7 @@ export class Caminho {
         else if (ob.area === 'refugio') { const falta = cm.visto.tut != null && cm.visto.tut < PASSOS.length;
           await this.ui.dialog({ nome: ob.rotulo, texto: 'No fim da trilha, luzes: a última aldeia acesa. O Refúgio.' + (falta ? '\n\nVocê ainda não terminou os primeiros passos (faltam ' + (PASSOS.length - cm.visto.tut) + '). Dá para voltar ao bosque quando quiser, pela Praça do poço.' : ''),
             acoes: [{ label: 'Entrar no Refúgio', fn: () => { if (falta) cm.visto.tut = PASSOS.length; this.entrar('refugio', { portal: 'bosque' }); } }, { label: falta ? 'Terminar o treino' : 'Ficar mais um pouco' }], voz: false }); }
+        else if (ob.area === 'conselho') await this.ui.dialog({ nome: ob.rotulo, texto: 'Uma porta de ferro, sem enfeite nenhum. Do outro lado, três tronos.\n\nOs zelotes queriam o Reino pela espada, e eram os melhores com ela. Dizem que o conselho só respeita quem o vence: primeiro um, depois dois, por fim os três.\n\nÉ uma das lutas mais duras do caminho. Aqui o nível e a forja contam.' + (cm.zelo ? '\n\n(Você já venceu o conselho. Eles aceitam revanche.)' : '\n\nPrêmio: o ZELO COM ENTENDIMENTO.'), acoes: [{ label: 'Entrar', fn: () => this.entrar('conselho') }, { label: 'Agora não' }], voz: false });
         else if (ob.area === 'bosque') await this.ui.dialog({ nome: ob.rotulo, texto: 'A trilha por onde você chegou: troncos, bonecos de palha e dardos que não ferem. Um bom lugar para treinar a mão e a lâmpada.', acoes: [{ label: 'Ir ao bosque', fn: () => this.entrar('bosque') }, { label: 'Refazer os primeiros passos', fn: () => { cm.visto.tut = 0; cm.visto.bosque = 1; this.tutVisto = this.tutIni = null; this.tutAndou = 0; this.entrar('bosque'); } }, { label: 'Agora não' }], voz: false });
         else if (ob.area) await this.ui.dialog({ nome: ob.rotulo, texto: ob.area === 'treino' ? 'Um pátio de areia para medir forças com os peregrinos da sua sala. Aqui os golpes de um ferem o outro, mas ninguém perde nada ao cair.\n\nSozinho, serve para treinar os golpes.' : 'As grades se fecham e os vícios vêm em ondas, cada vez mais. Cada onda vencida vale denários.\n\nSua melhor marca: ' + (cm.recorde || 0) + ' ondas.', acoes: [{ label: 'Entrar', fn: () => this.entrar(ob.area) }, { label: 'Agora não' }] });
         else if (ob.semana) escolherFase(this, semanaDe(ob.semana));

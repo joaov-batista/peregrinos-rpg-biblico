@@ -105,6 +105,18 @@ const FUNDO = {
 
 // ---- as páginas vivas da história ----
 Object.assign(FUNDO, {
+  conselho(g, b, A, Tm) { // três tronos de pedra; quem não desceu continua sentado, de arma no colo. Os braseiros acendem a cada fase
+    const L = A.x1 - A.x0, cx = A.x0 + L * 0.5, base = A.chao - 62, f = b.cen.fase || 0;
+    g.fillStyle = '#1C0E0C'; px(g, cx - 78, base, 156, 5); g.fillStyle = '#2E1A16'; px(g, cx - 78, base, 156, 1); px(g, cx - 70, base + 5, 140, 3);
+    const sentado = [f >= 1 && f < 2, f < 1, f < 1], cores = [['#4A2A2A', '#FFD23F'], ['#34405A', '#BFE6F2'], ['#6A5A30', '#FF8A3C']];
+    [-50, 0, 50].forEach((dx, i) => { const x = cx + dx, alto = i === 1 ? 50 : 42;
+      g.fillStyle = '#120908'; px(g, x - 13, base - alto, 26, alto); g.fillStyle = '#2E1A16'; px(g, x - 12, base - alto + 1, 24, alto - 1); g.fillStyle = '#3E2620'; px(g, x - 12, base - alto + 1, 2, alto - 1); px(g, x - 14, base - 14, 28, 3); g.fillStyle = '#120908'; px(g, x - 2, base - alto - 5, 4, 5); px(g, x - 9, base - alto - 2, 3, 2); px(g, x + 6, base - alto - 2, 3, 2);
+      g.fillStyle = cores[i][0]; px(g, x - 1, base - alto + 5, 2, 8); // a marca de cada um no espaldar
+      if (sentado[i]) { const curvo = i === 0 ? 3 : 0; g.fillStyle = '#0D0708'; px(g, x - 7, base - 30 + curvo, 14, 17 - curvo); px(g, x - 5, base - 39 + curvo, 10, 10); g.fillStyle = cores[i][0]; px(g, x - 6, base - 29 + curvo, 12, 15 - curvo); px(g, x - 4, base - 38 + curvo, 8, 8); g.fillStyle = '#0D0708'; px(g, x - 3, base - 35 + curvo, 5, 4); g.fillStyle = cores[i][1]; px(g, x - 2, base - 34 + curvo, 1, 1); if (i !== 2) px(g, x + 1, base - 34 + curvo, 1, 1); g.fillStyle = '#C9D2E0'; if (i === 1) px(g, x + 9, base - 52, 1, 40); else px(g, x - 8, base - 19, 16, 1); }
+    });
+    for (const [k, lado] of [[0, -1], [1, 1], [2, -1], [3, 1]]) { const x = cx + lado * (96 + (k > 1 ? 34 : 0)), y = A.chao - 2, aceso = k < 2 + f; g.fillStyle = '#120908'; px(g, x - 1, y - 30, 3, 30); px(g, x - 6, y - 34, 13, 5); g.fillStyle = '#3E2620'; px(g, x - 5, y - 33, 11, 3); if (aceso) { g.fillStyle = '#C9281F'; px(g, x - 4, y - 40 - (Math.floor(Tm * 9 + k) % 2), 9, 7); g.fillStyle = '#FF8A2A'; px(g, x - 2, y - 43 - (Math.floor(Tm * 11 + k) % 3), 5, 8); g.fillStyle = '#FFE08A'; px(g, x - 1, y - 40, 3, 4); } }
+    for (const dx of [-112, 112]) { g.fillStyle = '#120908'; px(g, cx + dx - 7, A.y0 + 6, 14, 54); g.fillStyle = '#6A1A16'; px(g, cx + dx - 6, A.y0 + 6, 12, 50); g.fillStyle = '#C9D2E0'; px(g, cx + dx - 1, A.y0 + 12, 2, 28); px(g, cx + dx, A.y0 + 10, 1, 2); g.fillStyle = '#C9963C'; px(g, cx + dx - 5, A.y0 + 40, 10, 2); px(g, cx + dx - 1, A.y0 + 42, 2, 7); px(g, cx + dx - 2, A.y0 + 49, 4, 2); } // estandartes com a espada
+  },
   escassez(g, b, A, Tm) { // o sol da seca, a árvore morta, a prateleira da viúva, o chão que racha; e a botija que não falta
     const L = A.x1 - A.x0, k = b.cen.seca || 0, cx = A.x0 + L * 0.5, cy = A.y0 + 34, r = 22 + Math.round(k * 8);
     for (let yy = -r; yy <= r; yy++) { const l = Math.round(Math.sqrt(r * r - yy * yy)); g.fillStyle = k > 0.7 ? '#C24A2A' : k > 0.4 ? '#D98A3C' : '#E8C878'; px(g, cx - l, cy + yy, l * 2, 1); }

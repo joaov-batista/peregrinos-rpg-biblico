@@ -101,6 +101,7 @@ export const TEMAS = {
   sarepta: t(['#3A2A1A', '#9A6A3A', '#E8C078'], '#6A4A2C', '#4A3220', '#2A1C12', '#D9B878', '#FFE0A0', 'seca', 'areia', 0.22),
   jerico: t(['#1E2A44', '#6A7A8A', '#E8B880'], '#5A5A4A', '#3E4034', '#22241C', '#C9C09A', '#FFE9A8', 'estrada', 'po', 0.2),
   masmorra: t(['#07070C', '#15141F', '#2A2030'], '#1A1A24', '#12121A', '#08080C', '#6A6E7C', '#FF8A3C', 'masmorra', 'brasa', 0.7),
+  zelotes: t(['#0A0606', '#2A1210', '#5A2A1C'], '#2A1612', '#1C0E0C', '#0E0706', '#B8A088', '#FF7A3C', 'muralha', 'brasa', 0.5),
   bosque: t(['#16283A', '#3F6A62', '#E0B878'], '#1E4038', '#16302A', '#0D1E1A', '#B8D8A0', '#FFE9A8', 'arvores', 'vagalume', 0.2),
   floresta: t(['#04090C', '#0B1E1C', '#1E3A32'], '#0C1D1A', '#081412', '#040A09', '#8FB89A', '#B8F0C8', 'arvores', 'vagalume', 0.86),
   getsemani: t(['#04061A', '#0E1638', '#27305C'], '#111733', '#0B1026', '#060913', '#9AA6C8', '#E8E2C8', 'arvores', 'vagalume', 0.8),
@@ -153,6 +154,7 @@ const REFUGIO = [
     planta(2, 'palmeira'), { tipo: 'cenario', col: 5, qual: 'banca' }, { tipo: 'cenario', col: 8, qual: 'forja' }, { tipo: 'cenario', col: 14, qual: 'descida', rotulo: 'Salão dos Rolos' },
     { tipo: 'npc', col: 5, id: 'lidia', nome: 'Lídia, vendedora de púrpura', look: lidia },
     { tipo: 'npc', col: 8, id: 'ferreiro', nome: 'Tubalcaim, o ferreiro', look: { skin: '#8A5A3A', hair: '#1E1612', tunic: '#5A4636', cape: 'none', style: 'curto', beard: true, body: 'forte' } },
+    { tipo: 'npc', col: 17, id: 'zelote1', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5A4636', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } },
     { tipo: 'arvore', col: 23 }, { tipo: 'fruto', col: 20, lin: 9 }, { tipo: 'fruto', col: 22, lin: 8 }, { tipo: 'fruto', col: 25, lin: 9 }, { tipo: 'fruto', col: 26, lin: 12 }, { tipo: 'npc', col: 24, lin: 10, id: 'zaqueu', nome: 'Zaqueu', look: zaqueu }] },
   // a praça das armas: armas, roupas e os bichos de Noé
   { cx: 2, nome: 'Praça das armas', papel: 'vila', tiles: sala([12, 4, 8], [12, 21, 25]), objs: [
@@ -165,7 +167,7 @@ const REFUGIO = [
   // o bairro: casas de teto plano (dá para andar por cima), a estalagem e o oleiro
   { cx: 3, nome: 'Bairro', papel: 'vila', tiles: sala([13, 3, 6], [13, 10, 13], [10, 15, 17], [13, 19, 22]), objs: [
     casa(4, 'estalagem', 'Estalagem do caminho'), planta(8, 'palmeira'), casa(11, 'marta', 'Casa de Marta e Maria'), planta(16, 'oliveira'), casa(20, 'oleiro', 'Casa do oleiro'), planta(27, 'cipreste'),
-    { tipo: 'vaso', col: 24 }, { tipo: 'vaso', col: 25 }, { tipo: 'vaso', col: 26 },
+    { tipo: 'vaso', col: 24 }, { tipo: 'vaso', col: 25 }, { tipo: 'vaso', col: 26 }, { tipo: 'npc', col: 18, id: 'zelote2', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#4A3A36', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } },
     { ...povo(8, 5, VILA.rute.look), id: 'rute', nome: VILA.rute.nome }, { ...povo(16, 3, VILA.eutico.look), id: 'eutico', nome: VILA.eutico.nome },
     { tipo: 'ave', col: 5, lin: 13 }, { tipo: 'ave', col: 16, lin: 10 }, { tipo: 'ave', col: 21, lin: 13 }] },
   // o pátio das provas; a escada do meio desce à cisterna
@@ -173,20 +175,21 @@ const REFUGIO = [
     planta(2, 'cipreste'), { tipo: 'cenario', col: 14, qual: 'descida', rotulo: 'Cisterna' },
     { tipo: 'npc', col: 4, id: 'mestre', nome: 'Benaia, mestre das provas', look: { skin: '#8A5A3A', hair: '#D9D2C5', tunic: '#343F51', cape: '#877451', style: 'curto', beard: true, body: 'forte' } },
     { tipo: 'boneco', col: 7 }, { tipo: 'boneco', col: 23 },
-    { tipo: 'portal', col: 10, area: 'treino', rotulo: 'Arena de treino' }, { tipo: 'portal', col: 20, area: 'desafio', rotulo: 'Desafio das ondas' },
+    { tipo: 'portal', col: 10, area: 'treino', rotulo: 'Arena de treino' }, { tipo: 'portal', col: 17, area: 'conselho', rotulo: 'O Conselho Zelote' }, { tipo: 'portal', col: 20, area: 'desafio', rotulo: 'Desafio das ondas' },
     { tipo: 'npc', col: 27, id: 'samuel', nome: 'Samuel, o que unge', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#D2CFBB', cape: '#55516D', style: 'longo', beard: true } }, { tipo: 'ave', col: 24, lin: 12 }] },
   // o olival: figos, sombra e a caravana que às vezes traz algo raro
   { cx: 5, nome: 'Olival', papel: 'vila', tiles: sala([12, 8, 11], [9, 13, 16], [12, 18, 21]), objs: [
     planta(4, 'oliveira'), planta(10, 'oliveira'), planta(15, 'palmeira'), planta(20, 'oliveira'), planta(25, 'cipreste'), { tipo: 'cenario', col: 23, qual: 'banca' }, { tipo: 'portal', col: 28, area: 'floresta', rotulo: 'Trilha escondida', oculto: true },
     { tipo: 'fruto', col: 4, lin: 14 }, { tipo: 'fruto', col: 10, lin: 11 }, { tipo: 'fruto', col: 15, lin: 8 }, { tipo: 'fruto', col: 20, lin: 11 },
     { tipo: 'npc', col: 23, id: 'mercador', nome: 'Mercador', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#7A5A2E', cape: '#3F2E4F', style: 'turbante', beard: true } },
-    { tipo: 'poco', col: 7 }, { ...povo(13, 4, VILA.ana.look), id: 'ana', nome: VILA.ana.nome }, { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
+    { tipo: 'poco', col: 7 }, { tipo: 'npc', col: 17, id: 'zelote3', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5E4A3A', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } }, { ...povo(13, 4, VILA.ana.look), id: 'ana', nome: VILA.ana.nome }, { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
   // o porto: o píer sobre o mar, o barqueiro que leva a Sardes, o pescador e, às vezes, um mercador de além-mar
   { cx: 6, nome: 'Porto do Refúgio', papel: 'vila', tiles: sala([12, 3, 6]), objs: [
     planta(2, 'palmeira'), { tipo: 'cenario', col: 5, qual: 'redes' }, { tipo: 'mar', col: 11 },
     { tipo: 'npc', col: 8, id: 'zebedeu', nome: 'Zebedeu, o pescador', look: { skin: '#A0673E', hair: '#D9D2C5', tunic: '#3F5A6A', cape: 'none', style: 'curto', beard: true, body: 'forte' } },
     { tipo: 'npc', col: 15, id: 'viajante', nome: 'Mercador de além-mar', look: { skin: '#6B4A2E', hair: '#1C120A', tunic: '#2E5E6A', cape: '#C9A63C', style: 'turbante', beard: true }, vezOutra: true },
     { tipo: 'npc', col: 22, id: 'barqueiro', nome: 'Jonatã, o barqueiro', look: { skin: '#8A5A3A', hair: '#2B1A10', tunic: '#5A4636', cape: '#3A3456', style: 'cacheado', beard: true } },
+    { tipo: 'npc', col: 19, id: 'zelote4', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#4A4036', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } },
     { tipo: 'barco', col: 26 }, { tipo: 'ave', col: 12, lin: 11 }, { tipo: 'ave', col: 19, lin: 12 }] },
   // ---- o subsolo ----
   { cx: 0, cy: 1, nome: 'Salão das Subfases', deco: 'subfases', papel: 'vila', tiles: sala(), objs: [
@@ -289,6 +292,9 @@ export function areaDef(id) {
       { papel: 'vila', tiles: marca(sala([12, 5, 10], [12, 18, 23]), [[15, 6, 'e'], [15, 12, 'e'], [15, 17, 'e'], [15, 24, 'e'], [11, 7, 'e'], [11, 21, 'e'], [8, 15, 'f']]), objs: [{ tipo: 'vaso', col: 14 }] },
       { papel: 'vila', tiles: marca(sala([13, 4, 8], [10, 11, 17], [13, 20, 25]), [[15, 4, 'e'], [15, 9, 'e'], [15, 14, 'e'], [15, 18, 'e'], [9, 13, 'e'], [9, 16, 'f'], [7, 8, 'f']]), objs: [{ tipo: 'ebenezer', col: 27 }] },
       { papel: 'arena' }] }; }
+  // o Conselho Zelote: um desafio à parte, com a porta à vista no Pátio das provas
+  if (id === 'conselho') return { id, nome: 'A Sala do Conselho', sub: 'Zelo sem entendimento (Rm 10:2)', tema: 'zelotes', chefe: 'conselho', conselho: true, arena: 'conselho', seed: id,
+    planta: [{ papel: 'inicio', tiles: ['............................'], objs: [{ tipo: 'ebenezer', col: 14 }, { tipo: 'escrito', col: 20, lin: 9, txt: '"Todos os que lançam mão da espada à espada perecerão" (Mt 26:52)' }, { tipo: 'placa', col: 22, txt: 'Derrote os três para desbloquear novas missões e itens especiais.' }] }, { papel: 'arena' }] };
   // Sardes: a cidade quase apagada, do outro lado do mar
   if (id === 'sardes') return { id, nome: 'Sardes', sub: 'Tens nome de que vives, e estás morto (Ap 3:1)', tema: 'sardes', seed: id, aberto: true, sardes: true, forca: 1.6, planta: SARDES };
   if (id === 'desafio') return { id, nome: 'Desafio das ondas', sub: 'Quantas você aguenta?', tema: 'tribunal', seed: id, extra: true, desafio: true,
