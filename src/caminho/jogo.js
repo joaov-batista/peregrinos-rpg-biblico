@@ -89,7 +89,11 @@ export class Caminho {
     this.raf = requestAnimationFrame(t => this.loop(t));
     const sala = limparCodigo(new URLSearchParams(location.search).get('sala'));
     const par = new URLSearchParams(location.search);
-    if (sala.length === 5) this.entrarNaSala(sala, par.has('redelocal')).catch(e => this.ui.toast(e.message, 6000));
+    let saguao = ''; try { saguao = sessionStorage.getItem('peregrinos.sala') || ''; sessionStorage.removeItem('peregrinos.sala'); } catch {} // o que foi escolhido no saguão, antes de entrar
+    if (par.has('quadro')) saguao = '';
+    if (saguao.startsWith('entrar:')) this.entrarNaSala(saguao.slice(7), par.has('redelocal')).catch(e => this.ui.toast(e.message + ' Você pode tentar de novo em Menu › Juntos.', 8000));
+    else if (saguao === 'abrir') this.abrirSala(par.has('redelocal')).then(cod => this.salaAberta(cod), e => this.ui.toast((e.message || 'Não deu para abrir a sala.') + ' Tente de novo em Menu › Juntos.', 8000));
+    else if (sala.length === 5) this.entrarNaSala(sala, par.has('redelocal')).catch(e => this.ui.toast(e.message, 6000));
     else if (par.get('quadro') === '0' && parent !== window) // tela dividida: o primeiro quadro abre a sala e avisa a página de fora
       this.abrirSala(false).then(cod => ({ cod, local: false }), () => this.abrirSala(true).then(cod => ({ cod, local: true })))
         .then(r => parent.postMessage({ peregrinosSala: r.cod, local: r.local }, location.origin)).catch(e => this.ui.toast(e.message, 6000));
@@ -377,6 +381,12 @@ export class Caminho {
     let cod = this.cm.sala || novoCodigo(), mp;
     try { mp = await Juntos.abrir(this, cod, local); } catch (e) { if (!/em uso/.test(e.message)) throw e; cod = novoCodigo(); mp = await Juntos.abrir(this, cod, local); }
     this.mp = mp; this.cm.sala = cod; this.salvar(); return cod;
+  }
+  // a sala aberta pelo saguão: mostra o código grande e deixa copiar o link
+  async salaAberta(cod) {
+    const link = location.origin + location.pathname + '?sala=' + cod;
+    const r = await this.ui.dialog({ nome: 'Sala ' + cod, texto: 'Sua sala está aberta e você é o anfitrião.\n\nMande o código ' + cod + ' aos amigos (até 4 peregrinos). Eles escolhem "Entrar na sala" na tela dos personagens, ou abrem o link.\n\nA sala fica aberta enquanto você estiver jogando, e da próxima vez o código será o mesmo. Ele também fica em Menu › Juntos.', acoes: [{ label: 'Copiar o link' }, { label: 'Começar' }], voz: false });
+    if (r === 'Copiar o link') navigator.clipboard?.writeText(link).then(() => this.ui.toast('Link da sala copiado.', 3500), () => this.ui.toast(link, 9000));
   }
   async entrarNaSala(cod, local) {
     if (this.mp) this.mp.sair();

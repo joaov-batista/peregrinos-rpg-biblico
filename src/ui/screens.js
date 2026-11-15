@@ -59,7 +59,7 @@ export function showAuth(onDone) {
   const emQuadro = new URLSearchParams(location.search).has('quadro');
   const nQuadro = +new URLSearchParams(location.search).get('quadro');
   const quem = emQuadro ? h('p', { class: 'title' }, 'Jogador ' + (nQuadro + 1) + (ONLINE ? ': entre com a sua conta' : '')) : '';
-  const juntos = emQuadro ? '' : h('div', { class: 'tela-div porta-painel juntos' }, h('span', {}, 'Jogar juntos neste aparelho'), h('div', { class: 'porta-linha' }, ...[2, 3, 4].map(n => h('button', { class: 'porta-btn', type: 'button', 'aria-label': n + ' jogadores', onclick: () => { location.href = location.pathname + '?telas=' + n; } }, h('b', {}, String(n)), ' jogadores'))));
+  const juntos = ''; // o multiplayer (sala por código e tela dividida) fica no saguão, depois do login
   setTimeout(() => scr().querySelector('.screen')?.classList.add('abertura'), 0);
   // aberto por dentro do Instagram, Facebook ou TikTok: lá não dá para instalar, e o salvamento some com facilidade
   const embutido = /Instagram|FBAN|FBAV|FB_IAB|TikTok|musical_ly|Line\//i.test(navigator.userAgent);
@@ -152,9 +152,36 @@ export async function showSelect(onPlay, onNew, onLogout) {
         } }, 'Apagar'))));
     if (conflict) list.append(conflictBox);
   }
-  screen(logo(), h('h2', { class: 'title' }, 'Escolha seu peregrino'), list,
+  screen(logo(), h('h2', { class: 'title' }, 'Escolha seu peregrino'), list, saguaoJuntos(),
     installButton(h('p', {})),
     h('div', { class: 'btn-row' }, chars.length < 3 ? h('button', { class: 'btn', onclick: onNew }, '+ Novo personagem') : '', h('button', { class: 'btn link', onclick: onLogout }, ONLINE && net.user ? 'Sair da conta' : 'Voltar')));
+}
+
+// O saguão do "Caminhar juntos": antes de entrar no jogo dá para escolher abrir uma sala (você é o anfitrião e passa o código)
+// ou entrar na sala de alguém. A escolha fica guardada até o jogo começar (jogo.js lê 'peregrinos.sala').
+// O multiplayer local (tela dividida) fica recolhido embaixo.
+function saguaoJuntos() {
+  if (new URLSearchParams(location.search).has('quadro')) return '';
+  const CH = 'peregrinos.sala', le = () => { try { return sessionStorage.getItem(CH) || ''; } catch { return ''; } }, poe = v => { try { v ? sessionStorage.setItem(CH, v) : sessionStorage.removeItem(CH); } catch {} };
+  const limpa = v => (v || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
+  const daUrl = limpa(new URLSearchParams(location.search).get('sala')); if (daUrl.length === 5 && !le()) poe('entrar:' + daUrl);
+  const nota = h('p', { class: 'saguao-nota', role: 'status' });
+  const campo = h('input', { class: 'saguao-codigo', maxlength: 5, placeholder: 'CÓDIGO', autocapitalize: 'characters', autocomplete: 'off', spellcheck: 'false', 'aria-label': 'Código da sala' });
+  const bSo = h('button', { class: 'porta-btn', type: 'button', onclick: () => { sfx('click'); poe(''); pinta(); } }, 'Sozinho');
+  const bCriar = h('button', { class: 'porta-btn', type: 'button', onclick: () => { sfx('click'); poe('abrir'); pinta(); } }, 'Criar sala');
+  const bEntrar = h('button', { class: 'porta-btn', type: 'button', onclick: () => { const c = limpa(campo.value); if (c.length < 5) { nota.textContent = 'O código tem cinco letras ou números.'; campo.focus(); return; } sfx('click'); poe('entrar:' + c); pinta(); } }, 'Entrar na sala');
+  campo.addEventListener('input', () => { campo.value = limpa(campo.value); }); campo.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') bEntrar.click(); });
+  function pinta() {
+    const v = le(), cod = v.startsWith('entrar:') ? v.slice(7) : '';
+    bSo.classList.toggle('on', !v); bCriar.classList.toggle('on', v === 'abrir'); bEntrar.classList.toggle('on', !!cod); if (cod) campo.value = cod;
+    nota.textContent = v === 'abrir' ? 'Você será o anfitrião. Toque em Jogar no seu peregrino: a sala abre e o código aparece para você mandar aos amigos (até 4).'
+      : cod ? 'Toque em Jogar no seu peregrino: você entra direto na sala ' + cod + '.' : 'Cada um no seu aparelho, até 4 peregrinos. Um cria a sala e manda o código; os outros entram com ele.';
+  }
+  pinta();
+  const local = h('details', { class: 'saguao-local' }, h('summary', {}, 'Multiplayer local (mesmo aparelho, tela dividida)'),
+    h('div', { class: 'porta-linha' }, ...[2, 3, 4].map(n => h('button', { class: 'porta-btn', type: 'button', 'aria-label': n + ' jogadores', onclick: () => { location.href = location.pathname + '?telas=' + n; } }, h('b', {}, String(n)), ' jogadores'))),
+    h('p', { class: 'saguao-nota' }, 'Um controle por jogador. Melhor em computador ou TV.'));
+  return h('div', { class: 'tela-div porta-painel saguao' }, h('span', {}, 'Caminhar juntos'), h('div', { class: 'porta-linha' }, bSo, bCriar), h('div', { class: 'porta-linha' }, campo, bEntrar), nota, local);
 }
 
 export function showCreator(onCreated, onBack) {
