@@ -16,7 +16,7 @@ const lamina = (s, x0, y0, x1, y1, g = 2) => { s.linha(x0, y0, x1, y1, g + 1, AC
 
 function zelote(s, b, Tm, nome) {
   const Q = QUEM[nome], M = Q.m, t = b.mov?.def?.fn || b.mov?.nome || '', caido = b.quebrado > 0 || b.tonto > 0, prep = !caido && (b.tele > 0 || (!!b.mov && b.mov.t < 0.3)), age = !caido && !!b.mov && !prep, pisca = Math.floor(Tm * 14) % 2;
-  const mergulho = /Cadente|^bote|^giro/.test(t) && !caido, parede = !mergulho && /Parede|Rasteira|Alta|chuva/.test(t) && !caido, rasante = !mergulho && !parede && !!t && !caido, vai = rasante && (age || b.corre);
+  const mergulho = /Cadente|^bote|^giro|^abalo/.test(t) && !caido, parede = !mergulho && /Parede|Rasteira|Alta|chuva|^fogo|^brasas|Costas/.test(t) && !caido, rasante = !mergulho && !parede && !!t && !caido, vai = rasante && (age || b.corre);
   const resp = Math.floor(Tm * 2.4) % 2, chao = oy - 2;
   // quanto o corpo se encolhe e para onde pende
   const kH = caido ? 0.5 : vai ? 0.62 : parede ? 0.72 : prep ? 0.9 : 1, kW = caido ? 1.25 : vai ? 1.15 : parede ? 1.05 : 1;
@@ -85,6 +85,7 @@ function zelote(s, b, Tm, nome) {
     if (!parede) for (let k = 1; k <= 6; k++) s.px(px - 2 - k, py + 3 + Math.round(Math.sin(k * 0.8 + Tm * 4) * 1.5) + k, k % 2 ? ACOE : C('#5A5E6A')); // a corrente
     s.ret(px - 2, py - 2, 4, 4, PELE); s.px(px - 2, py - 2, PELEE); // a mão
   }
+  if (nome === 'jair' && /^fogo|^brasas/.test(t)) { const fx = hx + 12, fy = hy - 14 + Math.round(Math.sin(Tm * 9) * 2), F1 = C('#FF9A3C'), F2 = C('#FFD27A'); s.linha(ombroX + 6, ombroY + 4, fx, fy + 6, 3, M[1]); s.ret(fx - 2, fy + 4, 4, 4, PELE); s.bola(fx, fy, 5 + pisca, 6 + pisca, { 0: C('#A8431C'), 1: F1, 2: F1, 3: F2, 4: BR }, 0, 0.6); s.px(fx - 4, fy - 8 - pisca * 2, F1); s.px(fx + 3, fy - 10 + pisca, F2); s.px(fx, fy - 12 - pisca, F1); } // a mão erguida com o fogo do zelo
   // ---------- rastros ----------
   if (vai) for (let k = 0; k < 4; k++) s.ret(cx - W - 40 - k * 5, base - 22 + k * 5, 9 - k * 2, 1, k % 2 ? Q.acento : ACO);
   if (mergulho && age) for (let k = 0; k < 3; k++) s.ret(cx - 7 + k * 7, base - H - 40 - k * 4, 1, 7, Q.acento);

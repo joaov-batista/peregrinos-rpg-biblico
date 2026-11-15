@@ -1030,7 +1030,20 @@ function zParede(G, b, m, dt, o) {
 const foice = (G, b, m, dir, y0, y1, v) => { const f = bala(G, b.x + dir * 20, y0, 0, 0, { r: 11, cor: '#D9B878', tipo: 'bola', vida: 5, fura: true, fixo: true }); f.vx = dir * vel(G, v); f.zf = { dir, y0, y1, ida: true, x0: f.x, t: 0 }; (m.fs = m.fs || []).push(f); };
 const passoFoices = (G, m, dt) => { const A = G.N.arena; for (const f of m.fs || []) if (vivo(G, f)) { const z = f.zf; z.t += dt; if (z.ida) { f.vx -= z.dir * vel(G, 560) * dt; if (f.vx * z.dir <= 0) z.ida = false; } else { f.vx -= z.dir * vel(G, 760) * dt; f.y += (z.y1 - f.y) * Math.min(1, dt * 5); if ((z.dir > 0 && f.x < A.x0 + 30) || (z.dir < 0 && f.x > A.x1 - 30)) f.vida = 0; } } };
 
-const PUNHAL = '#C9D2E0', LANCA = '#C9B48A', FOICE = '#D9B878';
+// o assassino: some, e aparece JÁ nas suas costas. O aviso é curto: ande para a frente ou pule
+function zCostas(G, b, m, dt, o) {
+  const A = G.N.arena;
+  if (m.e === 0) { if (m.t === 0) { const lado = -(G.p.face || 1); b.x = clamp(G.p.x + lado * 74, A.x0 + 40, A.x1 - 40); b.y = A.chao; b.face = Math.sign(G.p.x - b.x) || 1; m.d = b.face; b.alpha = 1; G.efeito('sumico', b.x, b.y - 30); sfx('dodge'); zona(G, { tipo: 'circ', x: b.x + m.d * 40, y: A.chao - 26, r: 50, aviso: av(G, o.tele), dur: 0.12, cor: o.cor }); }
+    b.alpha = 1; prepara(b); if (m.t > av(G, o.tele)) { m.e = 1; m.t0 = m.t; ataca(b); sfx('swing'); b.x = clamp(b.x + m.d * 46, A.x0 + 40, A.x1 - 40); } return false; }
+  b.alpha = 1; return m.t - m.t0 > o.rec;
+}
+// o vidente: brasas que procuram você, devagar, e se apagam sozinhas
+const brasa = (G, b, m) => { const f = bala(G, b.x + b.face * 14, b.y - 58, -Math.PI / 2 + (m.n - 2) * 0.7, vel(G, 250), { r: 8, cor: FOGO, tipo: 'bola', vida: 3.4 }); (m.bs = m.bs || []).push(f); };
+const passoBrasas = (G, m, dt) => { for (const f of m.bs || []) if (vivo(G, f)) guiar(f, G.p.x, G.p.y - 22, 2.1, dt); };
+// o forte: o chão responde. Pedras caem do teto onde a sala rachou
+const pedrasDoTeto = (G, b, n) => { const A = G.N.arena; for (let k = 0; k < n; k++) zona(G, { tipo: 'circ', x: clamp(k === 0 ? G.p.x : A.x0 + 60 + Math.random() * (A.x1 - A.x0 - 120), A.x0 + 40, A.x1 - 40), y: A.chao - 20, r: 34, aviso: av(G, 0.6 + k * 0.22), dur: 0.15, cor: LANCA }); };
+
+const PUNHAL = '#C9D2E0', LANCA = '#C9B48A', FOICE = '#D9B878', FOGO = '#FF9A3C';
 const conselho = {
   // entre os golpes ninguém fica na sala: voltam ao trono
   mover(G, b, dt) { noTrono(G, b); },
@@ -1050,14 +1063,16 @@ const conselho = {
     punhalCadente(G, b, m, dt) { return zMergulho(G, b, m, dt, { tele: 0.55, v: 1150, rec: 0.5, cor: PUNHAL }); },
     vaiEVolta(G, b, m, dt) { return zRasante(G, b, m, dt, { tele: 0.45, v: 860, rec: 0.6, cor: PUNHAL, volta: true }); },
     punhaisDaParede(G, b, m, dt) { return zParede(G, b, m, dt, { tele: 0.5, alt: 150, n: 3, int: 0.26, rec: 0.45, lanca: (G, b) => bala(G, b.x, b.y - 30, Math.atan2(G.p.y - 22 - (b.y - 30), G.p.x - b.x), vel(G, 560), { r: 5, cor: PUNHAL, tipo: 'lanca', vida: 2.2 }) }); },
-    /* --- Eleazar, a lança: o mais pesado. Entra na segunda fase --- */
+    pelasCostas(G, b, m, dt) { return zCostas(G, b, m, dt, { tele: 0.46, rec: 0.6, cor: PUNHAL }); },
+    /* --- Eleazar, o forte: o mais pesado. Onde ele cai, a sala racha. Entra na segunda fase --- */
+    abaloDoForte(G, b, m, dt) { return zMergulho(G, b, m, dt, { tele: 0.8, v: 1400, rec: 0.9, cor: LANCA, segue: 110, aoCair: (G, b) => { G.tremor(14); choque(G, b, LANCA, 380); pedrasDoTeto(G, b, 4); } }); },
     lancaCadente(G, b, m, dt) { return zMergulho(G, b, m, dt, { tele: 0.62, v: 1250, rec: 0.6, cor: LANCA, adianta: true, aoCair: (G, b) => choque(G, b, LANCA, 300) }); },
     estocadaZelote(G, b, m, dt) { return zRasante(G, b, m, dt, { tele: 0.68, v: 1180, rec: 0.7, cor: LANCA }); },
     lancasDaParede(G, b, m, dt) { const A = G.N.arena; return zParede(G, b, m, dt, { tele: 0.55, alt: 120, n: 3, int: 0.42, rec: 0.5, lanca: (G, b, m, dir) => G.tiros.push({ x: b.x, y: A.chao - (m.n % 2 ? 18 : 78), vx: dir * vel(G, 500), vy: 0, r: 7, vida: 3, cor: LANCA, tipo: 'lanca', fixo: true, fura: true }) }); },
     giroDaLanca(G, b, m, dt) { return zMergulho(G, b, m, dt, { tele: 0.7, v: 1000, rec: 0.75, cor: LANCA, segue: 150, aoCair: (G, b) => zona(G, { tipo: 'circ', x: b.x, y: b.y - 24, r: 112, aviso: av(G, 0.34), dur: 0.2, cor: LANCA }) }); }
   }
 };
-// Jair, a foice: o que luta de longe. As foices vão e voltam por alturas diferentes
+// Jair, o vidente: luta de longe. As foices vão e voltam sozinhas, o fogo desce e as brasas perseguem
 const zeloteFoice = {
   mover(G, b, dt) { noTrono(G, b); },
   palco() {},
@@ -1065,6 +1080,9 @@ const zeloteFoice = {
   golpes: {
     foiceRasteira(G, b, m, dt) { passoFoices(G, m, dt); const A = G.N.arena; return zParede(G, b, m, dt, { tele: 0.55, alt: 46, n: 1, int: 0.3, rec: 0.5, lanca: (G, b, m, dir) => foice(G, b, m, dir, A.chao - 16, A.chao - 84, 620), espera: (G, m) => !(m.fs || []).some(f => vivo(G, f)) || m.t > 4.5 }); },
     foiceAlta(G, b, m, dt) { passoFoices(G, m, dt); const A = G.N.arena; return zParede(G, b, m, dt, { tele: 0.55, alt: 150, n: 2, int: 0.5, rec: 0.5, lanca: (G, b, m, dir) => foice(G, b, m, dir, A.chao - (m.n % 2 ? 90 : 22), A.chao - (m.n % 2 ? 20 : 96), 580), espera: (G, m) => !(m.fs || []).some(f => vivo(G, f)) || m.t > 5.5 }); },
+    /* o vidente: o fogo do zelo cai onde você está (2Rs 1:10), e as brasas procuram você */
+    fogoDoZelo(G, b, m, dt) { const A = G.N.arena; return zParede(G, b, m, dt, { tele: 0.6, alt: 0, n: 4, int: 0.42, rec: 0.7, lanca: (G) => { muro(G, clamp(G.p.x + G.p.vx * 0.2, A.x0 + 30, A.x1 - 30) - 24, A.chao - 230, 48, 230, { aviso: av(G, 0.62), dur: 0.3, cor: FOGO }); sfx('magic'); } }); },
+    brasasVivas(G, b, m, dt) { passoBrasas(G, m, dt); return zParede(G, b, m, dt, { tele: 0.6, alt: 0, n: 3, int: 0.3, rec: 0.6, lanca: (G, b, m) => brasa(G, b, m), espera: (G, m) => !(m.bs || []).some(f => vivo(G, f)) || m.t > 5 }); },
     ceifar(G, b, m, dt) { return zRasante(G, b, m, dt, { tele: 0.6, v: 840, rec: 0.6, cor: FOICE }); },
     foiceCadente(G, b, m, dt) { return zMergulho(G, b, m, dt, { tele: 0.6, v: 1050, rec: 0.55, cor: FOICE, adianta: true }); }
   }
@@ -1078,7 +1096,8 @@ const zelotePunhal = {
     rasgo(G, b, m, dt) { return zRasante(G, b, m, dt, { tele: 0.55, v: 900, rec: 0.6, cor: PUNHAL }); },
     boteZelote(G, b, m, dt) { return zMergulho(G, b, m, dt, { tele: 0.6, v: 1100, rec: 0.55, cor: PUNHAL }); },
     chuvaDePunhais(G, b, m, dt) { return zParede(G, b, m, dt, { tele: 0.55, alt: 170, n: 4, int: 0.24, rec: 0.5, lanca: (G, b, m) => bala(G, b.x, b.y - 30, Math.atan2(G.p.y - 22 - (b.y - 30), G.p.x - b.x) + (m.n % 2 ? 0.12 : -0.12), vel(G, 520), { r: 5, cor: PUNHAL, tipo: 'lanca', vida: 2.2 }) }); },
-    finta(G, b, m, dt) { return zRasante(G, b, m, dt, { tele: 0.4, v: 780, rec: 0.7, cor: PUNHAL, volta: true }); }
+    finta(G, b, m, dt) { return zRasante(G, b, m, dt, { tele: 0.4, v: 780, rec: 0.7, cor: PUNHAL, volta: true }); },
+    sombraNasCostas(G, b, m, dt) { return zCostas(G, b, m, dt, { tele: 0.5, rec: 0.65, cor: PUNHAL }); }
   }
 };
 

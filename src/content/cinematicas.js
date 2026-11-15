@@ -150,8 +150,8 @@ export const CINEMAS = {
   'chefe-conselho': { titulo: 'O Conselho Zelote', cenas: [
     { cena: 'tribunal', fx: 'brasas', titulo: 'O CONSELHO ZELOTE', sub: 'Menaém · Eleazar · Jair', texto: 'Três tronos de pedra numa sala sem janelas. Três vultos de capuz, cada um com a sua arma atravessada no colo. Nenhum se levanta.' },
     { cena: 'tribunal', voz: 'vilao', fig: [{ p: 'chefe:conselho', x: 0.5, y: 0.8, s: 2 }], texto: 'Roma não saiu daqui com sermão, estrangeiro. Saiu pelo ferro, e pelo ferro a gente decide as coisas. Um de cada vez. É a nossa lei.' }] },
-  'chefe-zeloteFoice': { titulo: 'Jair, a Foice', cenas: [{ cena: 'tribunal', texto: 'Jair desce do trono.' }] },
-  'chefe-zelotePunhal': { titulo: 'Menaém, o Punhal', cenas: [{ cena: 'tribunal', texto: 'Menaém se levanta de novo.' }] },
+  'chefe-zeloteFoice': { titulo: 'Jair, o Vidente', cenas: [{ cena: 'tribunal', texto: 'Jair desce do trono.' }] },
+  'chefe-zelotePunhal': { titulo: 'Menaém, o Assassino', cenas: [{ cena: 'tribunal', texto: 'Menaém se levanta de novo.' }] },
   'chefe-escassez': { titulo: 'A Escassez', cenas: [
     { cena: 'casa', fx: 'brasas', fig: [{ p: 'chefe:escassez', x: 0.5, y: 0.78, s: 1.8, entra: 'cima' }], titulo: 'A ESCASSEZ', sub: 'a sombra desta página · 1 Reis 17:12', texto: 'Três anos sem chuva. Do pó da casa vazia levanta-se uma coisa magra, feita de terra rachada, com uma tigela vazia nas mãos.' },
     { cena: 'casa', voz: 'vilao', fig: [{ p: 'chefe:escassez', x: 0.5, y: 0.78, s: 2 }], texto: 'Um punhado de farinha. Um resto de azeite. Coma com o seu filho… e morra.' }] },

@@ -36,8 +36,8 @@ export const BOSSES = {
   // O Conselho Zelote (ficção do Refúgio): três que tinham zelo sem entendimento (Rm 10:2) e resolviam tudo pelo ferro
   conselho: { nome: 'O Conselho Zelote', titulo: 'Desafio', lv: 14, hp: 3000, atk: 40, def: 8, spd: 200, r: 26, xp: 900, ouro: 600, cor: '#C9D2E0', cor2: '#3A2A2A', ref: 'Romanos 10:2',
     intro: 'Um de cada vez, estrangeiro. É a nossa lei.', derrota: '"Têm zelo de Deus, porém não com entendimento" (Rm 10:2). Os três baixam as armas.' },
-  zeloteFoice: { nome: 'Jair, a Foice', titulo: 'Conselho Zelote', lv: 14, hp: 1000, atk: 40, def: 8, spd: 200, r: 26, xp: 0, ouro: 0, cor: '#D9B878', cor2: '#3A2A2A', ref: 'Romanos 10:2' },
-  zelotePunhal: { nome: 'Menaém, o Punhal', titulo: 'Conselho Zelote', lv: 14, hp: 1000, atk: 40, def: 8, spd: 200, r: 26, xp: 0, ouro: 0, cor: '#C9D2E0', cor2: '#3A2A2A', ref: 'Romanos 10:2' },
+  zeloteFoice: { nome: 'Jair, o Vidente', titulo: 'Conselho Zelote', lv: 14, hp: 1000, atk: 40, def: 8, spd: 200, r: 26, xp: 0, ouro: 0, cor: '#D9B878', cor2: '#3A2A2A', ref: 'Romanos 10:2' },
+  zelotePunhal: { nome: 'Menaém, o Assassino', titulo: 'Conselho Zelote', lv: 14, hp: 1000, atk: 40, def: 8, spd: 200, r: 26, xp: 0, ouro: 0, cor: '#C9D2E0', cor2: '#3A2A2A', ref: 'Romanos 10:2' },
   // as sombras das páginas vivas (a história do peregrino): não são personagens da Bíblia, são o que cobria aquelas páginas
   escassez: { nome: 'A Escassez', titulo: 'Sombra da página', lv: 3, hp: 700, atk: 20, def: 2, spd: 60, r: 30, xp: 180, ouro: 110, cor: '#C9A86A', cor2: '#5A3E22', ref: '1 Reis 17:12',
     intro: 'Um punhado de farinha. Um resto de azeite. Coma, e morra.', derrota: '"A farinha da panela não se acabará, e o azeite da botija não faltará" (1Rs 17:14).' },
