@@ -1,9 +1,9 @@
 // O que veio depois do Refúgio: o porto (barqueiro, pescador e o mercador de além-mar), a cidade de Sardes (velas,
 // a Palavra levada ao povo, os ataques no meio da rua) e o Vale da Mentira, onde se conquista a descida do Espírito.
 // O jogo chama estas funções em pontos fixos (entrar, a cada quadro, ao falar, ao usar, ao vencer um vício).
-import { sfx } from '../audio.js';
+import { sfx, music } from '../audio.js';
 import { RELIQUIAS, ARMAS_ALT } from './dados.js';
-import { rarDe, especiaisDe, ESPECIAIS } from './arsenal.js';
+import { rarDe, especiaisDe, ESPECIAIS, valorTroca } from './arsenal.js';
 import { pesca } from './menu.js';
 import { T, CW, CH, tileEm, VAZIO } from './nivel.js';
 import { TODAS } from '../content/index.js';
@@ -20,7 +20,7 @@ const nVelas = G => Object.keys(sar(G).velas).length, nPalavra = G => Object.key
 const progresso = G => { const s = sar(G); return s.feita ? 1 : (Math.min(1, nVelas(G) / SARDES_VELAS) * 0.5 + Math.min(1, nPalavra(G) / 5) * 0.3 + Math.min(1, s.abates / SARDES_ABATES) * 0.2); };
 const preenche = (txt, G) => txt.replace('{velas}', SARDES_VELAS).replace('{abates}', SARDES_ABATES).replace('{v}', nVelas(G)).replace('{p}', nPalavra(G)).replace('{a}', Math.min(sar(G).abates, SARDES_ABATES));
 // a luz da cidade acompanha o que já foi feito
-function luzDaCidade(G) { if (G.area !== 'sardes' || sar(G).feita) return; G.tm = { ...G.tm, escuro: 0.86 - progresso(G) * 0.4 }; }
+function luzDaCidade(G) { if (G.area !== 'sardes' || sar(G).feita) return; G.tm = { ...G.tm, escuro: 0.7 - progresso(G) * 0.36 }; }
 
 /* ---------------- ao entrar numa área ---------------- */
 export function aoEntrar(G, id, o = {}) {
@@ -28,6 +28,9 @@ export function aoEntrar(G, id, o = {}) {
     const k = o.portal ? andarDe(o.portal) : null; montarAndar(G, k ?? G.andarRolos ?? proximoAndar(G)); // voltando de uma página, o salão já está no andar dela // o mercador de além-mar só aparece de vez em quando, e cada visita traz outras coisas
     G.viajante = Math.random() < 0.4 ? sortearViajante(G) : null;
     G.objs = G.objs.filter(o => !o.vezOutra || G.viajante);
+    // quem já caiu muitas vezes recebe uma visita: um estrangeiro de branco junto ao poço, que aponta (sem contar) para onde está o Mestre
+    if ((G.cm.mortes || 0) >= 5 && !G.cm.getsemani) { const poco = G.objs.find(o => o.tipo === 'poco'); if (poco) { G.objs.push({ tipo: 'npc', id: 'mensageiro', nome: 'Um estrangeiro de branco', x: poco.x + 58, y: poco.y, luz: 130, cel: poco.cel, look: MENSAGEIRO });
+      if (!G.cm.visto.mensageiro) { G.cm.visto.mensageiro = 1; setTimeout(() => { if (G.area === 'refugio') G.ui.toast('Há um estrangeiro de branco junto ao poço. Ninguém o viu chegar.', 7000); }, 2500); } } }
   }
   if (id === 'sardes') {
     marco('sardes'); sar(G); luzDaCidade(G); G.sarEst = 'paz'; G.sarT = sar(G).feita ? rand(90, 140) : 22;
@@ -45,20 +48,27 @@ export function passoNovo(G, dt) {
   if (G.area !== 'sardes' || !G.souDono() || G.p.morto) return;
   const s = sar(G), p = G.p;
   if (G.sarEst === 'paz') { if ((G.sarT -= dt) <= 0) { G.sarEst = 'alerta'; G.sarT = 2.6; const grito = ['Ladrões! Pega ladrão!', 'Gritos no fim da rua!', 'Socorro! Eles voltaram!', 'Um vulto no meio do povo!'][Math.floor(rand(0, 4))]; G.grito?.(grito); sfx('boss'); } return; }
-  if (G.sarEst === 'alerta') { if ((G.sarT -= dt) <= 0) { G.sarEst = 'ataque'; atacar(G); } return; }
+  if (G.sarEst === 'alerta') { if ((G.sarT -= dt) <= 0) { G.sarEst = 'ataque'; G.sarLuta = 0; atacar(G); music('batalha'); } return; }
   // em ataque: quando o último cai, a rua volta a respirar
-  if (!G.inimigos.some(e => e.sardes && e.hp > 0)) { G.sarEst = 'paz'; G.sarT = s.feita ? rand(120, 180) : rand(35, 60); G.ui.toast('A rua se acalma. Por enquanto.', 3500); G.ganharOleo(15); }
+  // ninguém fica perdido no escuro: quem se afastou demais (ou caiu para fora da rua) reaparece perto, e um ataque nunca dura para sempre
+  G.sarLuta = (G.sarLuta || 0) + dt;
+  for (const e of G.inimigos) if (e.sardes && e.hp > 0) {
+    const longe = Math.abs(e.x - p.x) > 620 || Math.abs(e.y - p.y) > 330 || e.y > G.N.h * T + 60; e.longeT = longe ? (e.longeT || 0) + dt : 0;
+    if (e.longeT > 4 || G.sarLuta > 75) { if (G.sarLuta > 75) { e.hp = 0; e.sumiu = true; G.efeito('sumico', e.x, e.y - e.h / 2); continue; } const lado = Math.random() < 0.5 ? -1 : 1, x = p.x + lado * rand(200, 300); const tx = Math.floor(x / T), ty = Math.floor((p.y - 10) / T); if (tileEm(G.N, tx, ty) !== VAZIO) continue; G.efeito('sumico', e.x, e.y - e.h / 2); e.x = x; e.y = e.voa ? p.y - 110 : p.y - 2; e.vx = e.vy = 0; e.stun = 0.5; e.longeT = 0; G.efeito('sumico', e.x, e.y - e.h / 2); }
+  }
+  if (!G.inimigos.some(e => e.sardes && e.hp > 0)) { G.sarLuta = 0; G.sarEst = 'paz'; G.musicaDaArea(); G.sarT = s.feita ? rand(120, 180) : rand(35, 60); G.ui.toast('A rua se acalma. Por enquanto.', 3500); G.ganharOleo(15); }
 }
 function atacar(G) {
   const p = G.p, N = G.N, s = sar(G), forca = s.feita ? 1.2 : 1.7, n = (s.feita ? 2 : 3) + Math.floor(rand(0, 3)) + (G.mp ? G.mp.naArea().length : 0);
   const tipos = ['ganancia', 'ganancia', 'ira', 'medo', 'duvida', 'orgulho', 'inveja'];
   // um demônio que andava no meio do povo, com rosto de gente
   const vizinho = G.objs.filter(o => o.tipo === 'morador' && !(o.escondido > G.T) && Math.abs(o.x - p.x) < 520 && Math.abs(o.y - p.y) < 200)[0];
-  if (vizinho) { const e = G.nascer(Math.random() < 0.5 ? 'medo' : 'ira', vizinho.x, vizinho.y - 4, false, forca * 1.3); e.sardes = true; e.elite = true; vizinho.escondido = G.T + 40; G.efeito('sumico', vizinho.x, vizinho.y - 30); G.textoEm(vizinho.x, vizinho.y - 70, 'não era gente!', '#FF8A7A', 13); }
+  if (vizinho) { const e = G.nascer(Math.random() < 0.5 ? 'medo' : 'ira', vizinho.x, vizinho.y - 4, false, forca * 1.3); e.sardes = true; e.irado = 99; e.elite = true; vizinho.escondido = G.T + 40; G.efeito('sumico', vizinho.x, vizinho.y - 30); G.textoEm(vizinho.x, vizinho.y - 70, 'não era gente!', '#FF8A7A', 13); }
   for (let i = 0, feitos = 0; feitos < n && i < 40; i++) {
     const tipo = tipos[Math.floor(rand(0, tipos.length))], voa = tipo === 'medo' || tipo === 'duvida', x = p.x + (Math.random() < 0.5 ? -1 : 1) * rand(160, 360), y = voa ? p.y - rand(80, 140) : p.y - 2;
     const tx = Math.floor(x / T), ty = Math.floor((y - 10) / T); if (tileEm(N, tx, ty) !== VAZIO || tileEm(N, tx, ty - 1) !== VAZIO) continue;
-    const e = G.nascer(tipo, x, y, false, forca); e.sardes = true; e.stun = 0.5; e.flash = 0.3; G.efeito('sumico', e.x, e.y - e.h / 2); feitos++;
+    if (x < 9 * T || x > G.N.w * T - 2 * T) continue; // nada nasce no mar nem fora da cidade
+    const e = G.nascer(tipo, x, y, false, forca); e.sardes = true; e.irado = 99; e.stun = 0.5; e.flash = 0.3; G.efeito('sumico', e.x, e.y - e.h / 2); feitos++;
   }
 }
 
@@ -77,6 +87,7 @@ async function liberarEspirito(G) {
 
 /* ---------------- rótulos e uso dos objetos novos ---------------- */
 export function rotuloNovo(G, ob) {
+  if (ob.escondido > G.T) return null; // o vizinho que "não era gente" sumiu da rua: não há com quem falar
   switch (ob.tipo) {
     case 'vela': return sar(G).velas[ob.id] ? null : 'Reacender (10 de azeite)';
     case 'barco': return ob.volta ? 'Voltar ao Refúgio' : 'Embarcar para Sardes';
@@ -126,6 +137,17 @@ async function barco(G, ob) {
 /* ---------------- falas novas ---------------- */
 export async function falarNovo(G, ob) {
   const cm = G.cm, p = G.p, c = G.char;
+  if (ob.id === 'mensageiro') { // pistas leves, uma de cada vez, conforme o que o peregrino já achou; nunca conta o que há no fim
+    const n = cm.falas.mensageiro = (cm.falas.mensageiro || 0) + 1, diz = (texto, label = 'Guardar essas palavras') => G.ui.dialog({ nome: ob.nome, look: ob.look, texto, acoes: [{ label }] });
+    if (n === 1) {
+      await diz('Não tenha medo.\n\nVocê caiu ' + cm.mortes + ' vezes, e se levantou todas elas. "Sete vezes cairá o justo, e se levantará" (Pv 24:16).\n\nMas me diga, peregrino: você luta, lê, vence sombras… e para quem, afinal, está caminhando?', 'Não sei responder');
+      cm.mana = (cm.mana || 0) + 1; p.oleo = G.oleoMax(); sfx('level'); G.efeito('coleta', p.x, p.y - 30); G.textoEm(p.x, p.y - 80, '+1 maná · jarro cheio', '#FFE9A8', 13); G.salvar();
+      await diz('Tome. Pão para o caminho, e azeite para a sua lâmpada. Você vai precisar dela acesa.\n\nEste Refúgio tem mais do que portais. Lá onde o OLIVAL termina, depois da última oliveira, a sombra cobre alguma coisa.\n\nE o que a sua lâmpada faz com o que a sombra cobre?', 'Erguer a lâmpada no fim do olival…');
+    } else if (!cm.trilha) await diz('O olival fica para lá do pátio das provas. Vá até onde as oliveiras acabam.\n\nNão procure com os olhos. Procure com a luz: erga a lâmpada e espere um instante.');
+    else if (!cm.achados?.getsemani) await diz(n % 2 ? 'Você achou a trilha. Bom.\n\nA floresta é escura, mas não é ela que quero que você veja. Lá no fundo há uma clareira, um querubim de guarda e uma porta que respira. Todos param na porta.\n\nHá algo especial naquele lugar, e não é a porta. Olhe de novo. Com luz.' : 'Na clareira, as oliveiras mais velhas ficam no canto, depois do querubim. Tão velhas que parecem de outro tempo.\n\nÉ só o que eu digo.');
+    else await diz('Você já viu a passagem entre as oliveiras.\n\nEntão por que ainda está aqui falando comigo? Há Alguém esperando do outro lado. Sempre houve.\n\nVá. E não leve pressa.', 'Ir');
+    return true;
+  }
   if (ob.id === 'zebedeu') { await pesca(G); return true; }
   if (ob.id === 'viajante') { await viajante(G, ob); return true; }
   if (ob.id === 'barqueiro') { await barco(G, ob); return true; }
@@ -149,7 +171,7 @@ async function epafras(G, ob) {
   const pronto = nVelas(G) >= SARDES_VELAS && nPalavra(G) >= 5 && s.abates >= SARDES_ABATES;
   if (!pronto) return d(preenche(EPAFRAS.andamento, G));
   await d(EPAFRAS.final);
-  s.feita = true; marco('sardes_luz'); c.data.gold += 600; G.xp(400); G.pontos(2500); G.def.tema = 'sardes2'; G.tm = { ...G.tm, escuro: 0.3, ceu: ['#14203A', '#4A4A6A', '#E0A878'] }; G.clarao = 0.4; sfx('level'); G.salvar();
+  s.feita = true; G.musicaDaArea(); marco('sardes_luz'); c.data.gold += 600; G.xp(400); G.pontos(2500); G.def.tema = 'sardes2'; G.tm = { ...G.tm, escuro: 0.3, ceu: ['#14203A', '#4A4A6A', '#E0A878'] }; G.clarao = 0.4; sfx('level'); G.salvar();
   if (!G.cm.reliquias.includes('veste_branca')) await G.ganhar('veste_branca');
   G.ui.toast('+600 denários. Sardes voltou a ter luz.', 5000);
 }
@@ -164,6 +186,7 @@ async function palavra(G, ob) {
   G.ui.toast('A Palavra foi levada: ' + nPalavra(G) + ' de 5.', 3000);
 }
 
+const MENSAGEIRO = { skin: '#D9A273', hair: '#F4F1E6', tunic: '#F4F1FF', cape: '#E6E0F4', style: 'longo', beard: false };
 /* ---------------- o mercador de além-mar ---------------- */
 function sortearViajante(G) {
   const cm = G.cm, rel = DO_PORTO.filter(id => !cm.reliquias.includes(id)).sort(() => Math.random() - 0.5).slice(0, 2);
@@ -177,7 +200,7 @@ export async function viajante(G, ob) {
   const A = V.arma && !cm.armas?.[c.cls + ':' + V.arma] ? ARMAS_ALT[G.tipoArma][V.arma] : null;
   if (!ofertas.length && !A) return G.ui.dialog({ nome: ob.nome, look: ob.look, texto: 'Vendi tudo o que trouxe. O mar é largo e meu barco é pequeno: volto quando o vento quiser.', acoes: [{ label: 'Boa viagem' }] });
   const acoes = ofertas.map(o => ({ label: rarDe(o.R).marca + ' ' + o.R.nome + ' — ' + o.preco, fn: () => { if (c.data.gold < o.preco) return G.ui.toast('Faltam denários.'); c.data.gold -= o.preco; sfx('coin'); G.ganhar(o.id); G.salvar(); } }));
-  if (A) { const preco = Math.round(A.preco * 0.8); acoes.push({ label: rarDe(A).marca + ' ' + A.nome + ' — ' + preco, fn: () => { if (c.data.gold < preco) return G.ui.toast('Faltam denários.'); c.data.gold -= preco; cm.armas = cm.armas || {}; cm.armas[c.cls + ':' + V.arma] = 1; cm.armaAlt = cm.armaAlt || {}; cm.armaAlt[c.cls] = V.arma; G.equiparArma(); sfx('coin'); G.salvar(); G.ui.toast('Agora é sua: ' + A.nome + '. Já está na sua mão.', 4000); } }); }
+  if (A) { const preco = Math.round(A.preco * 0.8); acoes.push({ label: rarDe(A).marca + ' ' + A.nome + ' — ' + preco, fn: () => { if (c.data.gold < preco) return G.ui.toast('Faltam denários.'); cm.armas = cm.armas || {}; cm.armaAlt = cm.armaAlt || {}; const volta = valorTroca(ARMAS_ALT[G.tipoArma][cm.armaAlt[c.cls]]); c.data.gold += volta - preco; cm.armas[c.cls + ':' + V.arma] = 2; cm.armaAlt[c.cls] = V.arma; G.equiparArma(); sfx('coin'); G.salvar(); G.ui.toast('Agora é sua: ' + A.nome + '. Já está na sua mão.' + (volta ? ' O mercador ficou com a antiga: +' + volta + ' denários (peregrino carrega uma arma só).' : ''), 5500); } }); }
   acoes.push({ label: 'Só olhar' });
   const lista = ofertas.map(o => '◆ ' + o.R.nome + ' (' + rarDe(o.R).nome + ') — ' + o.R.desc).join('\n') + (A ? '\n◆ ' + A.nome + ' (' + rarDe(A).nome + ', ' + especiaisDe(A).map(k => ESPECIAIS[k].nome).join(' + ') + ') — ' + A.desc : '');
   return G.ui.dialog({ nome: ob.nome, look: ob.look, texto: 'Coisas de além-mar, que nenhum mercador daqui tem. Amanhã eu posso não estar.\n\n' + lista + '\n\nVocê tem ' + Math.floor(c.data.gold) + ' denários.', acoes });

@@ -90,9 +90,9 @@ const FUNDO = {
     for (let i = 0; i < galhos; i++) { const y = base - 110 - i * 30; for (const s of [-1, 1]) { g.fillStyle = '#3A2A1A'; linha(g, cx, y, cx + s * (90 - i * 15), y - 30); g.fillStyle = '#2F5A3A'; for (let k = 0; k < 30; k++) px(g, cx + s * (60 - i * 10) + Math.cos(k) * (30 - i * 4), y - 40 + Math.sin(k * 1.7) * 14, 5, 4); } }
     if (galhos <= 0) { g.fillStyle = '#6E7A84'; px(g, cx - 16, base - 44, 32, 5); g.fillStyle = '#B07A3A'; px(g, cx - 16, base - 34, 32, 5); }
   },
-  golias(g, b, A, Tm) { // o ribeiro com as cinco pedras lisas (1Sm 17:40)
+  golias(g, b, A, Tm) { // o ribeiro de onde vieram as cinco pedras lisas (1Sm 17:40)
     g.fillStyle = '#1C5A6E'; for (let x = A.x0 + 30; x < A.x0 + 180; x++) px(g, x, A.chao - 3 + Math.round(Math.sin(x * 0.2 + Tm * 3)), 1, 2);
-    for (let i = 0; i < (b.cen.pedras || 5); i++) { g.fillStyle = '#C9C4B2'; px(g, A.x0 + 50 + i * 24, A.chao - 6, 6, 4); g.fillStyle = (Math.floor(Tm * 2) + i) % 5 ? '#E8E4D6' : '#FFFFFF'; px(g, A.x0 + 51 + i * 24, A.chao - 6, 2, 1); }
+    // as pedras já não esperam no ribeiro: aparecem pelo vale, uma de cada vez (jogo.js › vale)
   },
   behemote(g, b, A, Tm) { // as rachaduras no chão e o rio que sobe
     const n = Math.min(12, b.cen.rachas || 0); g.fillStyle = '#2A1F14';

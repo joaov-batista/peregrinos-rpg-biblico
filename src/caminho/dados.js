@@ -98,6 +98,7 @@ export const TEMAS = {
   arvore: t(['#07141A', '#12383A', '#3F7A62'], '#12302E', '#0C211F', '#061312', '#9FD0A0', '#B8E6A0', 'arvores', 'folha', 0.55),
   terraco: t(['#151028', '#4A2E5E', '#E0A060'], '#2C2040', '#1D152C', '#100B19', '#F1C96A', '#FFD67A', 'muralha', 'estrela', 0.35, { perigo: 'vento' }),
   campo: t(['#0A1420', '#1E3440', '#587860'], '#172B30', '#0F1E22', '#081214', '#A9C7A0', '#A9D6E8', 'arvores', 'orvalho', 0.6),
+  bosque: t(['#16283A', '#3F6A62', '#E0B878'], '#1E4038', '#16302A', '#0D1E1A', '#B8D8A0', '#FFE9A8', 'arvores', 'vagalume', 0.2),
   floresta: t(['#04090C', '#0B1E1C', '#1E3A32'], '#0C1D1A', '#081412', '#040A09', '#8FB89A', '#B8F0C8', 'arvores', 'vagalume', 0.86),
   getsemani: t(['#04061A', '#0E1638', '#27305C'], '#111733', '#0B1026', '#060913', '#9AA6C8', '#E8E2C8', 'arvores', 'vagalume', 0.8),
   getsemani2: t(['#1C2244', '#7A6A8A', '#F2C9A0'], '#3A3456', '#262240', '#151226', '#F1E2C0', '#FFE9A8', 'arvores', 'folha', 0.18),
@@ -130,12 +131,16 @@ const planta = (col, qual) => ({ tipo: 'planta', col, qual });
 const povo = (col, vai, look) => ({ tipo: 'morador', col, vai, look });
 const marca = (g, pts) => { const r = g.map(l => l.split('')), topo = 16 - g.length; for (const [lin, col, ch] of pts) if (r[lin - topo]) r[lin - topo][col - 1] = ch; return r.map(l => l.join('')); };
 
+// terreno escrito à mão: plataformas [linha, de, até, tipo], muros [de, até, altura] que sobem do chão
+const terreno = (pls, muros = []) => { const alt = Math.max(1, ...muros.map(m => m[2]), ...pls.map(p => 16 - p[0])), g = Array.from({ length: alt }, () => Array(28).fill('.')), poe = (lin, col, ch) => { g[lin - (16 - alt)][col - 1] = ch; };
+  for (const [lin, a, b, ch = '='] of pls) for (let x = a; x <= b; x++) poe(lin, x, ch); for (const [a, b, h] of muros) for (let x = a; x <= b; x++) for (let k = 0; k < h; k++) poe(15 - k, x, '#'); return g.map(r => r.join('')); };
+
 // O Refúgio: uma aldeia a céu aberto (praças, mercado, bairro, pátio, olival, o portão do Éden) e, por baixo dela,
 // os salões de pedra: o Salão dos Rolos (as páginas do Livro), a Casa do Tesouro, a Cripta dos Gigantes e a cisterna.
 const REFUGIO = [
   { cx: 0, nome: 'Praça do poço', papel: 'inicio', tiles: sala([13, 20, 23]), objs: [
-    planta(2, 'oliveira'), planta(12, 'palmeira'), casa(21, 'viuva', 'Casa da viúva de Sarepta'), planta(27, 'oliveira'),
-    { tipo: 'ebenezer', col: 6 }, { tipo: 'poco', col: 14 },
+    planta(12, 'palmeira'), casa(21, 'viuva', 'Casa da viúva de Sarepta'), planta(27, 'oliveira'),
+    { tipo: 'portal', col: 2, area: 'bosque', rotulo: 'Bosque do treino' }, { tipo: 'ebenezer', col: 6 }, { tipo: 'poco', col: 14 },
     { tipo: 'npc', col: 10, id: 'velho', nome: 'Velho Peregrino', look: velho },
     { tipo: 'npc', col: 17, id: 'pedro', nome: 'Simão, o pescador', look: { skin: '#A0673E', hair: '#3A2314', tunic: '#497A80', cape: 'none', style: 'cacheado', beard: true, body: 'forte' } },
     { tipo: 'npc', col: 26, id: 'jumenta', nome: 'Uma jumenta', bicho: 'jumenta' },
@@ -224,6 +229,23 @@ export function areaDef(id) {
   if (id === 'refugio') return { id, nome: 'Refúgio', sub: 'A última aldeia acesa', tema: 'refugio', planta: REFUGIO, seed: 'refugio', paz: true, aberto: true };
   if (id === 'treino') return { id, nome: 'Arena de treino', sub: 'Ferro com ferro se afia (Pv 27:17)', tema: 'ela', seed: id, extra: true, pvp: true,
     planta: [{ papel: 'inicio', tiles: ['....====............====....', '............................', '..........========..........', '............................', '............................'] }] };
+  // o Bosque do Treino: o caminho até o Refúgio. É aqui que o peregrino aprende a andar, golpear e erguer a lâmpada,
+  // uma coisa por vez, com tudo à mão (troncos para bater, dardos que não ferem, azeite de sobra).
+  if (id === 'bosque') return { id, nome: 'Bosque do Treino', sub: 'O caminho até o Refúgio', tema: 'bosque', seed: id, paz: true, aberto: true, treino: true, planta: [
+    { papel: 'inicio', nome: 'A trilha', tiles: terreno([], [[13, 14, 3], [22, 23, 5]]), objs: [
+      planta(3, 'cipreste'), planta(8, 'oliveira'), planta(18, 'cipreste'), planta(27, 'oliveira'), { tipo: 'ave', col: 6, lin: 14 }, { tipo: 'ave', col: 17, lin: 12 },
+      { tipo: 'escrito', col: 6, lin: 10, txt: '"Os teus ouvidos ouvirão: este é o caminho, andai por ele" (Is 30:21)' },
+      { tipo: 'placa', col: 11, txt: 'Um tronco caído: pule.' }, { tipo: 'placa', col: 20, txt: 'Alto demais para um pulo só: no ar, pule de novo.' }] },
+    { papel: 'vila', nome: 'A clareira dos troncos', tiles: terreno([[12, 19, 24]]), objs: [
+      planta(2, 'oliveira'), { tipo: 'boneco', col: 7 }, { tipo: 'boneco', col: 10 }, planta(14, 'cipreste'), { tipo: 'boneco', col: 22, lin: 12 }, planta(27, 'cipreste'),
+      { tipo: 'placa', col: 5, txt: 'Bonecos de palha: golpeie à vontade. Cada golpe certo enche o jarro de azeite.' }, { tipo: 'placa', col: 17, txt: 'Suba na tábua. Para descer dela, segure para baixo.' }] },
+    { papel: 'vila', nome: 'A sombra do bosque', tiles: terreno([[12, 7, 9, '~'], [9, 10, 12, '~']], [[14, 19, 9]]), objs: [
+      planta(3, 'cipreste'), { tipo: 'placa', col: 5, txt: 'O barranco é alto demais. Erga a lâmpada: a luz mostra o que a sombra cobre.' },
+      { tipo: 'escrito', col: 10, lin: 5, txt: '"Lâmpada para os meus pés é a tua palavra" (Sl 119:105)' }, planta(23, 'oliveira'), { tipo: 'placa', col: 22, txt: 'Dardos de treino: não ferem. Erga a lâmpada na hora em que o dardo chega.' }, planta(27, 'cipreste')] },
+    { papel: 'vila', nome: 'O fim da trilha', tiles: terreno([[9, 12, 15]]), objs: [
+      planta(2, 'oliveira'), { tipo: 'boneco', col: 14, lin: 9 }, { tipo: 'placa', col: 8, txt: 'O boneco lá no alto: segure o golpe, mire e solte.' }, planta(18, 'cipreste'), { tipo: 'ebenezer', col: 21 },
+      { tipo: 'portal', col: 26, area: 'refugio', rotulo: 'Caminho do Refúgio' }, { tipo: 'ave', col: 24, lin: 13 }] }
+  ] };
   if (id === 'getsemani') return { id, nome: 'Getsêmani', sub: 'A noite antes da cruz', tema: 'getsemani', seed: id, paz: true, aberto: true, floresta: true, planta: [
     { papel: 'inicio', nome: 'O lagar de azeite', tiles: ['............................'], objs: [
       { tipo: 'portal', col: 3, area: 'floresta', rotulo: 'De volta à floresta' }, planta(6, 'oliveira'), { tipo: 'lagar', col: 13 }, planta(18, 'oliveira'), planta(23, 'cipreste'), planta(27, 'oliveira'),

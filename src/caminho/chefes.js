@@ -20,10 +20,10 @@ export const CHEFES = {
     golpes: { cofre: {}, moedao: {}, preco: {}, ganancia: {}, avalanche: {} },
     fases: [F(1, ['cofre', 'moedao', 'preco', 'ganancia']), F(0.6, ['cofre', 'moedao', 'preco', 'ganancia'], { grito: 'TUDO TEM PREÇO!' }), F(0.3, ['avalanche', 'moedao', 'preco', 'ganancia', 'cofre'], { grito: 'SIRVA A MIM!' })],
     dica: 'Ele vai atrás das moedas malditas que caem e se recupera com elas: apanhe-as antes (pesam) ou bata nele enquanto se abaixa.' },
-  procrastinacao: { vida: 760, pressa: 0.6, r: 38, arena: 'relogio', vel: 28, regras: { aura: { raio: 240, lentidao: 0.5 }, regenera: { apos: 2.2, taxa: 0.03 } },
+  procrastinacao: { vida: 760, pressa: 0.6, r: 38, arena: 'relogio', vel: 28, regras: { aura: { raio: 240, lentidao: 0.5 }, regenera: { apos: 1.4, taxa: 0.075, sempre: 0.012 } },
     golpes: { relogio: { n: 2, giro: 0.95, dur: 3.6 }, relogio3: { fn: 'relogio', n: 3, giro: -1.2, dur: 4 }, relogio4: { fn: 'relogio', n: 4, giro: 1.35, dur: 4.4 }, soneca: { raio: 170 }, ampulheta: {}, adiar: {}, tiquetaque: {} },
     fases: [F(1, ['relogio', 'soneca', 'ampulheta', 'tiquetaque']), F(0.6, ['relogio3', 'adiar', 'soneca', 'ampulheta', 'tiquetaque'], { grito: 'SÓ MAIS CINCO MINUTINHOS…' }), F(0.25, ['relogio4', 'adiar', 'tiquetaque', 'ampulheta'], { grito: 'AMANHÃ! AMANHÃ!' })],
-    dica: 'Ela se cura se você parar de bater (o relógio anda para trás). Não persiga: ela foge devagar. Ataque nas brechas do relógio.' },
+    dica: 'Ela se cura o tempo todo, e depressa se você parar de bater (o relógio anda para trás). Mas a barra que você já derrubou não volta: atravesse cada marca de uma vez. Ataque nas brechas do relógio.' },
   mentira: { vida: 500, r: 34, arena: 'espelhos', voa: 120, vel: 90,
     golpes: { copias: { n: 3 }, copias5: { fn: 'copias', n: 5 }, meiaVerdade: {}, inverter: {}, troca: {}, boato: {} },
     fases: [F(1, ['copias', 'meiaVerdade', 'boato', 'inverter']), F(0.6, ['copias5', 'troca', 'meiaVerdade', 'inverter', 'boato'], { grito: 'QUAL DE NÓS É O VERDADEIRO?' }), F(0.3, ['copias5', 'troca', 'inverter', 'boato', 'meiaVerdade'], { grito: 'NINGUÉM VAI ACREDITAR EM VOCÊ!', escuro: 0.5 })],
@@ -82,7 +82,7 @@ export const CHEFES = {
   golias: { vida: 1250, pressa: 0.7, r: 52, arena: 'vale', vel: 66, regras: { armadura: 0.1 },
     golpes: { lanca: { alcance: 230 }, lanca2: { fn: 'lanca', alcance: 240, repete: 1 }, escudeiro: {}, dardo: {}, desafio: {} },
     fases: [F(1, ['lanca', 'dardo', 'escudeiro']), F(0.6, ['desafio', 'lanca', 'escudeiro', 'dardo'], { grito: 'SOU EU ALGUM CÃO?' }), F(0.3, ['lanca2', 'dardo', 'escudeiro', 'lanca'], { grito: 'GOLIAS AVANÇA!' })],
-    dica: 'A armadura absorve quase tudo. Só a defesa perfeita contra a lança expõe a testa do gigante (1Sm 17:49). Pule o escudeiro.' },
+    dica: 'A armadura absorve quase tudo. De tempos em tempos uma pedra lisa aparece num canto do vale: apanhe, MIRE e golpeie para arremessar. É uma chance só; na testa, o gigante cambaleia (1Sm 17:49). A defesa perfeita contra a lança também expõe a testa.' },
   behemote: { vida: 3600, dano: 2, pressa: 0.5, r: 104, arena: 'savana', vel: 46, regras: { casco: 0.3 },
     golpes: { investida: { vel: 640, repete: 1, tonto: 2.6 }, investida2: { fn: 'investida', vel: 700, repete: 2, tonto: 2.6 }, terremoto: {}, cauda: {}, rio: {} },
     fases: [F(1, ['investida', 'terremoto', 'cauda']), F(0.5, ['investida2', 'rio', 'terremoto', 'cauda'], { grito: 'O CHÃO TREME!' })],
@@ -151,7 +151,8 @@ export function atualizarChefe(G, b, dt) {
       if (fim) { b.mov = null; desfazer(G, b); b.espera = (m.def.espera ?? 1.05) * G.dif.ritmo * (c.pressa || 1) * (b.fase ? 0.85 : 1) * (b.furia > 0 ? 0.7 : 1); if (Math.random() < 0.22 + b.fase * 0.12) b.espera = 0.2; } // às vezes emenda um golpe no outro
     }
     // regras passivas
-    if (c.regras?.regenera) { b.semGolpe = (b.semGolpe || 0) + dt; if (b.semGolpe > c.regras.regenera.apos && b.hp < b.max) { b.hp = Math.min(b.max, b.hp + b.max * c.regras.regenera.taxa * dt); if (Math.random() < dt * 5) G.fx.sobe(b.x + rand(-20, 20), b.y - 30, 1, '#A5CDCE'); } }
+    // quem não é vencido de vez se refaz: a cura é o tempo todo e forte, mas só dentro da barra atual (a que já caiu não volta)
+    if (c.regras?.regenera) { const r = c.regras.regenera, teto = b.max * c.fases[b.fase].vida; b.semGolpe = (b.semGolpe || 0) + dt; const folga = b.semGolpe > r.apos; if (b.hp < teto) { b.hp = Math.min(teto, b.hp + b.max * (folga ? r.taxa : r.sempre || 0) * dt); if (Math.random() < dt * (folga ? 9 : 3)) G.fx.sobe(b.x + rand(-20, 20), b.y - 30, 1, '#A5CDCE'); if (folga && !G.viuCura) { G.viuCura = true; G.fala(b, 'Cada “depois eu faço” me alimenta… eu me refaço!'); } } }
   }
   // física
   if (b.voa) { b.x = clamp(b.x + b.vx * dt, A.x0 + b.w / 2, A.x1 - b.w / 2); }

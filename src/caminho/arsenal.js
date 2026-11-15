@@ -78,6 +78,13 @@ const RAR_ANTIGAS = { curta: 'comum', montante: 'rara', cajadoPastor: 'comum', s
 const COR_ANTIGAS = { montante: '#C8CCD4', cinco: '#E8E2C8', brasa: '#FF9A3C', vara: '#C9E6A0', prata: '#E6ECF2', espinho: '#B8A070', alabarda: '#9AA8B4', cordas: '#C9A06A' };
 for (const [tipo, lista] of Object.entries(ARMAS_ALT)) for (const [id, a] of Object.entries(lista)) { a.rar = a.rar || RAR_ANTIGAS[id] || 'comum'; if (COR_ANTIGAS[id]) a.lamina = a.lamina || COR_ANTIGAS[id]; }
 for (const [tipo, lista] of Object.entries(NOVAS)) Object.assign(ARMAS_ALT[tipo] = ARMAS_ALT[tipo] || {}, lista);
+// Peregrino carrega UMA arma: trocar é entregar a que está na mão (o armeiro paga parte do valor) e levar a outra.
+// As de loja ficaram um pouco mais caras; as achadas (sem preço) podem ser resgatadas pelo valor da raridade.
+for (const lista of Object.values(ARMAS_ALT)) for (const a of Object.values(lista)) if (a.preco) a.preco = Math.round(a.preco * 1.25 / 10) * 10;
+const RESGATE = { comum: 480, rara: 950, epica: 1900, lendaria: 2800 };
+export const precoArma = a => a ? a.preco || RESGATE[a.rar || 'comum'] : 0;
+export const valorTroca = a => Math.round(precoArma(a) * 0.4 / 5) * 5;
+export const AVISO_UMA_ARMA = 'Atenção: você é peregrino. Quem está sempre em viagem não guarda muita coisa: você carrega UMA arma por vez. Ao trocar, a que está na sua mão fica com o armeiro (ele paga parte do valor dela). Se a quiser de volta, compra de novo.';
 
 // ---- relíquias novas (todas com efeito de verdade: G.tem('id') nos lugares certos) ----
 const RELIQ_NOVAS = {

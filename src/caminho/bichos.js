@@ -59,7 +59,8 @@ export function atualizarVicio(G, e, dt) {
   switch (e.ai) {
     case 'ronda': { // a Preguiça só anda de um lado para o outro… e, se ninguém bate nela, se recupera deitada (Pv 6:9-10)
       e.semHit = (e.semHit || 0) + dt;
-      if (e.semHit > 2.2 && e.hp < e.max) { e.vx = 0; e.hp = Math.min(e.max, e.hp + e.max * 0.12 * dt); if (Math.random() < dt * 3) G.fx.sobe(e.x, e.y - 20, 1, '#A5CDCE'); if (!e.bocejou) { e.bocejou = true; G.textoEm(e.x, e.y - e.h - 6, 'zzz… só mais um pouco', '#A5CDCE', 10); } }
+      const teto = Math.max(e.teto || 0, Math.ceil(e.hp / e.max * 3 - 0.001) / 3 * e.max); e.teto = e.semHit > 2.2 ? teto : 0; // só refaz o terço em que está: o que já perdeu de vez não volta
+      if (e.semHit > 2.2 && e.hp < teto) { e.vx = 0; e.hp = Math.min(teto, e.hp + e.max * 0.2 * dt); if (Math.random() < dt * 3) G.fx.sobe(e.x, e.y - 20, 1, '#A5CDCE'); if (!e.bocejou) { e.bocejou = true; G.textoEm(e.x, e.y - e.h - 6, 'zzz… só mais um pouco', '#A5CDCE', 10); } }
       else { e.bocejou = false; anda(N, e, e.face, v.vel); }
       break;
     }

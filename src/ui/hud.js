@@ -49,7 +49,7 @@ export function createHud(onExit) {
       if (opts.dismiss !== false) wrap.addEventListener('pointerdown', e => { if (e.target === wrap) close(opts.dismissValue); });
       wrap._close = close;
       build(panel, close);
-      requestAnimationFrame(() => panel.querySelector('button:not([disabled])')?.focus({ preventScroll: true }));
+      requestAnimationFrame(() => (panel.querySelector('.answer:not([disabled]), .btn-row .btn:not([disabled]), .btn.gold:not([disabled])') || panel.querySelector('button:not([disabled]):not(.x)') || panel.querySelector('button:not([disabled])'))?.focus({ preventScroll: true })); // nunca começa no ✕
     });
   }
   // botão de montar: só aparece com burrinho/cavalo equipado

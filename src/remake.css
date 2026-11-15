@@ -224,3 +224,19 @@ html.remake .char-card .col { grid-template-columns: 1fr; min-width: 170px; }
 .telas-grade.juntas iframe:first-child { z-index: 1; }
 .telas-grade.juntas iframe[style*="z-index: 2"] { z-index: 2; }
 .telas-vidas { color: #E9E6DC; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* a regra do peregrino: uma arma por vez */
+html.remake .aviso-arma { background: rgba(217, 166, 60, .1); box-shadow: inset 0 0 0 1px rgba(255, 233, 168, .35); border-radius: 3px; padding: 12px 14px; margin: 8px 0; color: #E9E6DC; }
+html.remake .aviso-arma.curto { padding: 7px 10px; font-size: .92em; color: #FFE9A8; }
+html.remake .aviso-arma p { margin: 0 0 8px; } html.remake .aviso-arma .ganha { color: #9BE39B; } html.remake .aviso-arma .gasta { color: #FFB38A; }
+html.remake .aviso-arma .acoes { display: flex; gap: 10px; margin-top: 10px; }
+
+/* teclado na tela, para escrever com o controle */
+.teclado-pad { z-index: 9999; position: fixed; inset: 0; display: grid; place-items: center; background: rgba(2, 3, 6, .88); pointer-events: auto; }
+.teclado-pad .panel { width: min(640px, 96vw); padding: 14px; background: #111B28; box-shadow: inset 0 0 0 2px #D9A63C; border-radius: 4px; }
+.teclado-pad .tp-titulo { margin: 0 0 6px; color: #9AA0B4; font-size: 14px; }
+.teclado-pad .tp-visor { min-height: 40px; padding: 8px 10px; margin-bottom: 10px; background: #05060B; color: #FFE9A8; font: 600 20px/1.2 ui-monospace, monospace; box-shadow: inset 0 0 0 1px rgba(255, 233, 168, .3); overflow: hidden; white-space: nowrap; }
+.teclado-pad .tp-linha { display: flex; gap: 4px; margin-bottom: 4px; justify-content: center; }
+.teclado-pad .tp-linha button { flex: 1 1 0; min-width: 0; min-height: 38px; padding: 4px 2px; background: #1C2A3D; color: #E9E6DC; border: 0; border-radius: 3px; font: 600 17px ui-monospace, monospace; cursor: pointer; }
+.teclado-pad .tp-linha button:focus { outline: 3px solid #FFE9A8; background: #33496B; }
+.teclado-pad .tp-linha button.btn.gold { background: #D9A63C; color: #05060B; }

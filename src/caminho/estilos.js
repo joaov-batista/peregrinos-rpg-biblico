@@ -739,7 +739,7 @@ const golias = {
   // o gigante avança sempre, devagar; se você foge para longe, para e afronta (1Sm 17:10)
   mover(G, b, dt) { const dx = G.p.x - b.x, d = Math.abs(dx); b.face = Math.sign(dx) || b.face; if (d > 420) { b.vx = 0; b.cen.afronta = (b.cen.afronta || 0) - dt; if (b.cen.afronta <= 0) { b.cen.afronta = 4; G.fala(b, 'Dai-me um homem, para que pelejemos!'); b.cen.vibra = 1; } } else b.vx = d > b.w * 0.7 ? b.face * (b.c.vel || 66) * (1 + fase(b) * 0.2) : 0; },
   // os exércitos assistem e se agitam; o ribeiro com as cinco pedras lisas brilha ao fundo
-  palco(G, b, dt) { b.cen.vibra = Math.max(0, (b.cen.vibra || 0) - dt); b.cen.pedras = 5; },
+  palco(G, b, dt) { b.cen.vibra = Math.max(0, (b.cen.vibra || 0) - dt); },
   pref: { lanca: (G, b) => perto(G, b) < 260 ? 1.8 : 0.5, escudeiro: (G, b) => perto(G, b) > 220 ? 1.4 : 0.6, dardo: (G, b) => perto(G, b) > 260 ? 1.6 : 0.6, desafio: G => G.inimigos.filter(e => e.kind === 'vicio').length < 2 ? 0.8 : 0 },
   golpes: {
     // a lança: a defesa perfeita expõe a testa do gigante (1Sm 17:49)

@@ -197,3 +197,25 @@ os outros digitam o código, ou abrem o link `?sala=CÓDIGO`. Não há servidor 
 - **Site de apresentação:** `/site` (`site.html`, `src/site/`). Trailer, clipes das batalhas, mecânicas, vocações e a página de download
   (computador, Android, iPhone ou navegador). Registra o mesmo service worker do jogo, então "Instalar" baixa o jogo para jogar sem internet.
   As mídias ficam em `public/site/` (geradas por `scripts/site-midia.py` a partir da mesma gravação) e não entram no cache offline do jogo.
+
+## Bosque do Treino, controle completo, trilhas compostas e ajustes de luta
+
+- **Bosque do Treino** (`bosque` em `dados.js`, `PASSOS`/`tutorial()`): quem chega pela primeira vez começa numa trilha antes do Refúgio,
+  com onze passos guiados e tudo à mão (troncos para pular, bonecos de palha, degraus que só a lâmpada mostra, dardos que não ferem,
+  jarro cheio para o ataque mira). A descida do Espírito saiu do tutorial: é conquistada no Vale da Mentira. O bosque continua aberto
+  pela Praça do poço.
+- **O estrangeiro de branco** (`mensageiro` em `mundonovo.js`): depois de cinco quedas (e antes do encontro no Getsêmani), aparece junto
+  ao poço e dá pistas leves, uma por vez, sobre a trilha do olival e a passagem entre as oliveiras.
+- **Controle** (`gamepad.js`): Start aperta o botão principal, B volta também nas telas de entrada, LB/RB trocam de aba, ◀ ▶ regulam
+  volumes, A num campo de texto abre um teclado na tela, botões de segurar (pesca) funcionam, e o direcional de controles genéricos
+  vale nos menus. `node tests/controle-browser.cjs` cria um peregrino e entra no jogo só com um controle de mentira.
+- **Golias** (`vale()` em `jogo.js`): uma pedra lisa aparece num canto qualquer do vale; quem apanha tem um arremesso, mirado. Na testa,
+  o gigante cambaleia. Errou, só na próxima pedra.
+- **Procrastinação / Preguiça:** a cura é constante e forte, mas só dentro da barra atual (`regenera` em `chefes.js`).
+- **Uma arma por vez** (`armeiro()` em `menu.js`, `precoArma`/`valorTroca` em `arsenal.js`): trocar entrega a arma da mão por 40% do
+  valor; as achadas ficam com Jael e a primeira retirada é de graça. Armas 25% mais caras.
+- **Câmaras:** um vício que saiu da câmara (voou para a sala de cima, entrou numa parede) é trazido de volta; depois de 14 s a onda
+  mostra onde estão os que faltam. **Sardes:** os atacantes perseguem, não se perdem no escuro e o ataque não dura para sempre.
+- **Trilhas compostas** (`src/trilhas.js`): 44 músicas escritas nota a nota e tocadas por um sequenciador (caixinha de música, flauta,
+  onda quadrada, harpa, baixo e bateria sintetizados): cada lugar, cada página, cada chefe, a batalha contra vícios e a raid.
+  `music(modo, chave)` escolhe pela chave; o que não tem trilha composta cai na trilha antiga.
