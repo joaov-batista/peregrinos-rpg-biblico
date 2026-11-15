@@ -282,6 +282,8 @@ export function renderPixel(G) {
   // avisos de golpe: áreas pontilhadas que fecham até o impacto
   for (const z of G.zonas) pintarZona(g, G, z, X, Y, vw, vh, Tm);
   pintarEfeitos(g, G.fxPx, cx, cy, true);
+  // figurantes: os zelotes de pé na sala, depois da luta, fazendo o gesto de respeito
+  for (const e of G.figurantes || []) { e.alpha = Math.min(1, (e.alpha ?? 1) + 0.035); const q = quadroChefe(e, Tm, G); if (!q) continue; const k = q.esc || 1; g.save(); g.translate(X(e.x), Y(e.y)); g.scale((e.face > 0 ? 1 : -1) * k, k); g.drawImage(q.s.tela(), -q.ax, -q.ay); g.restore(); }
   for (const e of G.inimigos) {
     if (Math.abs(e.x - p.x) > 1200) continue;
     if (e.kind === 'chefe') {

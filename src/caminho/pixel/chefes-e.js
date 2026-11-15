@@ -17,9 +17,11 @@ const lamina = (s, x0, y0, x1, y1, g = 2) => { s.linha(x0, y0, x1, y1, g + 1, AC
 function zelote(s, b, Tm, nome) {
   const Q = QUEM[nome], M = Q.m, t = b.mov?.def?.fn || b.mov?.nome || '', caido = b.quebrado > 0 || b.tonto > 0, prep = !caido && (b.tele > 0 || (!!b.mov && b.mov.t < 0.3)), age = !caido && !!b.mov && !prep, pisca = Math.floor(Tm * 14) % 2;
   const mergulho = /Cadente|^bote|^giro|^abalo/.test(t) && !caido, parede = !mergulho && /Parede|Rasteira|Alta|chuva|^fogo|^brasas|Costas/.test(t) && !caido, rasante = !mergulho && !parede && !!t && !caido, vai = rasante && (age || b.corre);
+  // o respeito, depois da luta: 1 = de pé, sereno; 2 = o gesto de cada um; 3 = o punho no peito e a cabeça baixa
+  const gs = caido ? 0 : b.gesto || 0; if (gs !== b.gestoDe) { b.gestoDe = gs; b.gestoIni = Tm; } const gk = gs >= 2 ? Math.min(1, (Tm - b.gestoIni) / 0.7) : 0, ajoelha = nome === 'eleazar' ? gk : 0;
   const resp = Math.floor(Tm * 2.4) % 2, chao = oy - 2;
   // quanto o corpo se encolhe e para onde pende
-  const kH = caido ? 0.5 : vai ? 0.62 : parede ? 0.72 : prep ? 0.9 : 1, kW = caido ? 1.25 : vai ? 1.15 : parede ? 1.05 : 1;
+  const kH = caido ? 0.5 : vai ? 0.62 : parede ? 0.72 : prep ? 0.9 : 1 - ajoelha * 0.3, kW = caido ? 1.25 : vai ? 1.15 : parede ? 1.05 : 1;
   const H = Math.round(Q.H * kH) - (resp && !t && !caido ? 0 : 0), W = Math.round(Q.W * kW), SH = Q.SH, R = Q.R;
   const base = chao - (mergulho ? 12 : parede ? 6 : 0), cx = ox, pende = vai ? 15 : caido ? -3 : mergulho ? 1 : nome === 'menaem' ? 4 : nome === 'jair' ? 3 : 1;
   const ombroY = base - H + R + 3 + resp * (t || caido ? 0 : 1), ombroX = cx + pende;
@@ -48,7 +50,7 @@ function zelote(s, b, Tm, nome) {
   if (nome === 'jair') { for (const [dx, dy] of [[-10, 14], [6, 22], [-3, 28]]) { s.ret(cx + dx, ombroY + dy, 5, 4, M[3]); s.px(cx + dx, ombroY + dy, BREU); s.px(cx + dx + 4, ombroY + dy + 3, BREU); } for (let k = 0; k < 9; k++) s.px(cx - W + 5 + k * 4, barra - 12 + (k % 2), C('#8A7A5A')); // remendos e a corda
   }
   // ---------- a cabeça: capuz fundo ----------
-  const hx = ombroX + (vai ? 7 : caido ? -2 : 2), hy = ombroY - R + 2 + (caido ? 4 : 0) + (vai ? 3 : 0);
+  const hx = ombroX + (vai ? 7 : caido ? -2 : 2), hy = ombroY - R + 2 + (caido ? 4 : 0) + (vai ? 3 : 0) + (gs === 3 ? Math.round(gk * 3) : 0);
   s.poli([[hx - R - 2, hy + R], [hx + R + 1, hy + R], [hx + R + 2, hy - 1], [hx + 2, hy - R - 2], [hx - R + 1, hy - R - 4 - (nome === 'jair' ? 2 : 0)], [hx - R - 3, hy - 2]], M[1]);
   s.poli([[hx - R - 2, hy + R], [hx - R + 3, hy + R], [hx - R + 3, hy - R - 2], [hx - R + 1, hy - R - 4 - (nome === 'jair' ? 2 : 0)], [hx - R - 3, hy - 2]], M[0]);
   s.linha(hx + 2, hy - R - 2, hx + R + 2, hy - 1, 1, M[3]); s.linha(hx + R + 2, hy - 1, hx + R + 1, hy + R, 1, M[2]); // luz na borda do capuz
@@ -58,7 +60,8 @@ function zelote(s, b, Tm, nome) {
   const olhoY = hy, aceso = prep && pisca;
   if (!caido) { s.ret(hx + 1, olhoY, 2, 1, BREU); s.ret(hx + 5, olhoY, 2, 1, BREU); s.ret(hx, olhoY - 1, 3, 1, BREU); s.ret(hx + 5, olhoY - 1, 3, 1, BREU); if (aceso) { s.px(hx + 2, olhoY, BR); s.px(hx + 6, olhoY, BR); } } // olhar firme sob a sobrancelha cerrada
   else { s.ret(hx + 1, olhoY, 2, 1, PELES); s.ret(hx + 5, olhoY, 2, 1, PELES); }
-  if (nome === 'menaem') { s.poli([[hx - 2, hy + 2], [hx + R, hy + 2], [hx + R, hy + R - 1], [hx - 1, hy + R]], M[2]); s.linha(hx - 2, hy + 2, hx + R, hy + 2, 1, M[3]); s.linha(hx + 1, hy + 4, hx + 6, hy + 5, 1, M[1]); // o lenço que cobre do nariz para baixo
+  if (nome === 'menaem') { if (gk < 0.5) { s.poli([[hx - 2, hy + 2], [hx + R, hy + 2], [hx + R, hy + R - 1], [hx - 1, hy + R]], M[2]); s.linha(hx - 2, hy + 2, hx + R, hy + 2, 1, M[3]); s.linha(hx + 1, hy + 4, hx + 6, hy + 5, 1, M[1]); } // o lenço que cobre do nariz para baixo
+    else { s.ret(hx + 2, hy + 4, 4, 1, PELES); s.ret(hx + 1, hy + 5, 6, 2, BREU); s.ret(hx - 2, hy + R - 2, R + 2, 3, M[2]); s.linha(hx - 2, hy + R - 2, hx + R, hy + R - 2, 1, M[3]); } // lenço arriado no pescoço: a boca e a barba curta
     s.ret(hx - R - 2, hy - 4, R * 2 + 3, 2, Q.acentoE); s.ret(hx - R - 2, hy - 4, R * 2 + 3, 1, Q.acento); // a faixa na testa, por cima do capuz
     for (let k = 0; k < 2; k++) { let x = hx - R - 2, y = hy - 3 + k; for (let i = 1; i <= 6; i++) { const nx = hx - R - 2 - i * (vai ? 4 : 2.2), ny = hy - 3 + k * 3 + Math.sin(Tm * 7 + i * 0.7 + k * 1.3) * (1 + i * 0.35) + (vai || mergulho ? -i * (mergulho ? 2.5 : 0.2) : i * 0.9); s.linha(x, y, nx, ny, 1, k ? Q.acentoE : Q.acento); x = nx; y = ny; } } } // as pontas ao vento
   if (nome === 'eleazar') { const G = C('#8E8E96'), GE = C('#5A5A64'); s.poli([[hx - 1, hy + 3], [hx + 7, hy + 3], [hx + 7, hy + R], [hx + 3, hy + R + 4], [hx, hy + R]], GE); s.poli([[hx + 3, hy + 3], [hx + 7, hy + 3], [hx + 7, hy + R], [hx + 4, hy + R + 3]], G); s.ret(hx + 2, hy + 4, 4, 1, BREU); // barba grisalha cheia
@@ -72,6 +75,7 @@ function zelote(s, b, Tm, nome) {
     else if (vai) { lamina(s, frente + 2, base - 12, frente + 16, base - 14); lamina(s, frente, base - 7, frente + 13, base - 5); }
     else if (parede) { lamina(s, hx + R + 3, hy - 6, hx + R + 12, hy - 15); lamina(s, frente - 2, maoY + 4, frente + 4, maoY + 13); s.ret(hx + R + 1, hy - 5, 3, 3, M[0]); }
     else if (caido) { lamina(s, frente + 1, chao - 2, frente + 12, chao - 1); lamina(s, tras - 2, chao - 1, tras - 12, chao - 2); }
+    else if (gs >= 2) { const ax = frente + 2 + Math.round(gk * 10); s.linha(ombroX + SH - 2, ombroY + 6, ax - 2, maoY - 4, 3, M[1]); s.ret(ax - 3, maoY - 6, 4, 4, PELE); lamina(s, ax - 4, maoY - 5, ax - 16, maoY - 3); s.ret(ax, maoY - 6, 6, 3, COURO); s.px(ax + 5, maoY - 6, COUROE); lamina(s, tras - 2, chao - 1, tras - 12, chao - 2); } // a sica oferecida pelo cabo; a outra, no chão
     else { lamina(s, frente - 2, maoY + 2, frente + 5 + (prep ? 3 : 0), maoY + 12 - (prep ? 8 : 0)); lamina(s, tras + 4, maoY + 3, tras - 3, maoY + 12); s.ret(frente - 4, maoY, 4, 3, M[0]); s.ret(tras + 3, maoY + 1, 4, 3, M[0]); } // seguradas ao contrário
   } else if (nome === 'eleazar') {
     const [x0, y0, x1, y1] = mergulho ? [cx + 2, base - H + 6, cx + 2, base + 16] : vai ? [cx - 22, base - 16, frente + 26, base - 13] : parede ? [cx - 14, hy - 4, frente + 22, hy - 18] : caido ? [tras - 10, chao - 3, frente + 22, chao - 6] : [frente + 3, base, frente + 6 - (prep ? 5 : 0), base - Q.H - 14];
@@ -79,13 +83,16 @@ function zelote(s, b, Tm, nome) {
     s.poli([[x1 - uy * 3, y1 + ux * 3], [x1 + uy * 3, y1 - ux * 3], [x1 + ux * 13, y1 + uy * 13]], ACO); s.linha(x1, y1, x1 + ux * 12, y1 + uy * 12, 1, BR); s.ret(x1 - 1, y1 - 1, 3, 3, C('#C9963C')); for (let k = 0; k < 4; k++) s.px(x1 - ux * 3 - uy * (2 + k), y1 - uy * 3 + ux * (2 + k) + k, Q.acento); // a ponta, o anel e o penacho
     if (!mergulho && !caido) s.ret(vai ? frente - 2 : frente + 1, vai ? base - 16 : maoY, 4, 4, M[0]); // a luva que a segura
   } else {
-    const giro = parede && age ? Tm * 15 : 0, [px, py, a] = mergulho ? [cx + 3, base - 4, Math.PI * 0.5] : vai ? [frente + 4, base - 13, 0] : parede ? [hx + R + 4, hy - 8, -1 + giro] : caido ? [frente + 2, chao - 4, 0.1] : [frente + 2, maoY, -1.25 - (prep ? 0.5 : 0)];
+    const giro = parede && age ? Tm * 15 : 0, [px, py, a] = mergulho ? [cx + 3, base - 4, Math.PI * 0.5] : vai ? [frente + 4, base - 13, 0] : parede ? [hx + R + 4, hy - 8, -1 + giro] : caido || gs >= 2 ? [frente + 2, chao - 4, 0.1] : [frente + 2, maoY, -1.25 - (prep ? 0.5 : 0)];
     const hl = parede ? 8 : 20, ex = px + Math.cos(a) * hl, ey = py + Math.sin(a) * hl; s.linha(px - Math.cos(a) * 6, py - Math.sin(a) * 6, ex, ey, 2, C('#3A2A1E')); s.linha(px, py, ex, ey, 1, C('#7A5A36'));
     for (let k = 0; k <= 14; k++) { const an = a - 0.2 + k * 0.17, rr = 13 - Math.abs(k - 7) * 0.12, qx = ex + Math.cos(an) * rr - Math.cos(a - 0.2) * 13, qy = ey + Math.sin(an) * rr - Math.sin(a - 0.2) * 13, g = k < 3 ? 1 : k > 11 ? 1 : 3; for (let j = 0; j < g; j++) s.px(qx - Math.cos(an) * j, qy - Math.sin(an) * j, j === 0 ? BR : j === 1 ? ACO : ACOE); } // a meia-lua da foice
     if (!parede) for (let k = 1; k <= 6; k++) s.px(px - 2 - k, py + 3 + Math.round(Math.sin(k * 0.8 + Tm * 4) * 1.5) + k, k % 2 ? ACOE : C('#5A5E6A')); // a corrente
-    s.ret(px - 2, py - 2, 4, 4, PELE); s.px(px - 2, py - 2, PELEE); // a mão
+    if (gs < 2) { s.ret(px - 2, py - 2, 4, 4, PELE); s.px(px - 2, py - 2, PELEE); } // a mão
   }
   if (nome === 'jair' && /^fogo|^brasas/.test(t)) { const fx = hx + 12, fy = hy - 14 + Math.round(Math.sin(Tm * 9) * 2), F1 = C('#FF9A3C'), F2 = C('#FFD27A'); s.linha(ombroX + 6, ombroY + 4, fx, fy + 6, 3, M[1]); s.ret(fx - 2, fy + 4, 4, 4, PELE); s.bola(fx, fy, 5 + pisca, 6 + pisca, { 0: C('#A8431C'), 1: F1, 2: F1, 3: F2, 4: BR }, 0, 0.6); s.px(fx - 4, fy - 8 - pisca * 2, F1); s.px(fx + 3, fy - 10 + pisca, F2); s.px(fx, fy - 12 - pisca, F1); } // a mão erguida com o fogo do zelo
+  // ---------- os gestos de respeito ----------
+  if (gs >= 2 && nome === 'jair' && gs === 2) { const bx = hx + 13, by = hy - 4 - Math.round(gk * 8); s.linha(ombroX + 6, ombroY + 5, bx, by + 5, 3, M[1]); s.ret(bx - 2, by, 5, 5, PELE); s.ret(bx - 2, by - 2, 1, 2, PELE); s.ret(bx, by - 3, 1, 3, PELE); s.ret(bx + 2, by - 2, 1, 2, PELE); if (gk >= 1) for (let k = 0; k < 4; k++) s.px(bx + 6 + k * 3, by + 8 + k * 4 + pisca, k % 2 ? C('#FFE9A8') : BR); } // a mão aberta que abençoa
+  if ((gs === 3 || (gs === 2 && nome === 'eleazar')) && gk > 0.4) { s.linha(ombroX + SH - 3, ombroY + 5, ombroX + 3, ombroY + 11, 3, M[2]); s.ret(ombroX, ombroY + 9, 5, 5, PELE); s.px(ombroX, ombroY + 9, PELEE); s.px(ombroX + 4, ombroY + 13, PELEE); } // o punho fechado no peito
   // ---------- rastros ----------
   if (vai) for (let k = 0; k < 4; k++) s.ret(cx - W - 40 - k * 5, base - 22 + k * 5, 9 - k * 2, 1, k % 2 ? Q.acento : ACO);
   if (mergulho && age) for (let k = 0; k < 3; k++) s.ret(cx - 7 + k * 7, base - H - 40 - k * 4, 1, 7, Q.acento);

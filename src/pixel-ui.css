@@ -323,3 +323,17 @@ html.remake .panel.esquema { width: min(1000px, calc(100% - 24px)); }
 .op-estrelas { display: flex; gap: 6px; justify-content: center; margin: 8px 0; }
 .op-estrela { background: none; border: 0; font-size: 40px; line-height: 1; color: #3A4158; cursor: pointer; padding: 2px 4px; text-shadow: 0 2px 0 #05060B; }
 .op-estrela.on { color: #E8C873; } .op-estrela:focus-visible, .op-estrela:hover { color: #FFE08A; outline: none; transform: scale(1.1); }
+
+/* ---------- a porta de entrada: o que fica embaixo do formulário vira painel, com botão de verdade ---------- */
+.ou-sep { display: flex; align-items: center; gap: 10px; color: #6E7590; font-size: 15px; margin: 6px 4px 0; } .ou-sep::before, .ou-sep::after { content: ""; flex: 1; height: 2px; background: #2A3050; }
+.porta-btn { appearance: none; font: inherit; font-size: 18px; line-height: 1.1; color: #E8E2D0; background: #1A2038; border: 0; border-radius: 0; padding: 10px 8px; min-height: 44px; cursor: pointer; text-shadow: 1px 1px 0 #05060C; box-shadow: inset 0 2px 0 #34406A, inset 0 -3px 0 #0C1020, 0 0 0 2px #05060C; flex: 1 1 0; white-space: nowrap; }
+.porta-btn b { color: #FFD76A; font-size: 1.15em; } .porta-btn:hover, .porta-btn:focus-visible, body.pad .porta-btn:focus { background: #26305A; color: #FFE9A8; outline: 2px solid #FFD76A; outline-offset: 2px; } .porta-btn:active { transform: translateY(2px); box-shadow: inset 0 2px 0 #0C1020, 0 0 0 2px #05060C; }
+.porta-btn.sem-conta { flex: none; margin: 4px 4px 0; } .sem-conta-nota { margin: 0; text-align: center; font-size: 14px; color: #7C839C; }
+html.remake .abertura .tela-div.porta-painel { width: min(380px, 92vw); box-sizing: border-box; margin-top: 12px; padding: 10px 12px 12px; gap: 8px; align-items: stretch; background: rgba(8, 10, 20, .82); box-shadow: 0 0 0 2px #05060C, inset 0 0 0 2px #2A3050; }
+html.remake .abertura .tela-div.porta-painel > span { margin: 0; text-align: center; font-size: 16px; letter-spacing: .08em; color: #C9A44A; }
+.porta-linha, html.remake .abertura .porta-painel .baixar-btns { display: flex; gap: 8px; flex-wrap: nowrap; } .porta-painel .porta-btn { font-size: 16px; padding: 8px 4px; }
+html.remake .abertura .porta-painel .baixar-ajuda { max-width: none; margin: 0; background: #0C1020; border: 0; border-radius: 0; box-shadow: inset 0 0 0 2px #2A3050; padding: 10px 12px; font-size: 16px; } html.remake .abertura .porta-painel .baixar-ajuda b { color: #FFD76A; } html.remake .abertura .porta-painel .baixar-ajuda li::marker { color: #C9A44A; }
+.porta-aviso { width: min(380px, 92vw); box-sizing: border-box; margin-bottom: 8px; padding: 8px 12px; display: grid; gap: 2px; text-align: left; font-size: 15px; line-height: 1.25; color: #F0E6C8; background: #3A2A10; box-shadow: 0 0 0 2px #05060C, inset 0 0 0 2px #C9A44A; } .porta-aviso b { color: #FFD76A; }
+@media (pointer: coarse) and (max-width: 700px) { .porta-painel.juntos { display: none !important; } } /* tela dividida num celular em pé não cabe */
+@media (max-height: 500px) { .ou-sep, .sem-conta-nota { display: none; } .porta-btn.sem-conta { min-height: 32px; padding: 4px 8px; font-size: 15px; grid-column: 1 / -1; } }
+.card.auth .form-msg:empty { display: none; }

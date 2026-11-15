@@ -145,7 +145,7 @@ export class Caminho {
 
   /* ================= Áreas ================= */
   entrar(id, o = {}) {
-    const def = areaDef(id), cm = this.cm;
+    const def = areaDef(id), cm = this.cm; this.figurantes = [];
     if (id === 'sardes' && cm.sar?.feita) def.tema = 'sardes2'; // depois de restaurada, Sardes tem outro céu
     if (id === 'getsemani' && cm.getsemani) { def.tema = 'getsemani2'; def.sub = 'A manhã seguinte'; } // depois do encontro, o jardim amanhece vazio
     this.area = id; this.def = def; this.tm = tema(def.tema); if (this.p && this.tem('mana_deserto')) this.p.oleo = Math.min(this.oleoMax(), this.p.oleo + 12);
@@ -1049,12 +1049,19 @@ export class Caminho {
     else if (d.mundo) { const m = MUNDO[d.mundo]; this.xp(300); this.pontos(1500); await this.ganhar(m.premio); }
     else if (d.conselho) { this.xp(600); this.pontos(3000); const primeira = !cm.zelo; cm.zelo = true; c.data.gold += primeira ? 600 : 150; this.salvar();
       if (primeira) { // o respeito: um de cada vez, cada um do seu jeito
+        const A = this.N.arena, dir = this.p.x < A.cx ? 1 : -1, fig = (id, quem, dx) => ({ id, cen: { quem }, x: clamp(this.p.x + dir * dx, A.x0 + 40, A.x1 - 40), y: A.chao, face: -dir, alpha: 0, gesto: 1 });
+        const [zm, ze, zj] = this.figurantes = [fig('zelotePunhal', 'menaem', 100), fig('conselho', 'eleazar', 205), fig('zeloteFoice', 'jair', 310)]; this.p.face = dir; const pausa = ms => new Promise(r => setTimeout(r, ms));
         await this.ui.dialog({ nome: 'O Conselho Zelote', texto: 'O salão fica em silêncio. Os três estão de pé, ofegantes, e nenhum deles se senta.\n\nEntão, um de cada vez, eles descem os degraus dos tronos até o chão onde você está.', acoes: [{ label: 'Continuar' }], cls: 'fala-narra', voz: false });
+        zm.gesto = 2; sfx('swing'); await pausa(1100);
         await this.ui.dialog({ nome: 'Menaém, o Assassino', texto: 'Menaém puxa o lenço do rosto. É a primeira vez que alguém de fora vê a cara dele.\n\n"Eu fui pelas suas costas três vezes, e três vezes você já estava virado. Ninguém nunca me viu chegar."\n\nEle vira a sica e a oferece pelo cabo. "Minha faca não se levanta mais contra você. Nem a de quem me obedece."', acoes: [{ label: 'Receber o gesto' }] });
+        ze.gesto = 2; await pausa(600); this.tremor(8); sfx('block'); await pausa(600);
         await this.ui.dialog({ nome: 'Eleazar, o Forte', texto: 'Eleazar finca a lança no chão de pedra e, devagar, põe um joelho em terra. O salão treme um pouco, como tudo que ele faz.\n\n"Eu derrubei o teto em cima de você, e você continuou de pé. Só me ajoelhei diante do Santo de Israel. Diante de você eu não me ajoelho: eu me abaixo para olhar nos olhos de um igual."\n\nEle bate o punho fechado no peito, uma vez.', acoes: [{ label: 'Bater no peito de volta' }] });
+        zj.gesto = 2; sfx('heal'); await pausa(1100);
         await this.ui.dialog({ nome: 'Jair, o Vidente', texto: 'Jair apaga a brasa na palma da mão, sem pressa, e tira o capuz.\n\n"Eu pedi fogo do céu, como Elias (2Rs 1:10). O Mestre repreendeu quem quis fazer o mesmo (Lc 9:54-55). Hoje entendi a repreensão: o fogo desceu, e você não se queimou de raiva."\n\nEle põe a mão velha na sua cabeça. "O Senhor te abençoe e te guarde, filho (Nm 6:24). Há um quarto trono neste salão desde que Simão nos deixou para seguir o Nazareno (Lc 6:15). Quando quiser, sente-se nele."', acoes: [{ label: 'Amém' }] });
+        zm.gesto = ze.gesto = zj.gesto = 3; await pausa(700); this.tremor(5); sfx('block'); await pausa(700);
         await this.ui.dialog({ nome: 'Menaém, Eleazar e Jair', texto: '"Nós esperávamos um Messias que viesse como nós: de ferro na mão. Ele veio, e mandou guardar a espada (Mt 26:52). Nunca perdoamos isso."\n\n"Você luta como um de nós, mas não pelo que nós lutamos. Talvez seja isso que nos faltou."\n\nOs três falam juntos, pela primeira vez sem amargura na voz:\n\n"IRMÃO DE ARMAS."', acoes: [{ label: 'Irmãos' }], cls: 'achado-lendaria' });
-      } else await this.ui.dialog({ nome: 'Menaém, Eleazar e Jair', texto: 'Os três põem as armas no chão, uma ao lado da outra, e batem o punho no peito.\n\n"De novo, e de novo você de pé. Bom treino, irmão."', acoes: [{ label: 'Bom treino' }] });
+      } else { const A = this.N.arena, dir = this.p.x < A.cx ? 1 : -1; this.figurantes = [['zelotePunhal', 'menaem', 100], ['conselho', 'eleazar', 205], ['zeloteFoice', 'jair', 310]].map(([id, quem, dx]) => ({ id, cen: { quem }, x: clamp(this.p.x + dir * dx, A.x0 + 40, A.x1 - 40), y: A.chao, face: -dir, alpha: 0, gesto: 3 }));
+        await this.ui.dialog({ nome: 'Menaém, Eleazar e Jair', texto: 'Os três põem as armas no chão, uma ao lado da outra, e batem o punho no peito.\n\n"De novo, e de novo você de pé. Bom treino, irmão."', acoes: [{ label: 'Bom treino' }] }); }
       if (primeira) await this.ui.dialog({ nome: 'ZELO COM ENTENDIMENTO', texto: '"Têm zelo de Deus, porém não com entendimento" (Rm 10:2). O seu, agora, tem os dois.\n\nDepois de uma DEFESA PERFEITA, o seu próximo golpe (em até dois segundos) sai com o triplo da força.\n\n+600 denários. Os zelotes da aldeia vão olhar para você de outro jeito.', acoes: [{ label: 'Amém' }], cls: 'achado-lendaria' }); }
     else if (d.raiz) await venceuRaiz(this);
     else if (d.historia) { this.xp(200); this.pontos(900); await vencerCapitulo(this); }

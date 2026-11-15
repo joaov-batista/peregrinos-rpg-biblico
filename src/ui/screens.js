@@ -51,15 +51,20 @@ export function showAuth(onDone) {
     go.disabled = false;
   } });
   if (ONLINE) form.append(tabs, h('label', {}, 'E-mail', email), h('label', {}, 'Senha', pass), go, msg,
-    h('button', { class: 'link', type: 'button', onclick: () => { net.user = null; dispatchEvent(new Event('peregrinos-sync')); initAudio(); onDone(); } }, 'Jogar sem conta (salva só neste aparelho, sem ranking mundial)'));
+    h('div', { class: 'ou-sep', 'aria-hidden': 'true' }, h('span', {}, 'ou')),
+    h('button', { class: 'porta-btn sem-conta', type: 'button', onclick: () => { net.user = null; dispatchEvent(new Event('peregrinos-sync')); initAudio(); onDone(); } }, 'Jogar sem conta'),
+    h('p', { class: 'sem-conta-nota' }, 'Salva só neste aparelho, sem ranking mundial.'));
   else form.append(h('p', { class: 'muted' }, 'Sua jornada fica salva neste navegador. Crie seu peregrino e descubra a Cidade de Refúgio.'),
     h('button', { class: 'btn gold wide', type: 'button', onclick: () => { initAudio(); onDone(); } }, 'Começar a jornada'));
   const emQuadro = new URLSearchParams(location.search).has('quadro');
   const nQuadro = +new URLSearchParams(location.search).get('quadro');
   const quem = emQuadro ? h('p', { class: 'title' }, 'Jogador ' + (nQuadro + 1) + (ONLINE ? ': entre com a sua conta' : '')) : '';
-  const juntos = emQuadro ? '' : h('div', { class: 'tela-div' }, h('span', {}, 'Jogar juntos neste aparelho'), ...[2, 3, 4].map(n => h('button', { class: 'btn sm', type: 'button', onclick: () => { location.href = location.pathname + '?telas=' + n; } }, n + ' jogadores')));
+  const juntos = emQuadro ? '' : h('div', { class: 'tela-div porta-painel juntos' }, h('span', {}, 'Jogar juntos neste aparelho'), h('div', { class: 'porta-linha' }, ...[2, 3, 4].map(n => h('button', { class: 'porta-btn', type: 'button', 'aria-label': n + ' jogadores', onclick: () => { location.href = location.pathname + '?telas=' + n; } }, h('b', {}, String(n)), ' jogadores'))));
   setTimeout(() => scr().querySelector('.screen')?.classList.add('abertura'), 0);
-  screen(logo(), quem, h('p', { class: 'week' }, 'Estudo da semana: ', h('b', {}, SEMANA_ATUAL.titulo), ' · ' + SEMANA_ATUAL.estudo), form, juntos, emQuadro ? '' : baixarJogo());
+  // aberto por dentro do Instagram, Facebook ou TikTok: lá não dá para instalar, e o salvamento some com facilidade
+  const embutido = /Instagram|FBAN|FBAV|FB_IAB|TikTok|musical_ly|Line\//i.test(navigator.userAgent);
+  const aviso = embutido && !emQuadro ? h('div', { class: 'porta-aviso', role: 'note' }, h('b', {}, 'Você abriu o jogo por dentro de outro aplicativo.'), h('span', {}, 'Para instalar e não perder o progresso, toque em ⋯ (em cima, à direita) e escolha "Abrir no navegador".')) : '';
+  screen(logo(), quem, h('p', { class: 'week' }, 'Estudo da semana: ', h('b', {}, SEMANA_ATUAL.titulo), ' · ' + SEMANA_ATUAL.estudo), aviso, form, juntos, emQuadro ? '' : baixarJogo());
 }
 
 // Botão "Instalar app" (aparece só quando dá para instalar)
@@ -91,8 +96,8 @@ function baixarJogo() {
     if (aqui && pwa.canPrompt) { ajuda.hidden = true; await pwa.install(t => { ajuda.hidden = false; ajuda.innerHTML = ''; ajuda.append(h('b', {}, t)); }); return; }
     mostrar(qual, titulo);
   };
-  const b = (qual, rotulo, titulo, aqui) => h('button', { class: 'btn sm', type: 'button', 'data-plat': qual, onclick: () => instalar(qual, titulo, aqui) }, rotulo);
-  const bloco = h('div', { class: 'tela-div baixar' }, h('span', {}, 'Baixar o jogo'),
+  const b = (qual, rotulo, titulo, aqui) => h('button', { class: 'porta-btn', type: 'button', 'data-plat': qual, onclick: () => instalar(qual, titulo, aqui) }, rotulo);
+  const bloco = h('div', { class: 'tela-div baixar porta-painel' }, h('span', {}, 'Baixar o jogo'),
     h('div', { class: 'baixar-btns' },
       b('pc', 'Computador', 'Instalar no computador', !celular),
       b('android', 'Android', 'Instalar no Android', android),
