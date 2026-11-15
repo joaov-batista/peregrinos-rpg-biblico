@@ -19,7 +19,7 @@ const quadro = new Sprite(120, 112);
 export const CHEFES_PX = {
   mamom: { ax: 60, ay: 104, pinta(s, b, Tm, G) {
     const ox = 60, oy = 104, t = Math.floor(Tm * 6), resp = [0, 0, 1, 1][t % 4], tipo = b.mov?.def.tipo, prep = b.tele > 0, caido = b.quebrado > 0 || b.tonto > 0;
-    const noAr = !b.chao && !caido, corre = tipo === 'investida' && b.art.step === 2, anda = Math.abs(b.vx) > 8 && !corre ? Math.floor(Tm * 5) % 2 : 0;
+    const noAr = !b.chao && !caido, corre = (tipo === 'investida' || b.corre) && b.art.step === 2, anda = Math.abs(b.vx) > 8 && !corre ? Math.floor(Tm * 5) % 2 : 0;
     let incl = corre ? 6 : prep ? -3 : caido ? 2 : 0, baixo = caido ? 6 : noAr ? -2 : resp, ry = 20 + (noAr ? 2 : 0) - (caido ? 3 : 0) + (b.pousou > 0 ? -3 : 0), rx = 23 + (b.pousou > 0 ? 3 : 0) - (noAr ? 1 : 0);
     const cy = oy - 34 + baixo + (b.pousou > 0 ? 3 : 0), cx = ox + incl;
     // manto atrás, com a barra rasgada

@@ -14,6 +14,7 @@ import { OLEO_USO } from '../heroi.js';
 import { Sprite, rampa, cor, carimbar, TINTA, BRANCO, PX } from './raster.js';
 import { quadroHeroi, quadroPessoa, vulto, AX, AY } from './humano.js';
 import { quadroChefe } from './chefespx.js';
+import { pintarPalco } from './palcos.js';
 import { cenaPixel, pintarFundoPixel, pintarSalasPixel, pintarBlocosPixel, pintarLuzPixel, TL, mistura, pontilha } from './mundo.js';
 import { pintarEfeitos } from './efeitos.js';
 import { JESUS_LOOK } from '../getsemani.js';
@@ -246,6 +247,8 @@ export function renderPixel(G) {
   pintarSalasPixel(g, G, C, vw, vh, cx, cy);
   for (const o of G.objs) { const x = X(o.x); if (x < -60 || x > vw + 60) continue; if (o.oculto && !G.achou(o)) { const k = G.p.lampA * clamp(1 - (Math.hypot(o.x - G.p.x, o.y - G.p.y) - 200) / 160, 0, 1); if (k < 0.05) continue; g.globalAlpha = k; } if (!pintarObjeto(g, o, G, x, Y(o.y), Tm)) antigo(() => desenharObjeto(g, o, G)); g.globalAlpha = 1; }
   if (G.def.mundo && G.N.arena) pintarArenaTema(g, G, X, Y, Tm);
+  const chefe = G.N.arena && G.inimigos.find(e => e.kind === 'chefe' && e.cen);
+  if (chefe) pintarPalco(g, G, chefe, X, Y, Tm, false); // o cenário que muda durante a luta
   pintarBlocosPixel(g, G, C, vw, vh, cx, cy);
   for (const o of G.objs) if (o.tipo === 'mar' || o.tipo === 'barco') pintarAgua(g, o, G, X(o.x), Y(o.y), Tm);
   // avisos de golpe: áreas pontilhadas que fecham até o impacto
@@ -304,6 +307,7 @@ export function renderPixel(G) {
   if (G.def.mundo === 'leviata' && G.N.arena) { // o mar bate no costado: ondas na frente de tudo
     const yy = Y(G.N.arena.chao) + 4; for (let xx = 0; xx < vw; xx++) { const h1 = Math.round(Math.sin((xx + cx) * 0.09 + Tm * 2.2) * 2 + Math.sin((xx + cx) * 0.031 - Tm * 1.3) * 3); g.fillStyle = '#123847'; g.fillRect(xx, yy + h1, 1, vh - yy); g.fillStyle = (xx + Math.floor(Tm * 6)) % 9 < 3 ? '#BFF0F8' : '#3A9AB0'; g.fillRect(xx, yy + h1, 1, 1); if ((xx * 7 + Math.floor(Tm * 3)) % 23 === 0) { g.fillStyle = '#1C5A6E'; g.fillRect(xx, yy + h1 + 5, 4, 1); } }
   }
+  if (chefe) pintarPalco(g, G, chefe, X, Y, Tm, true);
   pintarLuzPixel(g, G, vw, vh, cx, cy, luzCv);
   pintarClima(g, G, vw, vh, cx, Tm);
   pintarHud(g, G, vw); barraChefe(g, G, vw);
@@ -402,6 +406,10 @@ function pintarTiro(g, t, x, y, Tm) {
 
 function pintarZona(g, G, z, X, Y, vw, vh, Tm) {
   const A = G.N.arena, p = G.p, ativa = z.aviso <= 0, c = !z.cor ? '#D8C8F0' : z.cor.startsWith('#') ? z.cor : `rgb(${z.cor})`, pisca = Math.floor(Tm * 12) % 2;
+  const luzPerto = p.lamp && Math.hypot(z.x + (z.tipo === 'muro' ? z.w / 2 : 0) - p.x, (z.y ?? p.y) - p.y) < G.raioLuz();
+  if (z.oculta && !ativa && !luzPerto) { if (pisca && Math.floor(Tm * 3) % 3 === 0) { g.fillStyle = c; g.globalAlpha = 0.25; g.fillRect(X(z.x), Y(z.y + z.h) - 1, Math.round(z.w / PX), 1); g.globalAlpha = 1; } return; } // a cilada só aparece à luz
+  if (z.isca && z.sinal) { const x = X(z.x), y = Y(z.y), r = Math.round(z.r / PX); g.fillStyle = luzPerto ? '#FFE9A8' : c; for (let a = 0; a < 40; a++) if ((a + Math.floor(Tm * 10)) % 2) g.fillRect(x + Math.round(Math.cos(a / 40 * TAU) * r), y + Math.round(Math.sin(a / 40 * TAU) * r), 1, 1); if (luzPerto) { g.globalAlpha = 0.35; for (let yy = -r; yy <= r; yy += 2) for (let xx = -r; xx <= r; xx += 2) if (xx * xx + yy * yy < r * r) g.fillRect(x + xx, y + yy, 1, 1); g.globalAlpha = 1; } return; } // o abrigo verdadeiro brilha sob a lâmpada
+  if (z.tipo === 'muro' && ativa && z.dur > 0.4) { const x = X(z.x), y = Y(z.y), w = Math.round(z.w / PX), h = Math.round(z.h / PX); g.fillStyle = c; g.globalAlpha = 0.85; g.fillRect(x, y, w, h); g.globalAlpha = 1; g.fillStyle = '#FFFFFF'; g.fillRect(x, y, w, 1); for (let i = 0; i < w; i += 4) g.fillRect(x + i, y + ((i + Math.floor(Tm * 12)) % Math.max(1, h)), 1, 1); return; } // paredes que andam: onda, escudo, âncora, ouro
   if (z.tipo === 'circ') {
     const x = X(z.x), y = Y(z.y), r = Math.round(z.r / PX), k = ativa ? 1 : clamp(1 - z.aviso / 0.9, 0, 1);
     g.fillStyle = ativa ? '#fff' : c;
@@ -422,7 +430,7 @@ function pintarZona(g, G, z, X, Y, vw, vh, Tm) {
     g.fillRect(x + 1, y, w - 2, h); g.fillStyle = c; g.fillRect(x, y, 1, h); g.fillRect(x + w - 1, y, 1, h); if (z.tipo === 'col') for (let i = 0; i < 8; i++) g.fillRect(x - 3 + ((i * 7) % (w + 6)), y + h - 1 - ((i * 5) % 9), 1, 2);
     return;
   }
-  if (z.tipo === 'ret') return;
+  if (z.tipo === 'ret' || (z.isca && ativa)) return;
   const k = clamp(1 - z.aviso / 0.9, 0, 1); g.fillStyle = c;
   for (let yy = 0; yy < h; yy += 1) for (let xx = (yy & 1); xx < w; xx += 2) if (pontilha(xx, yy + Math.floor(Tm * 16), 0.12 + k * 0.4)) g.fillRect(x + xx, y + yy, 1, 1);
   g.fillStyle = pisca ? '#fff' : c; g.fillRect(x, y, w, 1); g.fillRect(x, y + h - 1, w, 1); if (z.tipo === 'col') { g.fillRect(x, y, 1, h); g.fillRect(x + w - 1, y, 1, h); }

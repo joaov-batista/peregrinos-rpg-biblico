@@ -141,7 +141,7 @@ export const CHEFES_A = {
 
   // A Violência de Nínive: o guerreiro assírio de elmo cônico, barba trançada, escudo e maça.
   violencia(s, b, Tm) {
-    const E = est(b, Tm), inv = E.tipo === 'investida' && E.ataca, incl = inv ? 6 : E.prep ? -3 : 0, baixo = E.caido ? 7 : E.resp - E.pouso * -1, cx = ox + incl, topo = oy - 62 + baixo;
+    const E = est(b, Tm), inv = (E.tipo === 'investida' || b.corre) && E.ataca, incl = inv ? 6 : E.prep ? -3 : 0, baixo = E.caido ? 7 : E.resp - E.pouso * -1, cx = ox + incl, topo = oy - 62 + baixo;
     for (const [dx, lev] of [[-9, E.anda && E.passo ? -3 : 0], [9, E.anda && !E.passo ? -3 : 0]]) { s.membro(ox + dx, oy - 24 + baixo, ox + dx + (inv ? 4 : 0), oy - 6 + lev, 7, BRONZE); s.ret(ox + dx - 5 + (inv ? 4 : 0), oy - 6 + lev, 12, 6, FERRO[2]); s.ret(ox + dx - 5 + (inv ? 4 : 0), oy - 6 + lev, 12, 1, FERRO[4]); }
     // saiote de escamas e couraça
     s.poli([[cx - 16, topo + 34], [cx + 16, topo + 34], [ox + 18, oy - 16 + baixo], [ox - 18, oy - 16 + baixo]], SANGUE[1]);

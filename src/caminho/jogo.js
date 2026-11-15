@@ -232,6 +232,7 @@ export class Caminho {
     if (this.cena) { this.ctl = { mx: this.cenaMx || 0, my: 0 }; for (const k of ['dodge', 'attack', 'dash', 'lock', 'defend', 'botija', 'item1', 'skill', 'interact', 'item2', 'menu', 'escape', 'map']) input.consume(k); return; } // numa cena, o peregrino não se move sozinho
     const m = input.move(), c = this.ctl = {};
     c.mx = Math.abs(m.x) > 0.3 ? Math.sign(m.x) : 0; c.my = Math.abs(m.y) > 0.45 ? Math.sign(m.y) : 0;
+    if (this.invertido > 0) c.mx = -c.mx; // a palavra torta da Mentira: esquerda vira direita
     c.pulo = input.consume('dodge'); c.puloSeg = input.isHeld('dodge');
     c.atk = input.consume('attack'); c.atkSeg = input.isHeld('attack');
     c.dash = input.consume('dash') || input.consume('lock');
@@ -249,7 +250,7 @@ export class Caminho {
   update(dt) {
     this.lerControles();
     if (this.p.carga >= MIRA_CARGA && !this.mp?.acompanhado()) dt *= 0.4; // mirando sozinho, o tempo quase para
-    this.fade = Math.max(0, this.fade - dt * 1.6);
+    this.fade = Math.max(0, this.fade - dt * 1.6); if (this.invertido > 0) this.invertido -= dt;
     if (this.clarao > 0) this.clarao -= dt; if (this.p.flashT > 0) this.p.flashT -= dt;
     if (this.hitstop > 0) { this.hitstop -= dt; this.atualizarFx(dt * 0.2); atualizarEfeitos(this.fxPx, dt * 0.25); return; }
     atualizarEfeitos(this.fxPx, dt);
@@ -375,7 +376,7 @@ export class Caminho {
   lutaRemota(on) {
     this.luta = on;
     if (on) { music('chefe'); sfx('boss'); const b = this.inimigos.find(e => e.kind === 'chefe'); if (b) { this.chefe = b; this.ui.banner(b.d.titulo || 'Chefe', b.d.nome, b.d.ref); } }
-    else { this.chefe = null; this.vazioT = 0; this.limparPerigos(); this.puxao = null; this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.ui.bossBar(null); if (!this.venceu) music(this.def.paz ? 'mundo' : 'fase'); }
+    else { this.chefe = null; this.vazioT = 0; this.limparPerigos(); this.puxao = null; this.invertido = 0; this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.ui.bossBar(null); if (!this.venceu) music(this.def.paz ? 'mundo' : 'fase'); }
   }
   // todos caíram ao mesmo tempo: desfaz a emboscada ou a luta para recomeçar do zero
   resetarEncontro() {
@@ -632,15 +633,17 @@ export class Caminho {
   atualizarZonas(dt) {
     const p = this.p, A = this.N.arena, pc = caixa(p);
     for (const z of this.zonas) {
-      if (z.aviso > 0) { z.aviso -= dt; if (z.aviso <= 0) { z.ativa = true; if (z.tipo !== 'poca') { sfx('hit'); this.tremor(z.tipo === 'col' ? 3 : 4); } if (z.tentacao && A) this.moedas.push({ x: z.x, y: A.chao - 30, vx: 0, vy: -120, t: 0, v: 5, maldita: true }); } continue; }
+      if (z.aviso > 0) { z.aviso -= dt; if (z.aviso <= 0) { z.ativa = true; if (z.pilar) this.efeito('pilarCeu', z.x, A ? A.chao : z.y); if (z.tipo !== 'poca') { sfx('hit'); this.tremor(z.tipo === 'col' ? 3 : 4); } if (z.tentacao && A) this.moedas.push({ x: z.x, y: A.chao - 30, vx: 0, vy: -120, t: 0, v: 5, maldita: true }); } continue; }
       z.dur -= dt;
       let r;
       if (z.tipo === 'col') r = { x: z.x - z.w / 2, y: z.y0 ?? (A ? A.y0 : p.y - 600), w: z.w, h: (z.y1 ?? (A ? A.chao : p.y + 100)) - (z.y0 ?? (A ? A.y0 : p.y - 600)) };
       else if (z.tipo === 'circ') r = null; else r = { x: z.x, y: z.y, w: z.w, h: z.h };
+      if (z.isca) continue; // só marca o lugar (onde o golpe vai cair, ou o abrigo verdadeiro)
       if (z.amigo) { if (!z.fez) { z.fez = true; this.golpear(r, z.amigo, { dir: 'lado', hits: new Set(), semOleo: true, carga: true }); } continue; }
       const dentro = r ? toca(r, pc) : Math.hypot(p.x - z.x, p.y - 19 - z.y) < z.r + 8;
       if (dentro && !p.morto) {
-        if (z.efeito === 'sono') { if (p.stunT <= 0 && !z.fez) { z.fez = true; p.stunT = 1.25; p.vx = 0; this.textoEm(p.x, p.y - 56, 'zzz… "Até quando ficarás deitado?" (Pv 6:9)', '#A5CDCE', 12); sfx('wrong'); } }
+        if (z.efeito === 'inverte') { if (!z.fez && this.p === this.eu) { z.fez = true; this.invertido = 3.2; this.textoEm(p.x, p.y - 60, 'seus passos mentem!', '#C79BFF', 13); sfx('wrong'); } }
+        else if (z.efeito === 'sono') { if (p.stunT <= 0 && !z.fez) { z.fez = true; p.stunT = 1.25; p.vx = 0; this.textoEm(p.x, p.y - 56, 'zzz… "Até quando ficarás deitado?" (Pv 6:9)', '#A5CDCE', 12); sfx('wrong'); } }
         else {
           const res = this.ferirHeroi(1, z.dono || { x: z.tipo === 'circ' ? z.x : p.x - p.face, y: p.y }, { semDefesa: z.tipo === 'poca' });
           if (res === 'parry' && z.lanca && z.dono) { if (z.nid && !this.souDono()) { this.mp.ev('zp', { id: z.nid }); z.dur = 0; } else this.zonaDefendida(z); }
@@ -936,7 +939,7 @@ export class Caminho {
     const d = this.def, cm = this.cm, c = this.char;
     this.p = this.eu;
     if (this.mp && !b.remoto && b.nid) this.mp.ev('cc', { id: b.nid });
-    b.fora = true; this.chefe = null; this.luta = false; this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.peso = 0; this.puxao = null;
+    b.fora = true; this.chefe = null; this.luta = false; this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.peso = 0; this.puxao = null; this.invertido = 0;
     this.ui.bossBar(null); music('fase', d.tema + (d.fase ? d.fase.n : '')); sfx('level');
     // juntos, a vitória só conta para quem leu os rolos desta página
     if (this.mp && !this.temSelos()) { this.ui.toast(b.d.nome + ' caiu, mas a recompensa é de quem leu os três rolos desta página. Leia-os e enfrente-o de novo.', 8000); this.semLutaAte = this.T + 8; return; }
