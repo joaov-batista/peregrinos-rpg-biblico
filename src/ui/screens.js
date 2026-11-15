@@ -122,7 +122,10 @@ export async function showSelect(onPlay, onNew, onLogout) {
   screen(logo(), h('p', { class: 'muted' }, 'Carregando personagens…'));
   let chars = [];
   try { chars = await net.listChars(); } catch (e) { screen(logo(), h('p', { class: 'form-msg err' }, 'Erro: ' + e.message), h('button', { class: 'btn', onclick: onLogout }, 'Voltar')); return; }
-  if (!chars.length) return onNew();
+  // quem ainda não tem peregrino: cria um agora. O painel de sala fica à vista, para quem veio jogar com amigos entrar já com o personagem novo
+  if (!chars.length) return screen(logo(), h('h2', { class: 'title' }, 'Bem-vindo, peregrino'), h('p', { class: 'muted' }, 'Você ainda não tem um peregrino. Crie o seu para começar a jornada.'),
+    h('button', { class: 'btn gold wide criar-primeiro', type: 'button', onclick: () => { sfx('click'); onNew(); } }, 'Criar meu peregrino'), saguaoJuntos(true),
+    h('div', { class: 'btn-row' }, h('button', { class: 'btn link', onclick: onLogout }, ONLINE && net.user ? 'Sair da conta' : 'Voltar')));
   const list = h('div', { class: 'char-list' });
   for (const c of chars) {
     const conflict = net.conflict(c.id);
@@ -160,7 +163,7 @@ export async function showSelect(onPlay, onNew, onLogout) {
 // O saguão do "Caminhar juntos": antes de entrar no jogo dá para escolher abrir uma sala (você é o anfitrião e passa o código)
 // ou entrar na sala de alguém. A escolha fica guardada até o jogo começar (jogo.js lê 'peregrinos.sala').
 // O multiplayer local (tela dividida) fica recolhido embaixo.
-function saguaoJuntos() {
+function saguaoJuntos(novo) {
   if (new URLSearchParams(location.search).has('quadro')) return '';
   const CH = 'peregrinos.sala', le = () => { try { return sessionStorage.getItem(CH) || ''; } catch { return ''; } }, poe = v => { try { v ? sessionStorage.setItem(CH, v) : sessionStorage.removeItem(CH); } catch {} };
   const limpa = v => (v || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
@@ -174,8 +177,9 @@ function saguaoJuntos() {
   function pinta() {
     const v = le(), cod = v.startsWith('entrar:') ? v.slice(7) : '';
     bSo.classList.toggle('on', !v); bCriar.classList.toggle('on', v === 'abrir'); bEntrar.classList.toggle('on', !!cod); if (cod) campo.value = cod;
-    nota.textContent = v === 'abrir' ? 'Você será o anfitrião. Toque em Jogar no seu peregrino: a sala abre e o código aparece para você mandar aos amigos (até 4).'
-      : cod ? 'Toque em Jogar no seu peregrino: você entra direto na sala ' + cod + '.' : 'Cada um no seu aparelho, até 4 peregrinos. Um cria a sala e manda o código; os outros entram com ele.';
+    const como = novo ? 'Crie o seu peregrino' : 'Toque em Jogar num peregrino seu (ou crie um novo)';
+    nota.textContent = v === 'abrir' ? 'Você será o anfitrião. ' + como + ': a sala abre e o código aparece para você mandar aos amigos (até 4).'
+      : cod ? como + ': você entra direto na sala ' + cod + '.' : 'Cada um no seu aparelho, até 4 peregrinos. Um cria a sala e manda o código; os outros entram com ele.';
   }
   pinta();
   const local = h('details', { class: 'saguao-local' }, h('summary', {}, 'Multiplayer local (mesmo aparelho, tela dividida)'),

@@ -17,7 +17,7 @@ const pasta = process.argv[2];
   const aperta = async (i, ms = 90) => { await p.evaluate(i => { __pad.buttons[i] = { pressed: true, value: 1 }; }, i); await p.waitForTimeout(ms); await p.evaluate(i => { __pad.buttons[i] = { pressed: false, value: 0 }; }, i); await p.waitForTimeout(260); };
   const B = { A: 0, B: 1, X: 2, Y: 3, cima: 12, baixo: 13, esq: 14, dir: 15, start: 9, LB: 4, RB: 5 };
   const onde = async (nota) => { const o = await p.evaluate(() => { const a = document.activeElement; const j = [...document.querySelectorAll('#overlay .modal')].pop() || document.getElementById('screens'); return { foco: a ? (a.tagName + '.' + a.className + ' "' + (a.textContent || a.placeholder || a.value || '').trim().slice(0, 40) + '"') : null, tela: (j?.querySelector('h2,h3,.title,.dlg-name')?.textContent || '').slice(0, 50), jogo: !!window.__game?.running, area: window.__game?.area }; }); console.log(String(++n).padStart(2), nota, JSON.stringify(o)); if (pasta) await p.screenshot({ path: pasta + '/' + String(n).padStart(2, '0') + '.png' }); return o; };
-  const passos = (process.env.PASSOS || 'A;start;start;baixo;A;A;dir;A;dir;A;start;start;A').split(';').filter(Boolean); // padrão: cria um peregrino e entra no jogo
+  const passos = (process.env.PASSOS || 'A;A;start;start;baixo;A;A;dir;A;dir;A;start;start;A').split(';').filter(Boolean); // padrão: cria um peregrino e entra no jogo
   await onde('início');
   for (const s of passos) { if (s.startsWith('js:')) { console.log('   ', JSON.stringify(await p.evaluate(s.slice(3)).catch(e => 'ERRO ' + e.message))); await p.waitForTimeout(500); await onde('js'); continue; } const [k, vezes = 1] = s.split('*'); for (let i = 0; i < +vezes; i++) await aperta(B[k]); await onde(s); }
   console.log('erros:', errs);
