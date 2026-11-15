@@ -46,7 +46,7 @@ function zelote(s, b, Tm, nome) {
   if (nome === 'menaem') { for (let k = 0; k < 3; k++) { const y = ombroY + 7 + k * 5; if (k) continue; s.linha(ombroX - SH + 3, y - 3, cx + W - 6, barra - 10, 2, COUROE); s.linha(ombroX - SH + 3, y - 3, cx + W - 6, barra - 10, 1, COURO); s.linha(ombroX + SH - 3, y - 3, cx - W + 6, barra - 10, 2, COUROE); s.linha(ombroX + SH - 3, y - 3, cx - W + 6, barra - 10, 1, COURO); } s.ret(cx - W + 4, barra - 9, W * 2 - 8, 2, Q.acentoE); s.ret(cx - W + 4, barra - 9, W * 2 - 8, 1, Q.acento); } // torso enfaixado e a faixa na cintura
   if (nome === 'eleazar') { s.bola(ombroX + 2, ombroY + 4, 3, 3, { 0: C('#6A4A1C'), 1: C('#8A6A2C'), 2: C('#C9963C'), 3: C('#E8C060'), 4: C('#FFF1BE') }, 0.4, -0.7); for (let k = 0; k < 4; k++) s.ret(ombroX - 4 + k, ombroY + 14 + k * 5, 9 - k, 1, Q.acentoE); } // broche de bronze e as tiras do peitoral
   if (nome === 'jair') { for (const [dx, dy] of [[-10, 14], [6, 22], [-3, 28]]) { s.ret(cx + dx, ombroY + dy, 5, 4, M[3]); s.px(cx + dx, ombroY + dy, BREU); s.px(cx + dx + 4, ombroY + dy + 3, BREU); } for (let k = 0; k < 9; k++) s.px(cx - W + 5 + k * 4, barra - 12 + (k % 2), C('#8A7A5A')); // remendos e a corda
-    if (!caido && !mergulho) for (let k = 0; k < 3; k++) }
+  }
   // ---------- a cabeça: capuz fundo ----------
   const hx = ombroX + (vai ? 7 : caido ? -2 : 2), hy = ombroY - R + 2 + (caido ? 4 : 0) + (vai ? 3 : 0);
   s.poli([[hx - R - 2, hy + R], [hx + R + 1, hy + R], [hx + R + 2, hy - 1], [hx + 2, hy - R - 2], [hx - R + 1, hy - R - 4 - (nome === 'jair' ? 2 : 0)], [hx - R - 3, hy - 2]], M[1]);
