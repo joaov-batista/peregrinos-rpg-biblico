@@ -115,7 +115,7 @@ Object.assign(FUNDO, {
   conselho(g, b, A, Tm) { // três tronos de pedra; quem não desceu continua sentado, de arma no colo. Os braseiros acendem a cada fase
     const L = A.x1 - A.x0, cx = A.x0 + L * 0.5, base = A.chao - 62, f = b.cen.fase || 0;
     g.fillStyle = '#1C0E0C'; px(g, cx - 78, base, 156, 5); g.fillStyle = '#2E1A16'; px(g, cx - 78, base, 156, 1); px(g, cx - 70, base + 5, 140, 3);
-    const sentado = [f >= 1 && f < 2, f < 1, f < 1], cores = [['#4A2A2A', '#FFD23F'], ['#34405A', '#BFE6F2'], ['#6A5A30', '#FF8A3C']];
+    const sentado = [f >= 1 && f < 2, f < 1, f < 1], cores = [['#8E2B45', '#FFD23F'], ['#2F5FB0', '#BFE6F2'], ['#C9A63C', '#FF8A3C']];
     [-50, 0, 50].forEach((dx, i) => { const x = cx + dx, alto = i === 1 ? 50 : 42;
       g.fillStyle = '#120908'; px(g, x - 13, base - alto, 26, alto); g.fillStyle = '#2E1A16'; px(g, x - 12, base - alto + 1, 24, alto - 1); g.fillStyle = '#3E2620'; px(g, x - 12, base - alto + 1, 2, alto - 1); px(g, x - 14, base - 14, 28, 3); g.fillStyle = '#120908'; px(g, x - 2, base - alto - 5, 4, 5); px(g, x - 9, base - alto - 2, 3, 2); px(g, x + 6, base - alto - 2, 3, 2);
       g.fillStyle = cores[i][0]; px(g, x - 1, base - alto + 5, 2, 8); // a marca de cada um no espaldar

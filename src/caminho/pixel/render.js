@@ -287,7 +287,7 @@ export function renderPixel(G) {
     if (e.kind === 'chefe') {
       const q = quadroChefe(e, Tm, G);
       if (q) {
-        const vira = e.face > 0 || e.c.semVirar ? 1 : -1, luz = p.lamp ? G.raioLuz() : 0;
+        const vira = (e.face > 0 || e.c.semVirar ? 1 : -1) * (q.inv ? -1 : 1), luz = p.lamp ? G.raioLuz() : 0;
         // os clones da Mentira: iguais ao verdadeiro, mas tremem dentro da luz da lâmpada
         for (const cl of e.clones) { const naLuz = luz && Math.hypot(cl.x - p.x, cl.y - p.y) < luz; carimbar(g, q.s, X(cl.x), Y(cl.y), q.ax, q.ay, vira, (cl.alpha ?? 1) * (naLuz ? 0.22 + 0.12 * Math.sin(Tm * 40) : 1) * Math.min(1, cl.t * 2)); }
         if (q.esc > 1) { const cv = q.s.tela(), k = q.esc; g.save(); g.translate(X(e.x), Y(e.y)); g.scale(vira * k, k); g.drawImage(cv, -q.ax, -q.ay); g.restore(); }
@@ -335,6 +335,11 @@ export function renderPixel(G) {
   pintarEfeitos(g, G.fxPx, cx, cy, false);
   for (const t of G.tiros) pintarTiro(g, t, X(t.x), Y(t.y), Tm);
   for (const o of G.outros) if (o.corpo.ts) for (const t of o.corpo.ts) pintarTiro(g, { x: t[0], y: t[1], vx: t[2], vy: t[3], r: t[4], tipo: t[5], cor: t[6], amigo: true }, X(t[0]), Y(t[1]), Tm);
+  // poeira do pulo e da queda: duas nuvenzinhas que se abrem para os lados, crescem e se desfazem
+  for (const d of G.poeiras || []) { const k = 1 - d.t / d.max, cx0 = X(d.x), cy0 = Y(d.y);
+    for (const sd of [-1, 1]) for (const [dx, dy, rr, at] of [[3, -1, 2.6, 0], [6, -2, 2, 0.12], [9, -1, 1.5, 0.22]]) { const kk = clamp((k - at) / (1 - at), 0, 1); if (kk <= 0) continue; const r = Math.max(1, Math.round(rr * d.f * (0.5 + Math.sin(kk * Math.PI) * 0.9))), x = cx0 + sd * Math.round((dx + kk * 9) * d.f), y = cy0 + dy - Math.round(kk * 3 * d.f);
+      for (let yy = -r; yy <= r; yy++) for (let xx = -r; xx <= r; xx++) if (xx * xx + yy * yy <= r * r + 1) { if (kk > 0.55 && (xx + yy + cx0) % 2) continue; g.fillStyle = yy < 0 ? '#E8E0D0' : yy === r ? '#8A7E70' : '#C9BFAE'; g.fillRect(x + xx, y + yy, 1, 1); } }
+    for (let i = 0; i < 3; i++) { const kk = clamp(k * 1.3 - i * 0.1, 0, 1); if (kk > 0 && kk < 1) { g.fillStyle = '#D8CFC0'; g.fillRect(cx0 + Math.round((i - 1) * 5 * d.f * (1 + kk)), cy0 - 3 - Math.round(kk * 8 * d.f), 1, 1); } } }
   for (const q of G.parts) { const k = q.t / q.max, x = X(q.x), y = Y(q.y); g.fillStyle = q.cor; if (q.anel) { const r = Math.round(q.r / PX * (1 - k)); g.globalAlpha = k > 0.5 ? 1 : 0.6; for (let a = 0; a < 24; a++) if ((a + Math.floor(Tm * 20)) % 3) g.fillRect(x + Math.round(Math.cos(a / 24 * TAU) * r), y + Math.round(Math.sin(a / 24 * TAU) * r), k > 0.6 ? 2 : 1, k > 0.6 ? 2 : 1); g.globalAlpha = 1; } else { const lg = k > 0.5 && q.r > 2 ? 2 : 1; g.fillRect(x, y, lg, lg); } }
   if (G.N.pocos) for (const o of G.N.pocos) { const x = X(o.x), y = Y(o.y) + 3; if (x < -20 || x > vw + 4) continue; for (let i = 0; i < 16; i++) { const h1 = Math.round(Math.sin((o.x + i) * 0.4 + Tm * 3) * 1.5); g.fillStyle = '#123847'; g.fillRect(x + i, y + h1, 1, 40); g.fillStyle = (i + Math.floor(Tm * 6)) % 5 < 2 ? '#BFF0F8' : '#3A9AB0'; g.fillRect(x + i, y + h1, 1, 1); } }
   if (G.def.mundo === 'leviata' && G.N.arena) { // o mar bate no costado: ondas na frente de tudo

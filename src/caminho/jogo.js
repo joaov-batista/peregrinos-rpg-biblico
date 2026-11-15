@@ -199,6 +199,8 @@ export class Caminho {
   // a trilha do lugar: cada página, o Refúgio, o bosque, Sardes (apagada ou acesa)… As provas de ondas já começam na trilha de raid.
   // um companheiro de luta do chefe (o Conselho Zelote): outro corpo na arena, com os seus golpes; a vida é a do chefe principal
   novoParceiro(id) { const A = this.N.arena; if (!A || !this.luta) return null; const q = novoChefe(id, A, this.dif); q.parte = true; q.alpha = 0; q.hp = q.max = 1e7; this.inimigos.push(q); return q; }
+  // a poeira que o peregrino levanta ao pular e ao cair (f = força: uma queda alta levanta mais)
+  poeira(x, y, f = 1) { (this.poeiras = this.poeiras || []).push({ x, y, f, t: 0.42, max: 0.42 }); if (this.poeiras.length > 12) this.poeiras.shift(); }
   nomeChefe(id) { return BOSSES[id]?.nome || id; }
   musicaDaArea() { const d = this.def; if (d.desafio) return music('raid'); music(d.paz ? 'mundo' : 'fase', d.treino || d.pvp ? 'bosque' : d.id === 'sardes' && this.cm.sar?.feita ? 'sardes2' : d.tema + (d.fase ? d.fase.n : '')); }
   async chegada(def) {
@@ -266,6 +268,7 @@ export class Caminho {
   update(dt) {
     this.lerControles();
     if (this.p.carga >= MIRA_CARGA && !this.mp?.acompanhado()) dt *= 0.4; // mirando sozinho, o tempo quase para
+    if (this.poeiras?.length) { for (const d of this.poeiras) d.t -= dt; this.poeiras = this.poeiras.filter(d => d.t > 0); }
     if (!(this.p.dashT > 0)) this.sicaHits = null;
     if (this.zeloT > 0) { this.zeloT -= dt; if (this.zeloFim && this.T > this.zeloFim) { this.zeloT = 0; this.zeloFim = 0; } }
     this.fade = Math.max(0, this.fade - dt * 1.6); if (this.invertido > 0) this.invertido -= dt;
@@ -282,7 +285,7 @@ export class Caminho {
     else {
       if (this.puxao && !p.dashT) p.x += Math.sign(this.puxao.x - p.x) * this.puxao.f * dt * (Math.abs(this.puxao.x - p.x) > 30 ? 1 : 0);
       if (this.tem('cinto_compaixao') && p.orando > 0) p.orando += dt * 0.45;
-      atualizarHeroi(this, dt);
+      { const noAr = !p.chao, vy0 = p.vy; atualizarHeroi(this, dt); if (noAr && p.chao && vy0 > 120) { this.poeira(p.x, p.y, clamp(vy0 / 620, 0.6, 1.7)); if (vy0 > 700) sfx('step'); } else if (!noAr && !p.chao && p.vy < -200) this.poeira(p.x, p.y, 0.75); } // caiu no chão / saiu do chão num pulo
       if (this.area === 'getsemani') passoGetsemani(this, dt);
       this.dons(dt);
       if (p.acoite) { p.acoite.t += dt; if (p.acoite.t > p.acoite.dur) p.acoite = null; }

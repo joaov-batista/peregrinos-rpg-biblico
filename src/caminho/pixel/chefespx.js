@@ -6,12 +6,14 @@ import { CHEFES_A } from './chefes-a.js';
 import { CHEFES_B } from './chefes-b.js';
 import { CHEFES_C } from './chefes-c.js';
 import { CHEFES_D } from './chefes-d.js';
-import { CHEFES_E } from './chefes-e.js';
+import { ZELOTES, ZAX, ZAY } from './chefes-e.js';
 import { CHEFES_F } from './chefes-f.js';
 
-const PINTORES = { ...CHEFES_A, ...CHEFES_B, ...CHEFES_C, ...CHEFES_D, ...CHEFES_E, ...CHEFES_F };
+const PINTORES = { ...CHEFES_A, ...CHEFES_B, ...CHEFES_C, ...CHEFES_D, ...CHEFES_F };
+// estes foram desenhados olhando para a esquerda; os antigos olham para a direita. Quem desenha na tela desvira
+const OLHA_ESQ = new Set(['escassez', 'desprezo', 'carcere', 'mentira', 'imoralidade', 'amargura']);
 // Beemote e Leviatã são colossos: desenhados no dobro do tamanho, ocupam boa parte da arena
-const COLOSSOS = { behemote: 2.5, leviata: 2.4, golias: 1.25, carcere: 1.5, escassez: 1.25, desprezo: 1.2, amargura: 1.7, conselho: 1.35, zeloteFoice: 1.35, zelotePunhal: 1.35 };
+const COLOSSOS = { behemote: 2.5, leviata: 2.4, golias: 1.25, carcere: 1.5, escassez: 1.25, desprezo: 1.2, amargura: 1.7, conselho: 1.5, zeloteFoice: 1.5, zelotePunhal: 1.5 };
 
 const OURO = rampa('#D9A63C'), OUROE = rampa('#8A6A2C'), OSSO = rampa('#E4DFCF'), MANTO = rampa('#3B2A4E'), ACO = rampa('#7F8C9C'), FERRO = rampa('#3A3F4C');
 const COROA = ['L.....L.....L', 'G.....G.....G', 'GG...GGG...GG', 'GGG.GGGGG.GGG', 'GgGGGGrGGGGgG', 'GGrGGGGGGGrGG', 'LLLLLLLLLLLLL', 'ggggggggggggg'];
@@ -68,11 +70,15 @@ export const CHEFES_PX = {
 
 // Quadro pronto de um chefe (ou null se ainda não foi redesenhado)
 export function quadroChefe(b, Tm, G) {
+  if (ZELOTES[b.id]) { // os zelotes usam o traço do peregrino
+    const s = ZELOTES[b.id](b, Tm); if (b.flash > 0) s.tinge(BRANCO); if (b.morrendo > 0) s.dissolve(1 - b.morrendo / 1.7, 3); if ((b.alpha ?? 1) < 1) s.dissolve(1 - b.alpha, 2);
+    return { s, ax: ZAX, ay: ZAY, esc: COLOSSOS[b.id] || 1 };
+  }
   const def = CHEFES_PX[b.id] || (PINTORES[b.id] && { ax: 60, ay: 104, pinta: PINTORES[b.id] }); if (!def) return null;
   const s = quadro.limpa(); def.pinta(s, b, Tm, G);
   if (b.flash > 0) s.tinge(BRANCO);
   if (b.morrendo > 0) s.dissolve(1 - b.morrendo / 1.7, 3);
   if ((b.alpha ?? 1) < 1) s.dissolve(1 - b.alpha, 2);
   s.contorno(TINTA);
-  return { s, ax: def.ax, ay: def.ay, esc: COLOSSOS[b.id] || 1 };
+  return { s, ax: def.ax, ay: def.ay, esc: COLOSSOS[b.id] || 1, inv: OLHA_ESQ.has(b.id) };
 }
