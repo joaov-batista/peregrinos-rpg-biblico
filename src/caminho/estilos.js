@@ -871,7 +871,15 @@ const leviata = {
 const escassez = {
   mover(G, b, dt) { const dx = G.p.x - b.x; b.face = Math.sign(dx) || b.face; b.vx = Math.abs(dx) > 150 ? b.face * (b.c.vel || 50) * (1 + fase(b) * 0.25) : 0; },
   // quanto mais ela perde, mais a terra racha
-  palco(G, b, dt) { b.cen.seca = 1 - b.hp / b.max; if (Math.random() < dt * 3) G.parts.push({ x: rand(G.N.arena.x0, G.N.arena.x1), y: G.N.arena.chao - 2, vx: rand(-20, 20), vy: -rand(20, 50), t: 0.8, max: 0.8, r: 1.4, cor: '#C9A86A', g: 0 }); },
+  // A seca bebe o azeite da sua lâmpada o tempo todo. Mas, como na casa da viúva, a botija não falta: de tempos em tempos
+  // uma botija aparece num canto. Cada peregrino enche o jarro na sua (ninguém tira a do outro).
+  jogador(G, b, p, dt) {
+    if (p.morto || b.morrendo) return; const A = G.N.arena;
+    p.oleo = Math.max(0, p.oleo - 2.4 * dt);
+    if (!b.avisoSeca && b.t > 2.5) { b.avisoSeca = true; G.ui?.toast?.('A seca bebe o azeite da sua lâmpada. Procure a botija: ela não falta (1Rs 17:16).', 6500); }
+    const bo = b.cen.botija; if (bo && b.botPega !== bo.id && Math.abs(p.x - (A.x0 + bo.k * (A.x1 - A.x0))) < 30 && p.y > A.chao - 70) { b.botPega = bo.id; p.oleo = G.oleoMax(); sfx('heal'); G.efeito('coleta', p.x, p.y - 30); G.fx.anel(p.x, p.y - 24, '#FFD98A', 80); G.textoEm(p.x, p.y - 74, 'o azeite da botija não faltou', '#FFE9A8', 13); }
+  },
+  palco(G, b, dt) { b.cen.seca = 1 - b.hp / b.max; b.cen.botT = (b.cen.botT ?? 5) - dt; if (b.cen.botT <= 0) { b.cen.botT = 11; b.cen.botija = { k: rand(0.1, 0.9), id: (b.cen.botija?.id || 0) + 1 }; sfx('key'); } if (Math.random() < dt * 3) G.parts.push({ x: rand(G.N.arena.x0, G.N.arena.x1), y: G.N.arena.chao - 2, vx: rand(-20, 20), vy: -rand(20, 50), t: 0.8, max: 0.8, r: 1.4, cor: '#C9A86A', g: 0 }); },
   pref: { rachaduras: (G, b) => perto(G, b) > 200 ? 1.6 : 0.8, poeira: G => noAr(G) ? 0.5 : 1.3, fome: (G, b) => perto(G, b) > 260 ? 2 : 0.4, mirrar: (G, b) => perto(G, b) < 240 ? 1.5 : 0.8 },
   golpes: {
     // a terra racha onde você pisa, uma, duas, três vezes
@@ -881,14 +889,14 @@ const escassez = {
       const A = G.N.arena;
       if (m.e === 0) { prepara(b); if (m.t > av(G, 0.7)) { m.e = 1; const d = Math.sign(G.p.x - b.x) || 1; m.c = G.tiros[G.tiros.push({ x: b.x + d * 30, y: A.chao - 12, vx: d * vel(G, 300), vy: 0, r: 10, vida: 9, cor: '#D9B878', tipo: 'bola', fura: true }) - 1]; m.bat = 0; ataca(b); sfx('dodge'); } return false; }
       const c = m.c; if (!vivo(G, c)) return true;
-      if ((c.x < A.x0 + c.r && c.vx < 0) || (c.x > A.x1 - c.r && c.vx > 0)) { c.vx *= -1.12; c.r += 7; c.y = A.chao - c.r - 2; m.bat++; G.tremor(4); sfx('block'); if (m.bat >= 3 + fase(b)) { c.vida = 0; G.fx.po(c.x, c.y, 14, '#D9B878'); return true; } }
+      if ((c.x < A.x0 + c.r && c.vx < 0) || (c.x > A.x1 - c.r && c.vx > 0)) { c.vx *= -1.12; c.r += 7; c.y = A.chao - c.r - 2; m.bat++; G.tremor(4); sfx('block'); G.efeito('slamAreia', c.x, A.chao); if (m.bat >= 3 + fase(b)) { c.vida = 0; G.fx.po(c.x, c.y, 14, '#D9B878'); return true; } }
       return m.t > 9;
     },
     // a fome puxa: uma mão magra agarra e traz para perto, e a boca se fecha em volta
     fome(G, b, m) {
       const c = centro(b);
       if (m.e === 0) { prepara(b); b.vx = 0; if (m.t === 0) G.fala(b, 'É o último punhado. Depois, morrer.'); if (m.t > av(G, 0.6)) { m.e = 1; m.t0 = m.t; bala(G, c.x, c.y, Math.atan2(G.p.y - 24 - c.y, G.p.x - c.x), vel(G, 520), { r: 7, cor: '#B8A078', tipo: 'lanca', vida: 1.4, puxa: { x: b.x, forca: 520, msg: 'a fome puxa!' } }); sfx('swing'); ataca(b); } return false; }
-      if (m.e === 1 && m.t - m.t0 > 0.7) { m.e = 2; m.t0 = m.t; zona(G, { tipo: 'circ', x: b.x, y: b.y - 30, r: 120, aviso: av(G, 0.55), dur: 0.2, cor: '#B8433A' }); }
+      if (m.e === 1 && m.t - m.t0 > 0.7) { m.e = 2; m.t0 = m.t; zona(G, { tipo: 'circ', x: b.x, y: b.y - 30, r: 120, aviso: av(G, 0.55), dur: 0.2, cor: '#B8433A' }); G.efeito('slamAreia', b.x, G.N.arena.chao); G.tremor(6); }
       return m.e === 2 && m.t - m.t0 > av(G, 0.55) + 0.4;
     },
     // tudo mirra: manchas de terra morta nascem em volta de você e ficam um tempo
@@ -899,19 +907,27 @@ const escassez = {
 const desprezo = {
   // a multidão não persegue: fecha o caminho. Recua se você chega perto, aperta se você se afasta
   mover(G, b, dt) { const dx = G.p.x - b.x, d = Math.abs(dx); b.face = Math.sign(dx) || b.face; b.vx = d < 130 ? -b.face * (b.c.vel || 60) : d > 330 ? b.face * (b.c.vel || 60) * (1 + fase(b) * 0.2) : 0; },
-  palco(G, b, dt) { b.cen.vozes = Math.max(0, (b.cen.vozes || 0) - dt); },
+  // "Mas ele clamava ainda mais" (Mc 10:48): cada golpe que você acerta é um grito a mais. O clamor enche a luz no fim da
+  // estrada e se esvai se você se cala; cheio, Alguém para, e a multidão inteira se abre.
+  palco(G, b, dt) {
+    b.cen.vozes = Math.max(0, (b.cen.vozes || 0) - dt); b.cen.gente = 1 - b.hp / b.max;
+    if (b.hpAnt != null && b.hp < b.hpAnt - 0.5 && !(b.quebrado > 0)) b.cen.clamor = Math.min(1, (b.cen.clamor || 0) + 0.075);
+    b.hpAnt = b.hp; if (!(b.quebrado > 0) && (b.cen.clamor || 0) < 1) b.cen.clamor = Math.max(0, (b.cen.clamor || 0) - 0.03 * dt);
+    if (!b.avisoClamor && b.t > 2.5) { b.avisoClamor = true; G.ui?.toast?.('"Ele clamava ainda mais" (Mc 10:48): não pare de golpear. Cada golpe enche a luz no fim da estrada.', 6500); }
+    if (b.cen.clamor >= 1) { b.cen.clamor = 0; b.mov = null; desfazer(G, b); G.limparPerigos(); b.post = 0; b.quebrado = 3; b.postImune = 0; G.clarao = 0.22; G.tremor(10); sfx('right'); G.efeito('pilarCeu', b.x, G.N.arena.chao); G.textoEm(b.x, b.y - b.h - 26, 'JESUS PAROU (Mc 10:49)', '#FFE9A8', 17); }
+  },
   pref: { calaTe: (G, b) => perto(G, b) > 220 ? 1.7 : 0.7, empurrao: (G, b) => perto(G, b) < 260 ? 1.6 : 0.6, dedos: G => noAr(G) ? 1.5 : 0.9, atropelo: (G, b) => perto(G, b) < 200 ? 1.4 : 0.9 },
   golpes: {
     // "Cala-te!": ondas de voz, uma rasteira (pule) e uma alta (fique no chão), alternando
     calaTe(G, b, m) {
       const A = G.N.arena, n = 3 + fase(b) * 2; prepara(b); b.vx = 0; if (m.t === 0) { G.fala(b, 'CALA-TE!'); b.cen.vozes = 2; }
-      if (m.t > av(G, 0.6) && (m.prox ?? 0) <= m.t && (m.n || 0) < n) { m.prox = m.t + av(G, 0.5); const alta = (m.n || 0) % 2; m.n = (m.n || 0) + 1; G.tiros.push({ x: b.x + b.face * 30, y: A.chao - (alta ? 72 : 16), vx: b.face * vel(G, 330), vy: 0, r: alta ? 12 : 14, vida: 3, cor: '#C9B8E8', tipo: 'som', fixo: true }); sfx('boss'); ataca(b); }
+      if (m.t > av(G, 0.6) && (m.prox ?? 0) <= m.t && (m.n || 0) < n) { m.prox = m.t + av(G, 0.5); const alta = (m.n || 0) % 2; m.n = (m.n || 0) + 1; G.tiros.push({ x: b.x + b.face * 30, y: A.chao - (alta ? 72 : 16), vx: b.face * vel(G, 330), vy: 0, r: alta ? 12 : 14, vida: 3, cor: '#C9B8E8', tipo: 'som', fixo: true }); sfx('boss'); ataca(b); G.efeito('giroSom', b.x + b.face * 30, A.chao - (alta ? 60 : 4), b.face); G.tremor(3); }
       return (m.n || 0) >= n && m.t > m.prox + 0.3;
     },
     // a multidão avança em bloco e empurra até a parede: pule por cima dos ombros
     empurrao(G, b, m, dt) {
       const A = G.N.arena;
-      if (m.t === 0) { m.d = Math.sign(G.p.x - b.x) || 1; m.z = muro(G, b.x + m.d * 40 - 20, A.chao - 92, 40, 92, { aviso: av(G, 0.7), dur: 3.2, cor: '#8A7A9A' }); G.fala(b, 'Não atrapalhe!'); }
+      if (m.t === 0) { m.d = Math.sign(G.p.x - b.x) || 1; m.z = muro(G, b.x + m.d * 40 - 20, A.chao - 92, 40, 92, { aviso: av(G, 0.7), dur: 3.2, cor: '#8A7A9A' }); G.fala(b, 'Não atrapalhe!'); G.efeito('baque', b.x + m.d * 40, A.chao); }
       prepara(b); if (m.z.aviso <= 0) m.z.x += m.d * vel(G, 190) * dt;
       if (m.z.x < A.x0 - 40 || m.z.x > A.x1 || m.t > 4.2) { m.z.dur = 0; return true; }
       return false;
@@ -925,7 +941,8 @@ const desprezo = {
     // a multidão passa por cima: só um vão fica livre, e a cada vez o vão está noutro lugar
     atropelo(G, b, m) {
       const A = G.N.arena, L = (A.x1 - A.x0) / 6, voltas = 2 + fase(b); prepara(b);
-      if ((m.prox ?? 0) <= m.t && (m.n || 0) < voltas) { m.prox = m.t + av(G, 1.2); const k = m.n || 0; m.n = k + 1; const vao = clamp(Math.floor((G.p.x - A.x0) / L) + [1, -1, 2, -2][k % 4], 0, 5); for (let i = 0; i < 6; i++) if (i !== vao) zona(G, { tipo: 'col', x: A.x0 + i * L + 4, w: L - 8, aviso: av(G, 1), dur: 0.22, cor: '#8A7A9A' }); G.tremor(4); sfx('magic'); }
+      if ((m.prox ?? 0) <= m.t && (m.n || 0) < voltas) { m.prox = m.t + av(G, 1.2); const k = m.n || 0; m.n = k + 1; const vao = clamp(Math.floor((G.p.x - A.x0) / L) + [1, -1, 2, -2][k % 4], 0, 5); for (let i = 0; i < 6; i++) if (i !== vao) zona(G, { tipo: 'col', x: A.x0 + i * L + 4, w: L - 8, aviso: av(G, 1), dur: 0.22, cor: '#8A7A9A' }); m.cai = m.t + av(G, 1); m.vao = vao; G.tremor(4); sfx('magic'); }
+      if (m.cai != null && m.t >= m.cai) { m.cai = null; for (let i = 0; i < 6; i += 2) if (i !== m.vao) G.efeito('slamPedra', A.x0 + (i + 0.5) * L, A.chao); G.tremor(9); sfx('block'); }
       return (m.n || 0) >= voltas && m.t > m.prox + 0.2;
     }
   }
@@ -933,13 +950,25 @@ const desprezo = {
 // O Cárcere (At 12): duas cadeias, quatro escoltas, um portão de ferro. A prisão não anda: as grades é que se movem.
 const carcere = {
   mover(G, b, dt) { const A = G.N.arena; b.cen.lado = b.cen.lado || 1; b.cen.troca = (b.cen.troca ?? 6) - dt; if (b.cen.troca <= 0) { b.cen.troca = 7 - fase(b); b.cen.lado *= -1; } const alvo = b.cen.lado > 0 ? A.x1 - 90 : A.x0 + 90, dx = alvo - b.x; b.vx = Math.abs(dx) > 10 ? Math.sign(dx) * (b.c.vel || 120) : 0; b.face = Math.sign(G.p.x - b.x) || b.face; },
+  // "Mas a igreja fazia contínua oração por ele" (At 12:5). Nenhum golpe abre esta prisão sozinho: ficar parado e ORAR enche a
+  // vigília (as velas da casa de Maria, ao fundo). Cheia, uma luz resplandece na cela, as cadeias caem e o Cárcere fica quebrantado.
+  jogador(G, b, p, dt) {
+    if (p.morto || b.morrendo) return;
+    if (!b.avisoVigilia && b.t > 2.5) { b.avisoVigilia = true; G.ui?.toast?.('"A igreja fazia contínua oração por ele" (At 12:5): fique parado e ORE. Quando as velas ao fundo se acenderem todas, as cadeias caem.', 8000); }
+    b.vigCd = Math.max(0, (b.vigCd || 0) - dt);
+    const ora = G.ctl?.orar && p.chao && Math.abs(p.vx) < 30;
+    if (ora && b.vigCd <= 0 && !(b.quebrado > 0)) {
+      b.vigLocal = (b.vigLocal || 0) + dt / 2.6; if (Math.random() < dt * 12) G.fx.sobe(p.x + rand(-12, 12), p.y - 10, 1, '#FFE9A8');
+      if (b.vigLocal >= 1) { b.vigLocal = 0; b.vigCd = 13; G.clarao = 0.28; G.tremor(12); sfx('level'); G.efeito('pilarCeu', b.x, G.N.arena.chao); G.limparPerigos(); G.textoEm(b.x, b.y - b.h - 26, 'AS CADEIAS CAÍRAM (At 12:7)', '#FFE9A8', 17); if (G.souDono()) { b.mov = null; desfazer(G, b); b.post = 0; b.postImune = 0; b.quebrado = 3.2; } else for (let i = 0; i < 2; i++) G.atingir(b, 1, p.x, { testa: true, semOleo: true }); }
+    } else b.vigLocal = Math.max(0, (b.vigLocal || 0) - dt * 0.12);
+  },
   palco(G, b, dt) { b.cen.grades = 1 - b.hp / b.max; },
   pref: { correntes: G => noAr(G) ? 0.6 : 1.4, escoltas: (G, b) => perto(G, b) > 200 ? 1.5 : 0.9, portao: (G, b) => fase(b) ? 1.3 : 0.8, ronda: (G, b) => perto(G, b) > 300 ? 1.6 : 0.8 },
   golpes: {
     // "preso com duas cadeias" (At 12:6): duas correntes cruzam a cela, uma de cada parede
     correntes(G, b, m) {
       const A = G.N.arena, n = 2 + fase(b); prepara(b);
-      if ((m.prox ?? av(G, 0.6)) <= m.t && (m.n || 0) < n) { m.prox = m.t + av(G, 0.95); const k = m.n || 0; m.n = k + 1; for (const [lado, alt] of [[1, 16], [-1, k % 2 ? 76 : 16]]) G.tiros.push({ x: lado > 0 ? A.x0 + 10 : A.x1 - 10, y: A.chao - alt, vx: lado * vel(G, 340), vy: 0, r: 9, vida: 3.2, cor: '#8A8E9A', tipo: 'bola', fixo: true, fura: true }); sfx('gate'); ataca(b); }
+      if ((m.prox ?? av(G, 0.6)) <= m.t && (m.n || 0) < n) { m.prox = m.t + av(G, 0.95); const k = m.n || 0; m.n = k + 1; for (const [lado, alt] of [[1, 16], [-1, k % 2 ? 76 : 16]]) G.tiros.push({ x: lado > 0 ? A.x0 + 10 : A.x1 - 10, y: A.chao - alt, vx: lado * vel(G, 340), vy: 0, r: 9, vida: 3.2, cor: '#8A8E9A', tipo: 'bola', fixo: true, fura: true }); sfx('gate'); ataca(b); G.efeito('faisca', A.x0 + 12, A.chao - 16, 1); G.efeito('faisca', A.x1 - 12, A.chao - 16, -1); }
       return (m.n || 0) >= n && m.t > m.prox + 0.5;
     },
     // "quatro escoltas de quatro soldados" (At 12:4): as lanças sobem do chão atrás dos seus passos
@@ -952,7 +981,7 @@ const carcere = {
     portao(G, b, m) {
       const A = G.N.arena, L = (A.x1 - A.x0) / 5;
       if (m.t === 0) { m.vao = Math.floor(rand(0, 5)); for (let i = 0; i < 5; i++) if (i !== m.vao) zona(G, { tipo: 'col', x: A.x0 + i * L + 3, w: L - 6, aviso: av(G, 1.5), dur: 0.35, cor: '#5A5E6A' }); zona(G, { tipo: 'circ', x: A.x0 + (m.vao + 0.5) * L, y: A.chao - 20, r: 30, aviso: av(G, 1.5), dur: 0.01, cor: '#FFE9A8', isca: true }); G.fala(b, 'Ninguém sai!'); sfx('gate'); }
-      prepara(b); if (m.t > av(G, 1.5) && !m.caiu) { m.caiu = true; G.tremor(10); sfx('block'); }
+      prepara(b); if (m.t > av(G, 1.5) && !m.caiu) { m.caiu = true; G.tremor(12); sfx('block'); for (let i = 0; i < 5; i++) if (i !== m.vao) G.efeito('slamPedra', A.x0 + (i + 0.5) * L, A.chao); }
       return m.t > av(G, 1.5) + 0.6;
     },
     // a ronda: a lanterna do carcereiro varre a cela de ponta a ponta; atravesse-a com o passo

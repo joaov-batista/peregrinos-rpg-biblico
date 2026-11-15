@@ -8,7 +8,7 @@ import { CHEFES_C } from './chefes-c.js';
 
 const PINTORES = { ...CHEFES_A, ...CHEFES_B, ...CHEFES_C };
 // Beemote e Leviatã são colossos: desenhados no dobro do tamanho, ocupam boa parte da arena
-const COLOSSOS = { behemote: 2.5, leviata: 2.4, golias: 1.25 };
+const COLOSSOS = { behemote: 2.5, leviata: 2.4, golias: 1.25, carcere: 1.5, escassez: 1.25, desprezo: 1.2 };
 
 const OURO = rampa('#D9A63C'), OUROE = rampa('#8A6A2C'), OSSO = rampa('#E4DFCF'), MANTO = rampa('#3B2A4E'), ACO = rampa('#7F8C9C'), FERRO = rampa('#3A3F4C');
 const COROA = ['L.....L.....L', 'G.....G.....G', 'GG...GGG...GG', 'GGG.GGGGG.GGG', 'GgGGGGrGGGGgG', 'GGrGGGGGGGrGG', 'LLLLLLLLLLLLL', 'ggggggggggggg'];

@@ -103,6 +103,40 @@ const FUNDO = {
   }
 };
 
+// ---- as páginas vivas da história ----
+Object.assign(FUNDO, {
+  escassez(g, b, A, Tm) { // o sol da seca, a árvore morta, a prateleira da viúva, o chão que racha; e a botija que não falta
+    const L = A.x1 - A.x0, k = b.cen.seca || 0, cx = A.x0 + L * 0.5, cy = A.y0 + 34, r = 22 + Math.round(k * 8);
+    for (let yy = -r; yy <= r; yy++) { const l = Math.round(Math.sqrt(r * r - yy * yy)); g.fillStyle = k > 0.7 ? '#C24A2A' : k > 0.4 ? '#D98A3C' : '#E8C878'; px(g, cx - l, cy + yy, l * 2, 1); }
+    g.fillStyle = 'rgba(255,220,150,.35)'; for (let i = 0; i < 12; i++) { const a = i / 12 * TAU + Tm * 0.1; linha(g, cx + Math.cos(a) * (r + 3), cy + Math.sin(a) * (r + 3), cx + Math.cos(a) * (r + 9 + k * 8), cy + Math.sin(a) * (r + 9 + k * 8), 2); }
+    g.fillStyle = '#2A1C12'; const tx = A.x0 + 26; px(g, tx, A.chao - 46, 3, 46); linha(g, tx + 1, A.chao - 34, tx - 12, A.chao - 50); linha(g, tx + 1, A.chao - 40, tx + 13, A.chao - 58); linha(g, tx - 12, A.chao - 50, tx - 16, A.chao - 60); linha(g, tx + 13, A.chao - 58, tx + 20, A.chao - 62); linha(g, tx + 1, A.chao - 46, tx + 2, A.chao - 58);
+    const sx = A.x1 - 44; g.fillStyle = '#3A2A1E'; px(g, sx - 14, A.chao - 40, 30, 2); px(g, sx - 12, A.chao - 38, 1, 6); px(g, sx + 13, A.chao - 38, 1, 6);
+    g.fillStyle = '#5A4636'; px(g, sx - 10, A.chao - 47, 10, 7); g.fillStyle = '#7A6248'; px(g, sx - 11, A.chao - 48, 12, 1); // a panela
+    g.fillStyle = '#8E5A32'; px(g, sx + 4, A.chao - 49, 7, 9); px(g, sx + 6, A.chao - 52, 3, 3); g.fillStyle = '#B8733E'; px(g, sx + 4, A.chao - 49, 2, 9); // a botija
+    g.fillStyle = '#1A120C'; for (let i = 0; i < 3 + Math.round(k * 11); i++) { let x = A.x0 + 14 + ((i * 53) % (L - 28)), y = A.chao; for (let j = 0; j < 4 + (i % 3) * 2; j++) { px(g, x, y); x += ((i * 7 + j * 5) % 3) - 1; y -= 1; } px(g, A.x0 + 14 + ((i * 53) % (L - 28)) - 2, A.chao, 5, 1); }
+    const bo = b.cen.botija; if (bo && b.botPega !== bo.id) { const x = Math.round(A.x0 + bo.k * L), y = A.chao - 1 - (Math.floor(Tm * 3) % 2); g.fillStyle = 'rgba(255,217,138,.25)'; px(g, x - 7, y - 16, 15, 17); g.fillStyle = '#17121f'; px(g, x - 4, y - 11, 9, 11); px(g, x - 2, y - 14, 5, 3); g.fillStyle = '#B8733E'; px(g, x - 3, y - 10, 7, 9); g.fillStyle = '#E0A060'; px(g, x - 3, y - 10, 2, 8); g.fillStyle = '#8E5A32'; px(g, x - 1, y - 13, 3, 3); g.fillStyle = '#FFE9A8'; px(g, x - 1, y - 15, 3, 1); for (let i = 0; i < 3; i++) px(g, x - 5 + ((Math.floor(Tm * 6) + i * 4) % 11), y - 18 - i * 2, 1, 1); }
+  },
+  desprezo(g, b, A, Tm) { // a estrada de Jericó: a multidão de costas engrossa; a capa largada; a luz no fim da estrada é o clamor
+    const L = A.x1 - A.x0, k = b.cen.gente || 0, cl = b.cen.clamor || 0, cx = A.x0 + L * 0.5;
+    const lw = 3 + Math.round(cl * 22); g.fillStyle = 'rgba(255,241,190,' + (0.12 + cl * 0.5) + ')'; px(g, cx - lw, A.y0, lw * 2, A.chao - A.y0 - 26); g.fillStyle = 'rgba(255,255,255,' + (0.1 + cl * 0.6) + ')'; px(g, cx - Math.max(1, lw >> 2), A.y0, Math.max(2, lw >> 1), A.chao - A.y0 - 26);
+    if (cl > 0.05) { g.fillStyle = '#FFE9A8'; for (let i = 0; i < 10; i++) if (i / 10 < cl) px(g, cx - 20 + i * 4, A.chao - 22, 3, 2); g.fillStyle = '#5A4A6A'; for (let i = 0; i < 10; i++) if (i / 10 >= cl) px(g, cx - 20 + i * 4, A.chao - 22, 3, 2); } // o clamor, em dez marcas
+    const n = 8 + Math.round(k * 18); for (let i = 0; i < n; i++) { const x = A.x0 + 6 + ((i * 37) % (L - 12)), fila = i % 3, y = A.chao - 22 - fila * 5 + Math.round(Math.sin(Tm * 2 + i) * (b.cen.vozes > 0 ? 1.5 : 0.5)); if (Math.abs(x - cx) < lw + 4) continue; g.fillStyle = ['#2A2438', '#221C2E', '#1A1624'][fila]; px(g, x - 3, y, 7, 26); px(g, x - 2, y - 4, 5, 5); }
+    g.fillStyle = '#5E4A3A'; px(g, A.x0 + 24, A.chao - 3, 14, 3); g.fillStyle = '#7A6248'; px(g, A.x0 + 26, A.chao - 4, 8, 1); px(g, A.x0 + 36, A.chao - 2, 4, 1); // a capa lançada fora (Mc 10:50)
+  },
+  carcere(g, b, A, Tm) { // a cela: grades ao fundo, a janela com a lua, tochas que se apagam; ao longe, as velas de quem ora
+    const L = A.x1 - A.x0, k = b.cen.grades || 0, v = b.vigLocal || 0;
+    g.fillStyle = '#15161E'; for (let x = A.x0 + 8; x < A.x1; x += 14) px(g, x, A.y0, 2, A.chao - A.y0); g.fillStyle = '#23252E'; for (let x = A.x0 + 8; x < A.x1; x += 14) px(g, x, A.y0, 1, A.chao - A.y0); for (const y of [A.y0 + 26, A.chao - 40]) { g.fillStyle = '#1C1E28'; px(g, A.x0, y, L, 3); }
+    const wx = A.x0 + 40, wy = A.y0 + 44; g.fillStyle = '#0A0B12'; px(g, wx - 12, wy - 14, 24, 28); g.fillStyle = '#2E3A5A'; px(g, wx - 10, wy - 12, 20, 24); g.fillStyle = '#E8E4D0'; for (let yy = -5; yy <= 5; yy++) { const l = Math.round(Math.sqrt(25 - yy * yy)); px(g, wx + 2 - l, wy - 3 + yy, l * 2, 1); } g.fillStyle = '#0A0B12'; for (let i = -1; i <= 1; i++) px(g, wx + i * 6, wy - 12, 2, 24); px(g, wx - 10, wy, 20, 2);
+    g.fillStyle = 'rgba(200,210,240,.07)'; for (let i = 0; i < 40; i++) px(g, wx - 8 + i, wy + 12 + i, 18, 1); // o luar entra de viés
+    for (let i = 0; i < 4; i++) { const x = A.x0 + L * (0.3 + i * 0.18), y = A.y0 + 62, acesa = i >= Math.floor(k * 4.2); g.fillStyle = '#3A2A1E'; px(g, x, y, 2, 9); px(g, x - 2, y, 6, 2); if (acesa) { g.fillStyle = '#FF8A2A'; px(g, x - 1, y - 5 - (Math.floor(Tm * 9 + i) % 2), 4, 5); g.fillStyle = '#FFE08A'; px(g, x, y - 4, 2, 3); } else { g.fillStyle = '#4A4E5A'; px(g, x, y - 3 - (Math.floor(Tm * 3 + i) % 3), 1, 2); } }
+    for (let i = 0; i < 3; i++) corrente(g, A.x0 + L * (0.22 + i * 0.3), A.y0, A.x0 + L * (0.22 + i * 0.3) + Math.sin(Tm * 1.4 + i) * 4, A.y0 + 30 + i * 8, Tm);
+    // a casa de Maria, ao longe: cinco velas, uma por pedaço de vigília
+    const hx = A.x1 - 46, hy = A.y0 + 40; g.fillStyle = '#1A1420'; px(g, hx - 16, hy - 10, 32, 22); g.fillStyle = '#2A2030'; px(g, hx - 18, hy - 12, 36, 3); g.fillStyle = v > 0.02 ? '#5A3E22' : '#0A0B12'; px(g, hx - 13, hy - 6, 26, 14);
+    for (let i = 0; i < 5; i++) { const acesa = v * 5 > i + 0.2, x = hx - 10 + i * 5; g.fillStyle = '#C9C4B2'; px(g, x, hy + 2, 2, 5); if (acesa) { g.fillStyle = '#FFD23F'; px(g, x, hy - 1 - (Math.floor(Tm * 8 + i) % 2), 2, 3); g.fillStyle = '#FFFFFF'; px(g, x, hy, 1, 1); } }
+    if (v > 0.02) { g.fillStyle = 'rgba(255,233,168,' + (0.08 + v * 0.3) + ')'; px(g, hx - 22, hy - 18, 44, 36); }
+  }
+});
+
 const FRENTE = {
   imoralidade(g, b, A, Tm) { // névoa rosada que sobe do chão
     const k = b.cen.nevoa || 0.25, h = 30 + k * 90;
