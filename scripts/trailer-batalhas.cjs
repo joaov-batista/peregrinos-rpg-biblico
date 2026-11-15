@@ -10,15 +10,15 @@ const FPS = 30;
 
 // as cenas: a mais épica de cada luta, cada uma com uma vocação diferente para mostrar as mecânicas
 const CENAS = [
-  { area: 'semana-01:1', chefe: 'mamom', cls: 'guerreiro', vida: 0.28, seg: 5.2, golpes: ['moedao', 'avalanche', 'cofre'], titulo: 'MAMOM', sub: 'a moeda gigante rola — pule' },
-  { area: 'semana-01:3', chefe: 'mentira', cls: 'profeta', vida: 0.55, seg: 5.2, golpes: ['copias5', 'troca', 'meiaVerdade'], titulo: 'A MENTIRA', sub: 'Profeta · a luz desfaz as cópias' },
-  { area: 'semana-01:2', chefe: 'procrastinacao', cls: 'juiz', vida: 0.24, seg: 5, golpes: ['relogio4', 'adiar'], titulo: 'PROCRASTINAÇÃO', sub: 'Juiz · o chicote entre os ponteiros' },
-  { area: 'mundo:golias', chefe: 'golias', cls: 'pastor', vida: 0.5, seg: 5.6, golpes: ['lanca', 'escudeiro', 'dardo'], postura: 76, titulo: 'GOLIAS', sub: 'Pastor · defenda a lança e mire na testa' },
-  { area: 'semana-03:4', chefe: 'fera', cls: 'valente', vida: 0.45, seg: 5, golpes: ['bote', 'garras'], dom: 'tornado', domT: 1.6, titulo: 'A FERA DO CAMPO', sub: 'dom · Redemoinho de fogo (2Rs 2:11)' },
-  { area: 'semana-01:5', chefe: 'satanas', cls: 'guerreiro', vida: 0.22, seg: 6, golpes: ['dardos', 'abismo', 'leao'], postura: 76, titulo: 'O ACUSADOR', sub: 'erga a lâmpada contra os dardos inflamados' },
-  { area: 'semana-03:3', chefe: 'babilonia', cls: 'levita', vida: 0.2, seg: 5.2, golpes: ['vozDoCeu', 'zigurate'], titulo: 'BABILÔNIA', sub: 'Levita · a voz do céu (Dn 4:31)' },
-  { area: 'mundo:behemote', chefe: 'behemote', cls: 'zelote', vida: 0.55, seg: 6, golpes: ['investida', 'rio', 'cauda'], titulo: 'BEEMOTE', sub: 'Zelote · faça o colosso bater na parede' },
-  { area: 'mundo:leviata', chefe: 'leviata', cls: 'valente', vida: 0.28, seg: 6.4, golpes: ['emergir', 'redemoinho', 'tochas'], dom: 'raios', domT: 3.2, titulo: 'LEVIATÃ', sub: 'Valente · espere ele emergir' }
+  { area: 'semana-01:1', chefe: 'mamom', cls: 'guerreiro', fase: 0.28, seg: 6.4, golpes: ['moedao', 'avalanche', 'cofre'], titulo: 'MAMOM', sub: 'a moeda gigante rola — pule' },
+  { area: 'semana-01:3', chefe: 'mentira', cls: 'profeta', fase: 0.55, seg: 6.4, golpes: ['copias5', 'troca', 'meiaVerdade'], titulo: 'A MENTIRA', sub: 'Profeta · a luz desfaz as cópias' },
+  { area: 'semana-01:2', chefe: 'procrastinacao', cls: 'juiz', fase: 0.24, seg: 6.2, golpes: ['relogio4', 'adiar'], titulo: 'PROCRASTINAÇÃO', sub: 'Juiz · o chicote entre os ponteiros' },
+  { area: 'mundo:golias', chefe: 'golias', cls: 'pastor', fase: 0.5, seg: 6.8, golpes: ['lanca', 'escudeiro', 'dardo'], titulo: 'GOLIAS', sub: 'Pastor · as Cinco Pedras Lisas' },
+  { area: 'semana-03:4', chefe: 'fera', cls: 'valente', fase: 0.45, seg: 6.2, golpes: ['bote', 'garras'], dom: 'tornado', domT: 1.6, titulo: 'A FERA DO CAMPO', sub: 'dom · Redemoinho de fogo (2Rs 2:11)' },
+  { area: 'semana-01:5', chefe: 'satanas', cls: 'guerreiro', fase: 0.22, seg: 7.2, golpes: ['dardos', 'abismo', 'leao'], titulo: 'O ACUSADOR', sub: 'erga a lâmpada contra os dardos inflamados' },
+  { area: 'semana-03:3', chefe: 'babilonia', cls: 'levita', fase: 0.2, seg: 6.4, golpes: ['vozDoCeu', 'zigurate'], titulo: 'BABILÔNIA', sub: 'Levita · a voz do céu (Dn 4:31)' },
+  { area: 'mundo:behemote', chefe: 'behemote', cls: 'zelote', fase: 0.55, seg: 7.2, golpes: ['investida', 'rio', 'cauda'], titulo: 'BEEMOTE', sub: 'Zelote · faça o colosso bater na parede' },
+  { area: 'mundo:leviata', chefe: 'leviata', cls: 'valente', fase: 0.28, seg: 7.6, golpes: ['emergir', 'redemoinho', 'tochas'], dom: 'raios', domT: 3.2, titulo: 'LEVIATÃ', sub: 'Valente · espere ele emergir' }
 ];
 
 (async () => {
@@ -43,49 +43,61 @@ const CENAS = [
     window.quadro = 0; window.eventos = [];
     const tremor = G.tremor.bind(G); G.tremor = a => { if (a >= 5) eventos.push([quadro, 't', a]); return tremor(a); };
     const texto = G.textoEm.bind(G); G.textoEm = (x, y, txt, ...r) => { if (/VIGIAI|QUEBRANTADO|ESTÁ ESCRITO|TONTO/.test(txt)) eventos.push([quadro, 'x', txt]); return texto(x, y, txt, ...r); };
-    window.passo = () => { G.update(1 / 30); G.render(); quadro++; };
-    // o bot: reage aos avisos como um jogador — sai das zonas, pula ondas, ergue a lâmpada no instante do dardo, golpeia nas brechas
-    let ultPulo = -9, ultVerso = -9, ultAtk = -9, lampAte = -9, combo = 0, domFeito = false, cfg = {};
+    window.brancos = 0; window.passo = () => { G.update(1 / 30); G.render(); if (G.chefe?.flash > 0) brancos++; quadro++; };
+    // o bot joga como gente: decide a cada ~0,15 s (tempo de reação) e segura os comandos entre uma decisão e outra;
+    // enquanto o chefe ataca, defende-se (sai das zonas, pula ondas, defende dardos — nem sempre acerta);
+    // só entra para bater na brecha (o chefe terminou o golpe, ficou exposto, tonto ou quebrantado), num combo curto, e recua.
+    let dec = { mx: 0, ate: -9 }, combo = { n: 0, prox: -9, fim: -9 }, ultPulo = -9, ultVerso = -9, lampAte = -9, domFeito = false, cfg = {};
+    const visto = new WeakMap(), viu = (o, T) => { if (!visto.has(o)) visto.set(o, { t: T, reage: Math.random() > 0.12 }); return visto.get(o); }; // às vezes não reage a tempo: leva o golpe
     const caixa = p => ({ x: p.x - 11, y: p.y - 40, w: 22, h: 40 }), toca = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
     G.lerControles = function () {
       const p = G.p, T = G.T, A = G.N.arena, b = G.inimigos.find(e => e.kind === 'chefe' && e.hp > 0 && !e.morrendo), c = { mx: 0, my: 0, pulo: false, puloSeg: true, atk: false, atkSeg: false, dash: false, lampP: false, lamp: false, orar: false, verso: false, interagir: false, dom: false, mira: 0, ladoMouse: 0 };
-      if (p.vida <= 1) p.vida = 3; // a cena não termina em morte
+      if (p.vida <= 1) p.vida = 2; // a cena não termina em morte
+      if (T - cfg.t0 < cfg.entrada) { c.mx = 1; G.ctl = c; return; } // entra correndo na arena
       const me = caixa(p); let fugir = 0, urgente = false, pular = false;
       for (const z of G.zonas) {
         if (z.isca && !z.sinal) continue;
         let r; if (z.tipo === 'col') r = { x: z.x - z.w / 2 - 14, y: z.y0 ?? A.y0, w: z.w + 28, h: (z.y1 ?? A.chao) - (z.y0 ?? A.y0) }; else if (z.tipo === 'circ') r = { x: z.x - z.r - 14, y: z.y - z.r, w: z.r * 2 + 28, h: z.r * 2 }; else r = { x: z.x - 10, y: z.y, w: z.w + 20, h: z.h };
         if (!toca(me, r)) continue;
+        const v = viu(z, T); if (!v.reage || T - v.t < 0.14) continue;
         if (z.tipo === 'faixa' || (z.tipo === 'muro' && z.h <= 40 && z.y > p.y - 50)) { if ((z.aviso ?? 0) < 0.4 || z.dur > 0.5) pular = true; continue; }
-        if (z.efeito === 'sono' || z.efeito === 'empurra' || z.tipo !== 'poca') { const meio = z.tipo === 'col' || z.tipo === 'circ' ? z.x : z.x + z.w / 2; fugir = Math.sign(p.x - meio) || (p.x < (A.x0 + A.x1) / 2 ? 1 : -1); if (p.x < A.x0 + 60) fugir = 1; if (p.x > A.x1 - 60) fugir = -1; urgente = urgente || (z.aviso ?? 0) < 0.3; }
+        if (z.tipo !== 'poca' || z.efeito) { const meio = z.tipo === 'col' || z.tipo === 'circ' ? z.x : z.x + z.w / 2; fugir = Math.sign(p.x - meio) || (p.x < (A.x0 + A.x1) / 2 ? 1 : -1); if (p.x < A.x0 + 60) fugir = 1; if (p.x > A.x1 - 60) fugir = -1; urgente = urgente || (z.aviso ?? 0) < 0.3; }
       }
-      for (const t of G.tiros) { if (t.amigo) continue; const dx = p.x - t.x, dy = p.y - 22 - t.y, d = Math.hypot(dx, dy), v = (t.vx * dx + t.vy * dy) / (d || 1); if (d < 130 && v > 60 && d / v < 0.24) { if (t.tipo === 'choque') pular = true; else c.lampP = true; } }
-      if (b && b.perigo && Math.abs(b.x - p.x) < 260 && Math.sign(b.vx || 0) === Math.sign(p.x - b.x)) { if (p.chao && T - ultPulo > 0.4) pular = true; else c.dash = true; c.mx = Math.sign(b.x - p.x) || 1; }
-      if (b && b.tele > 0 && b.art.lanca === 'prep' && Math.abs(b.x - p.x) < 250 && Math.random() < 0.25) c.lampP = true; // a lança de Golias: a defesa perfeita expõe a testa
-      if (b && !fugir) {
+      for (const t of G.tiros) { if (t.amigo) continue; const dx = p.x - t.x, dy = p.y - 22 - t.y, d = Math.hypot(dx, dy), vel = (t.vx * dx + t.vy * dy) / (d || 1); if (d < 130 && vel > 60 && d / vel < 0.24) { const v = viu(t, T); if (!v.reage) continue; if (t.tipo === 'choque') pular = true; else c.lampP = true; } }
+      if (b && b.perigo && Math.abs(b.x - p.x) < 260 && Math.sign(b.vx || 0) === Math.sign(p.x - b.x)) { const v = viu(b.mov || b, T); if (v.reage) { if (p.chao && T - ultPulo > 0.4) pular = true; else c.dash = true; } }
+      if (b && b.tele > 0 && b.art.lanca === 'prep' && Math.abs(b.x - p.x) < 250) { const v = viu(b.mov, T); if (v.reage && T - v.t > 0.3) c.lampP = true; } // a lança de Golias: a defesa perfeita expõe a testa
+      if (b) {
         const longe = ['funda', 'cajado', 'trombeta'].includes(G.tipoArma), alvoY = b.y - b.h * 0.55, dx = b.x - p.x, alc = b.w / 2 + (longe ? 230 : 58);
-        if (Math.abs(dx) > alc) c.mx = Math.sign(dx); else if (longe && Math.abs(dx) < 140) c.mx = -Math.sign(dx); else if (p.face !== Math.sign(dx)) c.mx = Math.sign(dx);
-        c.ladoMouse = Math.sign(dx); c.mira = Math.atan2(alvoY - (p.y - 22), dx);
+        const janela = !b.mov || b.exposto > 0 || b.quebrado > 0 || b.tonto > 0;
+        if (T >= dec.ate) { // uma decisão nova a cada tempo de reação
+          dec.ate = T + 0.12 + Math.random() * 0.1;
+          const quer = janela ? alc * 0.75 : (longe ? 290 : 200);
+          dec.mx = Math.abs(dx) > quer + 30 ? Math.sign(dx) : Math.abs(dx) < quer - 50 && !janela ? -Math.sign(dx) : 0;
+          if (janela && Math.abs(dx) < alc + 30 && combo.n === 0 && T > combo.fim) { combo.n = 2 + (Math.random() < 0.5 ? 1 : 0); combo.prox = T + 0.05; }
+          if (janela && (b.exposto > 0 || b.quebrado > 0 || b.tonto > 0) && p.oleo >= 30 && T - ultVerso > 2.5 && Math.abs(dx) < alc + 120) { c.verso = true; ultVerso = T; }
+          else if (janela && p.oleo >= 30 && T - ultVerso > 4.5 && Math.random() < 0.35 && Math.abs(dx) < alc + 120) { c.verso = true; ultVerso = T; }
+        }
+        c.mx = dec.mx; c.ladoMouse = Math.sign(dx) || 1; c.mira = Math.atan2(alvoY - (p.y - 22), dx);
         const alto = alvoY < p.y - 110;
-        if (alto && p.chao && Math.abs(dx) < alc + 60 && T - ultPulo > 0.6) pular = true;
-        if (alto && !p.chao) c.my = -1;
-        if (Math.abs(dx) < alc + 40 && !(b.alpha < 0.5) && T - ultAtk > (combo % 3 === 2 ? 0.75 : 0.3)) { c.atk = true; ultAtk = T; combo++; } // combos de três, com respiro, como quem joga
-        if (p.oleo >= 30 && T - ultVerso > 3.4 && Math.abs(dx) < alc + 120) { c.verso = true; ultVerso = T; }
+        if (combo.n > 0 && T >= combo.prox) { c.atk = true; combo.n--; combo.prox = T + 0.27 + Math.random() * 0.07; if (combo.n === 0) combo.fim = T + 0.45; if (alto) { c.my = -1; if (p.chao && T - ultPulo > 0.5) pular = true; } }
+        if (!janela) combo.n = 0; // o chefe começou outro golpe: larga o combo e se defende
       }
-      if (fugir) { c.mx = fugir; if (urgente && p.dashCd <= 0) c.dash = true; }
+      if (fugir) { combo.n = 0; c.mx = fugir; if (urgente && p.dashCd <= 0) c.dash = true; }
       if (pular && T - ultPulo > 0.25) { c.pulo = true; ultPulo = T; }
       if (!p.chao && T - ultPulo > 0.28 && T - ultPulo < 0.33 && pular) c.pulo = true; // salto duplo
       if (cfg.dom && !domFeito && T - cfg.t0 > cfg.domT) { c.dom = true; domFeito = true; p.oleo = G.oleoMax(); }
-      if (c.lampP) lampAte = T + 0.3; c.lamp = T < lampAte; // a lâmpada fica erguida um instante: a defesa perfeita precisa do toque E de segurar
+      if (c.lampP) lampAte = T + 0.3; c.lamp = T < lampAte; // a defesa perfeita precisa do toque E de segurar a lâmpada
       G.ctl = c;
     };
     window.cena = async o => {
-      cfg = { ...o, t0: 0 }; domFeito = false; G.char.cls = o.cls; G.tipoArma = CLASSES[o.cls].arma || 'espada'; G.equiparArma(); G.cm.dom = o.dom || null; G.domCd = 0;
+      cfg = { ...o, t0: 0, entrada: 0.7 }; domFeito = false; combo = { n: 0, prox: -9, fim: -9 }; G.char.cls = o.cls; G.tipoArma = CLASSES[o.cls].arma || 'espada'; G.equiparArma(); G.cm.dom = o.dom || null; G.domCd = 0;
       G.chefe = null; G.luta = false; G.venceu = false; G.limparPerigos?.(); G.entrar(o.area, { quieto: true });
-      const A = G.N.arena; G.p.x = A.x0 + 170; G.p.y = A.chao - 1; G.p.face = 1; G.p.vx = G.p.vy = 0; G.p.oleo = G.oleoMax(); G.p.vida = G.p.vidaMax; G.fade = 0; G.peso = 0;
+      const A = G.N.arena; G.p.x = A.x0 + 40; G.p.y = A.chao - 1; G.p.face = 1; G.p.vx = G.p.vy = 0; G.p.oleo = G.oleoMax(); G.p.vida = G.p.vidaMax; G.fade = 0; G.peso = 0;
       G.inimigos = G.inimigos.filter(e => e.kind === 'chefe'); await G.iniciarLuta(); G.ui.blocking = false; document.querySelectorAll('#overlay .modal').forEach(x => x.remove());
-      const b = G.chefe; b.hp = b.max * o.vida; let nf = 0; b.c.fases.forEach((f, i) => { if (b.hp / b.max <= f.vida) nf = i; }); b.fase = nf; b.espera = 0.5; if (o.postura) { b.post = o.postura; b.postT = 99; } // como no meio de uma luta: a postura já foi abalada
-      if (o.golpes) b.c = { ...b.c, fases: b.c.fases.map((f, i) => i === nf ? { ...f, golpes: o.golpes } : f) }; // os golpes que a cena quer mostrar
-      cfg.t0 = G.T; for (let i = 0; i < 8; i++) { G.update(1 / 30); G.render(); } // a câmera assenta (sem contar quadro: não é gravado)
+      // a luta começa do começo: vida cheia. Só o repertório de golpes é o da fase que a cena quer mostrar.
+      const b = G.chefe; let nf = 0; b.c.fases.forEach((f, i) => { if (o.fase >= f.vida) nf = i; }); b.fase = nf; b.espera = 1.3;
+      if (o.golpes) b.c = { ...b.c, fases: b.c.fases.map((f, i) => i === nf ? { ...f, golpes: o.golpes } : f) };
+      cfg.t0 = G.T; for (let i = 0; i < 4; i++) { G.update(1 / 30); G.render(); } // a câmera assenta (sem contar quadro: não é gravado)
     };
   });
   const marcas = []; let n = 0;
@@ -103,6 +115,6 @@ const CENAS = [
   }
   const eventos = await page.evaluate(() => window.eventos);
   fs.writeFileSync(path.join(SAIDA, 'cenas.json'), JSON.stringify({ fps: FPS, quadros: n, cenas: marcas, eventos, erros }, null, 1));
-  console.log(JSON.stringify({ quadros: n, eventos: eventos.length, erros: erros.slice(0, 5) }));
+  console.log(JSON.stringify({ quadros: n, eventos: eventos.length, brancos: await page.evaluate(() => window.brancos), erros: erros.slice(0, 5) }));
   await browser.close();
 })().catch(e => { console.log('FALHA', e.message.slice(0, 500)); process.exit(1); });
