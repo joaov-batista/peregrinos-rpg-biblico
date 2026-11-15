@@ -50,10 +50,29 @@ const CENTROS = [
   ['...e....', '..####..', '...##...', '...##...'], ['.==..==.', '........', '...==...', '........', '.^^^^^^.'], ['e..ee..e'],
   ['...vv...', '..====..', '........', '........', '.#....#.', '.#.e..#.'], ['.f.f.f..', '........', '........', '........', '...==...', '........', '........']
 ];
-const ARENAS = {
+// Cada chefe tem a sua sala: plataformas [linha, de, até] desenhadas para os golpes dele (refúgios altos contra a
+// investida do Beemote, costelas no ventre do Desespero, o zigurate de Babilônia, os pedestais dos encantadores…)
+export const ARENAS = {
   plana: [],
   plat: [[13, 4, 9], [13, 20, 25], [10, 12, 17]],
-  alta: [[13, 3, 7], [13, 22, 26], [10, 8, 12], [10, 17, 21]]
+  alta: [[13, 3, 7], [13, 22, 26], [10, 8, 12], [10, 17, 21]], // o barco do Leviatã
+  cofre: [[13, 2, 5], [10, 2, 3], [13, 24, 27], [10, 26, 27]], // Mamom: pilhas de moedas nos cantos
+  relogio: [[13, 5, 9], [13, 20, 24], [10, 11, 18], [7, 13, 16]], // Procrastinação: a torre do relógio
+  espelhos: [[13, 3, 6], [13, 23, 26], [10, 8, 11], [10, 18, 21], [7, 13, 16]], // Mentira: simetria de espelho
+  fuga: [[13, 1, 3], [13, 26, 28]], // Imoralidade: só há saída pelas pontas — fugir é o caminho
+  altar: [[13, 3, 8], [13, 21, 26], [10, 11, 18], [7, 9, 12], [7, 17, 20]], // Satanás: degraus acima do abismo
+  conves: [[13, 6, 8], [13, 21, 23], [10, 13, 16]], // Fugitivo: caixotes e o cesto da gávea
+  tormenta: [[13, 2, 6], [13, 11, 13], [13, 16, 18], [13, 23, 27], [10, 13, 16]], // Pavor: o convés na tempestade
+  costelas: [[13, 2, 4], [11, 6, 8], [13, 10, 12], [11, 14, 15], [13, 17, 19], [11, 21, 23], [13, 25, 27]], // Desespero: o ventre do peixe
+  barricadas: [[13, 9, 12], [13, 17, 20]], // Violência: as ruas de Nínive
+  colina: [[13, 2, 10], [10, 4, 8], [13, 20, 27]], // Ressentimento: a colina a leste da cidade (Jn 4:5)
+  pedestais: [[13, 4, 8], [13, 13, 16], [13, 21, 25], [10, 8, 11], [10, 18, 21]], // Encantadores
+  andaimes: [[13, 3, 9], [10, 3, 6], [13, 20, 26], [10, 23, 26]], // Jugo: os andaimes das obras do rei
+  zigurate: [[13, 6, 23], [10, 9, 20], [7, 12, 17]], // Babilônia
+  troncos: [[14, 5, 9], [14, 20, 24]], // Fera: troncos caídos no campo
+  terracos: [[13, 2, 7], [13, 22, 27], [10, 5, 10], [10, 19, 24], [7, 11, 18]], // Soberba: os terraços do palácio
+  vale: [[14, 2, 5], [14, 24, 27], [15, 13, 16]], // Golias: as encostas do vale de Elá e o ribeiro
+  savana: [[10, 4, 8], [10, 21, 25]] // Beemote: refúgios altos — embaixo é a investida
 };
 
 const espelha = s => s.split('').reverse().join('');
@@ -128,7 +147,7 @@ export function gerarNivel(def) {
     };
     c._ped = [];
     if (c.papel === 'arena') {
-      for (const [row, a, b] of ARENAS[def.arena || 'plana']) for (let x = a; x <= b; x++) set(ox + x, oy + row, PONTE);
+      for (const [row, a, b] of ARENAS[def.arena] || ARENAS.plana) for (let x = a; x <= b; x++) set(ox + x, oy + row, PONTE);
       N.arena = { x0: (ox + 1) * T, x1: (ox + CW - 1) * T, y0: (oy + 1) * T, chao: (oy + CH - 1) * T, cx: (ox + CW / 2) * T, cel: c };
       for (let y = 13; y <= 15; y++) set(ox, oy + y, PORTAO);
       N.porta = { x: ox * T + 16, y: (oy + 16) * T, tx: ox, ty: oy + 13 };
@@ -151,7 +170,7 @@ export function gerarNivel(def) {
         }
         poe(lado ? linhas.map(espelha) : linhas, lado ? 20 : 2);
       }
-      if (!poco && c.papel === 'corredor') poe(CENTROS[Math.floor(rng() * CENTROS.length)], 11);
+      if (!poco && c.papel === 'corredor') { const marcante = def.marca && c === corredores[Math.floor(corredores.length / 2)]; poe(marcante ? def.marca : CENTROS[Math.floor(rng() * CENTROS.length)], 11); } // a sala marcante da fase fica no meio do caminho
     }
     if (c.mask & U) for (const row of [13, 10, 8, 5, 2]) for (let x = 12; x <= 17; x++) set(ox + x, oy + row, PONTE);
     // portas sempre livres

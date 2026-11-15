@@ -25,6 +25,7 @@ import { novoHeroi, atualizarHeroi, desenharHeroi, ARMAS, OLEO_USO, damp } from 
 import { novoVicio, atualizarVicio, desenharVicio, vulneravel, VICIOS, ehVoador } from './bichos.js';
 import { CHEFES, novoChefe, atualizarChefe, desenharChefe, danoNoChefe } from './chefes.js';
 import { ESTILOS } from './estilos.js';
+import { PERIGOS } from './perigos.js';
 import { ARMADURA, RELIQUIAS, MUNDO, DIFICULDADES, ARMAS_ALT, DONS, areaDef, novoCaminho, semanaDe } from './dados.js';
 import { tema, pintarFundo, pintarBlocos, pintarEnfeites, pintarLampioes, pintarLuz, corA } from './cena.js';
 import { desenharObjeto } from './objetos.js';
@@ -143,7 +144,7 @@ export class Caminho {
     const N = this.N = gerarNivel(def);
     if (def.fase?.tema === 'conves') this.fazerBarco(N); // a travessia para Társis: o convés tem vãos por onde o mar entra
     N.revel = new Float32Array(N.w * N.h); N.desfeita = new Set(); N.portaAberta = false;
-    this.inimigos = []; this.tiros = []; this.zonas = []; this.moedas = []; this.parts = []; this.textos = []; this.chefe = null; this.puxao = null; this.pecado = null;
+    this.inimigos = []; this.tiros = []; this.zonas = []; this.moedas = []; this.moedasFeitas = new Set(); this.parts = []; this.textos = []; this.chefe = null; this.puxao = null; this.pecado = null;
     this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.peso = 0; this.luta = false; this.venceu = false; this.vento = null; this.climaT = 6; this.usados = {}; this.perto = null; this.emb = null;
     cm.selos[id] = cm.selos[id] || []; cm.est[id] = cm.est[id] || []; cm.seg[id] = cm.seg[id] || [];
     // objetos da área
@@ -366,7 +367,7 @@ export class Caminho {
   // golpe de um companheiro, já calculado no aparelho dele
   golpeRemoto(e, m) {
     if (!e || e.hp <= 0 || e.morrendo) return;
-    e.hp -= m.d; e.flash = 0.1; e.semGolpe = 0;
+    e.hp -= m.d; e.flash = 0.1; e.semGolpe = 0; e.semHit = 0;
     if (e.kind === 'chefe') { if (m.cl) e.clones = []; if (m.po) this.postura(e, m.po); if (e.hp <= 0) this.chefeMorre(e); }
     else { e.stun = Math.max(e.stun, 0.2); e.estado = 'idle'; e.tele = 0; if (m.vx != null) { e.vx = m.vx; e.vy = m.vy; e.chao = false; } }
   }
@@ -447,6 +448,8 @@ export class Caminho {
       if (p.atk && p.atk !== this.amarraAtk) { this.amarraAtk = p.atk; this.amarra -= 0.8; this.fx.po(p.x, p.y - 20, 4, '#C98E62'); if (this.amarra <= 0) { this.textoEm(p.x, p.y - 60, 'a corrente cedeu!', '#FFE9A8', 13); sfx('parry'); } }
     }
   }
+  // uma moeda maldita que alguém apanhou, ou que a Ganância recolheu, some em todos os aparelhos
+  moedaSumiu(m) { m.pego = true; if (m.cid) this.mp?.ev('mc', { id: m.cid }); }
   limparPerigos() { this.tiros = this.tiros.filter(t => t.amigo); this.zonas = []; }
 
   // aplica um golpe do peregrino em tudo o que a caixa toca
@@ -509,7 +512,7 @@ export class Caminho {
       return true;
     }
     if (!vulneravel(e, deX)) { sfx('block'); this.fx.faisca(e.x - dir * e.r, e.y - e.h / 2, 5, '#C79BFF'); if (e.ai === 'guarda') this.textoEm(e.x, e.y - e.h - 8, 'pelas costas!', '#C79BFF', 11); return true; }
-    e.hp -= dano; e.flash = 0.12; e.stun = Math.max(e.stun, 0.1); e.estado = 'idle'; e.tele = 0; e.irado = 4; e.cd = Math.min(e.cd, 0.3); // ferido, o vício avança
+    e.hp -= dano; e.semHit = 0; e.flash = 0.12; e.stun = Math.max(e.stun, 0.1); e.estado = 'idle'; e.tele = 0; e.irado = 4; e.cd = Math.min(e.cd, 0.3); // ferido, o vício avança
     const k = (this.arma.empurra || 1) * (e.ai === 'guarda' ? 0.35 : 1);
     if (atk.dir === 'cima') { e.vy = -260 * k; } else if (atk.dir === 'baixo') { e.vy = 160; } else { e.vx = dir * 110 * k; if (!e.voa) e.vy = -90 * k; e.chao = false; }
     this.fx.faisca(e.x, e.y - e.h / 2, 7, '#fff'); this.efeito('faisca', e.x, e.y - e.h / 2, dir); this.ganharOleo(atk.semOleo ? 0 : 11); sfx('hit'); this.hitstop = 0.05; this.tremor(2);
@@ -645,7 +648,10 @@ export class Caminho {
   atualizarZonas(dt) {
     const p = this.p, A = this.N.arena, pc = caixa(p);
     for (const z of this.zonas) {
-      if (z.aviso > 0) { z.aviso -= dt; if (z.aviso <= 0) { z.ativa = true; if (z.pilar) this.efeito('pilarCeu', z.x, A ? A.chao : z.y); if (z.tipo !== 'poca') { sfx('hit'); this.tremor(z.tipo === 'col' ? 3 : 4); } if (z.tentacao && A) this.moedas.push({ x: z.x, y: A.chao - 30, vx: 0, vy: -120, t: 0, v: 5, maldita: true }); } continue; }
+      if (z.aviso > 0) { z.aviso -= dt; if (z.aviso <= 0) { z.ativa = true; if (z.pilar) this.efeito('pilarCeu', z.x, A ? A.chao : z.y); if (z.tipo !== 'poca') { sfx('hit'); this.tremor(z.tipo === 'col' ? 3 : 4); } } }
+      // a moeda maldita nasce uma vez só em cada aparelho, com a mesma identidade em todos (mesmo que a zona chegue pela rede já ativa)
+      if (z.tentacao && z.aviso <= 0 && A && !this.moedasFeitas.has(z.cid || z)) { this.moedasFeitas.add(z.cid || z); this.moedas.push({ x: z.x, y: A.chao - 30, vx: 0, vy: -120, t: 0, v: 5, maldita: true, cid: z.cid }); }
+      if (z.aviso > 0) continue;
       z.dur -= dt;
       let r;
       if (z.tipo === 'col') r = { x: z.x - z.w / 2, y: z.y0 ?? (A ? A.y0 : p.y - 600), w: z.w, h: (z.y1 ?? (A ? A.chao : p.y + 100)) - (z.y0 ?? (A ? A.y0 : p.y - 600)) };
@@ -656,6 +662,9 @@ export class Caminho {
       if (dentro && !p.morto) {
         if (z.efeito === 'troca') { if (!z.fez) { z.fez = true; p.x = z.tx; p.vy = -200; p.chao = false; this.efeito('fumacaRoxa', p.x, p.y); this.textoEm(p.x, p.y - 60, 'quem é quem?', '#C79BFF', 13); } }
         else if (z.efeito === 'amarra') { if (!z.fez) { z.fez = true; this.amarra = z.dur2 || 3; this.textoEm(p.x, p.y - 60, 'acorrentado!', '#C98E62', 13); sfx('block'); } }
+        else if (z.efeito === 'petrifica') { if (!z.fez) { z.fez = true; // o olhar do Basilisco: a lâmpada erguida o devolve
+            if (p.vig > 0 || p.lamp) { if (z.dono) { if (z.dono.nid && !this.souDono()) this.mp.ev('pa', { id: z.dono.nid, vx: 0 }); else { z.dono.stun = 2; z.dono.aberto = 2; } } this.textoEm(p.x, p.y - 60, 'a luz devolve o olhar!', '#FFE9A8', 12); sfx('parry'); }
+            else { p.stunT = 1.3; p.vx = 0; this.textoEm(p.x, p.y - 60, 'petrificado!', '#9FE07A', 13); sfx('wrong'); } } }
         else if (z.efeito === 'inverte') { if (!z.fez && this.p === this.eu) { z.fez = true; this.invertido = 3.2; this.textoEm(p.x, p.y - 60, 'seus passos mentem!', '#C79BFF', 13); sfx('wrong'); } }
         else if (z.efeito === 'sono') { if (p.stunT <= 0 && !z.fez) { z.fez = true; p.stunT = 1.25; p.vx = 0; this.textoEm(p.x, p.y - 56, 'zzz… "Até quando ficarás deitado?" (Pv 6:9)', '#A5CDCE', 12); sfx('wrong'); } }
         else {
@@ -681,7 +690,7 @@ export class Caminho {
       if (solido(this.N, Math.floor((m.x + Math.sign(m.vx) * 5) / T), Math.floor(m.y / T))) m.vx *= -0.5;
       if (dist < 20 && m.t > 0.3 && !p.morto) {
         m.pego = true; const v = Math.round(m.v * (this.tem('tijolo_humilde') ? 1.3 : 1) * (this.tem('talento_multiplicado') ? 2 : 1)) || 1; d.gold += v; sfx('coin');
-        if (m.maldita) { this.peso++; this.textoEm(p.x, p.y - 54, '+' + v + ' denários… e um peso a mais', '#FFD23F', 12); }
+        if (m.maldita) { this.peso++; this.textoEm(p.x, p.y - 54, '+' + v + ' denários… e um peso a mais', '#FFD23F', 12); this.moedaSumiu(m); }
       }
       if (m.t > (m.maldita ? 9 : 14)) m.pego = true;
     }
@@ -692,13 +701,15 @@ export class Caminho {
   clima(dt) {
     let p = this.p; const tipo = this.tm.perigo;
     if (this.vento) { this.vento.t -= dt; if (!p.morto && p.dashT <= 0 && !this.tem('ancora_esperanca')) p.x += this.vento.f * dt * (p.chao ? 0.55 : 1) * (p.lamp ? 0.4 : 1); if (Math.random() < dt * 40) this.parts.push({ x: p.x + rand(200, 520), y: p.y - rand(0, 300), vx: this.vento.f * 4, vy: rand(-20, 20), t: 0.6, max: 0.6, r: 1.6, cor: this.tm.acento, g: 0 }); if (this.vento.t <= 0) this.vento = null; }
-    if ((!tipo && this.tm.deco !== 'mastros') || (this.luta && this.def.mundo !== 'leviata') || this.venceu || p.morto || this.def.paz || this.def.extra) return; // no barco do Leviatã o mar e as lanças não param
+    if ((!tipo && this.tm.deco !== 'mastros' && !(this.def.fase && PERIGOS[this.def.chefe])) || (this.luta && this.def.mundo !== 'leviata') || this.venceu || p.morto || this.def.paz || this.def.extra) return; // no barco do Leviatã o mar e as lanças não param
     // em grupo, só o dono da área sorteia o clima: uma rajada só para todos (os outros a recebem pela rede), mirada num peregrino qualquer
     if (this.mp?.acompanhado() && !this.souDono()) return;
     this.climaT = (this.climaT ?? 6) - dt; if (this.climaT > 0) return;
     this.climaT = this.tm.deco === 'mastros' || this.def.mundo === 'leviata' ? rand(4.5, 7) : rand(8, 12);
     if (this.mp?.acompanhado()) { const vivos = [this.eu, ...this.mp.naArea().map(o => o.h)].filter(h => !h.morto); if (vivos.length) p = vivos[Math.floor(Math.random() * vivos.length)]; }
     const sala = CH * T, ox = Math.floor(p.x / (CW * T)) * CW * T, oy = Math.floor((p.y - 2) / sala) * sala;
+    const perigoFase = this.def.fase && PERIGOS[this.def.chefe];
+    if (perigoFase && !this.luta) { this.climaT = rand(6.5, 10); perigoFase.f(this, p, { x0: ox + T, x1: ox + (CW - 1) * T, y0: oy + T, chao: oy + sala - T }); return; } // cada fase tem o seu perigo
     if (tipo === 'onda') { this.zonas.push({ tipo: 'faixa', x: ox + T, w: (CW - 2) * T, y: oy + sala - T - 30, h: 30, aviso: 1.3, dur: 0.35, cor: '120,210,245', baixo: true }); sfx('swing'); }
     else if (tipo === 'brasas') { for (let i = -1; i <= 1; i++) this.zonas.push({ tipo: 'col', x: p.x + i * 120 + rand(-20, 20), w: 40, aviso: 1.1 + (i + 1) * 0.25, dur: 0.22, cor: '#FF5A3C', y0: oy + T, y1: oy + sala - T }); sfx('shoot'); }
     if (this.tm.deco === 'mastros' && this.def.fase && !p.morto) { // no mar de Jonas, lanças e arpões cruzam o convés na altura do peito: pule, abaixe-se com o passo rasteiro ou apare

@@ -14,7 +14,8 @@ export const centro = b => ({ x: b.x, y: b.y - b.h * 0.55 });
 const angulo = (x, y, G) => Math.atan2(G.p.y - 20 - y, G.p.x - x);
 const av = (G, s) => s * G.dif.aviso;
 const vel = (G, v) => v * G.dif.vel;
-const zona = (G, z) => { G.zonas.push(z); return z; };
+let nMoeda = 0;
+const zona = (G, z) => { if (z.tentacao && !z.cid) z.cid = 'm' + (++nMoeda) + Math.random().toString(36).slice(2, 7); G.zonas.push(z); return z; }; // a moeda maldita leva uma identidade igual em todos os aparelhos
 const muro = (G, x, y, w, h, o = {}) => zona(G, { tipo: 'muro', x, y, w, h, aviso: 0.8, dur: 0.3, cor: '#FFFFFF', ...o });
 const vivo = (G, t) => t && t.vida > 0 && G.tiros.includes(t);
 const prepara = b => { b.vx *= 0.85; b.art.step = 1; b.tele = 1; };
@@ -39,7 +40,7 @@ const mamom = {
     const A = G.N.arena, m = G.moedas.filter(q => q.maldita && q.x > A.x0 && q.x < A.x1).sort((a, c) => Math.abs(a.x - b.x) - Math.abs(c.x - b.x))[0];
     const alvo = m ? m.x : G.p.x, dx = alvo - b.x; b.face = Math.sign(dx) || b.face;
     b.vx = Math.abs(dx) > (m ? 8 : b.w * 0.7) ? b.face * (b.c.vel || 70) * (m ? 1.5 : 1) * (1 + fase(b) * 0.15) : 0;
-    if (m && Math.abs(m.x - b.x) < 24) { G.moedas.splice(G.moedas.indexOf(m), 1); b.hp = Math.min(b.max, b.hp + b.max * 0.012); G.fx.sobe(b.x, b.y - 40, 6, '#FFD23F'); G.textoEm(b.x, b.y - b.h - 8, '+ouro', '#FFD23F', 11); sfx('coin'); }
+    if (m && Math.abs(m.x - b.x) < 24) { if (G.moedaSumiu) G.moedaSumiu(m); else m.pego = true; G.moedas.splice(G.moedas.indexOf(m), 1); b.hp = Math.min(b.max, b.hp + b.max * 0.012); G.fx.sobe(b.x, b.y - 40, 6, '#FFD23F'); G.textoEm(b.x, b.y - b.h - 8, '+ouro', '#FFD23F', 11); sfx('coin'); }
   },
   // o ouro se amontoa nos cantos conforme ele perde vida; o brilho das pilhas cresce
   palco(G, b, dt) { const k = 1 - b.hp / b.max; b.cen.ouro = k; if (Math.random() < dt * (1 + k * 4)) G.parts.push({ x: rand(G.N.arena.x0, G.N.arena.x1), y: G.N.arena.chao - rand(2, 10 + k * 50), vx: 0, vy: -10, t: 0.5, max: 0.5, r: 1.2, cor: '#FFF3C4', g: 0 }); },
@@ -75,7 +76,7 @@ const mamom = {
       if (m.e === 0) { if (m.t === 0) b.face = Math.sign(G.p.x - b.x) || 1; prepara(b); b.vx = 0; if (m.t > av(G, 0.65)) { m.e = 1; m.t0 = m.t; m.ux = b.x; sfx('dodge'); } return false; }
       if (m.e === 1) {
         ataca(b); b.corre = true; b.perigo = true; b.vx = b.face * vel(G, 560);
-        if (Math.abs(b.x - m.ux) > 70) { m.ux = b.x; zona(G, { tipo: 'circ', x: b.x, y: A.chao - 20, r: 1, aviso: 0.02, dur: 0.02, cor: '#FFD23F', isca: true, tentacao: true }); } // a moeda nasce em todos os aparelhos
+        if (Math.abs(b.x - m.ux) > 70) { m.ux = b.x; zona(G, { tipo: 'circ', x: b.x, y: A.chao - 20, r: 1, aviso: 0.02, dur: 0.3, cor: '#FFD23F', isca: true, tentacao: true }); } // a moeda nasce em todos os aparelhos (a zona dura mais que o intervalo da rede)
         if (b.parede === b.face || b.x < A.x0 + b.w / 2 + 6 || b.x > A.x1 - b.w / 2 - 6 || m.t - m.t0 > 1.8) { b.vx = 0; b.corre = false; b.perigo = false; G.efeito('slamOuro', b.x + b.face * b.w / 2, A.chao); G.tremor(9); sfx('block'); m.e = 2; m.t0 = m.t; }
         return false;
       }

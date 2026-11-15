@@ -67,3 +67,22 @@ test('em luta simulada, cada chefe usa todos os golpes e cada golpe termina sozi
     assert.ok(maior < 11.5, id + ': um golpe ficou preso por ' + maior.toFixed(1) + ' s');
   }
 });
+
+test('vícios, salas de chefe e fases: cada um tem o seu, sem repetir', async () => {
+  const { VICIOS } = await import('../src/caminho/bichos.js');
+  const { ARENAS } = await import('../src/caminho/nivel.js');
+  const { PERIGOS, MARCAS } = await import('../src/caminho/perigos.js');
+  const { TODAS } = await import('../src/content/index.js');
+  // cada vício luta de um jeito que nenhum outro usa
+  const ais = Object.entries(VICIOS).map(([id, v]) => [id, v.ai]);
+  for (const [id, ai] of ais) assert.equal(ais.filter(([, a]) => a === ai).length, 1, id + ' divide o comportamento "' + ai + '" com outro vício');
+  // cada chefe tem uma sala própria, e nenhuma planta de sala se repete
+  const arenas = Object.entries(CHEFES).map(([id, c]) => [id, c.arena]);
+  for (const [id, a] of arenas) { assert.ok(ARENAS[a], id + ': sala ' + a + ' não existe'); assert.equal(arenas.filter(([, b]) => b === a).length, 1, id + ' divide a sala ' + a); }
+  const plantas = arenas.map(([, a]) => JSON.stringify(ARENAS[a])); assert.equal(new Set(plantas).size, plantas.length, 'duas salas com a mesma planta');
+  // cada fase tem o seu perigo e a sua sala marcante, diferentes de todas as outras
+  const chefesDeFase = TODAS.flatMap(s => s.fases.map(f => f.chefe));
+  for (const c of chefesDeFase) { assert.equal(typeof PERIGOS[c]?.f, 'function', c + ' sem perigo de fase'); assert.ok(MARCAS[c], c + ' sem sala marcante'); }
+  const nomes = chefesDeFase.map(c => PERIGOS[c].nome), marcas = chefesDeFase.map(c => MARCAS[c].join('|'));
+  assert.equal(new Set(nomes).size, nomes.length, 'perigo de fase repetido'); assert.equal(new Set(marcas).size, marcas.length, 'sala marcante repetida');
+});

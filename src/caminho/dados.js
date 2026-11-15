@@ -273,10 +273,11 @@ export function areaDef(id) {
   if (f.n === 3 || f.n === 5) segredos.push('mana');
   const estacoes = f.estacoes || (primeira ? DECISOES_CORINTO[f.n] : undefined);
   return { id, sem, fase: f, nome: f.nome, sub: f.ref, tema: TEMA_FASE[f.tema] || f.tema, chefe: f.chefe, seed: id, cols: estacoes ? 8 : 7,
-    rolos: 3, estacoes, npcs: Object.values(f.npcs || {}).map(n => ({ ...n, falas: FALAS[sid]?.[f.n]?.[n.nome] || n.falas })), inimigos: f.inimigos, segredos, arena: arenaDe(f.chefe),
+    rolos: 3, marca: MARCAS[f.chefe], estacoes, npcs: Object.values(f.npcs || {}).map(n => ({ ...n, falas: FALAS[sid]?.[f.n]?.[n.nome] || n.falas })), inimigos: f.inimigos, segredos, arena: arenaDe(f.chefe),
     segTipos: f.n === 1 && primeira ? ['lampada'] : ['lampada', 'lampada', 'firmeza', 'asas'] };
 }
 import { CHEFES } from './chefes.js';
+import { MARCAS } from './perigos.js';
 const arenaDe = id => CHEFES[id]?.arena || 'plana';
 
 export const DIFICULDADES = {
