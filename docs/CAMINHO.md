@@ -259,7 +259,9 @@ os outros digitam o código, ou abrem o link `?sala=CÓDIGO`. Não há servidor 
 - **O Conselho Zelote** (`conselho` + os companheiros `zeloteFoice` e `zelotePunhal`, com `parte: true` em `CHEFES`): três lutadores
   e uma vida só. Menaém luta sozinho; depois Eleazar e Jair juntos; no fim os três. Entre os golpes ninguém fica na sala; cada golpe
   é um de três jeitos (`zRasante`, `zMergulho`, `zParede` em `estilos.js`). O que os companheiros apanham sai da vida do conselho
-  (`palco` do conselho). Porta no Pátio das provas; quatro zelotes pela aldeia apontam o caminho.
+  (`palco` do conselho). Porta na Clareira das provas; quatro zelotes pela aldeia apontam o caminho.
+- **Clareira das Provas** (`clareira` em `dados.js`): a mata atrás do Pátio das provas (portal "Trilha da mata"). A Arena de treino,
+  o Desafio das ondas e a porta do Conselho saíram do meio da aldeia e ficam ali; ao sair deles volta-se à clareira.
 - **Prêmio:** o Zelo com entendimento (`cm.zelo`): depois de uma defesa perfeita, o próximo golpe sai com o triplo da força.
 - **Depois da vitória** (`missao.js`): os zelotes vendem a arma do conselho (uma por vocação), três relíquias (Faixa de Fineias,
   Cantil de Masada, Sica oculta) e maná; e entregam a investigação: três sinais (Bairro, fim do Olival, Cisterna), uma dedução,

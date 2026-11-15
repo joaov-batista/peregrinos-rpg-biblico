@@ -598,7 +598,7 @@ export class Caminho {
     this.ui.bossBar(null);
   }
   renascer() {
-    if (this.def.desafio) { const n = (this.des?.onda || 1) - 1; this.des = null; this.entrar('refugio', { quieto: true }); return this.ui.toast('Você aguentou ' + n + ' onda(s). Melhor marca: ' + (this.cm.recorde || 0) + '.', 6000); }
+    if (this.def.desafio) { const n = (this.des?.onda || 1) - 1; this.des = null; this.entrar('clareira', { quieto: true, portal: 'desafio' }); return this.ui.toast('Você aguentou ' + n + ' onda(s). Melhor marca: ' + (this.cm.recorde || 0) + '.', 6000); }
     if (this.def.pvp) { this.des = null; return this.reviver(); }
     if (this.mp?.acompanhado()) return this.reviver();
     const eb = this.cm.ebenezer;
@@ -1170,7 +1170,7 @@ export class Caminho {
       case 'ebenezer': return 'Descansar';
       case 'portal': return ob.oculto && !this.achou(ob) ? null : 'Entrar';
       case 'saida': return 'Seguir caminho';
-      case 'retorno': return 'Voltar ao Refúgio';
+      case 'retorno': return ['treino', 'desafio', 'conselho'].includes(this.def.id) ? 'Voltar à clareira' : 'Voltar ao Refúgio';
       case 'querubim': case 'porta-pecado': return 'Olhar';
       case 'poco': return 'Beber';
     }
@@ -1223,6 +1223,8 @@ export class Caminho {
         if (ob.area === 'getsemani') await this.ui.dialog({ nome: ob.rotulo, texto: this.cm.getsemani ? 'O caminho entre as oliveiras, de volta ao jardim onde ele orou.' : 'A lâmpada mostrou um vão entre duas oliveiras velhas, tão velhas que parecem de outro tempo.\n\nDo outro lado, um cheiro de azeite e de terra molhada. E uma voz, muito baixa, orando.', acoes: [{ label: 'Atravessar', fn: () => this.entrar('getsemani') }, { label: 'Agora não' }], voz: false });
         else if (ob.area === 'floresta' && this.area === 'getsemani') await this.ui.dialog({ nome: ob.rotulo, texto: 'O caminho de volta à floresta escura, e ao seu tempo.', acoes: [{ label: 'Voltar', fn: () => this.entrar('floresta', { portal: 'getsemani' }) }, { label: 'Ficar mais um pouco' }], voz: false });
         else if (ob.area === 'floresta') await this.ui.dialog({ nome: ob.rotulo, texto: 'Entre as últimas oliveiras, a luz mostrou uma trilha que ninguém mais vê. Do outro lado, uma floresta escura, e lá no fundo, dizem, um jardim guardado por um querubim e uma porta que respira.\n\nSem a lâmpada erguida, ali não se enxerga o chão.', acoes: [{ label: 'Seguir a trilha', fn: () => this.entrar('floresta') }, { label: 'Agora não' }] });
+        else if (ob.area === 'refugio' && this.area === 'clareira') this.entrar('refugio', { portal: 'clareira' });
+        else if (ob.area === 'clareira') await this.ui.dialog({ nome: ob.rotulo, texto: 'Atrás do pátio a aldeia acaba e começa a mata. Uma trilha de terra batida entra entre as oliveiras.\n\nLá dentro há uma clareira: a arena de treino, o desafio das ondas e, no fundo, uma porta de ferro guardada pelos zelotes.', acoes: [{ label: 'Seguir a trilha', fn: () => this.entrar('clareira') }, { label: 'Agora não' }], voz: false });
         else if (ob.area === 'refugio') { const falta = cm.visto.tut != null && cm.visto.tut < PASSOS.length;
           await this.ui.dialog({ nome: ob.rotulo, texto: 'No fim da trilha, luzes: a última aldeia acesa. O Refúgio.' + (falta ? '\n\nVocê ainda não terminou os primeiros passos (faltam ' + (PASSOS.length - cm.visto.tut) + '). Dá para voltar ao bosque quando quiser, pela Praça do poço.' : ''),
             acoes: [{ label: 'Entrar no Refúgio', fn: () => { if (falta) cm.visto.tut = PASSOS.length; this.entrar('refugio', { portal: 'bosque' }); } }, { label: falta ? 'Terminar o treino' : 'Ficar mais um pouco' }], voz: false }); }
@@ -1248,7 +1250,7 @@ export class Caminho {
         break;
       }
       case 'poco': p.oleo = this.oleoMax(); p.vida = Math.min(p.vidaMax, p.vida + 1); sfx('heal'); this.efeito('cura', p.x, p.y); this.ui.toast('"Quem beber da água que eu lhe der nunca mais terá sede" (Jo 4:14). Azeite cheio.', 5000); break;
-      case 'retorno': this.entrar('refugio', { portal: d.sem?.id || d.mundo || d.id }); break;
+      case 'retorno': if (['treino', 'desafio', 'conselho'].includes(d.id)) this.entrar('clareira', { portal: d.id }); else this.entrar('refugio', { portal: d.sem?.id || d.mundo || d.id }); break;
       case 'querubim': this.ovo('querubim', 'Um querubim e uma espada flamejante guardam o caminho da árvore da vida (Gn 3:24). Por aqui não se volta: o caminho de volta é outro.'); await this.ui.dialog({ nome: 'O querubim', texto: 'A espada de fogo se revolve sem ruído. Atrás dela, um verde que você nunca viu e de que, estranhamente, sente saudade.\n\n"E pôs querubins ao oriente do jardim do Éden, e uma espada flamejante que se revolvia, para guardar o caminho da árvore da vida" (Gn 3:24).', acoes: [{ label: 'Falar com o querubim' }] });
         await this.ui.dialog({ nome: 'O querubim', texto: 'Eu guardo a passagem para o Jardim. Em breve ela se abrirá, e você poderá entrar.\n\nMas ainda não, peregrino. A sua jornada ainda é longa: há páginas que você não leu e sombras que ainda não venceu.\n\n"Ao vencedor, dar-lhe-ei que se alimente da árvore da vida, que está no paraíso de Deus" (Ap 2:7).', acoes: [{ label: 'Seguir o caminho' }] }); break;
       case 'porta-pecado': await this.portaDoPecado(ob); break;

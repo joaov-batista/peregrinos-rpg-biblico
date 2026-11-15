@@ -149,7 +149,7 @@ export async function falarNovo(G, ob) {
   if (ob.id?.startsWith?.('zelote')) { // amargurados, cada um aponta para o conselho do seu jeito
     const k = +ob.id.slice(-1) - 1, n = cm.falas[ob.id] = (cm.falas[ob.id] || 0) + 1, F = cm.zelo ? ZELOTES_DEPOIS : ZELOTES;
     if (cm.zelo) { await zeloteDepois(G, ob, inv(G).est >= 3 ? ZELOTES_FIM[k] : F[k][(n - 1) % F[k].length]); return true; } // venceu o conselho: eles vendem o que é deles e entregam a investigação
-    await G.ui.dialog({ nome: ob.nome, look: ob.look, texto: F[k][(n - 1) % F[k].length], acoes: [{ label: cm.zelo ? 'Paz' : 'Onde fica o conselho?', fn: cm.zelo ? undefined : () => G.ui.toast('O Conselho Zelote: a porta de ferro no Pátio das provas, entre a escada da cisterna e o Desafio das ondas.', 7000) }, { label: 'Seguir caminho' }] });
+    await G.ui.dialog({ nome: ob.nome, look: ob.look, texto: F[k][(n - 1) % F[k].length], acoes: [{ label: cm.zelo ? 'Paz' : 'Onde fica o conselho?', fn: cm.zelo ? undefined : () => G.ui.toast('O Conselho Zelote: no Pátio das provas, siga a Trilha da mata. A porta de ferro fica no fundo da clareira.', 7000) }, { label: 'Seguir caminho' }] });
     return true;
   }
   if (ob.id === 'mensageiro') { // pistas leves, uma de cada vez, conforme o que o peregrino já achou; nunca conta o que há no fim

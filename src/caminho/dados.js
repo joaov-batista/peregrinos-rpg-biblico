@@ -176,7 +176,7 @@ const REFUGIO = [
     planta(2, 'cipreste'), { tipo: 'cenario', col: 14, qual: 'descida', rotulo: 'Cisterna' },
     { tipo: 'npc', col: 4, id: 'mestre', nome: 'Benaia, mestre das provas', look: { skin: '#8A5A3A', hair: '#D9D2C5', tunic: '#343F51', cape: '#877451', style: 'curto', beard: true, body: 'forte' } },
     { tipo: 'boneco', col: 7 }, { tipo: 'boneco', col: 23 },
-    { tipo: 'portal', col: 10, area: 'treino', rotulo: 'Arena de treino' }, { tipo: 'portal', col: 17, area: 'conselho', rotulo: 'O Conselho Zelote' }, { tipo: 'portal', col: 20, area: 'desafio', rotulo: 'Desafio das ondas' },
+    planta(10, 'oliveira'), { tipo: 'portal', col: 20, area: 'clareira', rotulo: 'Trilha da mata' },
     { tipo: 'npc', col: 27, id: 'samuel', nome: 'Samuel, o que unge', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#D2CFBB', cape: '#55516D', style: 'longo', beard: true } }, { tipo: 'ave', col: 24, lin: 12 }] },
   // o olival: figos, sombra e a caravana que às vezes traz algo raro
   { cx: 5, nome: 'Olival', papel: 'vila', tiles: sala([12, 8, 11], [9, 13, 16], [12, 18, 21]), objs: [
@@ -254,6 +254,15 @@ export function areaDef(id) {
       planta(2, 'oliveira'), { tipo: 'boneco', col: 14, lin: 9 }, { tipo: 'placa', col: 8, txt: 'O boneco lá no alto: segure o golpe, mire e solte.' }, planta(18, 'cipreste'), { tipo: 'ebenezer', col: 21 },
       { tipo: 'portal', col: 26, area: 'refugio', rotulo: 'Caminho do Refúgio' }, { tipo: 'ave', col: 24, lin: 13 }] }
   ] };
+  // a Clareira das provas: fora da aldeia, no meio da mata. Ali ficam a arena, o desafio das ondas e a porta do Conselho
+  if (id === 'clareira') return { id, nome: 'Clareira das Provas', sub: 'Na mata, atrás do pátio', tema: 'bosque', seed: id, paz: true, aberto: true, planta: [
+    { papel: 'inicio', nome: 'A trilha da mata', tiles: terreno([[12, 19, 23]], [[13, 14, 2]]), objs: [
+      { tipo: 'portal', col: 3, area: 'refugio', rotulo: 'Voltar ao Refúgio' }, planta(6, 'cipreste'), planta(10, 'oliveira'), { tipo: 'boneco', col: 17 }, { tipo: 'boneco', col: 21, lin: 12 }, planta(25, 'cipreste'),
+      { tipo: 'escrito', col: 9, lin: 9, txt: '"Exercita-te na piedade" (1Tm 4:7)' }, { tipo: 'placa', col: 8, txt: 'Clareira das provas: a arena, as ondas e, no fundo, a porta do Conselho.' }, { tipo: 'ave', col: 12, lin: 13 }, { tipo: 'ave', col: 24, lin: 11 }] },
+    { papel: 'vila', nome: 'A clareira', tiles: terreno([]), objs: [
+      planta(2, 'oliveira'), { tipo: 'portal', col: 6, area: 'treino', rotulo: 'Arena de treino' }, planta(10, 'cipreste'), { tipo: 'portal', col: 14, area: 'desafio', rotulo: 'Desafio das ondas' }, planta(18, 'oliveira'),
+      { tipo: 'placa', col: 20, txt: 'O Conselho Zelote. Derrote os três para desbloquear novas missões e itens especiais.' }, { tipo: 'portal', col: 23, area: 'conselho', rotulo: 'O Conselho Zelote' }, planta(27, 'cipreste'), { tipo: 'ave', col: 16, lin: 13 }] }
+  ] };
   if (id === 'getsemani') return { id, nome: 'Getsêmani', sub: 'A noite antes da cruz', tema: 'getsemani', seed: id, paz: true, aberto: true, floresta: true, planta: [
     { papel: 'inicio', nome: 'O lagar de azeite', tiles: ['............................'], objs: [
       { tipo: 'portal', col: 3, area: 'floresta', rotulo: 'De volta à floresta' }, planta(6, 'oliveira'), { tipo: 'lagar', col: 13 }, planta(18, 'oliveira'), planta(23, 'cipreste'), planta(27, 'oliveira'),
@@ -293,7 +302,7 @@ export function areaDef(id) {
       { papel: 'vila', tiles: marca(sala([12, 5, 10], [12, 18, 23]), [[15, 6, 'e'], [15, 12, 'e'], [15, 17, 'e'], [15, 24, 'e'], [11, 7, 'e'], [11, 21, 'e'], [8, 15, 'f']]), objs: [{ tipo: 'vaso', col: 14 }] },
       { papel: 'vila', tiles: marca(sala([13, 4, 8], [10, 11, 17], [13, 20, 25]), [[15, 4, 'e'], [15, 9, 'e'], [15, 14, 'e'], [15, 18, 'e'], [9, 13, 'e'], [9, 16, 'f'], [7, 8, 'f']]), objs: [{ tipo: 'ebenezer', col: 27 }] },
       { papel: 'arena' }] }; }
-  // o Conselho Zelote: um desafio à parte, com a porta à vista no Pátio das provas
+  // o Conselho Zelote: um desafio à parte, com a porta na Clareira das provas (a mata atrás do pátio)
   if (id === 'conselho') return { id, nome: 'A Sala do Conselho', sub: 'Zelo sem entendimento (Rm 10:2)', tema: 'zelotes', chefe: 'conselho', conselho: true, arena: 'conselho', seed: id,
     planta: [{ papel: 'inicio', tiles: ['............................'], objs: [{ tipo: 'ebenezer', col: 14 }, { tipo: 'escrito', col: 20, lin: 9, txt: '"Todos os que lançam mão da espada à espada perecerão" (Mt 26:52)' }, { tipo: 'placa', col: 22, txt: 'Derrote os três para desbloquear novas missões e itens especiais.' }] }, { papel: 'arena' }] };
   // a toca da Raiz de Amargura, no fundo da cisterna (a investigação dos zelotes)
