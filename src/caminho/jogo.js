@@ -1064,7 +1064,7 @@ export class Caminho {
       case 'npc': return 'Falar';
       case 'morador': return ob.nome ? 'Falar' : null;
       case 'jesus': return this.cena || this.cm.getsemani ? null : 'Aproximar-se';
-      case 'discipulo': return 'Olhar';
+      case 'discipulo': return this.cena ? null : 'Olhar';
       case 'biblia': return 'Ler';
       case 'lagar': return 'Olhar';
       case 'casa': return 'Bater à porta';

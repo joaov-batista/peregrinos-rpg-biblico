@@ -108,8 +108,8 @@ function pintarObjeto(g, o, G, x, y, Tm) {
       g.globalAlpha = 0.16 * al; g.fillStyle = '#FFF1BE'; for (let r = 30; r > 8; r -= 7) { for (let a = 0; a < 40; a++) { const an = a / 40 * TAU; if ((a + Math.floor(Tm * 3)) % 2) g.fillRect(Math.round(x + Math.cos(an) * r), Math.round(yy - 22 + Math.sin(an) * r * 0.9), 1, 1); } }
       g.globalAlpha = 0.07 * al; g.fillRect(x - 3, 0, 6, yy - 30); // um raio do alto (Lc 22:43)
       g.globalAlpha = al; carimbar(g, quadroPessoa(JESUS_LOOK, Tm, 'jesus-' + (o.pose || 'pe'), o.pose), x, yy, 24, 40, o.vira || 1); g.globalAlpha = 1; return true; }
-    case 'discipulo': carimbar(g, quadroPessoa(o.look, Tm, 'disc-' + o.nome, 'dorme'), x, y, 24, 40, 1);
-      if (Math.floor(Tm * 1.2 + o.x) % 3 === 0) { g.fillStyle = '#9AA6C8'; const zy = y - 34 - Math.floor((Tm * 6) % 6); g.fillRect(x + 8, zy, 3, 1); g.fillRect(x + 10, zy + 1, 1, 1); g.fillRect(x + 9, zy + 2, 1, 1); g.fillRect(x + 8, zy + 3, 3, 1); } return true;
+    case 'discipulo': g.globalAlpha = o.alfa ?? 1; carimbar(g, quadroPessoa(o.look, Tm, 'disc-' + o.nome, o.acordado ? o.pose : 'dorme'), x, y, 24, 40, o.vira || 1); g.globalAlpha = 1;
+      if (!o.acordado && Math.floor(Tm * 1.2 + o.x) % 3 === 0) { g.fillStyle = '#9AA6C8'; const zy = y - 34 - Math.floor((Tm * 6) % 6); g.fillRect(x + 8, zy, 3, 1); g.fillRect(x + 10, zy + 1, 1, 1); g.fillRect(x + 9, zy + 2, 1, 1); g.fillRect(x + 8, zy + 3, 3, 1); } return true;
     case 'rocha': { const sp = sprObj('rocha-getsemani', 56, 22, s => { const R = rampa('#6E6A78'); s.bola(28, 14, 26, 9, R, 0.3, -0.8); s.bola(16, 15, 12, 6, R, 0.3, -0.8); s.ret(4, 18, 48, 4, R[1]); for (let i = 0; i < 18; i++) s.px(6 + (i * 13) % 44, 10 + (i * 7) % 9, R[3]); const M = rampa('#3F6A4A'); for (let i = 0; i < 9; i++) s.px(5 + i * 5, 20 - (i % 2), M[2]); });
       carimbar(g, sp, x, y, 28, 21); return true; }
     case 'lagar': { const sp = sprObj('lagar', 72, 46, s => { const P = rampa('#8E8A98'), M = rampa('#6B4A2E'), A = rampa('#C9B23A');
@@ -121,9 +121,23 @@ function pintarObjeto(g, o, G, x, y, Tm) {
     case 'biblia': { const b = Math.floor(Tm * 1.5) % 2; g.globalAlpha = 0.18; g.fillStyle = '#FFE9A8'; g.fillRect(x - 14, y - 16, 28, 16); g.globalAlpha = 1;
       g.fillStyle = '#17121f'; g.fillRect(x - 12, y - 8, 24, 8); g.fillStyle = '#6B2E2E'; g.fillRect(x - 11, y - 3, 22, 3); g.fillStyle = '#F1E9D2'; g.fillRect(x - 10, y - 8, 9, 5); g.fillRect(x + 1, y - 8, 9, 5); g.fillStyle = '#C9B88A'; for (let i = 0; i < 3; i++) { g.fillRect(x - 9, y - 7 + i * 1.5, 7, 1); g.fillRect(x + 2, y - 7 + i * 1.5, 7, 1); }
       g.fillStyle = '#B8423A'; g.fillRect(x, y - 8, 1, 7); if (b) { g.fillStyle = '#FFF1BE'; g.fillRect(x - 1, y - 12, 2, 2); } return true; }
-    case 'tocha': { const f = Math.floor(Tm * 10 + (o.fase || 0) * 5) % 2, bx = x, by = y; // um soldado contra a luz da tocha
-      g.fillStyle = '#05060B'; g.fillRect(bx - 4, by - 34, 9, 34); g.fillRect(bx - 3, by - 40, 7, 6); g.fillRect(bx - 5, by - 42, 11, 3); g.fillRect(bx + 4, by - 30, 6, 2); g.fillRect(bx + 8, by - 44, 2, 16);
-      g.fillStyle = '#FF8A2A'; g.fillRect(bx + 7, by - 50 + f, 4, 6); g.fillStyle = '#FFD86A'; g.fillRect(bx + 8, by - 48 + f, 2, 3); g.globalAlpha = 0.15; g.fillStyle = '#FF8A2A'; g.fillRect(bx - 10, by - 60, 30, 40); g.globalAlpha = 1; return true; }
+    case 'tocha': { const f = Math.floor(Tm * 10 + (o.fase || 0) * 5) % 2, d = o.vira || 1, bx = x, by = y, al = o.alfa ?? 1, R = (xx, yy, w, h) => g.fillRect(d > 0 ? bx + xx : bx - xx - w + 1, by + yy, w, h); // um soldado contra a luz da tocha
+      if (al <= 0) return true; g.globalAlpha = al; g.fillStyle = '#05060B';
+      if (o.caido) { R(-18, -8, 34, 7); R(-24, -10, 7, 6); R(14, -4, 12, 2); g.fillStyle = '#FF8A2A'; R(24, -7 + f, 4, 4); g.globalAlpha = 1; return true; } // caído de costas (Jo 18:6), a tocha no chão
+      const passo = o.indo != null ? Math.floor(Tm * 8 + (o.fase || 0)) % 2 : 0;
+      R(-4, -34, 9, 30); R(-4 + passo, -4, 3, 4); R(2 - passo, -4, 3, 4); R(-3, -40, 7, 6); R(-5, -42, 11, 3); R(4, -30, 6, 2); R(8, -44, 2, 16);
+      g.fillStyle = '#FF8A2A'; R(7, -50 + f, 4, 6); g.fillStyle = '#FFD86A'; R(8, -48 + f, 2, 3); g.globalAlpha = 0.22 * al; g.fillStyle = '#FF8A2A'; for (let a = 0; a < 16; a++) R(9 + Math.round(Math.cos(a * 0.39 + Tm * 2) * 7), -47 + Math.round(Math.sin(a * 0.39 + Tm * 2) * 7), 1, 1); g.globalAlpha = 1; return true; } // um halo pontilhado em volta da chama (a luz de verdade vem de o.luz)
+    case 'pessoa': { // Judas e Malco: gente de verdade no meio da escolta
+      const al = o.alfa ?? 1; if (al <= 0) return true; g.globalAlpha = al; carimbar(g, quadroPessoa(o.look, Tm, 'p-' + o.nome, o.pose), x, y, 24, 40, o.vira || 1);
+      if (o.ferido) { g.fillStyle = '#B8312A'; g.fillRect(x - (o.vira || 1) * 2, y - 33, 2, 3 + (Math.floor(Tm * 4) % 2)); } g.globalAlpha = 1; return true; }
+    case 'anjo': { // quase invisíveis: só um tremor de luz no ar, que a lâmpada mostra um pouco mais
+      const al = o.alfa ?? 0; if (al <= 0.01) return true; const p0 = G.p, lamp = p0.lamp && Math.hypot(o.x - p0.x, o.y - p0.y) < G.raioLuz() ? 1 : 0, k = al * (0.3 + 0.35 * lamp) * (0.7 + 0.3 * Math.sin(Tm * 3 + o.fase));
+      const cy = y - Math.round(Math.sin(Tm * 1.3 + o.fase) * 2) - (o.curva ? -3 : 0); g.globalAlpha = k; g.fillStyle = '#F4F1FF';
+      const tt = Math.floor(Tm * 6); for (let yy = -30; yy < 0; yy++) { const lg = 3 + Math.round((yy + 30) / 8); for (let xx = -lg; xx < lg; xx++) if ((xx + yy + tt) % 2 === 0 || Math.abs(xx) >= lg - 1) g.fillRect(x + xx, cy + yy, 1, 1); } // a veste, pontilhada como ar que tremula
+      g.fillRect(x - 2, cy - 36 + (o.curva ? 3 : 0), 5, 5); // a cabeça (baixa quando se curva)
+      for (const lado of [-1, 1]) for (let i = 0; i < 14; i++) { const ax = x + lado * (4 + i), ay = cy - 28 - Math.round(Math.sin(i / 14 * Math.PI) * 10) + i; if ((i + Math.floor(Tm * 8)) % 2) g.fillRect(ax, ay, 1, 3); } // as asas
+      if (o.espada > 0.05) { g.globalAlpha = Math.min(1, k * 2.4); g.fillStyle = '#FFFFFF'; const L = Math.round(4 + o.espada * 16); g.fillRect(x + 6, cy - 22 - L, 1, L); g.fillStyle = '#FFE9A8'; g.fillRect(x + 4, cy - 22, 5, 1); } // a espada, meio desembainhada
+      g.globalAlpha = 1; return true; }
     case 'mar': case 'barco': return true; // desenhados depois dos blocos (pintarAgua), por cima do chão
     // uma vela de rua (lampadário): apagada solta fumaça; acesa, chama e brilho
     case 'vela': { const aceso = !!G.cm.sar?.velas?.[o.id]; o.luz = aceso ? 130 : 0;
