@@ -85,6 +85,13 @@ export const TRILHAS = {
     mel: "1' - 5 1' 3' - 1' 3' 5' - 4' 3' 2' - 1' - | 6 - 3 6 1' - 6 1' 3' - 2' 1' 6 - 1' - | 4 - 1' 4' 6' - 4' 1' 6 - 1' 4' 6' - 4' - | 5' - 2' 7 5 - 7 2' 5' - 4' 2' 7 - 2' -" },
 
   /* ------------------------------ os chefes: cada um com o seu riff ------------------------------ */
+  // as sombras das páginas vivas
+  escassez: { tom: 2, esc: 'hijaz', bpm: 118, voz: 'flauta', riff: "1 . . 1 . 1 . . 1 . . 1 . 2 1 .", bat: 'tribal', luta: 1, pad: 1, prog: [1, 1, 2, 1],
+    mel: "1' - - 2' 1' - 5 - | 3' - - 2' 1' - - - | 2' - 4' - 6 - 2' - | 1' - 7 - 1' . . ." },
+  desprezo: { tom: 6, esc: 'menor', bpm: 146, voz: 'serra', riff: "1 1 . 1 1 . 1 1 . 1 1 . 5 . 7 .", bat: 'guerra', luta: 1, prog: [1, 6, 7, 5],
+    mel: "5' . 5' . 5' - 3' - | 6' . 6' . 6' - 3' - | 7 . 7 . 2' - 4' - | 5' - 4' - 2' - 7 -" },
+  carcere: { tom: -1, esc: 'harmonica', bpm: 134, voz: 'orgao', riff: "1 . 8 1 . 8 1 . 5 . 8 5 . 8 7 8", bat: 'bigorna', luta: 1, prog: [1, 4, 5, 1],
+    mel: "1' - 3' - 5' - 3' 1' | 4' - 6' - 4' - 1' - | 5' - 7 - 2' - 5' - | 1' - - 5 1' - . ." },
   mamom: { tom: 0, esc: 'harmonica', bpm: 150, voz: 'quadrada', riff: "1 . 1 8 . 1 5 . 1 . 1 8 . 5 7 8", bat: 'rock', luta: 1, prog: [1, 1, 6, 5],
     mel: "1' 3' 5' 3' 1' 3' 5' - | 1' 3' 5' 3' 8' 5' 3' - | 6 1' 3' 1' 6 1' 3' - | 5 7 2' 7 5' 4' 2' 7" },
   procrastinacao: { tom: 5, esc: 'dorico', bpm: 126, voz: 'flauta', riff: "1 . 8 . 1 . 8 . 1 . 8 . 1 8 1 8", bat: 'relogio', luta: 1, prog: [1, 4, 1, 7],

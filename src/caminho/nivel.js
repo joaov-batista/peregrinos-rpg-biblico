@@ -54,6 +54,9 @@ const CENTROS = [
 // investida do Beemote, costelas no ventre do Desespero, o zigurate de Babilônia, os pedestais dos encantadores…)
 export const ARENAS = {
   plana: [],
+  casebre: [[13, 3, 7], [13, 22, 26]], // a casa da viúva: dois jiraus
+  estrada: [[12, 12, 17]], // a estrada de Jericó: um barranco no meio
+  cela: [[13, 3, 6], [13, 23, 26], [10, 11, 18]], // o cárcere: catres e a grade do alto
   plat: [[13, 4, 9], [13, 20, 25], [10, 12, 17]],
   alta: [[13, 3, 7], [13, 22, 26], [10, 8, 12], [10, 17, 21]], // o barco do Leviatã
   cofre: [[13, 2, 5], [10, 2, 3], [13, 24, 27], [10, 26, 27]], // Mamom: pilhas de moedas nos cantos

@@ -9,6 +9,7 @@ import { T, CW, CH, tileEm, VAZIO } from './nivel.js';
 import { TODAS } from '../content/index.js';
 import { SARDES_POVO, EPAFRAS, SARDES_RUA, SARDES_VELAS, SARDES_ABATES } from '../content/sardes.js';
 import { marco } from '../telemetria.js';
+import { falaHistoria, historiaNoRefugio } from './historia.js';
 
 const rand = (a, b) => a + Math.random() * (b - a);
 export const PRECO_BARCO = 150;
@@ -28,6 +29,7 @@ export function aoEntrar(G, id, o = {}) {
     const k = o.portal ? andarDe(o.portal) : null; montarAndar(G, k ?? G.andarRolos ?? proximoAndar(G)); // voltando de uma página, o salão já está no andar dela // o mercador de além-mar só aparece de vez em quando, e cada visita traz outras coisas
     G.viajante = Math.random() < 0.4 ? sortearViajante(G) : null;
     G.objs = G.objs.filter(o => !o.vezOutra || G.viajante);
+    historiaNoRefugio(G);
     // quem já caiu muitas vezes recebe uma visita: um estrangeiro de branco junto ao poço, que aponta (sem contar) para onde está o Mestre
     if ((G.cm.mortes || 0) >= 5 && !G.cm.getsemani) { const poco = G.objs.find(o => o.tipo === 'poco'); if (poco) { G.objs.push({ tipo: 'npc', id: 'mensageiro', nome: 'Um estrangeiro de branco', x: poco.x + 58, y: poco.y, luz: 130, cel: poco.cel, look: MENSAGEIRO });
       if (!G.cm.visto.mensageiro) { G.cm.visto.mensageiro = 1; setTimeout(() => { if (G.area === 'refugio') G.ui.toast('Há um estrangeiro de branco junto ao poço. Ninguém o viu chegar.', 7000); }, 2500); } } }
@@ -137,6 +139,7 @@ async function barco(G, ob) {
 /* ---------------- falas novas ---------------- */
 export async function falarNovo(G, ob) {
   const cm = G.cm, p = G.p, c = G.char;
+  if (await falaHistoria(G, ob)) return true; // a campanha: pedidos, páginas vivas e a volta
   if (ob.id === 'mensageiro') { // pistas leves, uma de cada vez, conforme o que o peregrino já achou; nunca conta o que há no fim
     const n = cm.falas.mensageiro = (cm.falas.mensageiro || 0) + 1, diz = (texto, label = 'Guardar essas palavras') => G.ui.dialog({ nome: ob.nome, look: ob.look, texto, acoes: [{ label }] });
     if (n === 1) {

@@ -37,6 +37,7 @@ import { aquecerEfeitos, soltar, atualizarEfeitos } from './pixel/efeitos.js';
 import { Juntos, limparCodigo } from './juntos.js';
 import { marco } from '../telemetria.js';
 import { conviteOpiniao } from './opiniao.js';
+import { vencerCapitulo, alvoDaHistoria } from './historia.js';
 
 // Primeiros passos: [toque, controle, teclado]
 const PASSOS = [ // t: [toque, controle, teclado]; alvo: o botão de toque que pisca. No Bosque do Treino cada passo tem o seu lugar na trilha.
@@ -164,7 +165,7 @@ export class Caminho {
       if (ob.tipo === 'ebenezer') ob.luz = 150;
       if (ob.tipo === 'portal' || ob.tipo === 'segredo') ob.luz = 80;
     }
-    if (def.fase || def.mundo || (def.extra && !def.desafio)) this.objs.push({ tipo: 'retorno', x: N.inicio.x - 72, y: N.inicio.y, luz: 80 });
+    if (def.fase || def.mundo || def.historia || (def.extra && !def.desafio)) this.objs.push({ tipo: 'retorno', x: N.inicio.x - 72, y: N.inicio.y, luz: 80 });
     if (cm.sacola?.area === id) this.objs.push({ tipo: 'sacola', x: cm.sacola.x, y: cm.sacola.y, luz: 70 });
     this.mp?.mudouArea(id);
     if (this.souDono()) this.povoar();
@@ -191,6 +192,7 @@ export class Caminho {
   }
 
   // a trilha do lugar: cada página, o Refúgio, o bosque, Sardes (apagada ou acesa)… As provas de ondas já começam na trilha de raid.
+  nomeChefe(id) { return BOSSES[id]?.nome || id; }
   musicaDaArea() { const d = this.def; if (d.desafio) return music('raid'); music(d.paz ? 'mundo' : 'fase', d.treino || d.pvp ? 'bosque' : d.id === 'sardes' && this.cm.sar?.feita ? 'sardes2' : d.tema + (d.fase ? d.fase.n : '')); }
   async chegada(def) {
     if (def.fase) { await this.cinema(def.sem.id); await this.cinema(def.sem.id + '-fase-' + def.fase.n); }
@@ -1031,6 +1033,7 @@ export class Caminho {
     await this.ui.dialog({ nome: b.d.nome + ' caiu', texto: b.d.derrota || 'A sombra se desfaz.', acoes: [{ label: 'Amém' }] });
     if (d.fase) { await this.faseCompleta(); conviteOpiniao(this); }
     else if (d.mundo) { const m = MUNDO[d.mundo]; this.xp(300); this.pontos(1500); await this.ganhar(m.premio); }
+    else if (d.historia) { this.xp(200); this.pontos(900); await vencerCapitulo(this); }
     // achados: todo chefe pode deixar uma arma da sua vocação e uma relíquia (os gigantes do mundo, mais raras)
     const forte = !!d.mundo || b.id === 'satanas';
     if (Math.random() < (forte ? 0.85 : 0.55)) await this.achado(forte ? { rara: 25, epica: 45, lendaria: 30 } : { comum: 10, rara: 50, epica: 30, lendaria: 10 }, true);
@@ -1330,7 +1333,7 @@ export class Caminho {
     if (this.objT === Math.floor(this.T)) return this.objC; this.objT = Math.floor(this.T);
     const sem = TODAS.find(s => s.fases.some(f => !this.cm.feitas[s.id + ':' + f.n])), noAndar = sem && this.objs.find(o => o.tipo === 'portal' && o.semana === sem.id);
     const escadaAndares = !noAndar && sem && this.objs.find(o => o.tipo === 'cenario' && o.qual === 'andares'), portal = noAndar || escadaAndares; // a página está noutro andar: a seta leva à escada dos andares
-    if (!portal) return this.objC = null;
+    if (!portal) return this.objC = alvoDaHistoria(this); // sem página da semana por fazer, a seta mostra quem tem algo a contar
     const andar = y => Math.floor((y - 2) / (CH * T));
     let alvo = portal, rot = noAndar ? 'missão: ' + sem.estudo : 'escada dos andares: ' + (andarDe(sem.id) + 1) + 'º andar';
     if (andar(this.p.y) !== andar(portal.y)) { const esc = this.objs.filter(o => o.tipo === 'cenario' && o.qual === 'descida').sort((a, b) => Math.abs(a.x - portal.x) - Math.abs(b.x - portal.x))[0]; if (esc) { alvo = esc; rot = 'desça aqui: segure para baixo'; } }

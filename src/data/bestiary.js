@@ -31,6 +31,13 @@ export const ENEMIES = {
 //            sem desenho próprio, usa um genérico com cor, cor2 e "simbolo")
 // Uma semana pode trazer chefes novos no campo "chefes" do arquivo da semana (ver content/index.js).
 export const BOSSES = {
+  // as sombras das páginas vivas (a história do peregrino): não são personagens da Bíblia, são o que cobria aquelas páginas
+  escassez: { nome: 'A Escassez', titulo: 'Sombra da página', lv: 3, hp: 700, atk: 20, def: 2, spd: 60, r: 30, xp: 180, ouro: 110, cor: '#C9A86A', cor2: '#5A3E22', ref: '1 Reis 17:12',
+    intro: 'Um punhado de farinha. Um resto de azeite. Coma, e morra.', derrota: '"A farinha da panela não se acabará, e o azeite da botija não faltará" (1Rs 17:14).' },
+  desprezo: { nome: 'O Desprezo', titulo: 'Sombra da página', lv: 5, hp: 800, atk: 22, def: 3, spd: 70, r: 32, xp: 220, ouro: 130, cor: '#8A7A9A', cor2: '#3A3048', ref: 'Marcos 10:48',
+    intro: 'Cale-se, cego. O Mestre não tem tempo para gente como você.', derrota: '"Jesus parou e disse: Chamai-o" (Mc 10:49).' },
+  carcere: { nome: 'O Cárcere', titulo: 'Sombra da página', lv: 7, hp: 900, atk: 24, def: 4, spd: 120, r: 34, xp: 260, ouro: 150, cor: '#5A5E6A', cor2: '#23252E', ref: 'Atos 12:6',
+    intro: 'Duas cadeias. Quatro escoltas. Um portão de ferro. Amanhã ele morre.', derrota: '"As cadeias caíram-lhe das mãos" (At 12:7).' },
   mamom: {
     nome: 'Mamom, a Ganância', titulo: 'Subchefe', lv: 4, hp: 850, atk: 24, def: 3, spd: 110, r: 30, xp: 220, ouro: 140,
     cor: '#F2C14E', cor2: '#8A5A0A', ref: 'Mateus 6:24',

@@ -219,3 +219,19 @@ os outros digitam o código, ou abrem o link `?sala=CÓDIGO`. Não há servidor 
 - **Trilhas compostas** (`src/trilhas.js`): 44 músicas escritas nota a nota e tocadas por um sequenciador (caixinha de música, flauta,
   onda quadrada, harpa, baixo e bateria sintetizados): cada lugar, cada página, cada chefe, a batalha contra vícios e a raid.
   `music(modo, chave)` escolhe pela chave; o que não tem trilha composta cai na trilha antiga.
+
+## A história do peregrino (campanha)
+
+- **Independente das páginas da semana:** nada da campanha é exigido para entrar numa dungeon semanal, e nenhuma dungeon é exigida
+  para avançar na campanha. O progresso fica em `cm.hist` (`{ cap, est, fim }`); saves antigos começam o arco do zero, sem perder nada.
+- **Formato de um capítulo** (`src/content/historia.js`, `src/caminho/historia.js`): um morador do Refúgio faz um pedido → abre-se uma
+  **página viva** (`hist:<id>` em `areaDef`: caminho com vícios, duas pedras de descanso e uma arena) → a **sombra da página** (chefe
+  próprio) é vencida → aparece a cena bíblica, separada, com o título "Está escrito · referência" e só o que o texto conta → o
+  peregrino volta, conta o que viu, recebe o prêmio e **a aldeia muda** (lamparinas acesas, moradores reunidos na praça).
+- **Ficção × Escritura:** o Refúgio, os pedidos, os vícios e os chefes são ficção (a sombra do esquecimento que cobre a página).
+  A cena que aparece depois é o texto bíblico. A porta de cada página diz isso com todas as letras.
+- **Primeiro arco, "A lâmpada que falta":** Sarepta (1Rs 17, chefe A Escassez), a estrada de Jericó (Mc 10, O Desprezo) e a prisão
+  de Herodes (At 12, O Cárcere); no fim, Ana aponta o olival sem contar o que há lá. O arco prepara o Getsêmani (o azeite, a voz
+  que para por um só, a vigília); o roteiro do encontro (`getsemani.js`) não foi tocado.
+- **Para escrever um capítulo novo:** uma entrada em `CAPITULOS`, um chefe em `CHEFES` + `ESTILOS` (quatro golpes só dele), o desenho
+  em `pixel/chefes-c.js`, a ficha em `BOSSES`, a cutscene `chefe-<id>` e a trilha em `src/trilhas.js`.

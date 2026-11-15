@@ -15,6 +15,19 @@ import { ESTILOS, desfazer } from './estilos.js';
 const F = (vida, golpes, extra = {}) => ({ vida, golpes, ...extra });
 // golpes: nome → parâmetros; "fn" aponta para o golpe do estilo quando o nome é uma variação (mais forte) do mesmo golpe
 export const CHEFES = {
+  /* ---------- A história do peregrino: as sombras das páginas vivas ---------- */
+  escassez: { vida: 480, r: 40, arena: 'casebre', vel: 50,
+    golpes: { rachaduras: {}, poeira: {}, fome: {}, mirrar: {} },
+    fases: [F(1, ['rachaduras', 'poeira', 'mirrar']), F(0.6, ['fome', 'rachaduras', 'poeira', 'mirrar'], { grito: 'É O ÚLTIMO PÃO!' }), F(0.28, ['fome', 'poeira', 'rachaduras', 'mirrar'], { grito: 'NÃO HÁ MAIS NADA!' })],
+    dica: 'Ela vem devagar. Saia de cima das rachaduras, pule o poeira (ele cresce a cada parede) e, se a mão puxar, use o passo para sair da boca.' },
+  desprezo: { vida: 560, r: 42, arena: 'estrada', vel: 60,
+    golpes: { calaTe: {}, empurrao: {}, dedos: {}, atropelo: {} },
+    fases: [F(1, ['calaTe', 'dedos', 'empurrao']), F(0.6, ['atropelo', 'calaTe', 'empurrao', 'dedos'], { grito: 'QUEM É VOCÊ PARA GRITAR?' }), F(0.28, ['atropelo', 'calaTe', 'dedos', 'empurrao'], { grito: 'CALEM ESSE HOMEM!' })],
+    dica: 'A voz rasteira se pula; a voz alta passa por cima de quem fica no chão. No atropelo, corra para o vão livre. "Ele clamava ainda mais" (Mc 10:48): não pare de bater.' },
+  carcere: { vida: 640, r: 44, arena: 'cela', vel: 120,
+    golpes: { correntes: {}, escoltas: {}, portao: {}, ronda: {} },
+    fases: [F(1, ['correntes', 'escoltas', 'ronda']), F(0.6, ['portao', 'correntes', 'escoltas', 'ronda'], { grito: 'DUAS CADEIAS E QUATRO ESCOLTAS!', escuro: 0.35 }), F(0.28, ['portao', 'ronda', 'correntes', 'escoltas'], { grito: 'NINGUÉM SAI DAQUI!', escuro: 0.5 })],
+    dica: 'O cárcere fica nas paredes. Pule as correntes, não pare quando as lanças sobem, corra para o vão iluminado do portão e atravesse a ronda com o passo.' },
   /* ---------- Corinto (Atos 18) ---------- */
   mamom: { vida: 430, r: 40, arena: 'cofre', vel: 70,
     golpes: { cofre: {}, moedao: {}, preco: {}, ganancia: {}, avalanche: {} },

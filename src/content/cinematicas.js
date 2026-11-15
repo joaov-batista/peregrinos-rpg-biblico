@@ -144,6 +144,15 @@ export const CINEMAS = {
   },
 
   /* ================= Chefes (quando aparecem pela primeira vez) ================= */
+  'chefe-escassez': { titulo: 'A Escassez', cenas: [
+    { cena: 'casa', fx: 'brasas', fig: [{ p: 'chefe:escassez', x: 0.5, y: 0.78, s: 1.8, entra: 'cima' }], titulo: 'A ESCASSEZ', sub: 'a sombra desta página · 1 Reis 17:12', texto: 'Três anos sem chuva. Do pó da casa vazia levanta-se uma coisa magra, feita de terra rachada, com uma tigela vazia nas mãos.' },
+    { cena: 'casa', voz: 'vilao', fig: [{ p: 'chefe:escassez', x: 0.5, y: 0.78, s: 2 }], texto: 'Um punhado de farinha. Um resto de azeite. Coma com o seu filho… e morra.' }] },
+  'chefe-desprezo': { titulo: 'O Desprezo', cenas: [
+    { cena: 'agora', fig: [{ p: 'chefe:desprezo', x: 0.5, y: 0.78, s: 1.8, entra: 'cima' }], titulo: 'O DESPREZO', sub: 'a sombra desta página · Marcos 10:48', texto: 'A estrada de Jericó está cheia de gente. Todos de costas. Quando um cego grita à beira do caminho, a multidão inteira se vira, como um corpo só.' },
+    { cena: 'agora', voz: 'vilao', fig: [{ p: 'chefe:desprezo', x: 0.5, y: 0.78, s: 2 }], texto: 'Cale-se! O Mestre não tem tempo para gente como você.' }] },
+  'chefe-carcere': { titulo: 'O Cárcere', cenas: [
+    { cena: 'tribunal', fx: 'brasas', fig: [{ p: 'chefe:carcere', x: 0.5, y: 0.78, s: 1.8, entra: 'cima' }], titulo: 'O CÁRCERE', sub: 'a sombra desta página · Atos 12:6', texto: 'A prisão de Herodes. As grades se dobram, as chaves se juntam, e o próprio cárcere se põe de pé.' },
+    { cena: 'tribunal', voz: 'vilao', fig: [{ p: 'chefe:carcere', x: 0.5, y: 0.78, s: 2 }], texto: 'Duas cadeias. Quatro escoltas. Um portão de ferro. Amanhã ele morre, e nenhuma oração atravessa estas paredes.' }] },
   'chefe-mamom': {
     titulo: 'Mamom, a Ganância',
     cenas: [

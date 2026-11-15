@@ -204,6 +204,7 @@ const REFUGIO = [
 ];
 
 import { SARDES_POVO, EPAFRAS } from '../content/sardes.js';
+import { CAPITULOS } from '../content/historia.js';
 const sombrio = (cor) => ({ skin: ['#C68B59', '#8A5A3A', '#D9A273', '#A0673E'][cor % 4], hair: ['#1C120A', '#3A2314', '#D9D2C5', '#2B1A10'][(cor + 1) % 4], tunic: ['#3A3F4C', '#4A4036', '#3F4A3A', '#4A3A4A'][cor % 4], cape: 'none', style: ['curto', 'veu', 'cacheado', 'turbante'][cor % 4], beard: cor % 2 === 0 });
 const vela = col => ({ tipo: 'vela', col, id: 'v' + col });
 const povoS = (id, col) => ({ tipo: 'npc', col, id: 'sar_' + id, nome: SARDES_POVO[id].nome, look: SARDES_POVO[id].look, palavra: id });
@@ -278,6 +279,13 @@ export function areaDef(id) {
       { tipo: 'escrito', col: 14, lin: 6, txt: '"Conhecereis a verdade, e a verdade vos libertará" (Jo 8:32)' }] },
     { papel: 'vila', nome: 'O covil do dragão', tiles: sala([12, 3, 7], [9, 11, 18], [12, 22, 26]), objs: [{ tipo: 'escrito', col: 14, lin: 5, txt: '"Quando vier o Espírito da verdade, ele vos guiará a toda a verdade" (Jo 16:13)' }, { tipo: 'covil', col: 21 }] }
   ] };
+  // as páginas vivas da história do peregrino: um caminho com vícios, uma pedra de descanso e a sombra que cobre a página
+  if (id.startsWith('hist:')) { const c = CAPITULOS.find(x => x.id === id.slice(5));
+    return { id, nome: c.titulo, sub: c.ref, tema: c.tema, chefe: c.chefe, historia: c.id, arena: arenaDe(c.chefe), seed: id, inimigos: c.inimigos, forca: c.forca, planta: [
+      { papel: 'inicio', nome: c.lugar, tiles: sala([13, 20, 24]), objs: [{ tipo: 'ebenezer', col: 12 }, { tipo: 'escrito', col: 14, lin: 8, txt: c.ref + ': o que está escrito aqui aconteceu. A sombra que o cobre, não.' }] },
+      { papel: 'vila', tiles: marca(sala([12, 5, 10], [12, 18, 23]), [[15, 6, 'e'], [15, 12, 'e'], [15, 17, 'e'], [15, 24, 'e'], [11, 7, 'e'], [11, 21, 'e'], [8, 15, 'f']]), objs: [{ tipo: 'vaso', col: 14 }] },
+      { papel: 'vila', tiles: marca(sala([13, 4, 8], [10, 11, 17], [13, 20, 25]), [[15, 4, 'e'], [15, 9, 'e'], [15, 14, 'e'], [15, 18, 'e'], [9, 13, 'e'], [9, 16, 'f'], [7, 8, 'f']]), objs: [{ tipo: 'ebenezer', col: 27 }] },
+      { papel: 'arena' }] }; }
   // Sardes: a cidade quase apagada, do outro lado do mar
   if (id === 'sardes') return { id, nome: 'Sardes', sub: 'Tens nome de que vives, e estás morto (Ap 3:1)', tema: 'sardes', seed: id, aberto: true, sardes: true, forca: 1.6, planta: SARDES };
   if (id === 'desafio') return { id, nome: 'Desafio das ondas', sub: 'Quantas você aguenta?', tema: 'tribunal', seed: id, extra: true, desafio: true,
