@@ -189,3 +189,11 @@ os outros digitam o código, ou abrem o link `?sala=CÓDIGO`. Não há servidor 
 - **Pesca** (`pesca()`, Simão no Refúgio): lançar, fisgar no puxão e recolher mantendo a marca na faixa.
 - **Vocação** (`trocarVocacao()`, Samuel no pátio das provas).
 - **Trailer:** `art/trailer-peregrinos.mp4`, gravado por `scripts/trailer-gravar.cjs` com a trilha de `scripts/trailer-trilha.cjs`.
+- **Trailer das batalhas:** `art/trailer-batalhas-16x9.mp4` (1920×1080) e `art/trailer-batalhas-9x16.mp4` (1080×1920, reels: o jogo inteiro na largura, sem cortar a câmera).
+  Gravado quadro a quadro com o jogo real por `scripts/trailer-batalhas.cjs` (um bot joga com os mesmos comandos de quem joga e reage aos avisos)
+  e montado por `scripts/trailer-montar.py`, que sintetiza a trilha batendo junto com os tremores, as defesas perfeitas e os quebrantos.
+  Para refazer: `npm run dev`, depois `node scripts/trailer-batalhas.cjs <quadros>` e `python3 scripts/trailer-montar.py <quadros> <saída>`
+  (não edite arquivos do projeto durante a gravação: o servidor recarrega a página e a gravação cai).
+- **Site de apresentação:** `/site` (`site.html`, `src/site/`). Trailer, clipes das batalhas, mecânicas, vocações e a página de download
+  (computador, Android, iPhone ou navegador). Registra o mesmo service worker do jogo, então "Instalar" baixa o jogo para jogar sem internet.
+  As mídias ficam em `public/site/` (geradas por `scripts/site-midia.py` a partir da mesma gravação) e não entram no cache offline do jogo.

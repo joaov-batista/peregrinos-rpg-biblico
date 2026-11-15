@@ -1,0 +1,2 @@
+Cinzel, Pixelify Sans e Alegreya Sans: Google Fonts, licença SIL Open Font License 1.1 (https://openfontlicense.org).
+Usadas só para montar o trailer (scripts/trailer-montar.py).

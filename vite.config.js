@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 let outputDir = 'dist';
 export default defineConfig(({ mode }) => ({
   // na versão publicada: sem mapas do código-fonte, sem console.log/debugger e sem comentários de licença no pacote
-  build: { sourcemap: false, rollupOptions: { input: { main: 'index.html', painel: 'painel.html' } } },
+  build: { sourcemap: false, rollupOptions: { input: { main: 'index.html', painel: 'painel.html', site: 'site.html' } } },
   esbuild: mode === 'production' ? { drop: ['console', 'debugger'], legalComments: 'none' } : {},
   plugins: [{
     // o link de compartilhamento precisa do endereço completo da imagem: vem de VITE_SITE_URL ou do domínio do Vercel
@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => ({
         for (const e of await readdir(dir, { withFileTypes: true })) {
           const path = join(dir, e.name);
           if (e.isDirectory()) await walk(path);
-          else if (e.name !== 'sw.js') files.push(path);
+          else if (e.name !== 'sw.js' && !relative(root, path).replaceAll('\\', '/').startsWith('site/')) files.push(path); // os vídeos do site não entram no jogo offline
         }
       }
       await walk(root); files.sort();

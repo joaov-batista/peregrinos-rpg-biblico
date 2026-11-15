@@ -513,7 +513,7 @@ function pintarTextos(g, G, esc, cx, cy) {
   const d = G.dpr, e = esc * d, v = G.vista, p = G.p, cm = G.cm, def = G.def, u = Math.max(1, Math.round(e / 2.4));
   const txt = (s, x, y, tam, corT, alinha = 'left') => { g.font = `600 ${tam}px ${FONTE}`; g.textAlign = alinha; g.lineJoin = 'round'; g.lineWidth = Math.max(2, tam / 4.5); g.strokeStyle = '#17121f'; g.strokeText(s, x, y); g.fillStyle = corT; g.fillText(s, x, y); };
   const sx = wx => (wx / PX - cx) * e, sy = wy => (wy / PX - cy) * e;
-  for (const t of G.textos) { const x = t.fixo ? t.fixo.x : t.x, y = t.fixo ? t.fixo.y - t.fixo.h - 16 : t.y; g.globalAlpha = Math.min(1, t.t * 2); txt(t.txt, sx(x), sy(y), Math.round(t.tam * 0.62 * e / 1.3), t.cor, 'center'); }
+  for (const t of G.textos) { const x = t.fixo ? t.fixo.x : t.x, y = t.fixo ? t.fixo.y - t.fixo.h - 16 : t.y, tam = Math.round(t.tam * 0.62 * e / 1.3); g.font = `600 ${tam}px ${FONTE}`; const meia = g.measureText(t.txt).width / 2 + tam * 0.6, W = g.canvas.width; g.globalAlpha = Math.min(1, t.t * 2); txt(t.txt, meia * 2 < W ? clamp(sx(x), meia, W - meia) : W / 2, sy(y), tam, t.cor, 'center'); } // a fala nunca sai pela borda da tela
   g.globalAlpha = 1;
   for (const o of G.outros) { txt(o.nome, sx(o.corpo.x), sy(o.corpo.y - 68), 8 * u * 1.5, '#BFE3D8', 'center'); const n = Math.max(0, Math.ceil(o.corpo.vida || 0)), mx = o.corpo.vidaMax || 5; for (let i = 0; i < mx; i++) { const xx = sx(o.corpo.x) + (i - mx / 2) * 4 * u, yy = sy(o.corpo.y - 82); g.fillStyle = '#17121f'; g.fillRect(xx - u, yy - u, 4 * u, 4 * u); g.fillStyle = i < n ? '#FF9A3C' : '#4A4658'; g.fillRect(xx, yy, 2 * u, 2 * u); } }
   // ataque mira: a linha de pontaria enquanto carrega e os riscos de luz dos golpes soltos

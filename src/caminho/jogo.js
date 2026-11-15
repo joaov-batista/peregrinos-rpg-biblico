@@ -434,7 +434,7 @@ export class Caminho {
   risco(x0, y0, x1, y1, cor = '#FFF1BE', g = 4, chicote) { (this.riscos = this.riscos || []).push({ x0, y0, x1, y1, cor, g, chicote: !!chicote, t: 0.28, max: 0.28 }); this.mp?.fx(['r', x0, y0, x1, y1, cor, g, chicote ? 1 : 0]); }
   tremor(a) { if (config.tremor !== false) this.tremorA = Math.max(this.tremorA, a); }
   textoEm(x, y, txt, cor = '#fff', tam = 14) { this.textos.push({ x, y, txt, cor, tam, t: 1.3 }); this.mp?.fx(['t', x, y, txt, cor, tam]); }
-  fala(b, txt) { this.textos.push({ x: b.x, y: b.y - b.h - 16, txt: '“' + txt + '”', cor: '#F2E9D0', tam: 13, t: 2.4, fixo: b }); if (b.nid) this.mp?.fx(['f', b.nid, txt]); }
+  fala(b, txt) { this.textos = this.textos.filter(t => t.fixo !== b); this.textos.push({ x: b.x, y: b.y - b.h - 16, txt: '“' + txt + '”', cor: '#F2E9D0', tam: 13, t: 2.4, fixo: b }); if (b.nid) this.mp?.fx(['f', b.nid, txt]); }
   grito(txt) { this.gritoTxt = { txt, t: 2.6 }; this.mp?.fx(['g', txt]); }
   postura(b, n) { if (b.quebrado > 0 || b.postImune > 0) return; b.post = Math.min(100, b.post + n); b.postT = 2.2; if (b.post >= 100) { b.quebrado = 1.3; b.mov = null; this.textoEm(b.x, b.y - b.h - 20, 'QUEBRANTADO!', '#FFE9A8', 20); sfx('crit'); this.tremor(10); this.hitstop = 0.12; this.limparPerigos(); } }
   // golpes que mexem no corpo do peregrino: cada aparelho aplica no seu (jogando juntos, todos sentem)
