@@ -23,7 +23,7 @@ const FUNDO = {
   mentira(g, b, A, Tm) { // espelhos falsos que se acendem
     const n = b.cen.espelhos || 2;
     for (let i = 0; i < n; i++) { const x = A.x0 + 20 + i * (A.x1 - A.x0 - 40) / Math.max(1, n - 1) - 12, y = A.chao - 90 - (i % 2) * 30; g.fillStyle = '#2A1F3A'; px(g, x - 1, y - 1, 26, 42); g.fillStyle = (Math.floor(Tm * 4) + i) % 6 ? '#4A3A6A' : '#C79BFF'; px(g, x, y, 24, 40); g.fillStyle = 'rgba(232,220,255,.35)'; px(g, x + 3, y + 3, 2, 30); g.fillStyle = '#1A1228'; px(g, x + 8, y + 12, 8, 16); px(g, x + 10, y + 8, 4, 4); }
-    if (b.cen.laco) { g.fillStyle = Math.floor(Tm * 12) % 2 ? '#C79BFF' : '#FFFFFF'; linha(g, b.x, b.y - b.h * 0.5, b.px ?? b.x, b.py ?? b.y, 3); }
+    if (b.cen.laco) { g.fillStyle = Math.floor(Tm * 12) % 2 ? '#C79BFF' : '#FFFFFF'; linha(g, b.x, b.y - b.h * 0.5, b.cen.laco.x, b.cen.laco.y, 3); } // a linha da troca: dela até o lugar marcado
   },
   satanas(g, b, A, Tm) { // o céu racha em vermelho; fogo nas bordas
     g.fillStyle = '#7A1A14'; for (let i = 0; i < 4; i++) { let x = A.x0 + 60 + i * 230, y = A.y0; for (let k = 0; k < 18; k++) { px(g, x, y); x += ((i * 7 + k * 3) % 5) - 2; y += 4; } }
@@ -69,7 +69,7 @@ const FUNDO = {
   jugo(g, b, A, Tm) { // a muralha de tijolos cresce, fileira por fileira
     const n = Math.floor(b.cen.tijolos || 0); g.globalAlpha = 0.8; // a muralha sobe do chão, atrás da luta
     for (let r = 0; r < n; r++) for (let x = A.x0 + 40 + (r % 2) * 8; x < A.x1 - 40; x += 17) { g.fillStyle = '#5A3420'; px(g, x, A.chao - 7 - r * 7, 15, 6); g.fillStyle = '#8A5A32'; px(g, x, A.chao - 7 - r * 7, 15, 1); }
-    g.globalAlpha = 1; if (b.cen.amarra && b.px != null) corrente(g, b.x, b.y - b.h * 0.5, b.px, b.py, Tm);
+    g.globalAlpha = 1; if (b.amarrado) corrente(g, b.x, b.y - b.h * 0.5, b.px, b.py, Tm); // só quem foi pego tem a corrente
   },
   babilonia(g, b, A, Tm) { // a cidade e o zigurate sobem; a torre sob o trono
     const k = b.cen.cidade || 0.3;
@@ -127,8 +127,9 @@ export function pintarPalco(g, G, b, X, Y, Tm, frente) {
   const pintor = (frente ? FRENTE : FUNDO)[b.id]; if (!pintor || !G.N.arena) return;
   const A0 = G.N.arena, A = { x0: X(A0.x0), x1: X(A0.x1), y0: Y(A0.y0), chao: Y(A0.chao) };
   // o chefe e o jogador também em pixels (as cordas e correntes ligam os dois)
-  const bb = { ...b, x: X(b.x), y: Y(b.y), h: b.h / PX, w: b.w / PX, px: X(G.p.x), py: Y(G.p.y - 20), cen: {
+  const bb = { ...b, x: X(b.x), y: Y(b.y), h: b.h / PX, w: b.w / PX, px: X(G.p.x), py: Y(G.p.y - 20), amarrado: G.amarra > 0, cen: {
     ...b.cen,
+    laco: b.cen.laco ? { x: X(b.cen.laco.x), y: Y(b.cen.laco.y) } : 0,
     planta: b.cen.planta != null ? X(b.cen.planta) : null, verme: b.cen.verme != null ? X(b.cen.verme) : null, nuvem: b.cen.nuvem != null ? X(b.cen.nuvem) : null, raioX: b.cen.raioX != null ? X(b.cen.raioX) : null,
     vortice: b.cen.vortice != null ? X(b.cen.vortice) : null, tripes: b.cen.tripes?.map(X),
     corda: b.cen.corda ? { x: X(b.cen.corda.x), y: Y(b.cen.corda.y) } : null, corrente: b.cen.corrente ? { x: X(b.cen.corrente.x), y: Y(b.cen.corrente.y) } : null,

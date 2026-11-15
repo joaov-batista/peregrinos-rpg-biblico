@@ -24,6 +24,7 @@ import { solido } from './corpo.js';
 import { novoHeroi, atualizarHeroi, desenharHeroi, ARMAS, OLEO_USO, damp } from './heroi.js';
 import { novoVicio, atualizarVicio, desenharVicio, vulneravel, VICIOS, ehVoador } from './bichos.js';
 import { CHEFES, novoChefe, atualizarChefe, desenharChefe, danoNoChefe } from './chefes.js';
+import { ESTILOS } from './estilos.js';
 import { ARMADURA, RELIQUIAS, MUNDO, DIFICULDADES, ARMAS_ALT, DONS, areaDef, novoCaminho, semanaDe } from './dados.js';
 import { tema, pintarFundo, pintarBlocos, pintarEnfeites, pintarLampioes, pintarLuz, corA } from './cena.js';
 import { desenharObjeto } from './objetos.js';
@@ -276,7 +277,7 @@ export class Caminho {
     for (let i = 0; i < N.revel.length; i++) if (N.revel[i] > 0) N.revel[i] -= dt;
     this.simular(dt);
     passoMira(this, dt); if (this.riscos) { for (const r of this.riscos) r.t -= dt; this.riscos = this.riscos.filter(r => r.t > 0); }
-    this.atualizarTiros(dt); this.atualizarZonas(dt); this.atualizarMoedas(dt); this.atualizarFx(dt); passoEspeciais(this, dt); passoNovo(this, dt);
+    this.atualizarTiros(dt); this.atualizarZonas(dt); this.efeitoNoJogador(dt); this.atualizarMoedas(dt); this.atualizarFx(dt); passoEspeciais(this, dt); passoNovo(this, dt);
     if (this.pomba && (this.pomba.t += dt) > 1.4) this.pomba = null;
     if (this.pecado) this.atualizarPecado(dt);
     this.clima(dt); this.gatilhos(); this.emboscadas(dt); this.interacoes(); this.tutorial(dt);
@@ -376,7 +377,7 @@ export class Caminho {
   lutaRemota(on) {
     this.luta = on;
     if (on) { music('chefe'); sfx('boss'); const b = this.inimigos.find(e => e.kind === 'chefe'); if (b) { this.chefe = b; this.ui.banner(b.d.titulo || 'Chefe', b.d.nome, b.d.ref); } }
-    else { this.chefe = null; this.vazioT = 0; this.limparPerigos(); this.puxao = null; this.invertido = 0; this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.ui.bossBar(null); if (!this.venceu) music(this.def.paz ? 'mundo' : 'fase'); }
+    else { this.chefe = null; this.vazioT = 0; this.limparPerigos(); this.puxao = null; this.invertido = 0; this.amarra = 0; this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.ui.bossBar(null); if (!this.venceu) music(this.def.paz ? 'mundo' : 'fase'); }
   }
   // todos caíram ao mesmo tempo: desfaz a emboscada ou a luta para recomeçar do zero
   resetarEncontro() {
@@ -435,6 +436,17 @@ export class Caminho {
   fala(b, txt) { this.textos.push({ x: b.x, y: b.y - b.h - 16, txt: '“' + txt + '”', cor: '#F2E9D0', tam: 13, t: 2.4, fixo: b }); if (b.nid) this.mp?.fx(['f', b.nid, txt]); }
   grito(txt) { this.gritoTxt = { txt, t: 2.6 }; this.mp?.fx(['g', txt]); }
   postura(b, n) { if (b.quebrado > 0 || b.postImune > 0) return; b.post = Math.min(100, b.post + n); b.postT = 2.2; if (b.post >= 100) { b.quebrado = 1.3; b.mov = null; this.textoEm(b.x, b.y - b.h - 20, 'QUEBRANTADO!', '#FFE9A8', 20); sfx('crit'); this.tremor(10); this.hitstop = 0.12; this.limparPerigos(); } }
+  // golpes que mexem no corpo do peregrino: cada aparelho aplica no seu (jogando juntos, todos sentem)
+  puxarHeroi(o) { const p = this.p; p.vx = Math.sign(o.x - p.x) * (o.forca || 520); p.vy = -180; p.chao = false; if (o.msg) this.textoEm(p.x, p.y - 60, o.msg, '#FFB3D0', 12); }
+  efeitoNoJogador(dt) {
+    const p = this.eu, b = this.N.arena && this.inimigos.find(e => e.kind === 'chefe' && e.cen && !e.morrendo);
+    if (!b || p.morto) { this.amarra = 0; return; }
+    ESTILOS[b.id]?.jogador?.(this, b, p, dt);
+    if (this.amarra > 0) { // a corrente do Jugo: não deixa se afastar; cada golpe que você dá faz a corrente ceder
+      this.amarra -= dt; const d = p.x - b.x; if (Math.abs(d) > 220) { p.x = b.x + Math.sign(d) * 220; p.vx = 0; }
+      if (p.atk && p.atk !== this.amarraAtk) { this.amarraAtk = p.atk; this.amarra -= 0.8; this.fx.po(p.x, p.y - 20, 4, '#C98E62'); if (this.amarra <= 0) { this.textoEm(p.x, p.y - 60, 'a corrente cedeu!', '#FFE9A8', 13); sfx('parry'); } }
+    }
+  }
   limparPerigos() { this.tiros = this.tiros.filter(t => t.amigo); this.zonas = []; }
 
   // aplica um golpe do peregrino em tudo o que a caixa toca
@@ -624,7 +636,7 @@ export class Caminho {
         const r = this.ferirHeroi(1, { x: t.x - t.vx * 0.1, y: t.y });
         if (r && t.nid && this.mp) { this.mp.gasta(t, t.tipo !== 'choque'); if (r === 'parry' && t.tipo !== 'choque') t.nid = 0; }
         if (r === 'parry' && t.tipo !== 'choque') { t.amigo = true; t.vx *= -1.5; t.vy *= -1.5; t.dano = this.danoBase() * (this.hab.escudo ? 3 : 1.5); t.vida = 2; t.cor = '#FFF1BE'; t.g = 0; }
-        else if (r) t.vida = t.tipo === 'choque' ? t.vida : 0;
+        else if (r) { if (r === true && t.puxa) this.puxarHeroi(t.puxa); t.vida = t.tipo === 'choque' ? t.vida : 0; }
       }
     }
     this.tiros = this.tiros.filter(t => t.vida > 0);
@@ -642,12 +654,16 @@ export class Caminho {
       if (z.amigo) { if (!z.fez) { z.fez = true; this.golpear(r, z.amigo, { dir: 'lado', hits: new Set(), semOleo: true, carga: true }); } continue; }
       const dentro = r ? toca(r, pc) : Math.hypot(p.x - z.x, p.y - 19 - z.y) < z.r + 8;
       if (dentro && !p.morto) {
-        if (z.efeito === 'inverte') { if (!z.fez && this.p === this.eu) { z.fez = true; this.invertido = 3.2; this.textoEm(p.x, p.y - 60, 'seus passos mentem!', '#C79BFF', 13); sfx('wrong'); } }
+        if (z.efeito === 'troca') { if (!z.fez) { z.fez = true; p.x = z.tx; p.vy = -200; p.chao = false; this.efeito('fumacaRoxa', p.x, p.y); this.textoEm(p.x, p.y - 60, 'quem é quem?', '#C79BFF', 13); } }
+        else if (z.efeito === 'amarra') { if (!z.fez) { z.fez = true; this.amarra = z.dur2 || 3; this.textoEm(p.x, p.y - 60, 'acorrentado!', '#C98E62', 13); sfx('block'); } }
+        else if (z.efeito === 'inverte') { if (!z.fez && this.p === this.eu) { z.fez = true; this.invertido = 3.2; this.textoEm(p.x, p.y - 60, 'seus passos mentem!', '#C79BFF', 13); sfx('wrong'); } }
         else if (z.efeito === 'sono') { if (p.stunT <= 0 && !z.fez) { z.fez = true; p.stunT = 1.25; p.vx = 0; this.textoEm(p.x, p.y - 56, 'zzz… "Até quando ficarás deitado?" (Pv 6:9)', '#A5CDCE', 12); sfx('wrong'); } }
         else {
           const res = this.ferirHeroi(1, z.dono || { x: z.tipo === 'circ' ? z.x : p.x - p.face, y: p.y }, { semDefesa: z.tipo === 'poca' });
           if (res === 'parry' && z.lanca && z.dono) { if (z.nid && !this.souDono()) { this.mp.ev('zp', { id: z.nid }); z.dur = 0; } else this.zonaDefendida(z); }
           if (res === true && z.efeito === 'empurra') { p.vx = Math.sign(p.x - z.x) * 520; p.vy = -380; }
+          if (res === true && z.efeito === 'puxa') this.puxarHeroi({ x: z.px, forca: z.forca, msg: z.msg });
+          if (res === true && z.efeito === 'canga') { this.peso = (this.peso || 0) + 2; this.textoEm(p.x, p.y - 60, 'a canga pesa', '#C98E62', 12); }
         }
       }
     }
@@ -939,7 +955,7 @@ export class Caminho {
     const d = this.def, cm = this.cm, c = this.char;
     this.p = this.eu;
     if (this.mp && !b.remoto && b.nid) this.mp.ev('cc', { id: b.nid });
-    b.fora = true; this.chefe = null; this.luta = false; this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.peso = 0; this.puxao = null; this.invertido = 0;
+    b.fora = true; this.chefe = null; this.luta = false; this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.peso = 0; this.puxao = null; this.invertido = 0; this.amarra = 0;
     this.ui.bossBar(null); music('fase', d.tema + (d.fase ? d.fase.n : '')); sfx('level');
     // juntos, a vitória só conta para quem leu os rolos desta página
     if (this.mp && !this.temSelos()) { this.ui.toast(b.d.nome + ' caiu, mas a recompensa é de quem leu os três rolos desta página. Leia-os e enfrente-o de novo.', 8000); this.semLutaAte = this.T + 8; return; }

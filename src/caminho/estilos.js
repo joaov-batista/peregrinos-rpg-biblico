@@ -2,6 +2,9 @@
 // Nenhum golpe se repete entre chefes: cada um nasce do texto (as moedas de Mamom, o relógio da Procrastinação,
 // a árvore cortada de Daniel 4, o rio que o Beemote bebe…). Os golpes recebem (G, b, m, dt) e devolvem true ao terminar;
 // m = { t, e, def } (tempo no golpe, etapa e parâmetros). Tudo sempre avisado: dá para aprender e vencer sem levar dano.
+// Jogando juntos, só o aparelho "dono" roda os golpes; o que mexe no corpo de um peregrino (puxar, prender, trocar de lugar,
+// pesar, escorregar) vai numa zona, num dardo ou no palco do chefe, que todos recebem, e cada aparelho aplica no seu peregrino
+// (efeitoNoJogador em jogo.js e o "jogador" de cada estilo).
 import { rand, clamp, TAU } from '../util.js';
 import { sfx } from '../audio.js';
 
@@ -72,7 +75,7 @@ const mamom = {
       if (m.e === 0) { if (m.t === 0) b.face = Math.sign(G.p.x - b.x) || 1; prepara(b); b.vx = 0; if (m.t > av(G, 0.65)) { m.e = 1; m.t0 = m.t; m.ux = b.x; sfx('dodge'); } return false; }
       if (m.e === 1) {
         ataca(b); b.corre = true; b.perigo = true; b.vx = b.face * vel(G, 560);
-        if (Math.abs(b.x - m.ux) > 70) { m.ux = b.x; G.moedas.push({ x: b.x, y: A.chao - 20, vx: rand(-40, 40), vy: -200, t: 0, v: 5, maldita: true }); }
+        if (Math.abs(b.x - m.ux) > 70) { m.ux = b.x; zona(G, { tipo: 'circ', x: b.x, y: A.chao - 20, r: 1, aviso: 0.02, dur: 0.02, cor: '#FFD23F', isca: true, tentacao: true }); } // a moeda nasce em todos os aparelhos
         if (b.parede === b.face || b.x < A.x0 + b.w / 2 + 6 || b.x > A.x1 - b.w / 2 - 6 || m.t - m.t0 > 1.8) { b.vx = 0; b.corre = false; b.perigo = false; G.efeito('slamOuro', b.x + b.face * b.w / 2, A.chao); G.tremor(9); sfx('block'); m.e = 2; m.t0 = m.t; }
         return false;
       }
@@ -169,10 +172,10 @@ const mentira = {
     // a troca: uma linha liga vocês dois… e de repente você está onde ela estava
     troca(G, b, m) {
       prepara(b);
-      if (m.t === 0) { b.cen.laco = 1; G.fala(b, 'Quem é quem?'); }
+      const A = G.N.arena;
+      if (m.t === 0) { m.z = zona(G, { tipo: 'circ', x: G.p.x, y: G.p.y - 20, r: 64, aviso: av(G, 1.05), dur: 0.12, cor: '#C79BFF', efeito: 'troca', tx: clamp(b.x, A.x0 + 30, A.x1 - 30) }); b.cen.laco = { x: m.z.x, y: m.z.y }; G.fala(b, 'Quem é quem?'); }
       if (m.t > av(G, 1.05) && !m.fez) {
-        m.fez = true; b.cen.laco = 0; const px = G.p.x, A = G.N.arena; G.efeito('fumacaRoxa', b.x, b.y); G.efeito('fumacaRoxa', px, G.p.y);
-        if (G.p === G.eu) { G.p.x = clamp(b.x, A.x0 + 30, A.x1 - 30); G.p.vy = -200; G.p.chao = false; }
+        m.fez = true; b.cen.laco = 0; const px = m.z.x; G.efeito('fumacaRoxa', b.x, b.y); G.efeito('fumacaRoxa', px, m.z.y);
         b.x = clamp(px, A.x0 + 80, A.x1 - 80); sfx('magic'); G.clarao = 0.12;
         const c = centro(b); for (let i = -1; i <= 1; i++) bala(G, c.x, c.y, angulo(c.x, c.y, G) + i * 0.3, vel(G, 250), { cor: '#C79BFF' });
       }
@@ -208,8 +211,7 @@ const imoralidade = {
     },
     // o laço de fita: estala na altura do peito; quem é pego é arrastado para ela
     laco(G, b, m) {
-      if (m.e === 0) { if (m.t === 0) b.face = Math.sign(G.p.x - b.x) || 1; prepara(b); if (m.t === 0) { const w = 300; m.z = muro(G, b.face > 0 ? b.x : b.x - w, b.y - 56, w, 18, { aviso: av(G, 0.7), dur: 0.22, cor: '#FF8FB8' }); m.vida = G.p.vida; } if (m.t > av(G, 0.7)) { m.e = 1; m.t0 = m.t; ataca(b); sfx('swing'); } return false; }
-      if (G.p.vida < m.vida && !m.puxou) { m.puxou = true; G.p.vx = Math.sign(b.x - G.p.x) * 520; G.p.vy = -160; G.textoEm(G.p.x, G.p.y - 60, 'preso no laço!', '#FF8FB8', 12); }
+      if (m.e === 0) { if (m.t === 0) b.face = Math.sign(G.p.x - b.x) || 1; prepara(b); if (m.t === 0) { const w = 300; m.z = muro(G, b.face > 0 ? b.x : b.x - w, b.y - 56, w, 18, { aviso: av(G, 0.7), dur: 0.22, cor: '#FF8FB8', efeito: 'puxa', px: b.x, forca: 520, msg: 'preso no laço!' }); } if (m.t > av(G, 0.7)) { m.e = 1; m.t0 = m.t; ataca(b); sfx('swing'); } return false; }
       return m.t - m.t0 > 0.7;
     },
     // o perfume: nuvens doces que vão atrás de você, devagar, sem pressa
@@ -291,7 +293,8 @@ const fuga = {
     if (encurralado && Math.abs(dx) < 160 && b.chao) { b.vy = -880; b.vx = Math.sign(dx) * 420; b.chao = false; G.fala(b, 'Para longe!'); }
   },
   // o convés inclina, cada vez mais: você escorrega para o lado mais baixo
-  palco(G, b, dt) { b.cen.incl = Math.sin(b.t * 0.55) * (0.35 + fase(b) * 0.45); if (G.p.chao && G.p === G.eu && !(G.p.dashT > 0)) G.p.x += b.cen.incl * 70 * dt; },
+  palco(G, b, dt) { b.cen.incl = Math.sin(b.t * 0.55) * (0.35 + fase(b) * 0.45); },
+  jogador(G, b, p, dt) { if (p.chao && !(p.dashT > 0)) p.x += (b.cen.incl || 0) * 70 * dt; },
   pref: { bilhetes: (G, b) => perto(G, b) > 200 ? 1.4 : 0.8, outroNavio: () => 1.1, ancora: () => 1, corda: G => noAr(G) ? 0.5 : 1.2 },
   golpes: {
     // passagens para Társis: cartas que vão… e voltam para a mão dele, como bumerangue
@@ -386,9 +389,9 @@ const desespero = {
   mover(G, b, dt) { const A = G.N.arena, ty = A.chao - b.c.voa + Math.sin(b.t * 0.9) * 70; b.vx = clamp((G.p.x - b.x) * 0.8, -(b.c.vel || 80), b.c.vel || 80); b.y += clamp(ty - b.y, -1, 1) * 90 * dt; b.face = Math.sign(G.p.x - b.x) || b.face; },
   // o ventre se fecha: as paredes de carne avançam a cada fase e empurram você para o meio
   palco(G, b, dt) {
-    const A = G.N.arena; b.cen.aperto = Math.min(0.2, (b.cen.aperto || 0) + dt * 0.004 * (1 + fase(b))); const lim = (A.x1 - A.x0) * b.cen.aperto;
-    if (G.p === G.eu) { if (G.p.x < A.x0 + lim + 14) G.p.x = A.x0 + lim + 14; if (G.p.x > A.x1 - lim - 14) G.p.x = A.x1 - lim - 14; }
+    b.cen.aperto = Math.min(0.2, (b.cen.aperto || 0) + dt * 0.004 * (1 + fase(b)));
   },
+  jogador(G, b, p) { const A = G.N.arena, lim = (A.x1 - A.x0) * (b.cen.aperto || 0); if (p.x < A.x0 + lim + 14) p.x = A.x0 + lim + 14; if (p.x > A.x1 - lim - 14) p.x = A.x1 - lim - 14; },
   pref: { eco: () => 1.1, algas: G => noAr(G) ? 0.4 : 1.2, trevas: (G, b) => G.escuroAlvo > 0.8 ? 0 : 1, peso: () => 1 },
   golpes: {
     // o eco do clamor: uma esfera que ricocheteia nas paredes do ventre, várias vezes
@@ -438,10 +441,9 @@ const violencia = {
     // a corrente é lançada reta; se te acerta, ele puxa você para perto
     correntePuxa(G, b, m, dt) {
       const c = centro(b);
-      if (m.e === 0) { if (m.t === 0) { b.face = Math.sign(G.p.x - b.x) || 1; m.vida = G.p.vida; } prepara(b); if (m.t > av(G, 0.6)) { m.e = 1; m.t0 = m.t; m.c = bala(G, c.x, c.y, b.face > 0 ? 0 : Math.PI, vel(G, 520), { cor: '#B8B0A0', r: 9, tipo: 'lanca', fura: true, vida: 2 }); sfx('swing'); } return false; }
+      if (m.e === 0) { if (m.t === 0) b.face = Math.sign(G.p.x - b.x) || 1; prepara(b); if (m.t > av(G, 0.6)) { m.e = 1; m.t0 = m.t; m.c = bala(G, c.x, c.y, b.face > 0 ? 0 : Math.PI, vel(G, 520), { cor: '#B8B0A0', r: 9, tipo: 'lanca', fura: true, vida: 2, puxa: { x: b.x, forca: 600, msg: 'arrastado!' } }); sfx('swing'); } return false; }
       ataca(b); const dt0 = m.t - m.t0;
       if (vivo(G, m.c)) { b.cen.corrente = { x: m.c.x, y: m.c.y }; if (dt0 > 0.55 && m.c.vx * b.face > 0) { m.c.vx *= -1; } if (m.c.vx * b.face < 0 && Math.abs(m.c.x - b.x) < 30) m.c.vida = 0; }
-      if (G.p.vida < m.vida && !m.puxou) { m.puxou = true; G.p.vx = Math.sign(b.x - G.p.x) * 600; G.p.vy = -200; G.textoEm(G.p.x, G.p.y - 60, 'arrastado!', '#E9AD7F', 12); }
       if (dt0 > 1.4 || (!vivo(G, m.c) && dt0 > 0.3)) { b.cen.corrente = null; return true; }
       return false;
     },
@@ -581,10 +583,9 @@ const jugo = {
     },
     // as amarras: uma corrente prende você a ele; não dá para se afastar, e ele arrasta
     amarras(G, b, m, dt) {
-      if (m.e === 0) { prepara(b); if (m.t === 0) { zona(G, { tipo: 'circ', x: G.p.x, y: G.p.y - 20, r: 60, aviso: av(G, 0.9), dur: 0.2, cor: '#8A7A6A', isca: true }); m.x = G.p.x; } if (m.t > av(G, 0.9)) { m.e = 1; m.t0 = m.t; if (Math.abs(G.p.x - m.x) < 70) { b.cen.amarra = 1; G.textoEm(G.p.x, G.p.y - 60, 'acorrentado!', '#C98E62', 13); sfx('block'); } } return false; }
-      if (!b.cen.amarra) return true;
-      ataca(b); const raio = 220, d = G.p.x - b.x; b.vx = -Math.sign(d) * vel(G, 50);
-      if (G.p === G.eu && Math.abs(d) > raio) { G.p.x = b.x + Math.sign(d) * raio; G.p.vx = 0; }
+      if (m.e === 0) { prepara(b); if (m.t === 0) zona(G, { tipo: 'circ', x: G.p.x, y: G.p.y - 20, r: 64, aviso: av(G, 0.9), dur: 0.15, cor: '#8A7A6A', efeito: 'amarra', dur2: 3 + fase(b) }); if (m.t > av(G, 0.9)) { m.e = 1; m.t0 = m.t; b.cen.amarra = 1; sfx('block'); } return false; }
+      // quem foi pego fica preso ao chefe (efeitoNoJogador, em cada aparelho); ele recua arrastando
+      ataca(b); b.vx = -Math.sign(G.p.x - b.x) * vel(G, 50);
       if (m.t - m.t0 > 3 + fase(b)) { b.cen.amarra = 0; return true; }
       return false;
     },
@@ -599,9 +600,8 @@ const jugo = {
     },
     // a canga cai sobre os ombros: se pegar, você anda pesado por um tempo — a defesa perfeita a quebra
     cangalha(G, b, m) {
-      if (m.t === 0) { m.z = zona(G, { tipo: 'col', x: G.p.x, w: 70, y0: G.N.arena.chao - 220, aviso: av(G, 0.85), dur: 0.2, cor: '#8A5A3A' }); m.vida = G.p.vida; G.fala(b, 'Mais peso!'); }
+      if (m.t === 0) { m.z = zona(G, { tipo: 'col', x: G.p.x, w: 70, y0: G.N.arena.chao - 220, aviso: av(G, 0.85), dur: 0.2, cor: '#8A5A3A', efeito: 'canga' }); G.fala(b, 'Mais peso!'); }
       prepara(b);
-      if (G.p.vida < m.vida && !m.pesou) { m.pesou = true; G.peso = (G.peso || 0) + 2; G.textoEm(G.p.x, G.p.y - 60, 'a canga pesa', '#C98E62', 12); }
       return m.t > av(G, 0.85) + 0.6;
     }
   }
