@@ -144,6 +144,9 @@ export const CINEMAS = {
   },
 
   /* ================= Chefes (quando aparecem pela primeira vez) ================= */
+  'chefe-amargura': { titulo: 'A Raiz de Amargura', cenas: [
+    { cena: 'tribunal', titulo: 'A RAIZ DE AMARGURA', sub: 'o que consumia a aldeia · Hebreus 12:15', texto: 'No fundo da fenda, uma câmara inteira forrada de raízes pretas. Cada uma sobe até uma casa do Refúgio. No meio delas, alguma coisa abre os olhos.' },
+    { cena: 'tribunal', voz: 'vilao', fig: [{ p: 'chefe:amargura', x: 0.5, y: 0.78, s: 2 }], texto: 'Eu não entrei aqui, peregrino. Me plantaram. Cada ofensa guardada, cada conta que ninguém pagou… me regaram todos os dias. Você também. Quer que eu diga os nomes?' }] },
   'chefe-conselho': { titulo: 'O Conselho Zelote', cenas: [
     { cena: 'tribunal', fx: 'brasas', titulo: 'O CONSELHO ZELOTE', sub: 'Menaém · Eleazar · Jair', texto: 'Três tronos de pedra numa sala sem janelas. Três vultos de capuz, cada um com a sua arma atravessada no colo. Nenhum se levanta.' },
     { cena: 'tribunal', voz: 'vilao', fig: [{ p: 'chefe:conselho', x: 0.5, y: 0.8, s: 2 }], texto: 'Roma não saiu daqui com sermão, estrangeiro. Saiu pelo ferro, e pelo ferro a gente decide as coisas. Um de cada vez. É a nossa lei.' }] },

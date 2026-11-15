@@ -54,6 +54,7 @@ const CENTROS = [
 // investida do Beemote, costelas no ventre do Desespero, o zigurate de Babilônia, os pedestais dos encantadores…)
 export const ARENAS = {
   plana: [],
+  raizes: [[12, 4, 8], [12, 21, 25], [8, 12, 17]], // a toca da Raiz de Amargura: três raízes servem de degrau quando o fel sobe
   conselho: [[9, 2, 3], [9, 26, 27]], // a sala do Conselho Zelote: chão livre e dois poleiros altos junto às paredes
   casebre: [[13, 3, 7], [13, 22, 26]], // a casa da viúva: dois jiraus
   estrada: [[12, 12, 17]], // a estrada de Jericó: um barranco no meio

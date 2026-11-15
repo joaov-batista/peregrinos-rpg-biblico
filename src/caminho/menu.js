@@ -282,7 +282,7 @@ export function armeiro(G) {
       lista.replaceChildren(h('p', { class: 'muted' }, 'Você tem ' + Math.floor(c.data.gold) + ' denários · conhece ' + achadas + ' de ' + Object.keys(ops).length + ' armas de ' + (CLASSES[c.cls]?.nome || '') + '. As lendárias não se vendem: caem dos chefes.'),
         h('p', { class: 'aviso-arma curto' }, '⚠ Peregrino carrega uma arma só. Trocar = entregar a da mão' + (volta ? ' (vale ' + volta + ' denários)' : '') + ' e levar a outra.'));
       lista.append(h('button', { class: 'fase-row cm-rel' + (!atual ? ' on' : ''), disabled: !atual, onclick: () => confirmar(null) }, h('span', { class: 'cm-ico' }, iconeArma(tipo, null, 26)), h('div', {}, h('b', {}, 'Arma de sempre' + (!atual ? ' (na sua mão)' : ' — de graça')), h('small', {}, 'A que você trouxe para a jornada. Essa nunca se perde.'))));
-      const ordem = Object.entries(ops).sort((a, b) => rarDe(a[1]).ordem - rarDe(b[1]).ordem);
+      const ordem = Object.entries(ops).filter(([id, a]) => !a.zelote || cm.armas[c.cls + ':' + id]).sort((a, b) => rarDe(a[1]).ordem - rarDe(b[1]).ordem);
       for (const [rid, R] of Object.entries(RARIDADES)) {
         const desta = ordem.filter(([, a]) => (a.rar || 'comum') === rid); if (!desta.length) continue;
         lista.append(h('h4', { class: 'rar-titulo', style: 'color:' + R.cor }, R.marca + ' ' + ({ comum: 'Comuns', rara: 'Raras', epica: 'Épicas', lendaria: 'Lendárias' })[rid]));

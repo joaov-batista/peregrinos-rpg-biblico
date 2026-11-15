@@ -101,6 +101,7 @@ export const TEMAS = {
   sarepta: t(['#3A2A1A', '#9A6A3A', '#E8C078'], '#6A4A2C', '#4A3220', '#2A1C12', '#D9B878', '#FFE0A0', 'seca', 'areia', 0.22),
   jerico: t(['#1E2A44', '#6A7A8A', '#E8B880'], '#5A5A4A', '#3E4034', '#22241C', '#C9C09A', '#FFE9A8', 'estrada', 'po', 0.2),
   masmorra: t(['#07070C', '#15141F', '#2A2030'], '#1A1A24', '#12121A', '#08080C', '#6A6E7C', '#FF8A3C', 'masmorra', 'brasa', 0.7),
+  raiz: t(['#050806', '#0E1A12', '#243A1E'], '#12201A', '#0C1610', '#060C08', '#8AA878', '#B8E060', 'arvores', 'bolha', 0.6),
   zelotes: t(['#0A0606', '#2A1210', '#5A2A1C'], '#2A1612', '#1C0E0C', '#0E0706', '#B8A088', '#FF7A3C', 'muralha', 'brasa', 0.5),
   bosque: t(['#16283A', '#3F6A62', '#E0B878'], '#1E4038', '#16302A', '#0D1E1A', '#B8D8A0', '#FFE9A8', 'arvores', 'vagalume', 0.2),
   floresta: t(['#04090C', '#0B1E1C', '#1E3A32'], '#0C1D1A', '#081412', '#040A09', '#8FB89A', '#B8F0C8', 'arvores', 'vagalume', 0.86),
@@ -295,6 +296,9 @@ export function areaDef(id) {
   // o Conselho Zelote: um desafio à parte, com a porta à vista no Pátio das provas
   if (id === 'conselho') return { id, nome: 'A Sala do Conselho', sub: 'Zelo sem entendimento (Rm 10:2)', tema: 'zelotes', chefe: 'conselho', conselho: true, arena: 'conselho', seed: id,
     planta: [{ papel: 'inicio', tiles: ['............................'], objs: [{ tipo: 'ebenezer', col: 14 }, { tipo: 'escrito', col: 20, lin: 9, txt: '"Todos os que lançam mão da espada à espada perecerão" (Mt 26:52)' }, { tipo: 'placa', col: 22, txt: 'Derrote os três para desbloquear novas missões e itens especiais.' }] }, { papel: 'arena' }] };
+  // a toca da Raiz de Amargura, no fundo da cisterna (a investigação dos zelotes)
+  if (id === 'raiz') return { id, nome: 'A Fenda da Raiz', sub: 'Nenhuma raiz de amargura vos perturbe (Hb 12:15)', tema: 'raiz', chefe: 'amargura', raiz: true, arena: 'raizes', seed: id,
+    planta: [{ papel: 'inicio', tiles: ['............................'], objs: [{ tipo: 'ebenezer', col: 14 }, { tipo: 'escrito', col: 20, lin: 9, txt: '"Longe de vós toda amargura, cólera e ira" (Ef 4:31)' }] }, { papel: 'arena' }] };
   // Sardes: a cidade quase apagada, do outro lado do mar
   if (id === 'sardes') return { id, nome: 'Sardes', sub: 'Tens nome de que vives, e estás morto (Ap 3:1)', tema: 'sardes', seed: id, aberto: true, sardes: true, forca: 1.6, planta: SARDES };
   if (id === 'desafio') return { id, nome: 'Desafio das ondas', sub: 'Quantas você aguenta?', tema: 'tribunal', seed: id, extra: true, desafio: true,

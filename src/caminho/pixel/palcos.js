@@ -105,6 +105,13 @@ const FUNDO = {
 
 // ---- as páginas vivas da história ----
 Object.assign(FUNDO, {
+  amargura(g, b, A, Tm) { // a câmara forrada de raízes: o espinheiro cresce pelas paredes e pelo teto conforme ela apanha; as raízes sobem às casas
+    const L = A.x1 - A.x0, k = b.cen.espinhos || 0, f = b.cen.fase || 0;
+    for (let i = 0; i < 9; i++) { const x = A.x0 + 10 + i * (L - 20) / 8, bal = Math.sin(Tm * 0.8 + i) * 2; g.fillStyle = '#0B100A'; for (let y = A.y0; y < A.y0 + 40 + (i % 3) * 22 + k * 30; y += 2) px(g, x + Math.sin(y * 0.09 + i) * 4 + bal * (y - A.y0) / 80, y, 2 + (i % 2), 2); g.fillStyle = f ? '#B8E060' : '#6A8A30'; px(g, x + Math.sin((A.y0 + 30) * 0.09 + i) * 4, A.y0 + 30 + ((Math.floor(Tm * 6) + i * 7) % 26), 1, 2); }
+    const n = Math.round(4 + k * 26); g.fillStyle = '#16200F'; for (let i = 0; i < n; i++) { const lado = i % 2, t = (i >> 1) / 14, x = lado ? A.x1 - 4 - t * 60 : A.x0 + 4 + t * 60, y = A.chao - 6 - ((i * 37) % 130); px(g, x, y, 10, 2); px(g, x + (lado ? 8 : 0), y - 3, 2, 3); px(g, x + (lado ? 0 : 8), y + 2, 2, 3); g.fillStyle = i % 5 ? '#16200F' : '#3A5A2A'; }
+    if (f >= 2) { g.fillStyle = 'rgba(184,224,96,.07)'; px(g, A.x0, A.y0, L, A.chao - A.y0); }
+    const cx = A.x0 + L / 2; g.fillStyle = '#0B100A'; for (let i = -3; i <= 3; i++) for (let y = 0; y < 26; y += 2) px(g, cx + i * 16 + Math.sin(y * 0.2 + i) * 3, A.chao - y, 3, 2); // o toco de onde ela saiu
+  },
   conselho(g, b, A, Tm) { // três tronos de pedra; quem não desceu continua sentado, de arma no colo. Os braseiros acendem a cada fase
     const L = A.x1 - A.x0, cx = A.x0 + L * 0.5, base = A.chao - 62, f = b.cen.fase || 0;
     g.fillStyle = '#1C0E0C'; px(g, cx - 78, base, 156, 5); g.fillStyle = '#2E1A16'; px(g, cx - 78, base, 156, 1); px(g, cx - 70, base + 5, 140, 3);

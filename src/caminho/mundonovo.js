@@ -11,6 +11,7 @@ import { SARDES_POVO, EPAFRAS, SARDES_RUA, SARDES_VELAS, SARDES_ABATES } from '.
 import { marco } from '../telemetria.js';
 import { falaHistoria, historiaNoRefugio } from './historia.js';
 import { vidaNoRefugio, rotuloVida, usarVida, amizade } from './vida.js';
+import { missaoNoRefugio, rotuloMissao, usarMissao, zeloteDepois, inv } from './missao.js';
 
 const rand = (a, b) => a + Math.random() * (b - a);
 export const PRECO_BARCO = 150;
@@ -30,7 +31,7 @@ export function aoEntrar(G, id, o = {}) {
     const k = o.portal ? andarDe(o.portal) : null; montarAndar(G, k ?? G.andarRolos ?? proximoAndar(G)); // voltando de uma página, o salão já está no andar dela // o mercador de além-mar só aparece de vez em quando, e cada visita traz outras coisas
     G.viajante = Math.random() < 0.4 ? sortearViajante(G) : null;
     G.objs = G.objs.filter(o => !o.vezOutra || G.viajante);
-    historiaNoRefugio(G); vidaNoRefugio(G);
+    historiaNoRefugio(G); vidaNoRefugio(G); missaoNoRefugio(G);
     // quem já caiu muitas vezes recebe uma visita: um estrangeiro de branco junto ao poço, que aponta (sem contar) para onde está o Mestre
     if ((G.cm.mortes || 0) >= 5 && !G.cm.getsemani) { const poco = G.objs.find(o => o.tipo === 'poco'); if (poco) { G.objs.push({ tipo: 'npc', id: 'mensageiro', nome: 'Um estrangeiro de branco', x: poco.x + 58, y: poco.y, luz: 130, cel: poco.cel, look: MENSAGEIRO });
       if (!G.cm.visto.mensageiro) { G.cm.visto.mensageiro = 1; setTimeout(() => { if (G.area === 'refugio') G.ui.toast('Há um estrangeiro de branco junto ao poço. Ninguém o viu chegar.', 7000); }, 2500); } } }
@@ -90,7 +91,7 @@ async function liberarEspirito(G) {
 
 /* ---------------- rótulos e uso dos objetos novos ---------------- */
 export function rotuloNovo(G, ob) {
-  { const rv = rotuloVida(ob); if (rv) return rv; }
+  { const rv = rotuloVida(ob) ?? rotuloMissao(ob); if (rv) return rv; }
   if (ob.escondido > G.T) return null; // o vizinho que "não era gente" sumiu da rua: não há com quem falar
   switch (ob.tipo) {
     case 'vela': return sar(G).velas[ob.id] ? null : 'Reacender (10 de azeite)';
@@ -104,6 +105,7 @@ export function rotuloNovo(G, ob) {
 export async function usarNovo(G, ob) {
   const p = G.p, cm = G.cm, c = G.char;
   if (await usarVida(G, ob)) return true;
+  if (await usarMissao(G, ob)) return true;
   if (ob.tipo === 'vela') {
     const s = sar(G); if (s.velas[ob.id]) return true;
     if (p.oleo < 10) { G.ui.toast('A vela pede 10 de azeite. Golpes certos e defesas enchem a lâmpada.', 3500); return true; }
@@ -146,6 +148,7 @@ export async function falarNovo(G, ob) {
   if (await falaHistoria(G, ob)) return true; // a campanha: pedidos, páginas vivas e a volta
   if (ob.id?.startsWith?.('zelote')) { // amargurados, cada um aponta para o conselho do seu jeito
     const k = +ob.id.slice(-1) - 1, n = cm.falas[ob.id] = (cm.falas[ob.id] || 0) + 1, F = cm.zelo ? ZELOTES_DEPOIS : ZELOTES;
+    if (cm.zelo) { await zeloteDepois(G, ob, inv(G).est >= 3 ? ZELOTES_FIM[k] : F[k][(n - 1) % F[k].length]); return true; } // venceu o conselho: eles vendem o que é deles e entregam a investigação
     await G.ui.dialog({ nome: ob.nome, look: ob.look, texto: F[k][(n - 1) % F[k].length], acoes: [{ label: cm.zelo ? 'Paz' : 'Onde fica o conselho?', fn: cm.zelo ? undefined : () => G.ui.toast('O Conselho Zelote: a porta de ferro no Pátio das provas, entre a escada da cisterna e o Desafio das ondas.', 7000) }, { label: 'Seguir caminho' }] });
     return true;
   }
@@ -209,6 +212,12 @@ const ZELOTES_DEPOIS = [
   ['Eleazar baixou a lança do avô para você. Eu vi.\n\nSimão, o Zelote, ficou à mesa com o cobrador de impostos. Pela primeira vez acho que entendo por quê.'],
   ['"Se o meu reino fosse deste mundo, os meus servos pelejariam." Você pelejou, e venceu, e não ficou com nada do que é nosso.\n\nComeço a achar que o Reino é maior do que a nossa raiva.'],
   ['Você venceu os três e ninguém morreu. No nosso tempo isso não existia.\n\n"Amai os vossos inimigos." Ainda dói. Mas hoje doeu diferente.']
+];
+const ZELOTES_FIM = [
+  'Dormi a noite inteira. Faz anos que não acontecia.\n\nEu ainda afio a faca toda manhã. Mas hoje, afiando, percebi que não estava pensando em ninguém.',
+  'Fui até a casa do cobrador de impostos. Não entrei. Mas fui até a porta.\n\nUm passo de cada vez, estrangeiro. Simão, o Zelote, também deve ter começado pela porta.',
+  'Barrabás saiu livre e outro foi no lugar dele. A vida inteira eu achei isso uma injustiça.\n\nHoje me ocorreu que Barrabás sou eu.',
+  '"Amai os vossos inimigos." Eu ainda não consigo, não vou mentir.\n\nMas parei de odiar quem consegue.'
 ];
 const MENSAGEIRO = { skin: '#D9A273', hair: '#F4F1E6', tunic: '#F4F1FF', cape: '#E6E0F4', style: 'longo', beard: false };
 /* ---------------- o mercador de além-mar ---------------- */

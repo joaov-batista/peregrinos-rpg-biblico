@@ -1082,7 +1082,69 @@ const zelotePunhal = {
   }
 };
 
-export const ESTILOS = { conselho, zeloteFoice, zelotePunhal, escassez, desprezo, carcere, mamom, procrastinacao, mentira, imoralidade, satanas, fuga, pavor, desespero, violencia, ressentimento, encantadores, jugo, babilonia, fera, soberba, golias, behemote, leviata };
+/* ======================================================================================================
+   A RAIZ DE AMARGURA (Hb 12:15): o que estava consumindo a aldeia. Voa, mergulha em diagonal, chove fel do alto,
+   rasga o chão com raízes e fecha as paredes. Quanto mais ferida, mais o espinheiro toma a sala.
+   ====================================================================================================== */
+const FEL = '#B8E060', ESPINHO = '#3A5A2A';
+const amargura = {
+  // paira do lado oposto ao seu, subindo e descendo devagar: nunca fica ao alcance por muito tempo
+  mover(G, b, dt) { const A = G.N.arena, lado = G.p.x > A.cx ? -1 : 1, tx = clamp(G.p.x + lado * 210, A.x0 + 70, A.x1 - 70), ty = A.chao - 150 + Math.sin(b.t * 1.7) * 26; b.vx = 0; b.x += (tx - b.x) * Math.min(1, dt * 1.6); b.y += (ty - b.y) * Math.min(1, dt * 2.2); b.face = Math.sign(G.p.x - b.x) || b.face; },
+  palco(G, b, dt) { b.cen.espinhos = 1 - b.hp / b.max; b.cen.fase = fase(b); if (Math.random() < dt * (2 + b.cen.espinhos * 8)) G.parts.push({ x: rand(G.N.arena.x0, G.N.arena.x1), y: G.N.arena.y0 + rand(0, 40), vx: rand(-10, 10), vy: rand(20, 60), t: 1.6, max: 1.6, r: 1.3, cor: FEL, g: 30 }); },
+  pref: { raizesAmargas: G => noAr(G) ? 0.4 : 1.6, rasgoDeEspinho: (G, b) => perto(G, b) > 240 ? 1.5 : 1, chuvaDeFel: G => noAr(G) ? 1.3 : 0.9, lequeDeEspinhos: (G, b) => perto(G, b) > 200 ? 1.4 : 0.8, marDeFel: G => noAr(G) ? 0.5 : 1.3, abracoDaRaiz: (G, b) => perto(G, b) < 260 ? 1.4 : 0.8 },
+  golpes: {
+    // DO CHÃO: crava-se no chão e as raízes correm por baixo, uma atrás da outra, na sua direção (nas fases seguintes, para os dois lados)
+    raizesAmargas(G, b, m, dt) {
+      const A = G.N.arena;
+      if (m.e === 0) { prepara(b); b.y += (A.chao - b.y) * Math.min(1, dt * 9); if (m.t === 0) G.fala(b, 'Lembra do que te fizeram?'); if (m.t > av(G, 0.6)) { m.e = 1; b.y = A.chao; m.x0 = b.x; m.d = Math.sign(G.p.x - b.x) || 1; m.i = 0; m.prox = m.t; G.efeito('slamMagia', b.x, A.chao); G.tremor(9); sfx('block'); } return false; }
+      ataca(b); const n = 9 + fase(b) * 3;
+      if (m.prox <= m.t && m.i < n) { m.prox = m.t + 0.085; m.i++; for (const d of fase(b) ? [m.d, -m.d] : [m.d]) { const x = m.x0 + d * (40 + m.i * 48); if (x > A.x0 + 10 && x < A.x1 - 10) { zona(G, { tipo: 'ret', x: x - 13, y: A.chao - 96, w: 26, h: 96, aviso: av(G, 0.36), dur: 0.22, cor: ESPINHO }); if (m.i % 3 === 0) G.efeito('slamAreia', x, A.chao); } } }
+      return m.i >= n && m.t > m.prox + 0.7;
+    },
+    // EM DIAGONAL: some para um canto do teto e rasga a sala de ponta a ponta, deixando espinhos que caem. Duas, três, quatro vezes
+    rasgoDeEspinho(G, b, m, dt) {
+      const A = G.N.arena, n = 2 + fase(b);
+      if (m.e === 0) { if (m.t0 == null) { m.t0 = m.t; m.k = m.k || 0; m.lado = (m.k % 2 ? 1 : -1) * (G.p.x > A.cx ? -1 : 1); b.x = m.lado < 0 ? A.x0 + 50 : A.x1 - 50; b.y = A.chao - 250; G.efeito('fumacaNegra', b.x, b.y - 30); sfx('magic'); }
+        prepara(b); b.face = -m.lado; const ax = clamp(G.p.x, A.x0 + 40, A.x1 - 40); if (!m.marca) { m.marca = true; m.ax = ax; zona(G, { tipo: 'circ', x: ax, y: A.chao - 14, r: 30, aviso: av(G, 0.5), dur: 0.01, cor: FEL, isca: true }); }
+        if (m.t - m.t0 > av(G, 0.5)) { m.e = 1; const dx = m.ax - b.x, dy = A.chao - b.y, L = Math.hypot(dx, dy); m.ux = dx / L; m.uy = dy / L; sfx('dodge'); G.efeito('giroRoxo', b.x, b.y - 30, -m.lado); } return false; }
+      if (m.e === 1) { ataca(b); b.corre = true; const v = vel(G, 1050); b.x += m.ux * v * dt; b.y += m.uy * v * dt; if ((m.px ?? 0) <= m.t) { m.px = m.t + 0.05; bala(G, b.x, b.y - 30, Math.PI / 2 + rand(-0.5, 0.5), vel(G, 120), { g: 520, r: 5, cor: FEL, vida: 2.2 }); }
+        if (b.y >= A.chao) { b.y = A.chao; b.corre = false; m.e = 2; m.t1 = m.t; G.tremor(10); G.efeito('slamMagia', b.x, A.chao); sfx('block'); G.clarao = 0.06; } return false; }
+      if (m.t - m.t1 > 0.42) { m.k++; if (m.k < n) { m.e = 0; m.t0 = null; m.marca = false; return false; } return true; }
+      return false;
+    },
+    // DO AR: sobe ao teto, abre as asas e chove fel pela sala inteira, em cortinas que andam
+    chuvaDeFel(G, b, m, dt) {
+      const A = G.N.arena, L = A.x1 - A.x0;
+      if (m.e === 0) { prepara(b); b.x += (A.cx - b.x) * Math.min(1, dt * 4); b.y += (A.chao - 250 - b.y) * Math.min(1, dt * 5); if (m.t === 0) G.fala(b, 'Ninguém pagou pelo que você sofreu.'); if (m.t > av(G, 0.7)) { m.e = 1; m.t0 = m.t; m.i = 0; m.prox = m.t; sfx('magic'); G.efeito('fumacaRoxa', b.x, b.y - 20); } return false; }
+      ataca(b); const dur = 2.6 + fase(b) * 0.6;
+      if (m.prox <= m.t) { m.prox = m.t + 0.075; m.i++; const fr = ((m.i * 0.137) + Math.sin(m.i * 0.21) * 0.25 + 10) % 1; G.tiros.push({ x: A.x0 + 16 + fr * (L - 32), y: A.y0 + 10, vx: 0, vy: vel(G, 240), g: 420, r: 5, vida: 3, cor: FEL, tipo: 'bola' }); if (m.i % 12 === 0) G.tremor(2); }
+      return m.t - m.t0 > dur;
+    },
+    // EM LEQUE: três rajadas de espinhos abertas em leque, miradas em você, cada uma mais larga
+    lequeDeEspinhos(G, b, m, dt) {
+      const c = centro(b), n = 3 + fase(b); prepara(b);
+      if ((m.prox ?? av(G, 0.5)) <= m.t && (m.n || 0) < n) { m.prox = m.t + av(G, 0.5); const k = m.n || 0; m.n = k + 1; const a0 = Math.atan2(G.p.y - 22 - c.y, G.p.x - c.x), q = 2 + k; for (let i = -q; i <= q; i++) bala(G, c.x, c.y, a0 + i * 0.17, vel(G, 430), { r: 5, cor: ESPINHO, tipo: 'lanca', vida: 3 }); ataca(b); sfx('shoot'); G.efeito('faisca', c.x, c.y, b.face); }
+      return (m.n || 0) >= n && m.t > m.prox + 0.4;
+    },
+    // O MAR DE FEL: o fel sobe pelo chão, metade da sala de cada vez (na última fase, o chão inteiro: suba nas raízes)
+    marDeFel(G, b, m, dt) {
+      const A = G.N.arena, L = A.x1 - A.x0, voltas = 2 + fase(b); prepara(b);
+      if ((m.prox ?? 0) <= m.t && (m.n || 0) < voltas) { m.prox = m.t + av(G, 1.9); const k = m.n || 0; m.n = k + 1; const tudo = fase(b) >= 2 && k === voltas - 1, esq = k % 2 === (G.p.x > A.cx ? 1 : 0);
+        zona(G, { tipo: 'ret', x: tudo ? A.x0 : esq ? A.x0 : A.x0 + L / 2, y: A.chao - 22, w: tudo ? L : L / 2, h: 22, aviso: av(G, 1), dur: 0.8, cor: FEL }); sfx('magic'); if (k === 0) G.fala(b, 'Beba. É o que sobrou para você.'); }
+      return (m.n || 0) >= voltas && m.t > m.prox + 0.2;
+    },
+    // O ABRAÇO: duas paredes de espinho saem dos cantos e se fecham no meio. Pule uma delas
+    abracoDaRaiz(G, b, m, dt) {
+      const A = G.N.arena;
+      if (m.t === 0) { m.zs = [-1, 1].map(lado => Object.assign(muro(G, lado < 0 ? A.x0 + 4 : A.x1 - 44, A.chao - 78, 40, 78, { aviso: av(G, 0.75), dur: 3.4, cor: ESPINHO }), { lado })); G.fala(b, 'Fique. Fique comigo.'); sfx('gate'); }
+      prepara(b); for (const z of m.zs) if (z.aviso <= 0) z.x -= z.lado * vel(G, 170) * dt;
+      if (m.zs[0].x + 40 >= m.zs[1].x || m.t > 4) { for (const z of m.zs) z.dur = 0; G.efeito('slamMagia', (m.zs[0].x + m.zs[1].x) / 2 + 20, A.chao); G.tremor(8); return true; }
+      return false;
+    }
+  }
+};
+
+export const ESTILOS = { amargura, conselho, zeloteFoice, zelotePunhal, escassez, desprezo, carcere, mamom, procrastinacao, mentira, imoralidade, satanas, fuga, pavor, desespero, violencia, ressentimento, encantadores, jugo, babilonia, fera, soberba, golias, behemote, leviata };
 
 // o que precisa ser desfeito quando um golpe é interrompido (virada de fase, quebranto, morte)
 export function desfazer(G, b) {

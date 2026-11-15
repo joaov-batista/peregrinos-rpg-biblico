@@ -31,6 +31,8 @@ export const ENEMIES = {
 //            sem desenho próprio, usa um genérico com cor, cor2 e "simbolo")
 // Uma semana pode trazer chefes novos no campo "chefes" do arquivo da semana (ver content/index.js).
 export const BOSSES = {
+  amargura: { nome: 'A Raiz de Amargura', titulo: 'O que consumia a aldeia', lv: 15, hp: 3400, atk: 42, def: 8, spd: 220, r: 40, xp: 1000, ouro: 500, cor: '#B8E060', cor2: '#0E1A12', ref: 'Hebreus 12:15',
+    intro: 'Eu não entrei aqui, peregrino. Me plantaram. E me regaram todos os dias.', derrota: '"Longe de vós toda amargura… perdoando-vos uns aos outros, como também Deus, em Cristo, vos perdoou" (Ef 4:31-32).' },
   // O Conselho Zelote (ficção do Refúgio): três que tinham zelo sem entendimento (Rm 10:2) e resolviam tudo pelo ferro
   conselho: { nome: 'O Conselho Zelote', titulo: 'Desafio', lv: 14, hp: 3000, atk: 40, def: 8, spd: 200, r: 26, xp: 900, ouro: 600, cor: '#C9D2E0', cor2: '#3A2A2A', ref: 'Romanos 10:2',
     intro: 'Um de cada vez, estrangeiro. É a nossa lei.', derrota: '"Têm zelo de Deus, porém não com entendimento" (Rm 10:2). Os três baixam as armas.' },

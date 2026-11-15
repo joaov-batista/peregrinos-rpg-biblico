@@ -104,7 +104,7 @@ export function atualizarHeroi(G, dt) {
   const custoOra = G.custoOracao();
   if (c.orar && p.chao && !preso && !emDash && !p.lamp && p.oleo >= custoOra && p.vida < p.vidaMax) {
     p.orando += dt; if (p.orando < dt * 1.5) sfx('magic');
-    if (p.orando >= 0.95) { p.orando = 0; p.oleo -= custoOra; p.vida++; sfx('heal'); G.efeito('cura', p.x, p.y, 1, { gruda: p }); G.fx.anel(p.x, p.y - 20, '#FFE9A8', 60); G.fx.sobe(p.x, p.y - 10, 14, '#FFE9A8');
+    if (p.orando >= 0.95) { p.orando = 0; p.oleo -= custoOra; p.vida = Math.min(p.vidaMax, p.vida + (G.tem('lenho_mara') ? 2 : 1)); sfx('heal'); G.efeito('cura', p.x, p.y, 1, { gruda: p }); G.fx.anel(p.x, p.y - 20, '#FFE9A8', 60); G.fx.sobe(p.x, p.y - 10, 14, '#FFE9A8');
       if (G.tem('vaso_alabastro')) { p.inv = Math.max(p.inv, 1.5); G.fx.anel(p.x, p.y - 26, '#F0E6D8', 90); G.textoEm(p.x, p.y - 72, 'perfume de alabastro', '#F0E6D8', 11); } }
   } else p.orando = 0;
 

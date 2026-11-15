@@ -38,6 +38,7 @@ import { Juntos, limparCodigo } from './juntos.js';
 import { marco } from '../telemetria.js';
 import { conviteOpiniao } from './opiniao.js';
 import { vencerCapitulo, alvoDaHistoria } from './historia.js';
+import { venceuRaiz } from './missao.js';
 
 // Primeiros passos: [toque, controle, teclado]
 const PASSOS = [ // t: [toque, controle, teclado]; alvo: o botão de toque que pisca. No Bosque do Treino cada passo tem o seu lugar na trilha.
@@ -111,7 +112,7 @@ export class Caminho {
   // PÁGINAS DA SEMANA: todos lutam em pé de igualdade. Nível, forja, fôlegos extras e dons de força não contam lá dentro;
   // quem acabou de chegar entra com o mesmo golpe e os mesmos fôlegos de um veterano. Armas e relíquias mudam o jeito, não a conta.
   nivelado() { return !!this.def?.fase; }
-  vidaMax() { if (this.nivelado()) return Math.max(3, 7 + this.dif.vidas); return Math.max(3, 5 + (this.tem('veste_branca') ? 1 : 0) + (this.cm.getsemaniDom === 'folego' ? 1 : 0) + (this.hab.couraca ? 2 : 0) + Math.floor(this.cm.mana / 3) + (this.tem('osso_bronze') ? 1 : 0) + this.dif.vidas); }
+  vidaMax() { if (this.nivelado()) return Math.max(3, 7 + this.dif.vidas); return Math.max(3, 5 + (this.tem('veste_branca') ? 1 : 0) + (this.tem('cantil_masada') ? 1 : 0) + (this.cm.getsemaniDom === 'folego' ? 1 : 0) + (this.hab.couraca ? 2 : 0) + Math.floor(this.cm.mana / 3) + (this.tem('osso_bronze') ? 1 : 0) + this.dif.vidas); }
   oleoMax() { return (this.tem('odre_novo') ? 132 : 99) + (this.cm.getsemaniDom === 'azeite' ? 22 : 0) + (this.tem('chifre_azeite') ? 25 : 0); }
   espacos() { return 3 + (this.cm.reliquias.includes('coroa_restituida') ? 1 : 0) + (this.cm.reliquias.includes('perola_preco') ? 1 : 0); }
   temDom(id) { const d = DONS[id], ds = this.cm.dons || {}; if (!d) return false; return d.exige ? d.exige.every(x => this.temDom(x)) && !!ds.lingua : (ds[id] || 0) >= (d.partes || 1); }
@@ -168,7 +169,7 @@ export class Caminho {
       if (ob.tipo === 'ebenezer') ob.luz = 150;
       if (ob.tipo === 'portal' || ob.tipo === 'segredo') ob.luz = 80;
     }
-    if (def.fase || def.mundo || def.historia || (def.extra && !def.desafio)) this.objs.push({ tipo: 'retorno', x: N.inicio.x - 72, y: N.inicio.y, luz: 80 });
+    if (def.fase || def.mundo || def.historia || def.raiz || def.conselho || (def.extra && !def.desafio)) this.objs.push({ tipo: 'retorno', x: N.inicio.x - 72, y: N.inicio.y, luz: 80 });
     if (cm.sacola?.area === id) this.objs.push({ tipo: 'sacola', x: cm.sacola.x, y: cm.sacola.y, luz: 70 });
     this.mp?.mudouArea(id);
     if (this.souDono()) this.povoar();
@@ -265,6 +266,7 @@ export class Caminho {
   update(dt) {
     this.lerControles();
     if (this.p.carga >= MIRA_CARGA && !this.mp?.acompanhado()) dt *= 0.4; // mirando sozinho, o tempo quase para
+    if (!(this.p.dashT > 0)) this.sicaHits = null;
     if (this.zeloT > 0) { this.zeloT -= dt; if (this.zeloFim && this.T > this.zeloFim) { this.zeloT = 0; this.zeloFim = 0; } }
     this.fade = Math.max(0, this.fade - dt * 1.6); if (this.invertido > 0) this.invertido -= dt;
     if (this.clarao > 0) this.clarao -= dt; if (this.p.flashT > 0) this.p.flashT -= dt;
@@ -327,6 +329,7 @@ export class Caminho {
           for (let i = 0; i < r.n; i++) { const a = r.a + i * TAU / r.n, ux = Math.cos(a), uy = Math.sin(a), px = p.x - cx, py = p.y - 19 - cy, t = clamp(px * ux + py * uy, 30, r.len); if (Math.hypot(px - ux * t, py - uy * t) < 15) { this.ferirHeroi(1, e); break; } }
         }
       }
+      if (p.dashT > 0 && e.hp > 0 && !e.morrendo && !(e.alpha < 0.5) && this.tem('sica_oculta') && toca(caixa(p), caixa(e)) && !(this.sicaHits = this.sicaHits || new Set()).has(e)) { this.sicaHits.add(e); this.atingir(e, this.danoBase() * 1.6, p.x - p.face, { semOleo: true }); } // a sica oculta: o passo fere quem atravessa
       if (!(p.dashT > 0) && !(p.mergulho > 0) && e.hp > 0 && !e.morrendo && !(e.alpha < 0.5) && (e.kind !== 'vicio' || e.vista > 0.5) && toca(caixa(p), encolhe(caixa(e), e.kind === 'chefe' ? 0.72 : 0.8))) { // no passo, o corpo atravessa o adversário
         const r = this.ferirHeroi(1, e);
         if (r === true && e.ai === 'ladrao' && !e.fugindo) { const q = Math.min(this.char.data.gold, 15); this.char.data.gold -= q; e.roubo = q; e.fugindo = 5; if (q) this.textoEm(p.x, p.y - 50, '−' + q + ' denários!', '#FFD23F'); }
@@ -496,7 +499,7 @@ export class Caminho {
   }
 
   atingir(e, dano, deX, atk = {}) {
-    if (this.zeloT > 0 && this.T - (this.zeloEm || 0) > 0 && (atk === this.p.atk || atk.arma)) { dano *= 3; if (this.zeloAtk !== atk) { this.zeloAtk = atk; this.zeloFim = this.T + 0.25; this.efeito('critico', e.x, e.y - e.h / 2, 1); sfx('crit'); } } // zelo com entendimento: o contragolpe depois da defesa perfeita
+    if (this.zeloT > 0 && this.T - (this.zeloEm || 0) > 0 && (atk === this.p.atk || atk.arma)) { dano *= 3; if (this.zeloAtk !== atk) { this.zeloAtk = atk; if (--this.zeloGolpes <= 0) this.zeloFim = this.T + 0.25; this.efeito('critico', e.x, e.y - e.h / 2, 1); sfx('crit'); } } // zelo com entendimento: o contragolpe depois da defesa perfeita
     // os golpes da própria arma (o golpe comum e os tiros dele) levam o efeito especial da arma e das relíquias
     if ((atk === this.p.atk || atk.arma) && !atk.especial) { const hp0 = e.hp, r = this.atingirSo(e, dano, deX, atk); if (r && e.hp < hp0) aplicarEspecial(this, e, dano); return r; }
     return this.atingirSo(e, dano, deX, atk);
@@ -563,7 +566,7 @@ export class Caminho {
       if (origem?.nid && !this.souDono()) this.mp.ev('pa', { id: origem.nid, vx: Math.sign(origem.x - p.x) * 240 });
       if (origem?.kind === 'chefe') this.postura(origem, 26);
       else if (origem?.kind === 'vicio') { origem.stun = 1.5; origem.vx = Math.sign(origem.x - p.x) * 240; origem.aberto = 1.5; }
-      o.aoDefender?.(); this.tutParry = true; if (this.cm.zelo) { this.zeloT = 2; this.textoEm(p.x, p.y - 84, 'ZELO!', '#FFD23F', 13); }
+      o.aoDefender?.(); this.tutParry = true; if (this.cm.zelo) { const fx = this.tem('faixa_fineias'); this.zeloT = fx ? 4 : 2; this.zeloGolpes = fx ? 2 : 1; this.zeloAtk = null; this.zeloFim = 0; this.textoEm(p.x, p.y - 84, 'ZELO!', '#FFD23F', 13); }
       if (this.tem('jarro_gideao')) { this.fx.anel(p.x, p.y - 26, '#FFF4CF', 170); this.clarao = 0.14; for (const e of this.inimigos) if (e.kind === 'vicio' && e.hp > 0 && Math.hypot(e.x - p.x, e.y - p.y) < 170) e.stun = Math.max(e.stun, 1.2); this.textoEm(p.x, p.y - 86, 'o cântaro se quebra!', '#FFF4CF', 11); }
       return 'parry';
     }
@@ -1044,6 +1047,7 @@ export class Caminho {
     else if (d.conselho) { this.xp(600); this.pontos(3000); const primeira = !cm.zelo; cm.zelo = true; c.data.gold += primeira ? 600 : 150; this.salvar();
       await this.ui.dialog({ nome: 'Menaém, Eleazar e Jair', texto: 'Os três põem as armas no chão, uma ao lado da outra.\n\n"Nós esperávamos um Messias que viesse como nós: de ferro na mão. Ele veio, e mandou guardar a espada (Mt 26:52). Nunca perdoamos isso."\n\n"Você luta como um de nós, estrangeiro. Mas não pelo que nós lutamos. Talvez seja isso que nos faltou."', acoes: [{ label: 'Continuar' }] });
       if (primeira) await this.ui.dialog({ nome: 'ZELO COM ENTENDIMENTO', texto: '"Têm zelo de Deus, porém não com entendimento" (Rm 10:2). O seu, agora, tem os dois.\n\nDepois de uma DEFESA PERFEITA, o seu próximo golpe (em até dois segundos) sai com o triplo da força.\n\n+600 denários. Os zelotes da aldeia vão olhar para você de outro jeito.', acoes: [{ label: 'Amém' }], cls: 'achado-lendaria' }); }
+    else if (d.raiz) await venceuRaiz(this);
     else if (d.historia) { this.xp(200); this.pontos(900); await vencerCapitulo(this); }
     // achados: todo chefe pode deixar uma arma da sua vocação e uma relíquia (os gigantes do mundo, mais raras)
     const forte = !!d.mundo || b.id === 'satanas';

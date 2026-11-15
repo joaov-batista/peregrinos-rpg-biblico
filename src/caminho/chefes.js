@@ -15,6 +15,11 @@ import { ESTILOS, desfazer } from './estilos.js';
 const F = (vida, golpes, extra = {}) => ({ vida, golpes, ...extra });
 // golpes: nome → parâmetros; "fn" aponta para o golpe do estilo quando o nome é uma variação (mais forte) do mesmo golpe
 export const CHEFES = {
+  /* ---------- A Raiz de Amargura: o chefe secreto da investigação dos zelotes ---------- */
+  amargura: { vida: 1700, pressa: 0.6, r: 40, arena: 'raizes', voa: 150, vel: 0, semVirar: false,
+    golpes: { raizesAmargas: {}, rasgoDeEspinho: { espera: 1.2 }, chuvaDeFel: {}, lequeDeEspinhos: {}, marDeFel: {}, abracoDaRaiz: {} },
+    fases: [F(1, ['raizesAmargas', 'chuvaDeFel', 'lequeDeEspinhos', 'rasgoDeEspinho']), F(0.62, ['rasgoDeEspinho', 'marDeFel', 'raizesAmargas', 'abracoDaRaiz', 'lequeDeEspinhos'], { grito: 'VOCÊ NUNCA VAI ESQUECER!', escuro: 0.25 }), F(0.3, ['rasgoDeEspinho', 'marDeFel', 'chuvaDeFel', 'abracoDaRaiz', 'raizesAmargas', 'lequeDeEspinhos'], { grito: 'EU SOU TUDO O QUE TE DEVEM!', escuro: 0.4 })],
+    dica: 'Ela voa: bata quando ela crava no chão (raízes) e logo depois de cada rasgo em diagonal. Na chuva de fel, ande entre as cortinas. Quando o fel sobe, vá para o outro lado ou suba nas raízes. No abraço, pule uma das paredes.' },
   /* ---------- O Conselho Zelote: um, depois dois, depois os três. Uma vida só ---------- */
   conselho: { vida: 1500, pressa: 0.62, r: 26, arena: 'conselho', voa: 1, vel: 0,
     golpes: { punhalRasante: { espera: 0.9 }, punhalCadente: { espera: 0.9 }, vaiEVolta: { espera: 1 }, punhaisDaParede: { espera: 1 }, lancaCadente: { espera: 1.5 }, estocadaZelote: { espera: 1.5 }, lancasDaParede: { espera: 1.6 }, giroDaLanca: { espera: 1.6 } },

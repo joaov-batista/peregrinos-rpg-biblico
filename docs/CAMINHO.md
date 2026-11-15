@@ -253,3 +253,18 @@ os outros digitam o código, ou abrem o link `?sala=CÓDIGO`. Não há servidor 
   da festa em sequência e dá um presente melhor no terceiro.
 - **Amizades:** o primeiro papo do dia com um morador vale um coração (até 10). Aos 3 e aos 7, sete moradores contam algo que não
   contam a qualquer um; os demais dão um presente simples.
+
+## O Conselho Zelote, a loja dos zelotes e a Raiz de Amargura
+
+- **O Conselho Zelote** (`conselho` + os companheiros `zeloteFoice` e `zelotePunhal`, com `parte: true` em `CHEFES`): três lutadores
+  e uma vida só. Menaém luta sozinho; depois Eleazar e Jair juntos; no fim os três. Entre os golpes ninguém fica na sala; cada golpe
+  é um de três jeitos (`zRasante`, `zMergulho`, `zParede` em `estilos.js`). O que os companheiros apanham sai da vida do conselho
+  (`palco` do conselho). Porta no Pátio das provas; quatro zelotes pela aldeia apontam o caminho.
+- **Prêmio:** o Zelo com entendimento (`cm.zelo`): depois de uma defesa perfeita, o próximo golpe sai com o triplo da força.
+- **Depois da vitória** (`missao.js`): os zelotes vendem a arma do conselho (uma por vocação), três relíquias (Faixa de Fineias,
+  Cantil de Masada, Sica oculta) e maná; e entregam a investigação: três sinais (Bairro, fim do Olival, Cisterna), uma dedução,
+  e a fenda no fundo da cisterna.
+- **A Raiz de Amargura** (`amargura`, Hb 12:15): voa e tem seis golpes: raízes pelo chão, rasgo em diagonal, chuva de fel do teto,
+  leque de espinhos, mar de fel (suba nas raízes) e o abraço das paredes. Prêmio: o Lenho de Mara (cada oração devolve dois fôlegos).
+- **Atenção ao escrever diálogos:** `ui.dialog` devolve o rótulo escolhido e só chama o `fn` da ação 30 ms depois de fechar;
+  para decidir pelo que o jogador escolheu, use o valor devolvido.

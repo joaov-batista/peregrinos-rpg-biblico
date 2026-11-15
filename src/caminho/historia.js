@@ -41,7 +41,7 @@ export async function falaHistoria(G, ob) {
   if (ob.id !== c.quem) return false;
   const diz = (t, label = 'Continuar') => G.ui.dialog({ nome: ob.nome, look: ob.look, texto: t, acoes: [{ label }] });
   if (h.est === 0) { for (const [i, t] of c.pedido.entries()) await diz(t, i === c.pedido.length - 1 ? 'Eu vou' : 'Continuar'); h.est = 1; G.salvar(); sfx('key'); G.ui.toast('História · capítulo ' + c.n + ': ' + c.titulo + ' (' + c.ref + ')', 6000); await abrirPagina(G, c); return true; }
-  if (h.est === 1) { let conversa = false; await G.ui.dialog({ nome: ob.nome, look: ob.look, texto: 'A página está aberta: ' + c.ref + '. Quando quiser.', acoes: [{ label: 'Ir à página', fn: () => abrirPagina(G, c) }, { label: 'Só conversar', fn: () => { conversa = true; } }] }); return !conversa; }
+  if (h.est === 1) { const r = await G.ui.dialog({ nome: ob.nome, look: ob.look, texto: 'A página está aberta: ' + c.ref + '. Quando quiser.', acoes: [{ label: 'Ir à página', fn: () => abrirPagina(G, c) }, { label: 'Só conversar' }] }); return r !== 'Só conversar'; } // (a resposta do diálogo é o rótulo escolhido)
   // voltou depois de vencer a sombra: a conversa de volta, o prêmio e a aldeia que muda
   for (const [i, t] of c.volta.entries()) await diz(t, i === c.volta.length - 1 ? 'Amém' : 'Continuar');
   const pr = c.premio; G.char.data.gold += pr.gold; G.xp(pr.xp); G.pontos(600); G.cm.mana = (G.cm.mana || 0) + (pr.mana || 0);
