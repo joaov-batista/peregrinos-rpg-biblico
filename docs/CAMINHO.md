@@ -235,3 +235,21 @@ os outros digitam o código, ou abrem o link `?sala=CÓDIGO`. Não há servidor 
   que para por um só, a vigília); o roteiro do encontro (`getsemani.js`) não foi tocado.
 - **Para escrever um capítulo novo:** uma entrada em `CAPITULOS`, um chefe em `CHEFES` + `ESTILOS` (quatro golpes só dele), o desenho
   em `pixel/chefes-c.js`, a ficha em `BOSSES`, a cutscene `chefe-<id>` e a trilha em `src/trilhas.js`.
+
+## Chefes icônicos, igualdade nas páginas da semana e a vida no Refúgio
+
+- **Chefes da campanha refeitos** (`pixel/chefes-c.js`, `palcos.js`, `estilos.js`): cada um com silhueta própria, uma pose por golpe,
+  palco que muda e uma mecânica só dele. Escassez: a seca bebe o azeite e a botija "que não falta" aparece nos cantos. Desprezo:
+  "ele clamava ainda mais", cada golpe enche a luz no fim da estrada até a multidão se abrir. Cárcere: "a igreja fazia contínua
+  oração", ficar parado e orar acende as velas da casa de Maria até as cadeias caírem.
+- **Mentira e Imoralidade redesenhadas** (`pixel/chefes-d.js`): a máscara de duas caras com manto de cacos de espelho; o véu, o cálice
+  e a serpente enrolada. `scratch`: para ver todos os quadros de um chefe lado a lado, pinte `quadroChefe` com `b.mov` de cada golpe.
+- **Páginas da semana niveladas** (`nivelado()` em `jogo.js`): dentro de qualquer página de estudo, golpe e fôlegos são iguais para
+  todos (nível, forja, fôlegos extras e dom de força não contam). Fora delas (campanha, gigantes, Sardes) a progressão vale normalmente.
+- **Páginas vivas com cenário e trilha próprios:** temas `sarepta`, `jerico` e `masmorra` (`TEMAS`, `SKYLINE`, `trilhas.js`).
+- **O Livro do Refúgio** (`vida.js`, Praça do poço): rever as páginas vivas já abertas, o calendário e as amizades.
+- **Calendário e festas** (`content/vida.js`): sete tempos pelo mês de verdade (amendoeira, Páscoa, Semanas, vindima, Tabernáculos,
+  primeiras chuvas, Luzes). A aldeia ganha enfeites e uma mesa posta; sentar-se à mesa em três dias diferentes conta a história
+  da festa em sequência e dá um presente melhor no terceiro.
+- **Amizades:** o primeiro papo do dia com um morador vale um coração (até 10). Aos 3 e aos 7, sete moradores contam algo que não
+  contam a qualquer um; os demais dão um presente simples.

@@ -6,7 +6,7 @@
 export const ARCO = { id: 'lampada', titulo: 'A lâmpada que falta' };
 
 export const CAPITULOS = [
-  { id: 'sarepta', n: 1, titulo: 'O azeite que não acaba', ref: '1 Reis 17:8-16', quem: 'velho', quemNome: 'o Velho Peregrino', chefe: 'escassez', tema: 'sombra', inimigos: ['desanimo', 'preguica', 'ganancia'], forca: 1,
+  { id: 'sarepta', n: 1, titulo: 'O azeite que não acaba', ref: '1 Reis 17:8-16', quem: 'velho', quemNome: 'o Velho Peregrino', chefe: 'escassez', tema: 'sarepta', inimigos: ['desanimo', 'preguica', 'ganancia'], forca: 1,
     lugar: 'Sarepta, no tempo da seca', sala: 0, lamparinas: [4, 16, 24],
     pedido: [
       'Você reparou nas lamparinas da praça? Apagadas, todas. Não é descuido: o azeite do Refúgio está acabando.\n\nA viúva da casa ao lado guardava a botija que nunca secou. Guardava. Faz três noites que a botija amanheceu vazia.',
@@ -22,7 +22,7 @@ export const CAPITULOS = [
       'Acendi as lamparinas da praça com ele. Repare: a aldeia tem outra cor.\n\nMas uma lâmpada acesa mostra as que continuam apagadas. Procure Bartimeu, na Praça das armas. Ele anda inquieto, e não é de hoje.'],
     mudanca: 'As lamparinas da Praça do poço estão acesas.', premio: { gold: 120, xp: 160, mana: 1 } },
 
-  { id: 'jerico', n: 2, titulo: 'O grito à beira do caminho', ref: 'Marcos 10:46-52', quem: 'bartimeu', quemNome: 'Bartimeu', chefe: 'desprezo', tema: 'ninive', inimigos: ['orgulho', 'inveja', 'distracao'], forca: 1.15,
+  { id: 'jerico', n: 2, titulo: 'O grito à beira do caminho', ref: 'Marcos 10:46-52', quem: 'bartimeu', quemNome: 'Bartimeu', chefe: 'desprezo', tema: 'jerico', inimigos: ['orgulho', 'inveja', 'distracao'], forca: 1.15,
     lugar: 'A estrada de Jericó', sala: 2, lamparinas: [3, 16, 25],
     pedido: [
       'Você é o da lâmpada, não é? Eu enxergo, hoje. Mas tem noite em que acordo e não lembro como foi.\n\nLembro do pó da estrada. Lembro da capa. E depois… um branco. Como se alguém tivesse arrancado a página.',
@@ -40,7 +40,7 @@ export const CAPITULOS = [
       'Tome estas lamparinas, são para a praça. E fale com Rode, a criada, lá no poço. Ela não dorme há dias: fica de ouvido na porta.'],
     mudanca: 'A Praça das armas ganhou lamparinas, e Bartimeu voltou a contar a sua história.', premio: { gold: 160, xp: 220, mana: 1 } },
 
-  { id: 'prisao', n: 3, titulo: 'A noite da vigília', ref: 'Atos 12:5-17', quem: 'rode', quemNome: 'Rode', chefe: 'carcere', tema: 'tribunal', inimigos: ['medo', 'ira', 'duvida'], forca: 1.3,
+  { id: 'prisao', n: 3, titulo: 'A noite da vigília', ref: 'Atos 12:5-17', quem: 'rode', quemNome: 'Rode', chefe: 'carcere', tema: 'masmorra', inimigos: ['medo', 'ira', 'duvida'], forca: 1.3,
     lugar: 'Jerusalém, a prisão de Herodes', sala: 3, lamparinas: [2, 9, 23],
     pedido: [
       'Psiu! Fale baixo. Estou ouvindo a porta.\n\nNaquela noite a casa inteira orava por Pedro, que ia morrer de manhã. E bateram. Eu sei que bateram… mas de uns dias para cá, quando eu conto a história, a batida não vem. Fica um silêncio no lugar.',

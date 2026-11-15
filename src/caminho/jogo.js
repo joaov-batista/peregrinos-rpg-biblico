@@ -108,11 +108,14 @@ export class Caminho {
   custoVerso() { return OLEO_USO * (this.tem('cantico_novo') ? 0.7 : 1); }
   get dif() { return DIFICULDADES[this.cm.dif] || DIFICULDADES.provacao; }
   tem(rel) { return this.cm.eq.includes(rel) || (RELIQUIAS[rel]?.passiva && this.cm.reliquias.includes(rel)); }
-  vidaMax() { return Math.max(3, 5 + (this.tem('veste_branca') ? 1 : 0) + (this.cm.getsemaniDom === 'folego' ? 1 : 0) + (this.hab.couraca ? 2 : 0) + Math.floor(this.cm.mana / 3) + (this.tem('osso_bronze') ? 1 : 0) + this.dif.vidas); }
+  // PÁGINAS DA SEMANA: todos lutam em pé de igualdade. Nível, forja, fôlegos extras e dons de força não contam lá dentro;
+  // quem acabou de chegar entra com o mesmo golpe e os mesmos fôlegos de um veterano. Armas e relíquias mudam o jeito, não a conta.
+  nivelado() { return !!this.def?.fase; }
+  vidaMax() { if (this.nivelado()) return Math.max(3, 7 + this.dif.vidas); return Math.max(3, 5 + (this.tem('veste_branca') ? 1 : 0) + (this.cm.getsemaniDom === 'folego' ? 1 : 0) + (this.hab.couraca ? 2 : 0) + Math.floor(this.cm.mana / 3) + (this.tem('osso_bronze') ? 1 : 0) + this.dif.vidas); }
   oleoMax() { return (this.tem('odre_novo') ? 132 : 99) + (this.cm.getsemaniDom === 'azeite' ? 22 : 0) + (this.tem('chifre_azeite') ? 25 : 0); }
   espacos() { return 3 + (this.cm.reliquias.includes('coroa_restituida') ? 1 : 0) + (this.cm.reliquias.includes('perola_preco') ? 1 : 0); }
   temDom(id) { const d = DONS[id], ds = this.cm.dons || {}; if (!d) return false; return d.exige ? d.exige.every(x => this.temDom(x)) && !!ds.lingua : (ds[id] || 0) >= (d.partes || 1); }
-  danoBase() { return (this.cm.getsemaniDom === 'forca' ? 1.08 : 1) * (this.tem('cabelo_sansao') ? 1.2 : 1) * (this.esp > 0 ? 2 : 1) * 10 * (1 + Math.min(0.6, (this.char.level - 1) * 0.03)) * (1 + [0, 0.12, 0.24, 0.36, 0.5][this.cm.fio || 0]); }
+  danoBase() { if (this.nivelado()) return (this.esp > 0 ? 2 : 1) * 10 * 1.24 * 1.24; return (this.cm.getsemaniDom === 'forca' ? 1.08 : 1) * (this.tem('cabelo_sansao') ? 1.2 : 1) * (this.esp > 0 ? 2 : 1) * 10 * (1 + Math.min(0.6, (this.char.level - 1) * 0.03)) * (1 + [0, 0.12, 0.24, 0.36, 0.5][this.cm.fio || 0]); }
   raioLuz() { const o = this.p.oleo / this.oleoMax(), b = (this.tem('lamparina_abismo') ? 150 : 105) + o * 95; return b * (1 + this.p.lampA * 0.6); }
 
   resize() {
@@ -187,6 +190,7 @@ export class Caminho {
     this.musicaDaArea();
     this.ui.bossBar(null);
     this.ui.banner(def.sem ? def.sem.titulo.toUpperCase() : 'PEREGRINOS', def.nome, def.sub);
+    if (def.fase && !this.avisoNivelado) { this.avisoNivelado = true; setTimeout(() => this.running && this.ui.toast('Página da semana: aqui todos lutam em pé de igualdade. Nível e forja não contam; o que conta é a mão e a lâmpada.', 6500), 3500); }
     if (!o.quieto) this.chegada(def);
     this.salvar();
   }

@@ -5,8 +5,9 @@ import { Sprite, rampa, cor, TINTA, BRANCO } from './raster.js';
 import { CHEFES_A } from './chefes-a.js';
 import { CHEFES_B } from './chefes-b.js';
 import { CHEFES_C } from './chefes-c.js';
+import { CHEFES_D } from './chefes-d.js';
 
-const PINTORES = { ...CHEFES_A, ...CHEFES_B, ...CHEFES_C };
+const PINTORES = { ...CHEFES_A, ...CHEFES_B, ...CHEFES_C, ...CHEFES_D };
 // Beemote e Leviatã são colossos: desenhados no dobro do tamanho, ocupam boa parte da arena
 const COLOSSOS = { behemote: 2.5, leviata: 2.4, golias: 1.25, carcere: 1.5, escassez: 1.25, desprezo: 1.2 };
 

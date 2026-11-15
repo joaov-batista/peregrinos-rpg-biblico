@@ -44,6 +44,14 @@ export const TRILHAS = {
   ela: { tom: -7, esc: 'menor', bpm: 92, voz: 'flauta', baixo: 'andar', bat: 'marcha', pad: 1, oit: 1, prog: [1, 7, 6, 5],
     mel: "1' - 5 - 1' 2' 3' - | 7 - 4 - 7 1' 2' - | 6 - 3 - 6 7 1' - | 5 - - 7 2' - - -" },
 
+  // as páginas vivas da história
+  sarepta: { tom: 2, esc: 'hijaz', bpm: 72, voz: 'flauta', baixo: 'longo', pad: 1, eco: 1.3, prog: [1, 2, 1, 1],
+    mel: "1' - - 3' 2' - 1' - | 2' - - 4' 6 - - - | 5' - 4' 3' 2' - 3' - | 1' - - - 7 - 1' -" },
+  jerico: { tom: 7, esc: 'dorico', bpm: 96, voz: 'flauta', arp: 'harpa', baixo: 'andar', bat: 'leve', prog: [1, 7, 4, 1],
+    mel: "1' - 3' 4' 5' - 4' 3' | 2' - 7 2' 4' - 2' - | 1' - 4' 6' 4' - 1' - | 3' - 2' 1' 1' - . ." },
+  masmorra: { tom: -3, esc: 'frigio', bpm: 62, voz: 'piano', baixo: 'longo', bat: 'timpano', pad: 2, eco: 1.6, oit: 1, prog: [1, 2, 1, 6],
+    mel: "1 - - 5 - - 3 - | 2 - - 6 - - 4 - | 1 - 3 - 5 - 7 - | 6 - - 3 - - 1 -" },
+
   /* ------------------------------ as páginas (uma por fase) ------------------------------ */
   agora: { tom: 2, esc: 'dorico', bpm: 92, voz: 'flauta', arp: 'harpa', baixo: 'andar', bat: 'leve', prog: [1, 4, 1, 7],
     mel: "1' - 2' 3' 4' - 3' 2' | 6 - 1' - 4' - 1' - | 5' - 3' 1' 3' - 5' - | 4' - 2' 7 2' - - -" },
