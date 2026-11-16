@@ -994,7 +994,7 @@ const carcere = {
 };
 
 /* ======================================================================================================
-   O CONSELHO ZELOTE: três lutadores, um de cada vez… e depois todos. Somem entre um golpe e outro (voltam ao trono)
+   O CONSELHO ZELOTE: três lutadores. Primeiro um de cada vez, em rodízio; depois duplas que se alternam; por fim os três. Somem entre um golpe e outro (voltam ao trono)
    e reaparecem já no golpe: rasante pelo chão, mergulho do alto ou arremesso de cima da parede. Só se fere quem está na sala.
    Menaém (punhais) luta sozinho; depois Eleazar (lança) e Jair (foice) lutam juntos; no fim, os três de uma vez.
    A vida é uma só, do conselho inteiro: bater em qualquer um deles fere o conselho.
@@ -1044,18 +1044,35 @@ const passoBrasas = (G, m, dt) => { for (const f of m.bs || []) if (vivo(G, f)) 
 const pedrasDoTeto = (G, b, n) => { const A = G.N.arena; for (let k = 0; k < n; k++) zona(G, { tipo: 'circ', x: clamp(k === 0 ? G.p.x : A.x0 + 60 + Math.random() * (A.x1 - A.x0 - 120), A.x0 + 40, A.x1 - 40), y: A.chao - 20, r: 34, aviso: av(G, 0.6 + k * 0.22), dur: 0.15, cor: LANCA }); };
 
 const PUNHAL = '#C9D2E0', LANCA = '#C9B48A', FOICE = '#D9B878', FOGO = '#FF9A3C';
+const GOLPES_MENAEM = new Set(['punhalRasante', 'punhalCadente', 'vaiEVolta', 'punhaisDaParede', 'pelasCostas']), GOLPES_ELEAZAR = new Set(['lancaCadente', 'estocadaZelote', 'lancasDaParede', 'giroDaLanca', 'abaloDoForte']);
 const conselho = {
   // entre os golpes ninguém fica na sala: voltam ao trono
   mover(G, b, dt) { noTrono(G, b); },
   // o palco: quem está sentado, quem desceu; os dois companheiros entram na segunda fase, Menaém volta na terceira.
   // A vida é uma só: o que os companheiros apanham sai da vida do conselho.
+  // O rodízio do conselho. Fase 1: um de cada vez (Menaém, Eleazar, Jair, e de novo). Fase 2: dois de cada vez, alternando as
+  // duplas (Menaém e Eleazar, Eleazar e Jair, Jair e Menaém). Fase 3: os três juntos. O corpo principal é Menaém ou Eleazar na
+  // fase 1 e Eleazar daí em diante; Jair é o companheiro zeloteFoice e Menaém, a partir da fase 2, o zelotePunhal.
+  // A vida é uma só: o que os companheiros apanham sai da vida do conselho.
   palco(G, b, dt) {
-    const f = fase(b); b.cen.quem = f ? 'eleazar' : 'menaem'; b.cen.fase = f;
-    if (G.novoParceiro && G.souDono?.() !== false) { b.pars = (b.pars || []).filter(q => G.inimigos.includes(q));
-      if (f >= 1 && !b.pars.some(q => q.id === 'zeloteFoice')) { const q = G.novoParceiro('zeloteFoice'); if (q) { q.espera = 2.6; b.pars.push(q); } }
-      if (f >= 2 && !b.pars.some(q => q.id === 'zelotePunhal')) { const q = G.novoParceiro('zelotePunhal'); if (q) { q.espera = 3.4; b.pars.push(q); } } }
+    const f = fase(b), dono = G.souDono?.() !== false, parceiros = !!G.novoParceiro, r = b.cen.rod = b.cen.rod || { i: 0, t: 7, f: 0 };
+    if (G.novoParceiro && dono) { b.pars = (b.pars || []).filter(q => G.inimigos.includes(q));
+      if (!b.pars.some(q => q.id === 'zeloteFoice')) { const q = G.novoParceiro('zeloteFoice'); if (q) { q.espera = 1; b.pars.push(q); } }
+      if (f >= 1 && !b.pars.some(q => q.id === 'zelotePunhal')) { const q = G.novoParceiro('zelotePunhal'); if (q) { q.espera = 1.5; b.pars.push(q); } } }
+    const jair = (b.pars || []).find(q => q.id === 'zeloteFoice'), menaemP = (b.pars || []).find(q => q.id === 'zelotePunhal');
+    const ordem = parceiros && jair ? ['menaem', 'eleazar', 'jair'] : ['menaem', 'eleazar'], duplas = [['menaem', 'eleazar'], ['eleazar', 'jair'], ['jair', 'menaem']];
+    if (r.f !== f) { r.f = f; r.i = 0; r.t = 0; }
+    const ocupados = [b, jair, menaemP].some(q => q && q.mov);
+    r.t -= dt; if (r.t <= 0 && !ocupados) { r.i++; r.t = f === 0 ? 6.5 : f === 1 ? 8 : 99; }
+    const ativos = new Set(f === 0 ? [ordem[r.i % ordem.length]] : f === 1 ? (parceiros && jair ? duplas[r.i % 3] : ['eleazar']) : ['menaem', 'eleazar', 'jair']);
+    if (f === 0) { if (!ativos.has('jair')) b.cen.quem = [...ativos][0]; } else b.cen.quem = 'eleazar';
+    b.cen.fase = f;
+    const folga = (q, sim) => { if (!q) return; if (q.folga && sim) q.espera = Math.min(q.espera, 0.7); q.folga = !sim; };
+    folga(b, ativos.has(b.cen.quem)); folga(jair, ativos.has('jair')); folga(menaemP, ativos.has('menaem') && f >= 1);
     for (const q of G.inimigos) if (q.parte && q.hp < q.max) { const d = q.max - q.hp; q.hp = q.max; b.hp -= d; b.flash = 0.1; b.semGolpe = 0; if (b.hp <= 0 && !b.morrendo) { b.x = q.x; b.y = q.y; G.chefeMorre(b); } }
   },
+  // o corpo principal só escolhe os golpes de quem ele é agora
+  pode(G, b, n) { return (b.cen.quem === 'eleazar' ? GOLPES_ELEAZAR : GOLPES_MENAEM).has(n); },
   pref: { punhalRasante: G => noAr(G) ? 0.5 : 1.4, punhalCadente: G => noAr(G) ? 1.5 : 1, lancaCadente: G => noAr(G) ? 1.5 : 1, estocadaZelote: G => noAr(G) ? 0.5 : 1.3 },
   golpes: {
     /* --- Menaém, os punhais: o mais rápido. Luta sozinho na primeira fase --- */

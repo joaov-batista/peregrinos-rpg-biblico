@@ -257,7 +257,7 @@ os outros digitam o código, ou abrem o link `?sala=CÓDIGO`. Não há servidor 
 ## O Conselho Zelote, a loja dos zelotes e a Raiz de Amargura
 
 - **O Conselho Zelote** (`conselho` + os companheiros `zeloteFoice` e `zelotePunhal`, com `parte: true` em `CHEFES`): três lutadores
-  e uma vida só. Menaém luta sozinho; depois Eleazar e Jair juntos; no fim os três. Entre os golpes ninguém fica na sala; cada golpe
+  e uma vida só. Fase 1: um de cada vez, em rodízio (Menaém, Eleazar, Jair). Fase 2: duplas que se alternam (Menaém e Eleazar, Eleazar e Jair, Jair e Menaém). Fase 3: os três juntos (`palco` e `pode` do conselho; `folga` segura quem não está na vez). Entre os golpes ninguém fica na sala; cada golpe
   é um de três jeitos (`zRasante`, `zMergulho`, `zParede` em `estilos.js`). O que os companheiros apanham sai da vida do conselho
   (`palco` do conselho). Porta na Clareira das provas; quatro zelotes pela aldeia apontam o caminho.
 - **Clareira das Provas** (`clareira` em `dados.js`): a mata atrás do Pátio das provas (portal "Trilha da mata"). A Arena de treino,

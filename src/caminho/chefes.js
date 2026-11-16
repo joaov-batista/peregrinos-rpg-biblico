@@ -23,7 +23,7 @@ export const CHEFES = {
   /* ---------- O Conselho Zelote: um, depois dois, depois os três. Uma vida só ---------- */
   conselho: { vida: 1500, pressa: 0.62, r: 26, arena: 'conselho', voa: 1, vel: 0,
     golpes: { punhalRasante: { espera: 0.9 }, punhalCadente: { espera: 0.9 }, vaiEVolta: { espera: 1 }, punhaisDaParede: { espera: 1 }, pelasCostas: { espera: 0.9 }, abaloDoForte: { espera: 1.8 }, lancaCadente: { espera: 1.5 }, estocadaZelote: { espera: 1.5 }, lancasDaParede: { espera: 1.6 }, giroDaLanca: { espera: 1.6 } },
-    fases: [F(1, ['punhalRasante', 'punhalCadente', 'vaiEVolta', 'punhaisDaParede', 'pelasCostas']), F(0.66, ['lancaCadente', 'estocadaZelote', 'lancasDaParede', 'giroDaLanca', 'abaloDoForte'], { grito: 'ELEAZAR! JAIR! DESÇAM!' }), F(0.33, ['lancaCadente', 'estocadaZelote', 'giroDaLanca', 'abaloDoForte', 'lancasDaParede'], { grito: 'O CONSELHO INTEIRO!' })],
+    fases: [F(1, ['punhalRasante', 'punhalCadente', 'vaiEVolta', 'punhaisDaParede', 'pelasCostas', 'lancaCadente', 'estocadaZelote', 'lancasDaParede', 'giroDaLanca', 'abaloDoForte']), F(0.66, ['lancaCadente', 'estocadaZelote', 'lancasDaParede', 'giroDaLanca', 'abaloDoForte'], { grito: 'DOIS DE CADA VEZ!' }), F(0.33, ['lancaCadente', 'estocadaZelote', 'giroDaLanca', 'abaloDoForte', 'lancasDaParede'], { grito: 'O CONSELHO INTEIRO!' })],
     dica: 'Eles só podem ser feridos quando estão na sala. Rasante: pule. Mergulho: saia de baixo e bata quando ele cai. Na parede: desvie e alcance-o no alto. As foices voltam por outra altura. Com dois ou três, não persiga: escolha um e espere a brecha. MENAÉM, o assassino, some e aparece nas suas costas: ande para a frente. ELEAZAR, o forte, racha o teto quando cai: olhe os círculos. JAIR, o vidente, chama fogo onde você está e solta brasas que perseguem: não pare, e leve as brasas até elas apagarem.' },
   zeloteFoice: { parte: true, vida: 1e7, pressa: 0.62, r: 26, arena: 'conselho', voa: 1, vel: 0,
     golpes: { foiceRasteira: { espera: 2.2 }, foiceAlta: { espera: 2.2 }, ceifar: { espera: 2 }, foiceCadente: { espera: 2 }, fogoDoZelo: { espera: 2.2 }, brasasVivas: { espera: 2.4 } }, fases: [F(1, ['fogoDoZelo', 'foiceRasteira', 'brasasVivas', 'foiceAlta', 'ceifar', 'foiceCadente'])], dica: '' },
@@ -134,7 +134,8 @@ export function novoChefe(id, A, dif) {
 // seguidas e evitando os dois últimos quando há opção. Assim não há padrão para decorar: há leitura de avisos.
 function escolher(G, b, f) {
   const E = ESTILOS[b.id], lista = [...new Set(f.golpes)], fora = new Set(b.recentes.slice(-(lista.length > 3 ? 2 : 1)));
-  const cand = lista.filter(n => !fora.has(n)), pesos = cand.map(n => Math.max(0, (E.pref?.[b.c.golpes[n]?.fn || n]?.(G, b) ?? 1)) + 0.05);
+  let cand = lista.filter(n => !fora.has(n)); if (E.pode) { const ok = lista.filter(n => E.pode(G, b, n)), sem = ok.filter(n => !fora.has(n)); cand = sem.length ? sem : ok.length ? ok : cand; }
+  const pesos = cand.map(n => Math.max(0, (E.pref?.[b.c.golpes[n]?.fn || n]?.(G, b) ?? 1)) + 0.05);
   let r = rand(0, pesos.reduce((a, c) => a + c, 0)), nome = cand[0];
   for (let i = 0; i < cand.length; i++) { r -= pesos[i]; if (r <= 0) { nome = cand[i]; break; } }
   b.recentes.push(nome); if (b.recentes.length > 4) b.recentes.shift();
@@ -222,7 +223,7 @@ export function atualizarChefe(G, b, dt) {
     if (!b.mov) {
       b.espera -= dt;
       E.mover(G, b, dt); // entre os golpes, cada um se move do seu jeito
-      if (b.espera <= 0) { const nome = escolher(G, b, f); b.mov = { nome, def: c.golpes[nome], t: 0, e: 0 }; b.idx++; }
+      if (b.espera <= 0 && !b.folga) { const nome = escolher(G, b, f); b.mov = { nome, def: c.golpes[nome], t: 0, e: 0 }; b.idx++; }
     } else {
       const m = b.mov, fn = golpeDe(b, m.nome), fim = !fn || fn(G, b, m, dt) || m.t > 12; m.t += dt;
       if (fim) { b.mov = null; desfazer(G, b); b.espera = (m.def.espera ?? 1.05) * G.dif.ritmo * (c.pressa || 1) * (b.fase ? 0.85 : 1) * (b.furia > 0 ? 0.7 : 1) * 0.78; if (!c.voa1 && b.id !== 'conselho' && !c.parte && Math.random() < 0.34 + b.fase * 0.15) b.espera = 0.15; } // às vezes emenda um golpe no outro
