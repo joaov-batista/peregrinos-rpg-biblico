@@ -21,7 +21,7 @@ function zelote(s, b, Tm, nome) {
   const gs = caido ? 0 : b.gesto || 0; if (gs !== b.gestoDe) { b.gestoDe = gs; b.gestoIni = Tm; } const gk = gs >= 2 ? Math.min(1, (Tm - b.gestoIni) / 0.7) : 0, ajoelha = nome === 'eleazar' ? gk : 0;
   const resp = Math.floor(Tm * 2.4) % 2, chao = oy - 2;
   // quanto o corpo se encolhe e para onde pende
-  const kH = caido ? 0.5 : vai ? 0.62 : parede ? 0.72 : prep ? 0.9 : 1 - ajoelha * 0.3, kW = caido ? 1.25 : vai ? 1.15 : parede ? 1.05 : 1;
+  const kH = caido ? 0.5 : vai ? 0.62 : parede ? 0.72 : prep ? 0.9 : (1 - ajoelha * 0.3) * (b.sentado ? 0.84 : 1), kW = caido ? 1.25 : vai ? 1.15 : parede ? 1.05 : 1;
   const H = Math.round(Q.H * kH) - (resp && !t && !caido ? 0 : 0), W = Math.round(Q.W * kW), SH = Q.SH, R = Q.R;
   const base = chao - (mergulho ? 12 : parede ? 6 : 0), cx = ox, pende = vai ? 15 : caido ? -3 : mergulho ? 1 : nome === 'menaem' ? 4 : nome === 'jair' ? 3 : 1;
   const ombroY = base - H + R + 3 + resp * (t || caido ? 0 : 1), ombroX = cx + pende;
@@ -30,7 +30,7 @@ function zelote(s, b, Tm, nome) {
   if (vai) { s.poli([[ombroX - SH + 2, ombroY - 2], [ombroX - 2, ombroY + 8], [cx - W - 30, base - 9 + vento], [cx - W - 34, base - 17 + vento], [cx - W - 22, base - 20]], M[1]); s.poli([[ombroX - SH + 2, ombroY - 2], [cx - W - 22, base - 20], [cx - W - 34, base - 17 + vento], [cx - W - 10, base - 22]], M[2]); for (let k = 0; k < 5; k++) s.ret(cx - W - 34 - k * 2 + (k % 2) * 3, base - 17 + vento + k * 2, 5 - k, 2, M[1]); }
   if (mergulho) { s.poli([[ombroX - SH, ombroY + 2], [ombroX + SH - 2, ombroY + 2], [cx + 7 + vento, base - H - 26], [cx - 2 + vento, base - H - 34], [cx - 12, base - H - 20]], M[1]); s.poli([[ombroX - SH, ombroY + 2], [cx - 12, base - H - 20], [cx - 2 + vento, base - H - 34], [cx - 6, base - H - 12]], M[2]); for (let k = 0; k < 4; k++) s.ret(cx - 4 + vento + k * 3, base - H - 36 + (k % 2) * 3, 2, 5, M[1]); }
   // ---------- botas: só as pontas aparecem por baixo da barra ----------
-  if (!mergulho && !caido) for (const [dx, lev] of vai ? [[10, 0], [-12, -2]] : parede ? [[6, -1], [-2, 0]] : [[6, 0], [-5, 0]]) { s.ret(cx + dx - 3, base - 3 + lev, 7, 4, M[0]); s.ret(cx + dx + 2, base - 1 + lev, 3, 2, M[1]); }
+  if (!mergulho && !caido && !b.sentado) for (const [dx, lev] of vai ? [[10, 0], [-12, -2]] : parede ? [[6, -1], [-2, 0]] : [[6, 0], [-5, 0]]) { s.ret(cx + dx - 3, base - 3 + lev, 7, 4, M[0]); s.ret(cx + dx + 2, base - 1 + lev, 3, 2, M[1]); }
   if (mergulho) { s.ret(cx - 5, base - 2, 5, 5, M[0]); s.ret(cx + 2, base - 4, 5, 5, M[0]); }
   // ---------- o manto: a massa do corpo ----------
   const tras = cx - W - (vai ? 4 : nome === 'jair' ? 3 : 2), frente = cx + W - (vai ? 0 : 3), barra = base - (mergulho ? 2 : 1);

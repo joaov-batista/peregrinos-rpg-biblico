@@ -2,7 +2,11 @@
 // o convés de Jonas inclina, o ventre se fecha, a torre de Babilônia sobe, a árvore de Daniel 4 é cortada…
 // Só desenha: lê b.cen (o estado do palco, que o golpe e o estilo do chefe atualizam). "frente" = por cima de tudo.
 import { TAU } from '../../util.js';
-import { PX } from './raster.js';
+import { PX, Sprite, cor } from './raster.js';
+import { CHEFES_E } from './chefes-e.js';
+// os zelotes sentados nos tronos: o mesmo desenho da luta, numa pose sentada (um quadro só para eles)
+const SENTADO = new Sprite(120, 112), FIGURA = { menaem: { id: 'zelotePunhal', cen: {} }, eleazar: { id: 'conselho', cen: { quem: 'eleazar' } }, jair: { id: 'zeloteFoice', cen: {} } };
+function sentado(g, quem, x, y, face, Tm) { const f = FIGURA[quem]; Object.assign(f, { mov: null, quebrado: 0, tonto: 0, tele: 0, sentado: true, alpha: 1 }); SENTADO.limpa(); CHEFES_E[f.id](SENTADO, f, Tm); SENTADO.contorno(cor('#4A4460')); g.save(); g.translate(Math.round(x), Math.round(y)); g.scale(face, 1); g.drawImage(SENTADO.tela(), -60, -104); g.restore(); }
 
 const px = (g, x, y, w = 1, h = 1) => g.fillRect(Math.round(x), Math.round(y), w, h);
 function linha(g, x0, y0, x1, y1, passo = 1) { const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / passo)); for (let i = 0; i <= n; i++) px(g, x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n); }
@@ -112,17 +116,20 @@ Object.assign(FUNDO, {
     if (f >= 2) { g.fillStyle = 'rgba(184,224,96,.07)'; px(g, A.x0, A.y0, L, A.chao - A.y0); }
     const cx = A.x0 + L / 2; g.fillStyle = '#0B100A'; for (let i = -3; i <= 3; i++) for (let y = 0; y < 26; y += 2) px(g, cx + i * 16 + Math.sin(y * 0.2 + i) * 3, A.chao - y, 3, 2); // o toco de onde ela saiu
   },
-  conselho(g, b, A, Tm) { // três tronos de pedra; quem não desceu continua sentado, de arma no colo. Os braseiros acendem a cada fase
-    const L = A.x1 - A.x0, cx = A.x0 + L * 0.5, base = A.chao - 62, f = b.cen.fase || 0;
-    g.fillStyle = '#1C0E0C'; px(g, cx - 78, base, 156, 5); g.fillStyle = '#2E1A16'; px(g, cx - 78, base, 156, 1); px(g, cx - 70, base + 5, 140, 3);
-    const sentado = [f >= 1 && f < 2, f < 1, f < 1], cores = [['#8E2B45', '#FFD23F'], ['#2F5FB0', '#BFE6F2'], ['#C9A63C', '#FF8A3C']];
-    [-50, 0, 50].forEach((dx, i) => { const x = cx + dx, alto = i === 1 ? 50 : 42;
-      g.fillStyle = '#120908'; px(g, x - 13, base - alto, 26, alto); g.fillStyle = '#2E1A16'; px(g, x - 12, base - alto + 1, 24, alto - 1); g.fillStyle = '#3E2620'; px(g, x - 12, base - alto + 1, 2, alto - 1); px(g, x - 14, base - 14, 28, 3); g.fillStyle = '#120908'; px(g, x - 2, base - alto - 5, 4, 5); px(g, x - 9, base - alto - 2, 3, 2); px(g, x + 6, base - alto - 2, 3, 2);
-      g.fillStyle = cores[i][0]; px(g, x - 1, base - alto + 5, 2, 8); // a marca de cada um no espaldar
-      if (sentado[i]) { const curvo = i === 0 ? 3 : 0; g.fillStyle = '#0D0708'; px(g, x - 7, base - 30 + curvo, 14, 17 - curvo); px(g, x - 5, base - 39 + curvo, 10, 10); g.fillStyle = cores[i][0]; px(g, x - 6, base - 29 + curvo, 12, 15 - curvo); px(g, x - 4, base - 38 + curvo, 8, 8); g.fillStyle = '#0D0708'; px(g, x - 3, base - 35 + curvo, 5, 4); g.fillStyle = cores[i][1]; px(g, x - 2, base - 34 + curvo, 1, 1); if (i !== 2) px(g, x + 1, base - 34 + curvo, 1, 1); g.fillStyle = '#C9D2E0'; if (i === 1) px(g, x + 9, base - 52, 1, 40); else px(g, x - 8, base - 19, 16, 1); }
-    });
-    for (const [k, lado] of [[0, -1], [1, 1], [2, -1], [3, 1]]) { const x = cx + lado * (96 + (k > 1 ? 34 : 0)), y = A.chao - 2, aceso = k < 2 + f; g.fillStyle = '#120908'; px(g, x - 1, y - 30, 3, 30); px(g, x - 6, y - 34, 13, 5); g.fillStyle = '#3E2620'; px(g, x - 5, y - 33, 11, 3); if (aceso) { g.fillStyle = '#C9281F'; px(g, x - 4, y - 40 - (Math.floor(Tm * 9 + k) % 2), 9, 7); g.fillStyle = '#FF8A2A'; px(g, x - 2, y - 43 - (Math.floor(Tm * 11 + k) % 3), 5, 8); g.fillStyle = '#FFE08A'; px(g, x - 1, y - 40, 3, 4); } }
-    for (const dx of [-112, 112]) { g.fillStyle = '#120908'; px(g, cx + dx - 7, A.y0 + 6, 14, 54); g.fillStyle = '#6A1A16'; px(g, cx + dx - 6, A.y0 + 6, 12, 50); g.fillStyle = '#C9D2E0'; px(g, cx + dx - 1, A.y0 + 12, 2, 28); px(g, cx + dx, A.y0 + 10, 1, 2); g.fillStyle = '#C9963C'; px(g, cx + dx - 5, A.y0 + 40, 10, 2); px(g, cx + dx - 1, A.y0 + 42, 2, 7); px(g, cx + dx - 2, A.y0 + 49, 4, 2); } // estandartes com a espada
+  conselho(g, b, A, Tm) { // três tronos de pedra sobre um estrado; quem não está na sala fica sentado no seu. Os braseiros acendem a cada fase
+    const L = A.x1 - A.x0, cx = A.x0 + L * 0.5, base = A.chao - 40, assento = base - 22, f = b.cen.fase || 0, z = b.zel || {};
+    g.fillStyle = '#1C0E0C'; px(g, cx - 104, base, 208, 6); g.fillStyle = '#2E1A16'; px(g, cx - 104, base, 208, 1); px(g, cx - 96, base + 6, 192, 4); px(g, cx - 88, base + 10, 176, 30); g.fillStyle = '#241210'; for (let k = 0; k < 4; k++) px(g, cx - 88, base + 16 + k * 6, 176, 1); // o estrado e os degraus
+    const marca = { menaem: '#8E2B45', eleazar: '#C9963C', jair: '#E8E2D0' };
+    for (const [quem, i] of [['menaem', -1], ['eleazar', 0], ['jair', 1]]) {
+      const x = cx + i * 64, alto = i === 0 ? 92 : 80, topo = assento - alto;
+      g.fillStyle = '#120908'; px(g, x - 19, topo, 38, alto + 22); g.fillStyle = '#2E1A16'; px(g, x - 18, topo + 1, 36, alto + 20); g.fillStyle = '#3E2620'; px(g, x - 18, topo + 1, 3, alto + 20); px(g, x - 14, topo - 6, 28, 6); g.fillStyle = '#120908'; px(g, x - 3, topo - 12, 6, 7); // o espaldar
+      g.fillStyle = marca[quem]; px(g, x - 1, topo + 5, 2, 2); px(g, x - 3, topo + 7, 6, 2); px(g, x - 4, topo + 9, 8, 2); px(g, x - 3, topo + 11, 6, 2); px(g, x - 1, topo + 13, 2, 2); // a marca de cada um (um losango)
+      if (!z[quem]) sentado(g, quem, x, assento + 2, i < 0 ? 1 : i > 0 ? -1 : (b.px < x ? -1 : 1), Tm);
+      g.fillStyle = '#120908'; px(g, x - 22, assento - 14, 8, 18); px(g, x + 14, assento - 14, 8, 18); g.fillStyle = '#3E2620'; px(g, x - 21, assento - 13, 6, 3); px(g, x + 15, assento - 13, 6, 3); // os braços do trono, por cima
+      g.fillStyle = '#241210'; px(g, x - 20, assento + 2, 40, 4);
+    }
+    for (const [k, lado] of [[0, -1], [1, 1], [2, -1], [3, 1]]) { const x = cx + lado * (124 + (k > 1 ? 34 : 0)), y = A.chao - 2, aceso = k < 2 + f; g.fillStyle = '#120908'; px(g, x - 1, y - 30, 3, 30); px(g, x - 6, y - 34, 13, 5); g.fillStyle = '#3E2620'; px(g, x - 5, y - 33, 11, 3); if (aceso) { g.fillStyle = '#FF7A3C'; const h = 4 + (Math.floor(Tm * 9 + k) % 3); px(g, x - 3, y - 34 - h, 7, h); g.fillStyle = '#FFD23F'; px(g, x - 1, y - 33 - h + 2, 3, h - 2); } }
+    for (const dx of [-140, 140]) { g.fillStyle = '#120908'; px(g, cx + dx - 7, A.y0 + 6, 14, 54); g.fillStyle = '#6A1A16'; px(g, cx + dx - 6, A.y0 + 6, 12, 50); g.fillStyle = '#C9D2E0'; px(g, cx + dx - 1, A.y0 + 12, 2, 28); px(g, cx + dx, A.y0 + 10, 1, 2); g.fillStyle = '#C9963C'; px(g, cx + dx - 5, A.y0 + 22, 10, 2); } // os estandartes com a espada
   },
   escassez(g, b, A, Tm) { // o sol da seca, a árvore morta, a prateleira da viúva, o chão que racha; e a botija que não falta
     const L = A.x1 - A.x0, k = b.cen.seca || 0, cx = A.x0 + L * 0.5, cy = A.y0 + 34, r = 22 + Math.round(k * 8);
@@ -180,7 +187,8 @@ export function pintarPalco(g, G, b, X, Y, Tm, frente) {
   const pintor = (frente ? FRENTE : FUNDO)[b.id]; if (!pintor || !G.N.arena) return;
   const A0 = G.N.arena, A = { x0: X(A0.x0), x1: X(A0.x1), y0: Y(A0.y0), chao: Y(A0.chao) };
   // o chefe e o jogador também em pixels (as cordas e correntes ligam os dois)
-  const bb = { ...b, x: X(b.x), y: Y(b.y), h: b.h / PX, w: b.w / PX, px: X(G.p.x), py: Y(G.p.y - 20), amarrado: G.amarra > 0, cen: {
+  const zel = b.id !== 'conselho' ? null : G.figurantes?.length || b.morrendo ? { menaem: 1, eleazar: 1, jair: 1 } : { menaem: G.inimigos.some(q => q.hp > 0 && (q.alpha ?? 1) > 0.1 && (q.id === 'zelotePunhal' || (q.id === 'conselho' && q.cen?.quem === 'menaem'))), eleazar: G.inimigos.some(q => q.id === 'conselho' && q.cen?.quem === 'eleazar' && (q.alpha ?? 1) > 0.1), jair: G.inimigos.some(q => q.id === 'zeloteFoice' && (q.alpha ?? 1) > 0.1) }; // quem está fora do trono (na cena do respeito, todos de pé)
+  const bb = { ...b, zel, x: X(b.x), y: Y(b.y), h: b.h / PX, w: b.w / PX, px: X(G.p.x), py: Y(G.p.y - 20), amarrado: G.amarra > 0, cen: {
     ...b.cen,
     laco: b.cen.laco ? { x: X(b.cen.laco.x), y: Y(b.cen.laco.y) } : 0,
     planta: b.cen.planta != null ? X(b.cen.planta) : null, verme: b.cen.verme != null ? X(b.cen.verme) : null, nuvem: b.cen.nuvem != null ? X(b.cen.nuvem) : null, raioX: b.cen.raioX != null ? X(b.cen.raioX) : null,

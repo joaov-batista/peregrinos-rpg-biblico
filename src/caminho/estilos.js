@@ -999,11 +999,24 @@ const carcere = {
    Menaém (punhais) luta sozinho; depois Eleazar (lança) e Jair (foice) lutam juntos; no fim, os três de uma vez.
    A vida é uma só, do conselho inteiro: bater em qualquer um deles fere o conselho.
    ====================================================================================================== */
-const noTrono = (G, b) => { b.alpha = 0; b.vx = 0; b.corre = false; };
+// Os tronos: Menaém à esquerda, Eleazar no meio, Jair à direita (o desenho fica em pixel/palcos.js). Quem não está na sala
+// fica sentado no trono dele; ao ser chamado salta do trono até onde o golpe começa, e no fim do golpe salta de volta.
+const QUEM_Z = b => b.id === 'conselho' ? (b.cen?.quem || 'menaem') : b.id === 'zeloteFoice' ? 'jair' : 'menaem';
+export const tronoZ = (A, quem) => ({ x: A.cx + ({ menaem: -1, eleazar: 0, jair: 1 }[quem] ?? 0) * 128, y: A.chao - 124 });
+const arco = (b, x0, y0, x1, y1, k, alto) => { b.x = x0 + (x1 - x0) * k; b.y = y0 + (y1 - y0) * k - Math.sin(k * Math.PI) * alto; };
+const noTrono = (G, b, dt = 0) => { b.vx = 0; b.corre = false;
+  if (b.alpha > 0.5 && !b.volta && !(b.hp <= 0)) b.volta = { t: 0, x0: b.x, y0: b.y };
+  const v = b.volta; if (!v) { b.alpha = 0; return; }
+  v.t += dt; const k = Math.min(1, v.t / 0.34), d = tronoZ(G.N.arena, QUEM_Z(b)); b.alpha = 1; b.face = Math.sign(d.x - v.x0) || b.face; b.corre = true; arco(b, v.x0, v.y0, d.x, d.y, k, 90);
+  if (k >= 1) { b.volta = null; b.alpha = 0; b.corre = false; } };
+// no começo do golpe: do trono até o ponto de partida (o aviso do golpe continua contando)
+function saiDoTrono(G, b, m) {
+  if (m.t === 0) { const o = tronoZ(G.N.arena, QUEM_Z(b)), deVolta = b.volta; m.sai = { x0: deVolta ? b.x : o.x, y0: deVolta ? b.y : o.y, x1: b.x, y1: b.y }; b.volta = null; sfx('dodge'); }
+  const s = m.sai; if (!s) return; const k = Math.min(1, m.t / 0.3); arco(b, s.x0, s.y0, s.x1, s.y1, k, 80); b.corre = k < 1; if (k >= 1) { m.sai = null; G.efeito('pouso', b.x, b.y); } }
 // rasante: aparece num canto, no chão, e cruza a sala inteira. Pule (ou atravesse com o passo)
 function zRasante(G, b, m, dt, o) {
   const A = G.N.arena;
-  if (m.e === 0) { if (m.t === 0) { m.d = G.p.x > A.cx ? 1 : -1; b.x = m.d > 0 ? A.x0 + 46 : A.x1 - 46; b.y = A.chao; b.face = m.d; b.alpha = 1; G.efeito('sumico', b.x, b.y - 30); sfx('swing'); } b.alpha = 1; prepara(b); if (m.t > av(G, o.tele)) { m.e = 1; sfx('dodge'); } return false; }
+  if (m.e === 0) { if (m.t === 0) { m.d = G.p.x > A.cx ? 1 : -1; b.x = m.d > 0 ? A.x0 + 46 : A.x1 - 46; b.y = A.chao; b.face = m.d; b.alpha = 1; sfx('swing'); } saiDoTrono(G, b, m); b.alpha = 1; prepara(b); if (m.t > av(G, o.tele)) { m.e = 1; sfx('dodge'); } return false; }
   if (m.e === 1) { ataca(b); b.corre = true; b.x += m.d * vel(G, o.v) * dt; if (Math.random() < dt * 40) G.fx.po(b.x - m.d * 20, b.y - 4, 2, o.cor);
     if ((m.d > 0 && b.x > A.x1 - 56) || (m.d < 0 && b.x < A.x0 + 56)) { b.x = clamp(b.x, A.x0 + 56, A.x1 - 56); b.corre = false; if (o.volta && !m.voltou) { m.voltou = true; m.e = 3; m.t0 = m.t; } else { m.e = 2; m.t0 = m.t; } } return false; }
   if (m.e === 3) { prepara(b); b.face = -m.d; if (m.t - m.t0 > av(G, 0.32)) { m.d *= -1; m.e = 1; sfx('dodge'); } return false; } // vira e volta
@@ -1012,8 +1025,8 @@ function zRasante(G, b, m, dt, o) {
 // mergulho: aparece no alto, em cima de você, e desce reto com a arma
 function zMergulho(G, b, m, dt, o) {
   const A = G.N.arena;
-  if (m.e === 0) { if (m.t === 0) { b.x = clamp(G.p.x + (o.adianta ? G.p.vx * 0.25 : 0), A.x0 + 40, A.x1 - 40); b.y = A.chao - 236; b.alpha = 1; b.face = Math.sign(G.p.x - b.x) || 1; G.efeito('sumico', b.x, b.y - 30); sfx('magic'); }
-    b.alpha = 1; prepara(b); if (o.segue && m.t < av(G, o.tele) * 0.65) b.x += clamp(G.p.x - b.x, -1, 1) * vel(G, o.segue) * dt;
+  if (m.e === 0) { if (m.t === 0) { b.x = clamp(G.p.x + (o.adianta ? G.p.vx * 0.25 : 0), A.x0 + 40, A.x1 - 40); b.y = A.chao - 236; b.alpha = 1; b.face = Math.sign(G.p.x - b.x) || 1; sfx('magic'); }
+    saiDoTrono(G, b, m); b.alpha = 1; prepara(b); if (o.segue && m.t < av(G, o.tele) * 0.65) b.x += clamp(G.p.x - b.x, -1, 1) * vel(G, o.segue) * dt;
     if (!m.marca && m.t > av(G, o.tele) * 0.65) { m.marca = true; zona(G, { tipo: 'circ', x: b.x, y: A.chao - 14, r: 26, aviso: av(G, o.tele) * 0.35 + 0.12, dur: 0.01, cor: o.cor, isca: true }); }
     if (m.t > av(G, o.tele)) { m.e = 1; sfx('swing'); } return false; }
   if (m.e === 1) { ataca(b); b.y += vel(G, o.v) * dt; if (b.y >= A.chao) { b.y = A.chao; m.e = 2; m.t0 = m.t; G.tremor(6); G.efeito('pouso', b.x, A.chao); sfx('block'); o.aoCair?.(G, b, m); } return false; }
@@ -1022,7 +1035,7 @@ function zMergulho(G, b, m, dt, o) {
 // da parede: agarra-se no alto do lado mais longe de você e arremessa
 function zParede(G, b, m, dt, o) {
   const A = G.N.arena;
-  if (m.e === 0) { if (m.t === 0) { m.lado = G.p.x > A.cx ? -1 : 1; b.x = m.lado < 0 ? A.x0 + 24 : A.x1 - 24; b.y = A.chao - o.alt; b.face = -m.lado; b.alpha = 1; G.efeito('sumico', b.x, b.y - 30); sfx('swing'); } b.alpha = 1; prepara(b); if (m.t > av(G, o.tele)) { m.e = 1; m.n = 0; m.prox = m.t; } return false; }
+  if (m.e === 0) { if (m.t === 0) { m.lado = G.p.x > A.cx ? -1 : 1; b.x = m.lado < 0 ? A.x0 + 24 : A.x1 - 24; b.y = A.chao - o.alt; b.face = -m.lado; b.alpha = 1; sfx('swing'); } saiDoTrono(G, b, m); b.alpha = 1; prepara(b); if (m.t > av(G, o.tele)) { m.e = 1; m.n = 0; m.prox = m.t; } return false; }
   b.alpha = 1; if (m.prox <= m.t && m.n < o.n) { m.prox = m.t + o.int; m.n++; o.lanca(G, b, m, -m.lado); ataca(b); sfx('shoot'); }
   return m.n >= o.n && m.t > m.prox + o.rec && (!o.espera || o.espera(G, m));
 }
@@ -1047,7 +1060,7 @@ const PUNHAL = '#C9D2E0', LANCA = '#C9B48A', FOICE = '#D9B878', FOGO = '#FF9A3C'
 const GOLPES_MENAEM = new Set(['punhalRasante', 'punhalCadente', 'vaiEVolta', 'punhaisDaParede', 'pelasCostas']), GOLPES_ELEAZAR = new Set(['lancaCadente', 'estocadaZelote', 'lancasDaParede', 'giroDaLanca', 'abaloDoForte']);
 const conselho = {
   // entre os golpes ninguém fica na sala: voltam ao trono
-  mover(G, b, dt) { noTrono(G, b); },
+  mover(G, b, dt) { noTrono(G, b, dt); },
   // o palco: quem está sentado, quem desceu; os dois companheiros entram na segunda fase, Menaém volta na terceira.
   // A vida é uma só: o que os companheiros apanham sai da vida do conselho.
   // O rodízio do conselho. Fase 1: um de cada vez (Menaém, Eleazar, Jair, e de novo). Fase 2: dois de cada vez, alternando as
@@ -1091,7 +1104,7 @@ const conselho = {
 };
 // Jair, o vidente: luta de longe. As foices vão e voltam sozinhas, o fogo desce e as brasas perseguem
 const zeloteFoice = {
-  mover(G, b, dt) { noTrono(G, b); },
+  mover(G, b, dt) { noTrono(G, b, dt); },
   palco() {},
   pref: { foiceRasteira: G => noAr(G) ? 0.6 : 1.4, foiceAlta: G => noAr(G) ? 1.4 : 0.8 },
   golpes: {
@@ -1106,7 +1119,7 @@ const zeloteFoice = {
 };
 // Menaém de volta, ferido e furioso, na última fase: três de uma vez
 const zelotePunhal = {
-  mover(G, b, dt) { noTrono(G, b); },
+  mover(G, b, dt) { noTrono(G, b, dt); },
   palco() {},
   pref: { rasgo: G => noAr(G) ? 0.5 : 1.3, boteZelote: G => noAr(G) ? 1.5 : 1 },
   golpes: {
