@@ -10,7 +10,7 @@ import { sfx } from '../audio.js';
 import { BOSSES } from '../data/bestiary.js';
 import { drawBoss } from '../game/boss-art.js';
 import { mover } from './corpo.js';
-import { ESTILOS, desfazer } from './estilos.js';
+import { ESTILOS, desfazer, choque } from './estilos.js';
 
 const F = (vida, golpes, extra = {}) => ({ vida, golpes, ...extra });
 // golpes: nome → parâmetros; "fn" aponta para o golpe do estilo quando o nome é uma variação (mais forte) do mesmo golpe
@@ -163,6 +163,11 @@ function instinto(G, b, dt) {
     if (ag.t > 0.42) { b.agarra = null; b.espera = 0.3; p.inv = 0; G.ferirHeroi?.(1, b, { semDefesa: true }); p.stunT = 0.45; p.travaX = 0.7; p.vx = ag.dir * 1000; p.vy = -560; p.chao = false; p.pogo = false; sfx('swing'); G.tremor(11); G.fx.po(b.x, b.y - b.h, 14, '#FF8A7A'); }
     return true;
   }
+  if (b.salto) { const s = b.salto; s.t += dt; ataca(b); // o salto contra quem se esconde na plataforma: sobe até a altura dele e cai pesado
+    if (s.t < 0.3 * G.dif.aviso / 0.8) { b.tele = 1; b.vx = 0; b.face = Math.sign(s.x - b.x) || b.face; return true; }
+    if (!s.subiu) { s.subiu = true; b.vy = -Math.sqrt(2 * 2050 * Math.max(60, s.h + 50)); b.vx = (s.x - b.x) / 0.62; b.chao = false; sfx('dodge'); }
+    else if (b.chao || s.t > 2.2) { b.salto = null; b.vx = 0; G.tremor?.(8); choque(G, b, b.d.cor || '#E6E0CF', 360); sfx('block'); b.espera = Math.max(b.espera, 0.4); return false; }
+    return 'fisica'; }
   if (b.investe) { const v = b.investe; v.t += dt; b.vx = 0;
     if (v.t < 0.24 * G.dif.aviso / 0.8) { b.tele = 1; b.face = v.d; return true; }
     b.x = clamp(b.x + v.d * 600 * G.dif.vel * dt, A.x0 + b.w / 2, A.x1 - b.w / 2); ataca(b); if (Math.random() < dt * 30) G.fx.po(b.x - v.d * b.w * 0.4, b.y - 6, 2, b.d.cor || '#fff');
@@ -177,6 +182,9 @@ function instinto(G, b, dt) {
     if (b.mov) { b.mov = null; desfazer(G, b); }
     b.agarra = { t: 0, e: 0 }; b.agarraCd = 3; b.cimaT = b.coladoT = b.pogoN = 0; G.textoEm?.(b.x, b.y - b.h - 20, '!', '#FF6A5A', 24); sfx('wrong'); return true;
   }
+  // quem fica em cima de uma plataforma batendo de longe não fica em paz: todo chefe tem resposta para o alto
+  const naPlat = p.chao && p.y < A.chao - 40; b.platT = naPlat ? (b.platT || 0) + dt : Math.max(0, (b.platT || 0) - dt * 1.5); if (b.platCd > 0) b.platCd -= dt;
+  if (b.platT > 0.9 && !(b.platCd > 0) && !b.mov) { b.platCd = 2.8 - b.fase * 0.5; b.platT = 0.3; contraPlataforma(G, b, p, A); return true; }
   if (!b.mov && b.espera > 0.4 && !(b.investeCd > 0) && Math.abs(p.x - b.x) > 150 && Math.random() < dt * (0.7 + b.fase * 0.4)) { b.investe = { t: 0, d: Math.sign(p.x - b.x) || 1 }; b.investeCd = 2.6; sfx('dodge'); return true; }
   return false;
 }
@@ -188,6 +196,16 @@ export function tanque(b, area) {
   const tam = clamp(Math.sqrt(area) / 170, 0.8, 3.2), arma = 1 + def * 0.035 + (regra.armadura != null || regra.casco != null ? 0.12 : 0), lento = vel < 60 ? 1.18 : vel < 90 ? 1.08 : 1;
   b.resiste = clamp(1 / (Math.pow(tam, 0.4) * arma * lento), 0.5, 1);
   b.pesado = !b.c.parte && (tam >= 1.3 || regra.armadura != null || regra.casco != null || (tam >= 1.1 && (def >= 6 || vel < 60)));
+}
+// A resposta à plataforma: espinhos que furam a plataforma por baixo onde você está (e onde vai estar), dardos mirados no alto
+// e, para quem anda no chão, um salto até a sua altura que cai pesado. Sempre com aviso: dá para sair, mas não para ficar.
+function contraPlataforma(G, b, p, A) {
+  const cor = b.d.cor || '#E6E0CF', y1 = p.y + 14, y0 = p.y - 130;
+  G.textoEm?.(b.x, (b.hb ? b.y + b.hb.y0 : b.y - b.h) - 16, '↑', '#FF6A5A', 20); sfx('wrong');
+  for (const [dx, av] of [[0, 0.6], [p.face * 90, 0.85], [-p.face * 90, 1.1]]) G.zonas.push({ tipo: 'col', x: clamp(p.x + dx, A.x0 + 30, A.x1 - 30), w: 64, y0, y1, aviso: av * G.dif.aviso / 0.8, dur: 0.25, cor });
+  const cx = b.x + (b.hb?.dx || 0), cy = b.hb ? b.y + b.hb.y0 + b.hb.h * 0.3 : b.y - b.h * 0.7, a = Math.atan2(p.y - 24 - cy, p.x - cx);
+  for (let i = -1; i <= 1; i++) G.tiros.push({ x: cx, y: cy, vx: Math.cos(a + i * 0.16) * 330 * G.dif.vel, vy: Math.sin(a + i * 0.16) * 330 * G.dif.vel, r: 7, vida: 3, cor, tipo: 'bola' });
+  if (!b.voa && !b.c.parte && Math.abs(p.x - b.x) < 520) b.salto = { t: 0, x: clamp(p.x, A.x0 + b.w / 2, A.x1 - b.w / 2), h: b.y - p.y };
 }
 const ataca = b => { b.art.step = 2; b.art.artAttack = (b.art.artAttack || 0) + 1; };
 
@@ -218,9 +236,11 @@ export function atualizarChefe(G, b, dt) {
       return;
     }
     const f = c.fases[b.fase];
-    if (!c.parte && b.id !== 'conselho' && !(b.alpha < 0.5) && instinto(G, b, dt)) return;
+    const ins = !c.parte && b.id !== 'conselho' && !(b.alpha < 0.5) && instinto(G, b, dt);
+    if (ins === true) return;
     if (!b.mov || b.mov.nome !== 'trevas') G.escuroAlvo = f.escuro ?? c.escuro ?? 0;
-    if (!b.mov) {
+    if (ins === 'fisica') { /* no meio do salto: só a física do corpo, lá embaixo */ }
+    else if (!b.mov) {
       b.espera -= dt;
       E.mover(G, b, dt); // entre os golpes, cada um se move do seu jeito
       if (b.espera <= 0 && !b.folga) { const nome = escolher(G, b, f); b.mov = { nome, def: c.golpes[nome], t: 0, e: 0 }; b.idx++; }

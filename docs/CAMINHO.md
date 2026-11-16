@@ -284,3 +284,6 @@ os outros digitam o código, ou abrem o link `?sala=CÓDIGO`. Não há servidor 
   quadro do chefe e guarda em `e.hb`; `caixa()` usa isso. A cabeça da Escassez, a testa do Golias e o corpo inteiro dos gigantes
   agora contam. **Peso** (`tanque()` em `chefes.js`): corpo grande, armadura e passo lento fazem o chefe sentir menos cada golpe
   (`resiste`, até metade) e os pesados (Golias, Beemote, Leviatã, Cárcere) tiram dois fôlegos por acerto a luta inteira.
+- **Resposta à plataforma** (`contraPlataforma()` em `chefes.js`): quem fica quase um segundo parado em cima de uma plataforma
+  recebe, com aviso, três colunas de espinhos que furam a plataforma (onde está e dos dois lados), três dardos mirados no alto e,
+  se o chefe anda no chão, um salto até a altura do peregrino que cai com onda de choque. Volta a cada 2,8 s (menos nas fases finais).
