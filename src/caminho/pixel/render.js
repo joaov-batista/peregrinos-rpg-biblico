@@ -297,6 +297,7 @@ export function renderPixel(G) {
         if (q.esc > 1) { const cv = q.s.tela(), k = q.esc; g.save(); g.translate(X(e.x), Y(e.y)); g.scale(vira * k, k); g.drawImage(cv, -q.ax, -q.ay); g.restore(); }
         else carimbar(g, q.s, X(e.x), Y(e.y), q.ax, q.ay, vira);
         pintarExtrasChefe(g, e, G, X, Y, Tm);
+        if (window.__verHb && e.hb) { g.strokeStyle = '#0F0'; g.lineWidth = 2; g.strokeRect(X(e.x + e.hb.dx - e.hb.w / 2), Y(e.y + e.hb.y0), e.hb.w / PX, e.hb.h / PX); } // depuração: a caixa de dano
       }
       else antigo(() => desenharChefe(g, e, Tm, G));
     } else {
@@ -606,7 +607,7 @@ function medirChefe(e, q, vira) {
   const s = q.s, W = s.w, H = s.h, B = s.b; let x0 = W, x1 = -1, y0 = H, y1 = -1;
   for (let y = 0; y < H; y++) { const o = y * W; for (let x = 0; x < W; x++) if (B[o + x] >>> 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; y1 = y; } }
   if (x1 < 0) return;
-  const k = q.esc || 1, w = (x1 - x0 + 1) * k, h = (y1 - y0 + 1) * k;
-  e.hb = { dx: ((x0 + x1 + 1) / 2 - q.ax) * k * vira, w: Math.max(30, w * 0.8), y0: (y0 - q.ay) * k + h * 0.06, h: Math.max(40, h * 0.9) };
+  const k = (q.esc || 1) * PX, w = (x1 - x0 + 1) * k, h = (y1 - y0 + 1) * k; // pixel do desenho → unidade do mundo (cada pixel vale PX)
+  e.hb = { dx: ((x0 + x1 + 1) / 2 - q.ax) * k * vira, w: Math.max(30, w * 0.82), y0: (y0 - q.ay) * k + h * 0.06, h: Math.max(40, h * 0.9) };
   const area = e.hb.w * e.hb.h; if (!(e.hbArea >= area * 0.98) && !e.morrendo) { e.hbArea = Math.max(e.hbArea || 0, area); tanque(e, e.hbArea); }
 }

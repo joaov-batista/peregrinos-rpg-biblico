@@ -185,7 +185,7 @@ function instinto(G, b, dt) {
 //   pesado  = bate forte: cada acerto tira dois fôlegos.
 export function tanque(b, area) {
   const def = Math.min(10, (b.d?.def ?? 4) === 99 ? 10 : b.d?.def ?? 4), vel = b.c.vel ?? (b.d?.spd ? b.d.spd / 2 : 80), regra = b.c.regras || {};
-  const tam = clamp(Math.sqrt(area) / 85, 0.8, 3.2), arma = 1 + def * 0.035 + (regra.armadura != null || regra.casco != null ? 0.12 : 0), lento = vel < 60 ? 1.18 : vel < 90 ? 1.08 : 1;
+  const tam = clamp(Math.sqrt(area) / 170, 0.8, 3.2), arma = 1 + def * 0.035 + (regra.armadura != null || regra.casco != null ? 0.12 : 0), lento = vel < 60 ? 1.18 : vel < 90 ? 1.08 : 1;
   b.resiste = clamp(1 / (Math.pow(tam, 0.4) * arma * lento), 0.5, 1);
   b.pesado = !b.c.parte && (tam >= 1.3 || regra.armadura != null || regra.casco != null || (tam >= 1.1 && (def >= 6 || vel < 60)));
 }
