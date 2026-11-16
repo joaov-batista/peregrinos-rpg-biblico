@@ -57,7 +57,8 @@ const PASSOS = [ // t: [toque, controle, teclado]; alvo: o botão de toque que p
 
 // por que os chefes recuperam a vida (quando você cai, quando erra a Escritura, quando para de lutar)
 const PORQUE_VOLTAM = 'Os vícios não vivem de si mesmos.\n\nTodos os dias, em algum lugar, alguém os alimenta com o próprio pecado: uma mentira contada, uma hora adiada, uma moeda amada demais. Enquanto forem alimentados, eles se refazem. É por isso que um chefe ferido volta inteiro, e que alguns se curam no meio da luta.\n\nNão basta feri-los: é preciso vencê-los até o fim. E cada dia em que você não os alimenta, eles ficam mais fracos.\n\n"Não reine, portanto, o pecado em vosso corpo mortal" (Rm 6:12).';
-const caixa = e => ({ x: e.x - e.w / 2, y: e.y - e.h, w: e.w, h: e.h });
+// a caixa de quem pode ser ferido. Chefe desenhado em pixel usa o tamanho real do desenho (e.hb, medido em pixel/render.js)
+const caixa = e => e.hb ? { x: e.x + e.hb.dx - e.hb.w / 2, y: e.y + e.hb.y0, w: e.hb.w, h: e.hb.h } : { x: e.x - e.w / 2, y: e.y - e.h, w: e.w, h: e.h };
 const toca = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 
 export class Caminho {
@@ -539,7 +540,8 @@ export class Caminho {
       let d = danoNoChefe(e, dano, this.tipoArma) * (forte && this.tem('pedra_lisa') ? 1.4 : 1);
       if (quique) d *= [0.6, 0.35, 0.2][Math.min(2, e.pogoN)]; // quicar na cabeça vale, mas cada quique seguido rende menos
       if (especial) d *= 0.35 * Math.max(0.3, 1 - e.versoN * 0.3);
-      if (!(e.quebrado > 0)) d *= 0.82; // o chefe aguenta mais: a vida não derrete // o verso fere o chefe, mas repetido ele já espera
+      if (!(e.quebrado > 0)) d *= 0.82; // o chefe aguenta mais: a vida não derrete
+      if (!atk.testa) d *= e.resiste || 1; // quanto maior, mais armado e mais lento, menos sente cada golpe (tanque(), em chefes.js) // o verso fere o chefe, mas repetido ele já espera
       if (e.c.fases[e.fase].golpes.includes('voz') && e.id === 'babilonia') d *= 0.25; // a voz do céu: não é hora de bater
       e.hp -= d; e.flash = 0.1; e.semGolpe = 0; this.postura(e, atk.testa ? 70 : quique || especial ? 0 : atk.carga ? 4 : 2);
       if (e.clones.length) { for (const cl of e.clones) this.fx.po(cl.x, cl.y - e.h / 2, 12, e.d.cor || '#C79BFF'); e.clones = []; this.postura(e, 30); this.textoEm(e.x, e.y - e.h - 12, 'A verdadeira!', '#FFE9A8'); sfx('right'); }
@@ -578,6 +580,7 @@ export class Caminho {
 
   ferirHeroi(n, origem, o = {}) {
     if (origem?.kind === 'chefe' && this.cm.dif !== 'peregrino' && origem.c?.fases?.length > 1 && origem.fase === origem.c.fases.length - 1) n = Math.max(n, 2); // na última fase, o chefe fere em dobro
+    if (origem?.kind === 'chefe' && this.cm.dif !== 'peregrino' && origem.pesado) n = Math.max(n, 2); // os pesados batem forte a luta inteira
     const p = this.p;
     if (this.ausente || p !== this.eu || p.morto || p.inv > 0 || this.fade > 0.5) return false;
     if (p.vig > 0 && !o.espinho && !o.semDefesa) {
@@ -858,7 +861,7 @@ export class Caminho {
     for (const t of this.tiros) if (t.funda && !t.acertou && t.vida <= dt * 2 && !t.avisou) { t.avisou = true; this.textoEm(p.x, p.y - 70, 'errou… espere a próxima pedra', '#C9B88A', 12); }
   }
   pedraNoGigante(e, t) {
-    const testa = t.y < e.y - e.h * 0.6; t.acertou = true;
+    const cx = caixa(e), testa = t.y < cx.y + cx.h * 0.32; t.acertou = true;
     this.atingir(e, this.danoBase() * (testa ? 38 : 17), t.x - t.vx, { dir: 'lado', semOleo: true, testa });
     this.textoEm(e.x, e.y - e.h - 22, testa ? 'NA TESTA! (1Sm 17:49)' : 'a pedra atravessou a armadura!', '#FFE9A8', testa ? 15 : 12); this.tremor(testa ? 12 : 6); this.clarao = testa ? 0.12 : 0;
   }

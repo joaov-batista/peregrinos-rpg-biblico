@@ -18,7 +18,7 @@ export const MIRA_NOME = {
   juiz: { chao: 'Açoite de Sangar', ar: 'Laço e queda', parede: 'Gancho do juiz' },
   valente: { chao: 'Queda da lança', ar: 'Lança cadente', parede: 'Lanças da muralha' }
 };
-const caixaDe = e => ({ x: e.x - e.w / 2, y: e.y - e.h, w: e.w, h: e.h });
+const caixaDe = e => e.hb ? { x: e.x + e.hb.dx - e.hb.w / 2, y: e.y + e.hb.y0, w: e.hb.w, h: e.hb.h } : { x: e.x - e.w / 2, y: e.y - e.h, w: e.w, h: e.h };
 const toca = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 const novoAtk = (dir = 'lado', hits) => ({ dir, hits: hits || new Set(), semOleo: true, carga: true });
 

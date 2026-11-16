@@ -13,6 +13,7 @@ import { MUNDO } from '../dados.js';
 import { OLEO_USO } from '../heroi.js';
 import { Sprite, rampa, cor, carimbar, TINTA, BRANCO, PX } from './raster.js';
 import { quadroHeroi, quadroPessoa, vulto, AX, AY } from './humano.js';
+import { tanque } from '../chefes.js';
 import { quadroChefe } from './chefespx.js';
 import { pintarPalco } from './palcos.js';
 import { cenaPixel, pintarFundoPixel, pintarSalasPixel, pintarBlocosPixel, pintarLuzPixel, TL, mistura, pontilha } from './mundo.js';
@@ -292,6 +293,7 @@ export function renderPixel(G) {
         const vira = (e.face > 0 || e.c.semVirar ? 1 : -1) * (q.inv ? -1 : 1), luz = p.lamp ? G.raioLuz() : 0;
         // os clones da Mentira: iguais ao verdadeiro, mas tremem dentro da luz da lâmpada
         for (const cl of e.clones) { const naLuz = luz && Math.hypot(cl.x - p.x, cl.y - p.y) < luz; carimbar(g, q.s, X(cl.x), Y(cl.y), q.ax, q.ay, vira, (cl.alpha ?? 1) * (naLuz ? 0.22 + 0.12 * Math.sin(Tm * 40) : 1) * Math.min(1, cl.t * 2)); }
+        medirChefe(e, q, vira);
         if (q.esc > 1) { const cv = q.s.tela(), k = q.esc; g.save(); g.translate(X(e.x), Y(e.y)); g.scale(vira * k, k); g.drawImage(cv, -q.ax, -q.ay); g.restore(); }
         else carimbar(g, q.s, X(e.x), Y(e.y), q.ax, q.ay, vira);
         pintarExtrasChefe(g, e, G, X, Y, Tm);
@@ -595,4 +597,16 @@ function pintarTextos(g, G, esc, cx, cy) {
   const f = Math.max(G.fade, p.morto ? clamp(1.2 - G.mortoT, 0, 1) : 0);
   if (f > 0) { g.fillStyle = `rgba(6,7,15,${f})`; g.fillRect(0, 0, G.cv.width, G.cv.height); }
   if (G.clarao > 0) { g.fillStyle = `rgba(255,246,220,${Math.min(0.5, G.clarao * 2)})`; g.fillRect(0, 0, G.cv.width, G.cv.height); }
+}
+
+// A caixa de dano do chefe é o tamanho real do desenho: mede o que está pintado no quadro (a cada poucos quadros) e guarda
+// em e.hb, relativo aos pés. Tira um pouco das bordas (capa solta, ponta de arma). O maior tamanho visto decide o peso dele.
+function medirChefe(e, q, vira) {
+  if ((e.hbN = (e.hbN || 0) + 1) % 4 !== 1 && e.hb) return;
+  const s = q.s, W = s.w, H = s.h, B = s.b; let x0 = W, x1 = -1, y0 = H, y1 = -1;
+  for (let y = 0; y < H; y++) { const o = y * W; for (let x = 0; x < W; x++) if (B[o + x] >>> 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; y1 = y; } }
+  if (x1 < 0) return;
+  const k = q.esc || 1, w = (x1 - x0 + 1) * k, h = (y1 - y0 + 1) * k;
+  e.hb = { dx: ((x0 + x1 + 1) / 2 - q.ax) * k * vira, w: Math.max(30, w * 0.8), y0: (y0 - q.ay) * k + h * 0.06, h: Math.max(40, h * 0.9) };
+  const area = e.hb.w * e.hb.h; if (!(e.hbArea >= area * 0.98) && !e.morrendo) { e.hbArea = Math.max(e.hbArea || 0, area); tanque(e, e.hbArea); }
 }

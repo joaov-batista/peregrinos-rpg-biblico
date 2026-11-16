@@ -280,3 +280,7 @@ os outros digitam o código, ou abrem o link `?sala=CÓDIGO`. Não há servidor 
   rápidos, avisos mais curtos, 5 fôlegos nas páginas da semana e dano em dobro na última fase do chefe.
 - **Sem atalhos:** quique e especial repetidos rendem cada vez menos no chefe; o especial tem espera de 1,8 s; golpes no chefe
   dão menos azeite; a postura enche mais devagar e o quebranto é curto. O vento não atravessa parede nem grade.
+- **Caixa de dano do tamanho do desenho** (`medirChefe` em `pixel/render.js`): a cada poucos quadros mede o que está pintado no
+  quadro do chefe e guarda em `e.hb`; `caixa()` usa isso. A cabeça da Escassez, a testa do Golias e o corpo inteiro dos gigantes
+  agora contam. **Peso** (`tanque()` em `chefes.js`): corpo grande, armadura e passo lento fazem o chefe sentir menos cada golpe
+  (`resiste`, até metade) e os pesados (Golias, Beemote, Leviatã, Cárcere) tiram dois fôlegos por acerto a luta inteira.

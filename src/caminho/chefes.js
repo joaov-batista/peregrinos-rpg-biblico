@@ -152,13 +152,13 @@ function instinto(G, b, dt) {
     ag.t += dt; b.vx = 0; b.art.step = 1;
     if (ag.e === 0) { b.tele = 1;
       if (ag.t > 0.26 * G.dif.aviso / 0.8) {
-        const perto = !p.morto && !(p.dashT > 0) && Math.abs(p.x - b.x) < b.w * 0.6 + 50 && p.y < b.y + 20 && p.y > b.y - b.h - 150;
+        const perto = !p.morto && !(p.dashT > 0) && Math.abs(p.x - b.x - (b.hb?.dx || 0)) < (b.hb?.w ?? b.w) * 0.6 + 50 && p.y < b.y + 20 && p.y > (b.hb ? b.y + b.hb.y0 : b.y - b.h) - 150;
         if (!perto) { b.agarra = null; b.espera = Math.min(b.espera, 0.12); G.textoEm?.(b.x, b.y - b.h - 18, 'escapou', '#C9D2E8', 11); return false; } // escapou: o chefe emenda logo
         ag.e = 1; ag.t = 0; ag.dir = Math.sign(p.x - b.x) || (Math.random() < 0.5 ? -1 : 1); sfx('block'); G.tremor(7); G.hitstop = 0.08; G.textoEm?.(b.x, b.y - b.h - 34, 'AGARROU!', '#FF6A5A', 17);
       }
       return true;
     }
-    p.x = clamp(b.x + ag.dir * 6, A.x0 + 20, A.x1 - 20); p.y = b.y - b.h - 4; p.vx = p.vy = 0; p.chao = false; p.stunT = Math.max(p.stunT || 0, 0.12); ataca(b);
+    p.x = clamp(b.x + ag.dir * 6, A.x0 + 20, A.x1 - 20); p.y = (b.hb ? b.y + b.hb.y0 : b.y - b.h) - 4; p.vx = p.vy = 0; p.chao = false; p.stunT = Math.max(p.stunT || 0, 0.12); ataca(b);
     if (ag.t > 0.42) { b.agarra = null; b.espera = 0.3; p.inv = 0; G.ferirHeroi?.(1, b, { semDefesa: true }); p.stunT = 0.45; p.travaX = 0.7; p.vx = ag.dir * 1000; p.vy = -560; p.chao = false; p.pogo = false; sfx('swing'); G.tremor(11); G.fx.po(b.x, b.y - b.h, 14, '#FF8A7A'); }
     return true;
   }
@@ -167,9 +167,10 @@ function instinto(G, b, dt) {
     b.x = clamp(b.x + v.d * 600 * G.dif.vel * dt, A.x0 + b.w / 2, A.x1 - b.w / 2); ataca(b); if (Math.random() < dt * 30) G.fx.po(b.x - v.d * b.w * 0.4, b.y - 6, 2, b.d.cor || '#fff');
     if (v.t > 0.24 * G.dif.aviso / 0.8 + 0.34) b.investe = null; return true; }
   if (G.p !== G.eu || p.morto) return false;
-  const emCima = !p.chao && Math.abs(p.x - b.x) < b.w * 0.6 + 34 && p.y < b.y - b.h * 0.55 && p.y > b.y - b.h - 280;
+  const bw = b.hb?.w ?? b.w, bh = b.hb?.h ?? b.h, topo = b.hb ? b.y + b.hb.y0 : b.y - b.h, bx = b.x + (b.hb?.dx || 0); // o tamanho real do desenho
+  const emCima = !p.chao && Math.abs(p.x - bx) < bw * 0.6 + 34 && p.y < topo + bh * 0.45 && p.y > topo - 280;
   b.cimaT = emCima ? (b.cimaT || 0) + dt : Math.max(0, (b.cimaT || 0) - dt * 2);
-  const colado = p.chao && Math.abs(p.x - b.x) < b.w * 0.5 + 56 && Math.abs(p.y - b.y) < 90;
+  const colado = p.chao && Math.abs(p.x - bx) < bw * 0.5 + 56 && Math.abs(p.y - b.y) < 90;
   b.coladoT = colado ? (b.coladoT || 0) + dt : Math.max(0, (b.coladoT || 0) - dt);
   if ((b.cimaT > 0.5 || (b.pogoN || 0) >= 2 || b.coladoT > 1.5) && !(b.agarraCd > 0)) {
     if (b.mov) { b.mov = null; desfazer(G, b); }
@@ -177,6 +178,15 @@ function instinto(G, b, dt) {
   }
   if (!b.mov && b.espera > 0.4 && !(b.investeCd > 0) && Math.abs(p.x - b.x) > 150 && Math.random() < dt * (0.7 + b.fase * 0.4)) { b.investe = { t: 0, d: Math.sign(p.x - b.x) || 1 }; b.investeCd = 2.6; sfx('dodge'); return true; }
   return false;
+}
+// O peso de cada chefe, medido pelo tamanho real do desenho, pela armadura e pela lentidão:
+//   resiste = quanto de cada golpe ele sente (corpo grande, armadura e passo lento sentem menos);
+//   pesado  = bate forte: cada acerto tira dois fôlegos.
+export function tanque(b, area) {
+  const def = Math.min(10, (b.d?.def ?? 4) === 99 ? 10 : b.d?.def ?? 4), vel = b.c.vel ?? (b.d?.spd ? b.d.spd / 2 : 80), regra = b.c.regras || {};
+  const tam = clamp(Math.sqrt(area) / 85, 0.8, 3.2), arma = 1 + def * 0.035 + (regra.armadura != null || regra.casco != null ? 0.12 : 0), lento = vel < 60 ? 1.18 : vel < 90 ? 1.08 : 1;
+  b.resiste = clamp(1 / (Math.pow(tam, 0.4) * arma * lento), 0.5, 1);
+  b.pesado = !b.c.parte && (tam >= 1.3 || regra.armadura != null || regra.casco != null || (tam >= 1.1 && (def >= 6 || vel < 60)));
 }
 const ataca = b => { b.art.step = 2; b.art.artAttack = (b.art.artAttack || 0) + 1; };
 
