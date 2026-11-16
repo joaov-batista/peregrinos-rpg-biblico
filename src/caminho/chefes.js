@@ -146,7 +146,7 @@ function escolher(G, b, f) {
 //  • quem fica em cima da cabeça, quica nela ou gruda no corpo é AGARRADO: um "!" curto (dá para escapar com o passo ou
 //    saindo de perto), depois o chefe segura o peregrino no alto e o ARREMESSA longe, tirando um fôlego que não se defende;
 //  • entre um golpe e outro, de vez em quando, uma INVESTIDA curta na sua direção (o corpo do chefe fere).
-function instinto(G, b, dt) {
+function instinto(G, b, dt, soAgarra) { // soAgarra: os zelotes do Conselho só agarram (o resto da luta deles é o rodízio)
   const p = G.p, A = G.N.arena, ag = b.agarra;
   if (b.agarraCd > 0) b.agarraCd -= dt; if (b.investeCd > 0) b.investeCd -= dt;
   if (ag) {
@@ -163,12 +163,12 @@ function instinto(G, b, dt) {
     if (ag.t > 0.42) { b.agarra = null; b.espera = 0.3; p.inv = 0; G.ferirHeroi?.(1, b, { semDefesa: true }); p.stunT = 0.45; p.travaX = 0.7; p.vx = ag.dir * 1000; p.vy = -560; p.chao = false; p.pogo = false; sfx('swing'); G.tremor(11); G.fx.po(b.x, b.y - b.h, 14, '#FF8A7A'); }
     return true;
   }
-  if (b.salto) { const s = b.salto; s.t += dt; ataca(b); // o salto contra quem se esconde na plataforma: sobe até a altura dele e cai pesado
+  if (soAgarra) { /* sem salto nem investida */ } else if (b.salto) { const s = b.salto; s.t += dt; ataca(b); // o salto contra quem se esconde na plataforma: sobe até a altura dele e cai pesado
     if (s.t < 0.3 * G.dif.aviso / 0.8) { b.tele = 1; b.vx = 0; b.face = Math.sign(s.x - b.x) || b.face; return true; }
     if (!s.subiu) { s.subiu = true; b.vy = -Math.sqrt(2 * 2050 * Math.max(60, s.h + 50)); b.vx = (s.x - b.x) / 0.62; b.chao = false; sfx('dodge'); }
     else if (b.chao || s.t > 2.2) { b.salto = null; b.vx = 0; G.tremor?.(8); choque(G, b, b.d.cor || '#E6E0CF', 360); sfx('block'); b.espera = Math.max(b.espera, 0.4); return false; }
     return 'fisica'; }
-  if (b.investe) { const v = b.investe; v.t += dt; b.vx = 0;
+  if (!soAgarra && b.investe) { const v = b.investe; v.t += dt; b.vx = 0;
     if (v.t < 0.24 * G.dif.aviso / 0.8) { b.tele = 1; b.face = v.d; return true; }
     b.x = clamp(b.x + v.d * 600 * G.dif.vel * dt, A.x0 + b.w / 2, A.x1 - b.w / 2); ataca(b); if (Math.random() < dt * 30) G.fx.po(b.x - v.d * b.w * 0.4, b.y - 6, 2, b.d.cor || '#fff');
     if (v.t > 0.24 * G.dif.aviso / 0.8 + 0.34) b.investe = null; return true; }
@@ -184,8 +184,8 @@ function instinto(G, b, dt) {
   }
   // quem fica em cima de uma plataforma batendo de longe não fica em paz: todo chefe tem resposta para o alto
   const naPlat = p.chao && p.y < A.chao - 40; b.platT = naPlat ? (b.platT || 0) + dt : Math.max(0, (b.platT || 0) - dt * 1.5); if (b.platCd > 0) b.platCd -= dt;
-  if (b.platT > 0.9 && !(b.platCd > 0) && !b.mov) { b.platCd = 2.8 - b.fase * 0.5; b.platT = 0.3; contraPlataforma(G, b, p, A); return true; }
-  if (!b.mov && b.espera > 0.4 && !(b.investeCd > 0) && Math.abs(p.x - b.x) > 150 && Math.random() < dt * (0.7 + b.fase * 0.4)) { b.investe = { t: 0, d: Math.sign(p.x - b.x) || 1 }; b.investeCd = 2.6; sfx('dodge'); return true; }
+  if (!soAgarra && b.platT > 0.9 && !(b.platCd > 0) && !b.mov) { b.platCd = 2.8 - b.fase * 0.5; b.platT = 0.3; contraPlataforma(G, b, p, A); return true; }
+  if (!soAgarra && !b.mov && b.espera > 0.4 && !(b.investeCd > 0) && Math.abs(p.x - b.x) > 150 && Math.random() < dt * (0.7 + b.fase * 0.4)) { b.investe = { t: 0, d: Math.sign(p.x - b.x) || 1 }; b.investeCd = 2.6; sfx('dodge'); return true; }
   return false;
 }
 // O peso de cada chefe, medido pelo tamanho real do desenho, pela armadura e pela lentidão:
@@ -195,7 +195,7 @@ export function tanque(b, area) {
   const def = Math.min(10, (b.d?.def ?? 4) === 99 ? 10 : b.d?.def ?? 4), vel = b.c.vel ?? (b.d?.spd ? b.d.spd / 2 : 80), regra = b.c.regras || {};
   const tam = clamp(Math.sqrt(area) / 170, 0.8, 3.2), arma = 1 + def * 0.035 + (regra.armadura != null || regra.casco != null ? 0.12 : 0), lento = vel < 60 ? 1.18 : vel < 90 ? 1.08 : 1;
   b.resiste = clamp(1 / (Math.pow(tam, 0.4) * arma * lento), 0.5, 1);
-  b.pesado = !b.c.parte && (tam >= 1.3 || regra.armadura != null || regra.casco != null || (tam >= 1.1 && (def >= 6 || vel < 60)));
+  b.pesado = !b.c.parte && b.id !== 'conselho' && (tam >= 1.3 || regra.armadura != null || regra.casco != null || (tam >= 1.1 && (def >= 6 || vel < 60)));
 }
 // A resposta à plataforma: espinhos que furam a plataforma por baixo onde você está (e onde vai estar), dardos mirados no alto
 // e, para quem anda no chão, um salto até a sua altura que cai pesado. Sempre com aviso: dá para sair, mas não para ficar.
@@ -236,7 +236,7 @@ export function atualizarChefe(G, b, dt) {
       return;
     }
     const f = c.fases[b.fase];
-    const ins = !c.parte && b.id !== 'conselho' && !(b.alpha < 0.5) && instinto(G, b, dt);
+    const zel = c.parte || b.id === 'conselho', ins = !(b.alpha < 0.5) && (!zel || (b.naSala && !b.volta)) && instinto(G, b, dt, zel); // os zelotes agarram quando estão na sala
     if (ins === true) return;
     if (!b.mov || b.mov.nome !== 'trevas') G.escuroAlvo = f.escuro ?? c.escuro ?? 0;
     if (ins === 'fisica') { /* no meio do salto: só a física do corpo, lá embaixo */ }
