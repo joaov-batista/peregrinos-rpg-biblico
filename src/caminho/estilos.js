@@ -387,7 +387,7 @@ const pavor = {
 
 const desespero = {
   // respira: sobe e desce devagar, sempre sobre você, como uma onda funda
-  mover(G, b, dt) { const A = G.N.arena, ty = A.chao - b.c.voa + Math.sin(b.t * 0.9) * 70; b.vx = clamp((G.p.x - b.x) * 0.8, -(b.c.vel || 80), b.c.vel || 80); b.y += clamp(ty - b.y, -1, 1) * 90 * dt; b.face = Math.sign(G.p.x - b.x) || b.face; },
+  mover(G, b, dt) { const A = G.N.arena, ty = A.chao - b.c.voa + Math.sin(b.t * 0.9) * 70; b.vx = clamp((G.p.x - b.x) * 1.6, -(b.c.vel || 80), b.c.vel || 80); b.y += clamp(ty - b.y, -1, 1) * 160 * dt; b.face = Math.sign(G.p.x - b.x) || b.face; },
   // o ventre se fecha: as paredes de carne avançam a cada fase e empurram você para o meio
   palco(G, b, dt) {
     b.cen.aperto = Math.min(0.2, (b.cen.aperto || 0) + dt * 0.004 * (1 + fase(b)));
@@ -398,7 +398,7 @@ const desespero = {
     // o eco do clamor: uma esfera que ricocheteia nas paredes do ventre, várias vezes
     eco(G, b, m, dt) {
       const A = G.N.arena, c = centro(b), lim = (A.x1 - A.x0) * (b.cen.aperto || 0);
-      if (m.e === 0) { prepara(b); if (m.t > av(G, 0.6)) { m.e = 1; m.bs = [0, 1].slice(0, 1 + Math.min(1, fase(b))).map(i => bala(G, c.x, c.y, angulo(c.x, c.y, G) + i * 0.5, vel(G, 300), { cor: '#B6A0E6', r: 11, vida: 7, fura: true, bate: 4 })); sfx('magic'); } return false; }
+      if (m.e === 0) { prepara(b); if (m.t > av(G, 0.6)) { m.e = 1; m.bs = [0, 1, -1].slice(0, 2 + Math.min(1, fase(b))).map(i => bala(G, c.x, c.y, angulo(c.x, c.y, G) + i * 0.45, vel(G, 380), { cor: '#B6A0E6', r: 11, vida: 7, fura: true, bate: 5 })); sfx('magic'); } return false; }
       ataca(b);
       for (const t of m.bs) if (vivo(G, t)) {
         if ((t.x < A.x0 + lim + 10 && t.vx < 0) || (t.x > A.x1 - lim - 10 && t.vx > 0)) { t.vx *= -1; t.bate--; sfx('click'); G.fx.anel(t.x, t.y, '#B6A0E6', 30); }

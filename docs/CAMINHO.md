@@ -270,3 +270,13 @@ os outros digitam o código, ou abrem o link `?sala=CÓDIGO`. Não há servidor 
   leque de espinhos, mar de fel (suba nas raízes) e o abraço das paredes. Prêmio: o Lenho de Mara (cada oração devolve dois fôlegos).
 - **Atenção ao escrever diálogos:** `ui.dialog` devolve o rótulo escolhido e só chama o `fn` da ação 30 ms depois de fechar;
   para decidir pelo que o jogador escolheu, use o valor devolvido.
+
+## Chefes difíceis por padrão
+
+- **Instinto de todo chefe** (`instinto()` em `chefes.js`, menos o Conselho): quem fica em cima da cabeça, quica nela duas vezes
+  seguidas ou gruda no corpo é agarrado. Há um "!" curto para escapar (passo ou sair de perto); se pega, o chefe segura o peregrino
+  no alto e o arremessa longe, com um fôlego que não se defende. Entre os golpes, investidas curtas na direção do jogador.
+- **Ritmo:** menos pausa entre golpes e mais golpes emendados. Provação (o padrão) ficou difícil: mais vida, golpes mais
+  rápidos, avisos mais curtos, 5 fôlegos nas páginas da semana e dano em dobro na última fase do chefe.
+- **Sem atalhos:** quique e especial repetidos rendem cada vez menos no chefe; o especial tem espera de 1,8 s; golpes no chefe
+  dão menos azeite; a postura enche mais devagar e o quebranto é curto. O vento não atravessa parede nem grade.

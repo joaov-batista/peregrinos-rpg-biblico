@@ -116,7 +116,7 @@ export class Caminho {
   // PÁGINAS DA SEMANA: todos lutam em pé de igualdade. Nível, forja, fôlegos extras e dons de força não contam lá dentro;
   // quem acabou de chegar entra com o mesmo golpe e os mesmos fôlegos de um veterano. Armas e relíquias mudam o jeito, não a conta.
   nivelado() { return !!this.def?.fase; }
-  vidaMax() { if (this.nivelado()) return Math.max(3, 7 + this.dif.vidas); return Math.max(3, 5 + (this.tem('veste_branca') ? 1 : 0) + (this.tem('cantil_masada') ? 1 : 0) + (this.cm.getsemaniDom === 'folego' ? 1 : 0) + (this.hab.couraca ? 2 : 0) + Math.floor(this.cm.mana / 3) + (this.tem('osso_bronze') ? 1 : 0) + this.dif.vidas); }
+  vidaMax() { if (this.nivelado()) return Math.max(3, 5 + this.dif.vidas); return Math.max(3, 5 + (this.tem('veste_branca') ? 1 : 0) + (this.tem('cantil_masada') ? 1 : 0) + (this.cm.getsemaniDom === 'folego' ? 1 : 0) + (this.hab.couraca ? 2 : 0) + Math.floor(this.cm.mana / 3) + (this.tem('osso_bronze') ? 1 : 0) + this.dif.vidas); }
   oleoMax() { return (this.tem('odre_novo') ? 132 : 99) + (this.cm.getsemaniDom === 'azeite' ? 22 : 0) + (this.tem('chifre_azeite') ? 25 : 0); }
   espacos() { return 3 + (this.cm.reliquias.includes('coroa_restituida') ? 1 : 0) + (this.cm.reliquias.includes('perola_preco') ? 1 : 0); }
   temDom(id) { const d = DONS[id], ds = this.cm.dons || {}; if (!d) return false; return d.exige ? d.exige.every(x => this.temDom(x)) && !!ds.lingua : (ds[id] || 0) >= (d.partes || 1); }
@@ -534,18 +534,18 @@ export class Caminho {
       if (!forte && !e.mov && !(e.guardaCd > 0) && !atk.semOleo && Math.random() < 0.26 + e.fase * 0.08) { e.guardaCd = 2.2; e.espera = 0.05; e.flash = 0.05; sfx('block'); this.efeito('vigilia', e.x - dir * e.w * 0.4, clamp(p.y - 28, e.y - e.h, e.y), -dir); this.textoEm(e.x, e.y - e.h - 6, 'APARADO', '#C9D2E8', 12); if (this.souDono()) { p.vx = -dir * 260; p.vy = -160; } return true; }
       const quique = (atk.dir === 'baixo' || atk.dir === 'diagB') && !p.chao, especial = atk.carga && atk.semOleo;
       if (quique) { e.pogoN = this.T - (e.pogoT ?? -9) < 1.4 ? (e.pogoN || 0) + 1 : 0; e.pogoT = this.T;
-        if (e.pogoN >= 3 && !(e.quebrado > 0)) { e.pogoN = 0; e.guardaCd = 1.2; sfx('block'); this.tremor(6); this.efeito('vigilia', e.x, e.y - e.h, 1); this.textoEm(e.x, e.y - e.h - 10, 'SACUDIU!', '#FF8A7A', 14); // quem fica quicando na cabeça é jogado longe e ferido
-          if (this.souDono()) { p.vy = -520; p.vx = (Math.sign(p.x - e.x) || 1) * 520; p.pogo = false; this.ferirHeroi(1, e, { semDefesa: true }); } return true; } }
+}
       if (especial) { e.versoN = this.T - (e.versoT ?? -99) < 7 ? (e.versoN || 0) + 1 : 0; e.versoT = this.T; }
       let d = danoNoChefe(e, dano, this.tipoArma) * (forte && this.tem('pedra_lisa') ? 1.4 : 1);
-      if (quique) d *= [0.75, 0.5, 0.3][Math.min(2, e.pogoN)]; // quicar na cabeça vale, mas cada quique seguido rende menos
-      if (especial) d *= 0.55 * Math.max(0.25, 1 - e.versoN * 0.3); // o verso fere o chefe, mas repetido ele já espera
+      if (quique) d *= [0.6, 0.35, 0.2][Math.min(2, e.pogoN)]; // quicar na cabeça vale, mas cada quique seguido rende menos
+      if (especial) d *= 0.35 * Math.max(0.3, 1 - e.versoN * 0.3);
+      if (!(e.quebrado > 0)) d *= 0.82; // o chefe aguenta mais: a vida não derrete // o verso fere o chefe, mas repetido ele já espera
       if (e.c.fases[e.fase].golpes.includes('voz') && e.id === 'babilonia') d *= 0.25; // a voz do céu: não é hora de bater
       e.hp -= d; e.flash = 0.1; e.semGolpe = 0; this.postura(e, atk.testa ? 70 : quique || especial ? 0 : atk.carga ? 4 : 2);
       if (e.clones.length) { for (const cl of e.clones) this.fx.po(cl.x, cl.y - e.h / 2, 12, e.d.cor || '#C79BFF'); e.clones = []; this.postura(e, 30); this.textoEm(e.x, e.y - e.h - 12, 'A verdadeira!', '#FFE9A8'); sfx('right'); }
       this.fx.faisca(e.x - dir * e.w * 0.3, clamp(p.y - 22, e.y - e.h, e.y), forte ? 12 : 6, forte ? '#FFE9A8' : '#fff'); this.efeito(forte ? 'critico' : 'faiscaLuz', e.x - dir * e.w * 0.3, clamp(p.y - 28, e.y - e.h, e.y), dir);
       if (config.numerosDano !== false) this.textoEm(e.x + rand(-14, 14), e.y - e.h - 4, String(Math.round(d)), forte ? '#FFE9A8' : '#E6E0CF', forte ? 17 : 13);
-      this.ganharOleo(atk.semOleo ? 0 : 11); sfx(forte ? 'crit' : 'hit'); this.hitstop = forte ? 0.07 : 0.04; this.tremor(forte ? 6 : 2.5);
+      this.ganharOleo(atk.semOleo ? 0 : 7); sfx(forte ? 'crit' : 'hit'); this.hitstop = forte ? 0.07 : 0.04; this.tremor(forte ? 6 : 2.5);
       if (e.hp <= 0) this.chefeMorre(e);
       return true;
     }
@@ -577,6 +577,7 @@ export class Caminho {
   pontos(n) { this.char.score += n; this.char.week_score += n; }
 
   ferirHeroi(n, origem, o = {}) {
+    if (origem?.kind === 'chefe' && this.cm.dif !== 'peregrino' && origem.c?.fases?.length > 1 && origem.fase === origem.c.fases.length - 1) n = Math.max(n, 2); // na última fase, o chefe fere em dobro
     const p = this.p;
     if (this.ausente || p !== this.eu || p.morto || p.inv > 0 || this.fade > 0.5) return false;
     if (p.vig > 0 && !o.espinho && !o.semDefesa) {

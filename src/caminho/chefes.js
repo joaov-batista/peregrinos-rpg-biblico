@@ -72,7 +72,7 @@ export const CHEFES = {
     golpes: { relampago: {}, vagalhao: {}, rajada: {}, granizo: {} },
     fases: [F(1, ['relampago', 'granizo', 'rajada']), F(0.5, ['vagalhao', 'relampago', 'granizo', 'rajada'], { grito: 'O MEDO QUER DECIDIR POR VOCÊ!' })],
     dica: 'Ele pisca de um lugar a outro do céu. Quando o vagalhão vier, suba nas plataformas. O raio cai no meio e depois dos lados.' },
-  desespero: { vida: 460, r: 36, arena: 'costelas', voa: 120, vel: 80, escuro: 0.55,
+  desespero: { vida: 460, r: 36, arena: 'costelas', voa: 120, vel: 150, pressa: 0.75, escuro: 0.55,
     golpes: { eco: {}, algas: {}, trevas: {}, peso: {} },
     fases: [F(1, ['eco', 'algas', 'peso']), F(0.5, ['trevas', 'eco', 'peso', 'algas'], { grito: 'AQUI NINGUÉM PODE OUVIR VOCÊ…' })],
     dica: 'As paredes do ventre se fecham devagar: a luta fica mais apertada. Guarde azeite para as trevas. Orar no abismo é exatamente o que Jonas fez (Jn 2:2).' },
@@ -141,6 +141,45 @@ function escolher(G, b, f) {
   return nome;
 }
 
+// O instinto de todo chefe (vale para todos, menos o Conselho, que some entre os golpes):
+//  • quem fica em cima da cabeça, quica nela ou gruda no corpo é AGARRADO: um "!" curto (dá para escapar com o passo ou
+//    saindo de perto), depois o chefe segura o peregrino no alto e o ARREMESSA longe, tirando um fôlego que não se defende;
+//  • entre um golpe e outro, de vez em quando, uma INVESTIDA curta na sua direção (o corpo do chefe fere).
+function instinto(G, b, dt) {
+  const p = G.p, A = G.N.arena, ag = b.agarra;
+  if (b.agarraCd > 0) b.agarraCd -= dt; if (b.investeCd > 0) b.investeCd -= dt;
+  if (ag) {
+    ag.t += dt; b.vx = 0; b.art.step = 1;
+    if (ag.e === 0) { b.tele = 1;
+      if (ag.t > 0.26 * G.dif.aviso / 0.8) {
+        const perto = !p.morto && !(p.dashT > 0) && Math.abs(p.x - b.x) < b.w * 0.6 + 50 && p.y < b.y + 20 && p.y > b.y - b.h - 150;
+        if (!perto) { b.agarra = null; b.espera = Math.min(b.espera, 0.12); G.textoEm?.(b.x, b.y - b.h - 18, 'escapou', '#C9D2E8', 11); return false; } // escapou: o chefe emenda logo
+        ag.e = 1; ag.t = 0; ag.dir = Math.sign(p.x - b.x) || (Math.random() < 0.5 ? -1 : 1); sfx('block'); G.tremor(7); G.hitstop = 0.08; G.textoEm?.(b.x, b.y - b.h - 34, 'AGARROU!', '#FF6A5A', 17);
+      }
+      return true;
+    }
+    p.x = clamp(b.x + ag.dir * 6, A.x0 + 20, A.x1 - 20); p.y = b.y - b.h - 4; p.vx = p.vy = 0; p.chao = false; p.stunT = Math.max(p.stunT || 0, 0.12); ataca(b);
+    if (ag.t > 0.42) { b.agarra = null; b.espera = 0.3; p.inv = 0; G.ferirHeroi?.(1, b, { semDefesa: true }); p.stunT = 0.45; p.travaX = 0.7; p.vx = ag.dir * 1000; p.vy = -560; p.chao = false; p.pogo = false; sfx('swing'); G.tremor(11); G.fx.po(b.x, b.y - b.h, 14, '#FF8A7A'); }
+    return true;
+  }
+  if (b.investe) { const v = b.investe; v.t += dt; b.vx = 0;
+    if (v.t < 0.24 * G.dif.aviso / 0.8) { b.tele = 1; b.face = v.d; return true; }
+    b.x = clamp(b.x + v.d * 600 * G.dif.vel * dt, A.x0 + b.w / 2, A.x1 - b.w / 2); ataca(b); if (Math.random() < dt * 30) G.fx.po(b.x - v.d * b.w * 0.4, b.y - 6, 2, b.d.cor || '#fff');
+    if (v.t > 0.24 * G.dif.aviso / 0.8 + 0.34) b.investe = null; return true; }
+  if (G.p !== G.eu || p.morto) return false;
+  const emCima = !p.chao && Math.abs(p.x - b.x) < b.w * 0.6 + 34 && p.y < b.y - b.h * 0.55 && p.y > b.y - b.h - 280;
+  b.cimaT = emCima ? (b.cimaT || 0) + dt : Math.max(0, (b.cimaT || 0) - dt * 2);
+  const colado = p.chao && Math.abs(p.x - b.x) < b.w * 0.5 + 56 && Math.abs(p.y - b.y) < 90;
+  b.coladoT = colado ? (b.coladoT || 0) + dt : Math.max(0, (b.coladoT || 0) - dt);
+  if ((b.cimaT > 0.5 || (b.pogoN || 0) >= 2 || b.coladoT > 1.5) && !(b.agarraCd > 0)) {
+    if (b.mov) { b.mov = null; desfazer(G, b); }
+    b.agarra = { t: 0, e: 0 }; b.agarraCd = 3; b.cimaT = b.coladoT = b.pogoN = 0; G.textoEm?.(b.x, b.y - b.h - 20, '!', '#FF6A5A', 24); sfx('wrong'); return true;
+  }
+  if (!b.mov && b.espera > 0.4 && !(b.investeCd > 0) && Math.abs(p.x - b.x) > 150 && Math.random() < dt * (0.7 + b.fase * 0.4)) { b.investe = { t: 0, d: Math.sign(p.x - b.x) || 1 }; b.investeCd = 2.6; sfx('dodge'); return true; }
+  return false;
+}
+const ataca = b => { b.art.step = 2; b.art.artAttack = (b.art.artAttack || 0) + 1; };
+
 export function atualizarChefe(G, b, dt) {
   const c = b.c, A = G.N.arena, E = ESTILOS[b.id];
   b.cen = b.cen || {}; b.recentes = b.recentes || [];
@@ -168,6 +207,7 @@ export function atualizarChefe(G, b, dt) {
       return;
     }
     const f = c.fases[b.fase];
+    if (!c.parte && b.id !== 'conselho' && !(b.alpha < 0.5) && instinto(G, b, dt)) return;
     if (!b.mov || b.mov.nome !== 'trevas') G.escuroAlvo = f.escuro ?? c.escuro ?? 0;
     if (!b.mov) {
       b.espera -= dt;
@@ -175,7 +215,7 @@ export function atualizarChefe(G, b, dt) {
       if (b.espera <= 0) { const nome = escolher(G, b, f); b.mov = { nome, def: c.golpes[nome], t: 0, e: 0 }; b.idx++; }
     } else {
       const m = b.mov, fn = golpeDe(b, m.nome), fim = !fn || fn(G, b, m, dt) || m.t > 12; m.t += dt;
-      if (fim) { b.mov = null; desfazer(G, b); b.espera = (m.def.espera ?? 1.05) * G.dif.ritmo * (c.pressa || 1) * (b.fase ? 0.85 : 1) * (b.furia > 0 ? 0.7 : 1); if (!c.voa1 && b.id !== 'conselho' && !c.parte && Math.random() < 0.22 + b.fase * 0.12) b.espera = 0.2; } // às vezes emenda um golpe no outro
+      if (fim) { b.mov = null; desfazer(G, b); b.espera = (m.def.espera ?? 1.05) * G.dif.ritmo * (c.pressa || 1) * (b.fase ? 0.85 : 1) * (b.furia > 0 ? 0.7 : 1) * 0.78; if (!c.voa1 && b.id !== 'conselho' && !c.parte && Math.random() < 0.34 + b.fase * 0.15) b.espera = 0.15; } // às vezes emenda um golpe no outro
     }
     // regras passivas
     // quem não é vencido de vez se refaz: a cura é o tempo todo e forte, mas só dentro da barra atual (a que já caiu não volta)
