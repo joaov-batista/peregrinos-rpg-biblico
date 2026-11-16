@@ -219,7 +219,8 @@ export function atualizarHeroi(G, dt) {
     p.carga = 0; p.segGolpe = 0; p.avisoMira = false;
   }
   // verso (especial da vocação)
-  if (c.verso && p.oleo >= G.custoVerso() && !preso && !p.lamp && p.orando <= 0) G.verso();
+  if (p.versoCd > 0) p.versoCd -= dt;
+  if (c.verso && p.oleo >= G.custoVerso() && !preso && !p.lamp && p.orando <= 0 && !(p.versoCd > 0)) { p.versoCd = 1.8; G.verso(); }
 
   // ---- física ----
   const noAr = !p.chao, vyAntes = p.vy;

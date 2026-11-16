@@ -466,7 +466,7 @@ export class Caminho {
   textoEm(x, y, txt, cor = '#fff', tam = 14) { this.textos.push({ x, y, txt, cor, tam, t: 1.3 }); this.mp?.fx(['t', x, y, txt, cor, tam]); }
   fala(b, txt) { this.textos = this.textos.filter(t => t.fixo !== b); this.textos.push({ x: b.x, y: b.y - b.h - 16, txt: '“' + txt + '”', cor: '#F2E9D0', tam: 13, t: 2.4, fixo: b }); if (b.nid) this.mp?.fx(['f', b.nid, txt]); }
   grito(txt) { this.gritoTxt = { txt, t: 2.6 }; this.mp?.fx(['g', txt]); }
-  postura(b, n) { if (b.quebrado > 0 || b.postImune > 0) return; b.post = Math.min(100, b.post + n); b.postT = 2.2; if (b.post >= 100) { b.quebrado = 1.3; b.mov = null; this.textoEm(b.x, b.y - b.h - 20, 'QUEBRANTADO!', '#FFE9A8', 20); sfx('crit'); this.tremor(10); this.hitstop = 0.12; this.limparPerigos(); } }
+  postura(b, n) { if (b.quebrado > 0 || b.postImune > 0) return; b.post = Math.min(100, b.post + (n >= 50 ? n : n * 0.55)); b.postT = 2.2; if (b.post >= 100) { b.quebrado = 1.05; b.mov = null; this.textoEm(b.x, b.y - b.h - 20, 'QUEBRANTADO!', '#FFE9A8', 20); sfx('crit'); this.tremor(10); this.hitstop = 0.12; this.limparPerigos(); } }
   // golpes que mexem no corpo do peregrino: cada aparelho aplica no seu (jogando juntos, todos sentem)
   puxarHeroi(o) { const p = this.p; p.vx = Math.sign(o.x - p.x) * (o.forca || 520); p.vy = -180; p.chao = false; if (o.msg) this.textoEm(p.x, p.y - 60, o.msg, '#FFB3D0', 12); }
   efeitoNoJogador(dt) {
@@ -532,9 +532,16 @@ export class Caminho {
       const forte = e.exposto > 0 || e.quebrado > 0 || e.tonto > 0;
       // o chefe também se defende: fora de um golpe, pode aparar o seu e responder na hora
       if (!forte && !e.mov && !(e.guardaCd > 0) && !atk.semOleo && Math.random() < 0.26 + e.fase * 0.08) { e.guardaCd = 2.2; e.espera = 0.05; e.flash = 0.05; sfx('block'); this.efeito('vigilia', e.x - dir * e.w * 0.4, clamp(p.y - 28, e.y - e.h, e.y), -dir); this.textoEm(e.x, e.y - e.h - 6, 'APARADO', '#C9D2E8', 12); if (this.souDono()) { p.vx = -dir * 260; p.vy = -160; } return true; }
+      const quique = (atk.dir === 'baixo' || atk.dir === 'diagB') && !p.chao, especial = atk.carga && atk.semOleo;
+      if (quique) { e.pogoN = this.T - (e.pogoT ?? -9) < 1.4 ? (e.pogoN || 0) + 1 : 0; e.pogoT = this.T;
+        if (e.pogoN >= 3 && !(e.quebrado > 0)) { e.pogoN = 0; e.guardaCd = 1.2; sfx('block'); this.tremor(6); this.efeito('vigilia', e.x, e.y - e.h, 1); this.textoEm(e.x, e.y - e.h - 10, 'SACUDIU!', '#FF8A7A', 14); // quem fica quicando na cabeça é jogado longe e ferido
+          if (this.souDono()) { p.vy = -520; p.vx = (Math.sign(p.x - e.x) || 1) * 520; p.pogo = false; this.ferirHeroi(1, e, { semDefesa: true }); } return true; } }
+      if (especial) { e.versoN = this.T - (e.versoT ?? -99) < 7 ? (e.versoN || 0) + 1 : 0; e.versoT = this.T; }
       let d = danoNoChefe(e, dano, this.tipoArma) * (forte && this.tem('pedra_lisa') ? 1.4 : 1);
+      if (quique) d *= [0.75, 0.5, 0.3][Math.min(2, e.pogoN)]; // quicar na cabeça vale, mas cada quique seguido rende menos
+      if (especial) d *= 0.55 * Math.max(0.25, 1 - e.versoN * 0.3); // o verso fere o chefe, mas repetido ele já espera
       if (e.c.fases[e.fase].golpes.includes('voz') && e.id === 'babilonia') d *= 0.25; // a voz do céu: não é hora de bater
-      e.hp -= d; e.flash = 0.1; e.semGolpe = 0; this.postura(e, atk.testa ? 70 : atk.carga ? 6 : 2);
+      e.hp -= d; e.flash = 0.1; e.semGolpe = 0; this.postura(e, atk.testa ? 70 : quique || especial ? 0 : atk.carga ? 4 : 2);
       if (e.clones.length) { for (const cl of e.clones) this.fx.po(cl.x, cl.y - e.h / 2, 12, e.d.cor || '#C79BFF'); e.clones = []; this.postura(e, 30); this.textoEm(e.x, e.y - e.h - 12, 'A verdadeira!', '#FFE9A8'); sfx('right'); }
       this.fx.faisca(e.x - dir * e.w * 0.3, clamp(p.y - 22, e.y - e.h, e.y), forte ? 12 : 6, forte ? '#FFE9A8' : '#fff'); this.efeito(forte ? 'critico' : 'faiscaLuz', e.x - dir * e.w * 0.3, clamp(p.y - 28, e.y - e.h, e.y), dir);
       if (config.numerosDano !== false) this.textoEm(e.x + rand(-14, 14), e.y - e.h - 4, String(Math.round(d)), forte ? '#FFE9A8' : '#E6E0CF', forte ? 17 : 13);
@@ -735,7 +742,7 @@ export class Caminho {
   // o clima da área também joga: ondas no convés (Jn 1:4), brasas no tribunal, o vento oriental (Jn 4:8)
   clima(dt) {
     let p = this.p; const tipo = this.tm.perigo;
-    if (this.vento) { this.vento.t -= dt; if (!p.morto && p.dashT <= 0 && !this.tem('ancora_esperanca')) p.x += this.vento.f * dt * (p.chao ? 0.55 : 1) * (p.lamp ? 0.4 : 1); if (Math.random() < dt * 40) this.parts.push({ x: p.x + rand(200, 520), y: p.y - rand(0, 300), vx: this.vento.f * 4, vy: rand(-20, 20), t: 0.6, max: 0.6, r: 1.6, cor: this.tm.acento, g: 0 }); if (this.vento.t <= 0) this.vento = null; }
+    if (this.vento) { this.vento.t -= dt; if (!p.morto && p.dashT <= 0 && !this.tem('ancora_esperanca')) this.empurrarVento(p, this.vento.f * dt * (p.chao ? 0.55 : 1) * (p.lamp ? 0.4 : 1)); if (Math.random() < dt * 40) this.parts.push({ x: p.x + rand(200, 520), y: p.y - rand(0, 300), vx: this.vento.f * 4, vy: rand(-20, 20), t: 0.6, max: 0.6, r: 1.6, cor: this.tm.acento, g: 0 }); if (this.vento.t <= 0) this.vento = null; }
     if ((!tipo && this.tm.deco !== 'mastros' && !(this.def.fase && PERIGOS[this.def.chefe])) || (this.luta && this.def.mundo !== 'leviata') || this.venceu || p.morto || this.def.paz || this.def.extra) return; // no barco do Leviatã o mar e as lanças não param
     // em grupo, só o dono da área sorteia o clima: uma rajada só para todos (os outros a recebem pela rede), mirada num peregrino qualquer
     if (this.mp?.acompanhado() && !this.souDono()) return;
@@ -753,6 +760,15 @@ export class Caminho {
       for (let i = 0; i < 3; i++) this.tiros.push({ x: p.x - lado * (520 + i * 150), y: p.y - 30 - (i === 1 ? 44 : 0), vx: lado * 470, vy: 0, r: 7, vida: 3, cor: '#C9B48A', tipo: 'lanca', fura: true });
     }
     else if (tipo === 'vento') { this.soprar(2.4, -150, 'vento oriental!'); sfx('dodge'); }
+  }
+  // o vento empurra, mas não atravessa: para na parede, na grade da câmara trancada e na borda da arena (antes jogava para fora da sala)
+  empurrarVento(p, dx) {
+    if (!dx) return; const N = this.N, lado = Math.sign(dx), borda = p.x + dx + lado * p.w / 2, tx = Math.floor(borda / T), y0 = Math.floor((p.y - p.h + 1) / T), y1 = Math.floor((p.y - 1) / T);
+    for (let ty = y0; ty <= y1; ty++) if (solido(N, tx, ty)) return;
+    let x = p.x + dx; const c = this.emb?.c;
+    if (c) { const x0 = c.cx * CW * T + T + p.w / 2, x1 = (c.cx + 1) * CW * T - T - p.w / 2; x = clamp(x, x0, x1); }
+    if (this.luta && N.arena) x = clamp(x, N.arena.x0 + p.w / 2, N.arena.x1 - p.w / 2);
+    p.x = clamp(x, T + p.w / 2, N.w * T - T - p.w / 2);
   }
   // o vento empurra todos os peregrinos da área: quem sorteia avisa os outros
   soprar(d, f, texto, remoto) { this.vento = { t: d, f }; this.textoEm(this.eu.x, this.eu.y - 96, texto, this.tm.acento, 12); if (!remoto) this.mp?.ev('vn', { d, f, tx: texto }); }

@@ -333,9 +333,9 @@ import { MARCAS } from './perigos.js';
 const arenaDe = id => CHEFES[id]?.arena || 'plana';
 
 export const DIFICULDADES = {
-  peregrino: { nome: 'Peregrino', desc: 'Para conhecer a história: um fôlego a mais e avisos um pouco mais longos. Ainda exige atenção.', hp: 1.45, ritmo: 0.95, aviso: 1.05, vel: 1, vidas: 1, oleo: 1.2 },
-  provacao: { nome: 'Provação', desc: 'O jogo como foi pensado: chefes de fôlego longo, que não esperam você pensar.', hp: 2.1, ritmo: 0.72, aviso: 0.8, vel: 1.2, vidas: 0, oleo: 1 },
-  fornalha: { nome: 'Fornalha', desc: 'Sete vezes mais quente (Dn 3:19): chefes muito rápidos, avisos curtos e um fôlego a menos.', hp: 2.8, ritmo: 0.55, aviso: 0.64, vel: 1.35, vidas: -1, oleo: 0.9 }
+  peregrino: { nome: 'Peregrino', desc: 'Para conhecer a história: um fôlego a mais e avisos um pouco mais longos. Ainda exige atenção.', hp: 1.7, ritmo: 0.92, aviso: 1.05, vel: 1, vidas: 1, oleo: 1.2 },
+  provacao: { nome: 'Provação', desc: 'O jogo como foi pensado: chefes de fôlego longo, que não esperam você pensar.', hp: 2.6, ritmo: 0.68, aviso: 0.8, vel: 1.2, vidas: 0, oleo: 1 },
+  fornalha: { nome: 'Fornalha', desc: 'Sete vezes mais quente (Dn 3:19): chefes muito rápidos, avisos curtos e um fôlego a menos.', hp: 3.4, ritmo: 0.52, aviso: 0.64, vel: 1.35, vidas: -1, oleo: 0.9 }
 };
 
 export function novoCaminho() {
