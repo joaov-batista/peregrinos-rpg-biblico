@@ -1005,18 +1005,20 @@ const QUEM_Z = b => b.id === 'conselho' ? (b.cen?.quem || 'menaem') : b.id === '
 export const tronoZ = (A, quem) => ({ x: A.cx + ({ menaem: -1, eleazar: 0, jair: 1 }[quem] ?? 0) * 128, y: A.chao - 124 });
 const arco = (b, x0, y0, x1, y1, k, alto) => { b.x = x0 + (x1 - x0) * k; b.y = y0 + (y1 - y0) * k - Math.sin(k * Math.PI) * alto; };
 const noTrono = (G, b, dt = 0) => { b.vx = 0; b.corre = false;
+  // na vez dele, entre um golpe e outro, fica na sala: cai até o chão, encara você e espera o próximo golpe
+  if (b.naSala && !b.folga && !b.volta) { const A = G.N.arena; b.alpha = 1; b.y = Math.min(A.chao, b.y + 700 * dt); b.face = Math.sign(G.p.x - b.x) || b.face; return; }
   if (b.alpha > 0.5 && !b.volta && !(b.hp <= 0)) b.volta = { t: 0, x0: b.x, y0: b.y };
   const v = b.volta; if (!v) { b.alpha = 0; return; }
   v.t += dt; const k = Math.min(1, v.t / 0.34), d = tronoZ(G.N.arena, QUEM_Z(b)); b.alpha = 1; b.face = Math.sign(d.x - v.x0) || b.face; b.corre = true; arco(b, v.x0, v.y0, d.x, d.y, k, 90);
-  if (k >= 1) { b.volta = null; b.alpha = 0; b.corre = false; } };
+  if (k >= 1) { b.volta = null; b.naSala = false; b.alpha = 0; b.corre = false; } };
 // no começo do golpe: do trono até o ponto de partida (o aviso do golpe continua contando)
 function saiDoTrono(G, b, m) {
-  if (m.t === 0) { const o = tronoZ(G.N.arena, QUEM_Z(b)), deVolta = b.volta; m.sai = { x0: deVolta ? b.x : o.x, y0: deVolta ? b.y : o.y, x1: b.x, y1: b.y }; b.volta = null; sfx('dodge'); }
-  const s = m.sai; if (!s) return; const k = Math.min(1, m.t / 0.3); arco(b, s.x0, s.y0, s.x1, s.y1, k, 80); b.corre = k < 1; if (k >= 1) { m.sai = null; G.efeito('pouso', b.x, b.y); } }
+  if (m.t === 0) { const o = tronoZ(G.N.arena, QUEM_Z(b)), daSala = b.naSala || b.volta; m.sai = { x0: daSala ? m.px0 : o.x, y0: daSala ? m.py0 : o.y, x1: b.x, y1: b.y, alto: daSala ? 50 : 80 }; b.volta = null; sfx('dodge'); }
+  const s = m.sai; if (!s) return; const k = Math.min(1, m.t / 0.3); arco(b, s.x0, s.y0, s.x1, s.y1, k, s.alto); b.corre = k < 1; if (k >= 1) { m.sai = null; b.naSala = true; G.efeito('pouso', b.x, b.y); } }
 // rasante: aparece num canto, no chão, e cruza a sala inteira. Pule (ou atravesse com o passo)
 function zRasante(G, b, m, dt, o) {
   const A = G.N.arena;
-  if (m.e === 0) { if (m.t === 0) { m.d = G.p.x > A.cx ? 1 : -1; b.x = m.d > 0 ? A.x0 + 46 : A.x1 - 46; b.y = A.chao; b.face = m.d; b.alpha = 1; sfx('swing'); } saiDoTrono(G, b, m); b.alpha = 1; prepara(b); if (m.t > av(G, o.tele)) { m.e = 1; sfx('dodge'); } return false; }
+  if (m.e === 0) { if (m.t === 0) { m.px0 = b.x; m.py0 = b.y; m.d = G.p.x > A.cx ? 1 : -1; b.x = m.d > 0 ? A.x0 + 46 : A.x1 - 46; b.y = A.chao; b.face = m.d; b.alpha = 1; sfx('swing'); } saiDoTrono(G, b, m); b.alpha = 1; prepara(b); if (m.t > av(G, o.tele)) { m.e = 1; sfx('dodge'); } return false; }
   if (m.e === 1) { ataca(b); b.corre = true; b.x += m.d * vel(G, o.v) * dt; if (Math.random() < dt * 40) G.fx.po(b.x - m.d * 20, b.y - 4, 2, o.cor);
     if ((m.d > 0 && b.x > A.x1 - 56) || (m.d < 0 && b.x < A.x0 + 56)) { b.x = clamp(b.x, A.x0 + 56, A.x1 - 56); b.corre = false; if (o.volta && !m.voltou) { m.voltou = true; m.e = 3; m.t0 = m.t; } else { m.e = 2; m.t0 = m.t; } } return false; }
   if (m.e === 3) { prepara(b); b.face = -m.d; if (m.t - m.t0 > av(G, 0.32)) { m.d *= -1; m.e = 1; sfx('dodge'); } return false; } // vira e volta
@@ -1025,7 +1027,7 @@ function zRasante(G, b, m, dt, o) {
 // mergulho: aparece no alto, em cima de você, e desce reto com a arma
 function zMergulho(G, b, m, dt, o) {
   const A = G.N.arena;
-  if (m.e === 0) { if (m.t === 0) { b.x = clamp(G.p.x + (o.adianta ? G.p.vx * 0.25 : 0), A.x0 + 40, A.x1 - 40); b.y = A.chao - 236; b.alpha = 1; b.face = Math.sign(G.p.x - b.x) || 1; sfx('magic'); }
+  if (m.e === 0) { if (m.t === 0) { m.px0 = b.x; m.py0 = b.y; b.x = clamp(G.p.x + (o.adianta ? G.p.vx * 0.25 : 0), A.x0 + 40, A.x1 - 40); b.y = A.chao - 236; b.alpha = 1; b.face = Math.sign(G.p.x - b.x) || 1; sfx('magic'); }
     saiDoTrono(G, b, m); b.alpha = 1; prepara(b); if (o.segue && m.t < av(G, o.tele) * 0.65) b.x += clamp(G.p.x - b.x, -1, 1) * vel(G, o.segue) * dt;
     if (!m.marca && m.t > av(G, o.tele) * 0.65) { m.marca = true; zona(G, { tipo: 'circ', x: b.x, y: A.chao - 14, r: 26, aviso: av(G, o.tele) * 0.35 + 0.12, dur: 0.01, cor: o.cor, isca: true }); }
     if (m.t > av(G, o.tele)) { m.e = 1; sfx('swing'); } return false; }
@@ -1035,7 +1037,7 @@ function zMergulho(G, b, m, dt, o) {
 // da parede: agarra-se no alto do lado mais longe de você e arremessa
 function zParede(G, b, m, dt, o) {
   const A = G.N.arena;
-  if (m.e === 0) { if (m.t === 0) { m.lado = G.p.x > A.cx ? -1 : 1; b.x = m.lado < 0 ? A.x0 + 24 : A.x1 - 24; b.y = A.chao - o.alt; b.face = -m.lado; b.alpha = 1; sfx('swing'); } saiDoTrono(G, b, m); b.alpha = 1; prepara(b); if (m.t > av(G, o.tele)) { m.e = 1; m.n = 0; m.prox = m.t; } return false; }
+  if (m.e === 0) { if (m.t === 0) { m.px0 = b.x; m.py0 = b.y; m.lado = G.p.x > A.cx ? -1 : 1; b.x = m.lado < 0 ? A.x0 + 24 : A.x1 - 24; b.y = A.chao - o.alt; b.face = -m.lado; b.alpha = 1; sfx('swing'); } saiDoTrono(G, b, m); b.alpha = 1; prepara(b); if (m.t > av(G, o.tele)) { m.e = 1; m.n = 0; m.prox = m.t; } return false; }
   b.alpha = 1; if (m.prox <= m.t && m.n < o.n) { m.prox = m.t + o.int; m.n++; o.lanca(G, b, m, -m.lado); ataca(b); sfx('shoot'); }
   return m.n >= o.n && m.t > m.prox + o.rec && (!o.espera || o.espera(G, m));
 }
@@ -1046,7 +1048,7 @@ const passoFoices = (G, m, dt) => { const A = G.N.arena; for (const f of m.fs ||
 // o assassino: some, e aparece JÁ nas suas costas. O aviso é curto: ande para a frente ou pule
 function zCostas(G, b, m, dt, o) {
   const A = G.N.arena;
-  if (m.e === 0) { if (m.t === 0) { const lado = -(G.p.face || 1); b.x = clamp(G.p.x + lado * 74, A.x0 + 40, A.x1 - 40); b.y = A.chao; b.face = Math.sign(G.p.x - b.x) || 1; m.d = b.face; b.alpha = 1; G.efeito('sumico', b.x, b.y - 30); sfx('dodge'); zona(G, { tipo: 'circ', x: b.x + m.d * 40, y: A.chao - 26, r: 50, aviso: av(G, o.tele), dur: 0.12, cor: o.cor }); }
+  if (m.e === 0) { if (m.t === 0) { const lado = -(G.p.face || 1); b.x = clamp(G.p.x + lado * 74, A.x0 + 40, A.x1 - 40); b.y = A.chao; b.face = Math.sign(G.p.x - b.x) || 1; m.d = b.face; b.alpha = 1; b.naSala = true; b.volta = null; G.efeito('sumico', b.x, b.y - 30); sfx('dodge'); zona(G, { tipo: 'circ', x: b.x + m.d * 40, y: A.chao - 26, r: 50, aviso: av(G, o.tele), dur: 0.12, cor: o.cor }); }
     b.alpha = 1; prepara(b); if (m.t > av(G, o.tele)) { m.e = 1; m.t0 = m.t; ataca(b); sfx('swing'); b.x = clamp(b.x + m.d * 46, A.x0 + 40, A.x1 - 40); } return false; }
   b.alpha = 1; return m.t - m.t0 > o.rec;
 }
@@ -1078,10 +1080,11 @@ const conselho = {
     const ocupados = [b, jair, menaemP].some(q => q && q.mov);
     r.t -= dt; if (r.t <= 0 && !ocupados) { r.i++; r.t = f === 0 ? 6.5 : f === 1 ? 8 : 99; }
     const ativos = new Set(f === 0 ? [ordem[r.i % ordem.length]] : f === 1 ? (parceiros && jair ? duplas[r.i % 3] : ['eleazar']) : ['menaem', 'eleazar', 'jair']);
-    if (f === 0) { if (!ativos.has('jair')) b.cen.quem = [...ativos][0]; } else b.cen.quem = 'eleazar';
+    const quer = f === 0 ? (ativos.has('jair') ? b.cen.quem : [...ativos][0]) : 'eleazar', trocando = quer !== b.cen.quem && (b.naSala || b.volta || b.mov); // quem está na sala volta ao trono antes de o outro descer
+    if (!trocando) b.cen.quem = quer;
     b.cen.fase = f;
     const folga = (q, sim) => { if (!q) return; if (q.folga && sim) q.espera = Math.min(q.espera, 0.7); q.folga = !sim; };
-    folga(b, ativos.has(b.cen.quem)); folga(jair, ativos.has('jair')); folga(menaemP, ativos.has('menaem') && f >= 1);
+    folga(b, !trocando && ativos.has(b.cen.quem)); folga(jair, ativos.has('jair')); folga(menaemP, ativos.has('menaem') && f >= 1);
     for (const q of G.inimigos) if (q.parte && q.hp < q.max) { const d = q.max - q.hp; q.hp = q.max; b.hp -= d; b.flash = 0.1; b.semGolpe = 0; if (b.hp <= 0 && !b.morrendo) { b.x = q.x; b.y = q.y; G.chefeMorre(b); } }
   },
   // o corpo principal só escolhe os golpes de quem ele é agora
