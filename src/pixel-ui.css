@@ -347,3 +347,9 @@ html.remake .tela-div.porta-painel.saguao, .tela-div.porta-painel.saguao { displ
 .saguao-nota { margin: 0; text-align: center; font-size: 14px; line-height: 1.3; color: #9AA0B6; }
 .saguao-local { border-top: 2px solid #2A3050; padding-top: 6px; } .saguao-local summary { cursor: pointer; font-size: 14px; color: #7C839C; text-align: center; padding: 4px; } .saguao-local[open] summary { color: #C9A44A; margin-bottom: 6px; } .saguao-local .saguao-nota { margin-top: 6px; }
 @media (max-height: 500px) { html.remake .tela-div.porta-painel.saguao { display: flex !important; margin-top: 4px; padding: 6px 10px; gap: 4px; } .saguao-nota { font-size: 12px; } .saguao .porta-btn { min-height: 34px; padding: 4px; } }
+
+/* ---------- controle na tela dos personagens: dá para ver qual está escolhido ---------- */
+body.pad .char-card:focus-within, .char-card:has(:focus-visible) { box-shadow: 0 0 0 3px #FFD76A, 0 0 18px rgba(255, 215, 106, .45) !important; transform: scale(1.02); }
+body.pad .char-card button:focus, body.pad #screens button:focus, body.pad #screens input:focus, #screens button:focus-visible { outline: 3px solid #FFD76A !important; outline-offset: 3px; }
+body.pad .char-card .btn.gold:focus { background: #FFE08A !important; }
+body.pad .char-card .btn.danger:focus { color: #FFB0A8 !important; }

@@ -125,7 +125,7 @@ function voltar(janela) {
   clicar(achar(janela, '.quiet-button, [data-voltar]') || [...janela.querySelectorAll('button')].find(el => !el.disabled && visivel(el) && /^(←\s*)?(voltar|anterior|cancelar)/i.test(el.textContent.trim())));
 }
 // Start: o botão principal da janela (Continuar, Jogar, Entrar, OK) sem precisar andar até ele
-const principal = janela => achar(janela, '.forge-primary, .btn.gold, .btn.primary, button[type="submit"]');
+const principal = janela => { const card = document.activeElement?.closest?.('.char-card'); if (card && janela.contains(card)) return achar(card, '.btn.gold'); return achar(janela, '.forge-primary, .btn.gold, .btn.primary, button[type="submit"]'); }; // na lista de personagens, o Jogar do personagem em foco
 // LB / RB: troca de aba (menu, lojas, etapas da criação)
 function aba(janela, d) {
   const grupo = [...janela.querySelectorAll('.cm-abas, .tabs, .creation-steps, [role="tablist"]')].find(visivel); if (!grupo) return;
