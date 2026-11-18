@@ -246,9 +246,12 @@ export class Caminho {
   /* ================= Laço ================= */
   loop(now) {
     if (!this.running) return;
-    const dt = Math.min(0.033, (now - this.last) / 1000); this.last = now;
+    const bruto = Math.min(0.1, Math.max(0, (now - this.last) / 1000)); this.last = now;
+    /* aparelho lento: o tempo do jogo não fica em câmera lenta (passos menores) e a imagem passa a ser ampliada num passo só */
+    this.quadroMed = (this.quadroMed ?? 0.016) * 0.95 + bruto * 0.05; if (!this.leve && this.T > 4 && this.quadroMed > 0.024) { this.leveT = (this.leveT || 0) + bruto; if (this.leveT > 2.5) this.leve = true; } else if (!this.leve) this.leveT = 0;
+    const passos = Math.max(1, Math.ceil(bruto / 0.034)), dt = bruto / passos;
     // um erro num quadro não pode parar o jogo (nem a sala, para quem joga junto)
-    try { if (!document.hidden) { if ((!this.ui.blocking || this.cena) && !this.pausaGeral) this.update(dt) /* numa cena o mundo segue vivo por trás das falas; os controles já ficam presos */; else if (this.mp) this.updateAusente(dt); this.mp?.tick(dt); this.telaJunta(dt); } this.render(); }
+    try { if (!document.hidden) { if ((!this.ui.blocking || this.cena) && !this.pausaGeral) { for (let i = 0; i < passos; i++) this.update(dt); } /* numa cena o mundo segue vivo por trás das falas; os controles já ficam presos */ else if (this.mp) this.updateAusente(dt * passos); this.mp?.tick(dt); this.telaJunta(dt); } this.render(); }
     catch (e) { this.p = this.eu || this.p; if (!this.erroVisto) { this.erroVisto = true; console.error('[caminho]', e); } }
     this.raf = requestAnimationFrame(t => this.loop(t));
   }

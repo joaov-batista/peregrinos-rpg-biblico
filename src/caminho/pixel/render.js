@@ -367,10 +367,11 @@ export function renderPixel(G) {
 
   // amplia: primeiro por um fator inteiro (pixels nítidos), depois ajusta à tela
   const cvw = G.cv.width, cvh = G.cv.height, k = Math.max(1, Math.ceil(cvh / vh));
-  if (meio.width !== vw * k || meio.height !== vh * k) { meio.width = vw * k; meio.height = vh * k; }
-  mg.imageSmoothingEnabled = false; mg.drawImage(baixa, 0, 0, vw * k, vh * k);
-  const G2 = G.g; G2.setTransform(1, 0, 0, 1, 0, 0); G2.imageSmoothingEnabled = true; G2.imageSmoothingQuality = 'low';
-  G2.drawImage(meio, 0, 0, vw * k, vh * k, 0, 0, vw * esc * G.dpr, cvh);
+  const G2 = G.g; G2.setTransform(1, 0, 0, 1, 0, 0);
+  if (G.leve) { G2.imageSmoothingEnabled = false; G2.drawImage(baixa, 0, 0, vw, vh, 0, 0, vw * esc * G.dpr, cvh); } /* aparelho lento: um passo só */
+  else { if (meio.width !== vw * k || meio.height !== vh * k) { meio.width = vw * k; meio.height = vh * k; }
+    mg.imageSmoothingEnabled = false; mg.drawImage(baixa, 0, 0, vw * k, vh * k);
+    G2.imageSmoothingEnabled = true; G2.imageSmoothingQuality = 'low'; G2.drawImage(meio, 0, 0, vw * k, vh * k, 0, 0, vw * esc * G.dpr, cvh); }
   pintarTextos(G2, G, esc, cx, cy);
 }
 

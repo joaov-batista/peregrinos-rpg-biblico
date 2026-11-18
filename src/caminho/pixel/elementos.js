@@ -35,7 +35,8 @@ function coluna(g, el, x, y, w, h, ativa, k, Tm) {
   }
   // o golpe
   if (el === 'fogo') { // chamas que sobem: línguas de fogo de alturas diferentes, mais claras no miolo
-    for (let i = 0; i < w; i++) { const meio = 1 - Math.abs(i - w / 2) / (w / 2), alt = h * (0.55 + 0.45 * meio) * (0.85 + 0.15 * Math.sin(Tm * 18 + i * 1.7)); for (let yy = 0; yy < alt; yy += 2) { const q = yy / alt; px(g, P[q > 0.85 ? 1 : q > 0.6 ? 2 : meio > 0.6 && q < 0.4 ? 4 : 3], x + i, base - yy - 2, 1, 2); } }
+    for (let i = 0; i < w; i++) { const meio = 1 - Math.abs(i - w / 2) / (w / 2), alt = Math.round(h * (0.55 + 0.45 * meio) * (0.85 + 0.15 * Math.sin(Tm * 18 + i * 1.7))), b0 = base - 2, nucleo = meio > 0.6; /* faixas de cor por coluna de pixel: poucas chamadas, mesmo desenho */
+      px(g, P[3], x + i, b0 - alt * 0.6, 1, alt * 0.6); if (nucleo) px(g, P[4], x + i, b0 - alt * 0.4, 1, alt * 0.4); px(g, P[2], x + i, b0 - alt * 0.85, 1, alt * 0.25); px(g, P[1], x + i, b0 - alt, 1, alt * 0.15); }
     for (let i = 0; i < 8; i++) px(g, P[4], x + ruido(i, f) * w, base - h - ((Tm * 60 + i * 9) % 20), 1, 1);
   } else if (el === 'raio') { // o raio: um zigue-zague do alto ao chão, com galhos, e o clarão no chão
     g.globalAlpha = 0.18; px(g, P[2], x - 4, y, w + 8, h); g.globalAlpha = 1;
@@ -43,7 +44,7 @@ function coluna(g, el, x, y, w, h, ativa, k, Tm) {
     for (let s = 0; s < segs; s++) { const y0 = y + s * h / segs, nx = x + w / 2 + (ruido(s, f) - 0.5) * w * 0.8; const passos = Math.max(1, Math.round(h / segs)); for (let t = 0; t <= passos; t++) { const xx = cx + (nx - cx) * t / passos, yy = y0 + t; px(g, P[1], xx - 2, yy, 5, 1); px(g, P[3], xx - 1, yy, 3, 1); px(g, P[4], xx, yy, 1, 1); } if (ruido(f, s) < 0.3) for (let t = 0; t < 6; t++) px(g, P[3], nx + t * (ruido(s, 7) < 0.5 ? 1 : -1), y0 + t * 0.8, 1, 1); cx = nx; }
     px(g, P[4], x - 2, base - 2, w + 4, 2); for (let i = 0; i < 6; i++) px(g, P[3], x + ruido(i, f) * w, base - 3 - ruido(f, i) * 6, 1, 1);
   } else if (el === 'agua') { // gêiser: coluna d'água com borda clara, espuma no alto e gotas
-    for (let i = 0; i < w; i++) { const on = Math.sin(Tm * 14 + i * 0.6) * 2; for (let yy = 0; yy < h; yy += 2) px(g, P[i < 2 || i > w - 3 ? 3 : (yy + f + i) % 6 < 2 ? 2 : 1], x + i + (yy % 4 ? 0 : on * 0.3), base - yy - 2, 1, 2); }
+    for (let i = 0; i < w; i++) { const borda = i < 2 || i > w - 3; px(g, P[borda ? 3 : 1], x + i, base - h, 1, h); if (!borda) for (let yy = (f + i) % 6; yy < h; yy += 6) px(g, P[2], x + i, base - yy - 2, 1, 2); }
     for (let i = 0; i < w + 6; i += 2) px(g, P[4], x - 3 + i, base - h - 2 + Math.round(Math.sin(Tm * 10 + i) * 2), 2, 2);
     for (let i = 0; i < 8; i++) { const q = (Tm * 2 + i / 8) % 1; px(g, P[3], x + w / 2 + (ruido(i, 1) - 0.5) * w * 2 * q, base - h - 4 + q * q * 30, 1, 2); }
   } else if (el === 'pedra') { // pedras caindo e poeira no chão
@@ -57,7 +58,7 @@ function coluna(g, el, x, y, w, h, ativa, k, Tm) {
     for (let i = 0; i < 24; i++) px(g, P[3], meio + (ruido(i, 3) - 0.5) * w * 0.5, y + ((Tm * 140 + i * 17) % h), 1, 2);
     for (let i = 0; i < w; i++) { const alt = Math.round(h * 0.18 * Math.max(0, 1 - Math.abs(i - w / 2) / (w / 2))); for (let yy = 0; yy < alt; yy += 2) px(g, P[yy > alt - 3 ? 3 : 2], x + i, base - yy - 2, 1, 2); }
   } else if (el === 'sombra' || el === 'magia' || el === 'veneno') { // escorre do alto: fios escuros, olhos (sombra), runas (magia), gotas (veneno), grãos (areia)
-    for (let i = 0; i < w; i += 2) { const comp = h * (0.6 + 0.4 * ruido(i, Math.floor(Tm * 4))); for (let yy = 0; yy < comp; yy += 2) px(g, P[yy / comp > 0.7 ? 1 : 2 + ((i + yy + f) % 3 === 0 ? 1 : 0)], x + i + Math.round(Math.sin(Tm * 6 + yy * 0.2 + i) * 1), y + yy, 2, 2); }
+    for (let i = 0; i < w; i += 2) { const comp = h * (0.6 + 0.4 * ruido(i, Math.floor(Tm * 4))); for (let yy = 0; yy < comp; yy += 6) px(g, P[yy / comp > 0.7 ? 1 : 2 + ((i + yy + f) % 3 === 0 ? 1 : 0)], x + i + Math.round(Math.sin(Tm * 6 + yy * 0.2 + i) * 1), y + yy, 2, 6); }
     if (el === 'sombra') { px(g, P[4], x + w / 2 - 4, y + h * 0.3, 2, 2); px(g, P[4], x + w / 2 + 2, y + h * 0.3, 2, 2); }
     if (el === 'magia') for (let i = 0; i < 4; i++) { const ry = y + ((Tm * 40 + i * 20) % h); px(g, P[4], x + w / 2 - 2, ry, 4, 1); px(g, P[4], x + w / 2, ry - 2, 1, 4); }
     px(g, P[3], x - 2, base - 2, w + 4, 2);
@@ -73,9 +74,9 @@ function coluna(g, el, x, y, w, h, ativa, k, Tm) {
 function faixa(g, el, x, y, w, h, ativa, k, Tm) {
   const P = PAL[el], f = Math.floor(Tm * 16);
   if (!ativa) { g.globalAlpha = 0.25 + k * 0.5; for (let i = 0; i < w; i += 3) px(g, P[2 + ((i + f) % 2)], x + i, y + h - 2 - Math.round(ruido(i, f) * 3 * k), 2, 2); g.globalAlpha = 1; return; }
-  if (el === 'agua') { for (let i = 0; i < w; i++) { const top = Math.round(h * 0.25 + Math.sin(Tm * 9 - i * 0.12) * h * 0.2); for (let yy = top; yy < h; yy += 2) px(g, P[yy < top + 2 ? 4 : yy < top + 5 ? 3 : 1 + ((i + yy) % 5 === 0 ? 1 : 0)], x + i, y + yy, 1, 2); } return; }
+  if (el === 'agua') { for (let i = 0; i < w; i++) { const top = Math.round(h * 0.25 + Math.sin(Tm * 9 - i * 0.12) * h * 0.2); px(g, P[1], x + i, y + top + 5, 1, h - top - 5); px(g, P[3], x + i, y + top + 2, 1, 3); px(g, P[4], x + i, y + top, 1, 2); if (i % 5 === 0) px(g, P[2], x + i, y + top + 8 + (i * 7) % Math.max(1, h - top - 10), 1, 2); } return; }
   if (el === 'vento' || el === 'som') { for (let r = 0; r < h; r += 4) for (let i = 0; i < w; i += 14) { const xx = x + ((i + Tm * 220 + r * 9) % w); px(g, P[3], xx, y + r, 8, 1); px(g, P[4], xx + 8, y + r - 1, 2, 1); } return; }
-  if (el === 'fogo') { for (let i = 0; i < w; i++) { const alt = h * (0.5 + 0.5 * Math.abs(Math.sin(Tm * 12 + i * 0.35))); for (let yy = 0; yy < alt; yy += 2) { const q = yy / alt; px(g, P[q > 0.75 ? 1 : q > 0.45 ? 2 : 3], x + i, y + h - yy - 2, 1, 2); } } return; }
+  if (el === 'fogo') { for (let i = 0; i < w; i++) { const alt = Math.round(h * (0.5 + 0.5 * Math.abs(Math.sin(Tm * 12 + i * 0.35)))), b0 = y + h - 2; px(g, P[3], x + i, b0 - alt * 0.45, 1, alt * 0.45); px(g, P[2], x + i, b0 - alt * 0.75, 1, alt * 0.3); px(g, P[1], x + i, b0 - alt, 1, alt * 0.25); } return; }
   if (el === 'raio') { /* arcos elétricos que atravessam a faixa, com brilho em volta */
     g.globalAlpha = 0.16; px(g, P[2], x, y, w, h); g.globalAlpha = 1;
     for (let a = 0; a < 3; a++) { let yy = y + h * (0.25 + a * 0.25); for (let i = 0; i < w; i += 3) { const ny = y + h * (0.25 + a * 0.25) + (ruido(i + a * 50, f) - 0.5) * h * 0.4; const d = ny - yy; for (let t = 0; t < 3; t++) { const qy = yy + d * t / 3; px(g, P[1], x + i + t, qy - 1, 1, 3); px(g, P[a === 1 ? 4 : 3], x + i + t, qy, 1, 1); } yy = ny; } }
