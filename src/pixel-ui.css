@@ -353,3 +353,16 @@ body.pad .char-card:focus-within, .char-card:has(:focus-visible) { box-shadow: 0
 body.pad .char-card button:focus, body.pad #screens button:focus, body.pad #screens input:focus, #screens button:focus-visible { outline: 3px solid #FFD76A !important; outline-offset: 3px; }
 body.pad .char-card .btn.gold:focus { background: #FFE08A !important; }
 body.pad .char-card .btn.danger:focus { color: #FFB0A8 !important; }
+
+/* primeira vez: um botão só; "Jogar com amigos" recolhido */
+html.remake .criar-primeiro { display: block; width: min(360px, 100%); margin: 14px auto 10px; padding: 14px 20px; font-size: 22px; }
+.saguao-recolhido { width: min(420px, 100%); margin: 4px auto; text-align: center; }
+.saguao-recolhido > summary { cursor: pointer; color: #C9B88A; font-size: 16px; padding: 6px; list-style: none; }
+.saguao-recolhido > summary::before { content: '▸ '; } .saguao-recolhido[open] > summary::before { content: '▾ '; }
+
+/* o cartão do tutorial, compacto: a tecla e uma frase numa linha, os pontinhos embaixo */
+html.remake #cmTut { width: auto; max-width: min(560px, calc(100vw - 200px)); padding: 8px 16px 6px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 12px; top: calc(var(--safe-t, 0px) + 18px); }
+html.remake #cmTut .kbd { margin: 0; font-size: 18px; padding: 2px 10px; }
+html.remake #cmTut p { margin: 0; font-size: 21px; }
+html.remake #cmTut i { flex-basis: 100%; display: flex; justify-content: center; gap: 4px; margin-top: 2px; }
+html.remake #cmTut u { width: 14px; }

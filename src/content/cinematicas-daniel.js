@@ -11,11 +11,10 @@ const textos = [
 ];
 export const CINEMAS_DANIEL = {
   'caminho-prologo': { titulo: 'O Livro fechado', cenas: [
-    { cena: 'noite', titulo: 'PEREGRINOS', sub: 'O Caminho', texto: 'Houve um tempo em que toda casa tinha um Livro aberto, e toda aldeia, uma lâmpada acesa.' },
-    { cena: 'sombras', texto: 'Ninguém o queimou. Ninguém o proibiu. Ele apenas foi ficando fechado. E cada página esquecida, a sombra cobriu.' },
-    { cena: 'sombras', fx: 'brasas', fig: [{ p: 'chefe:mentira', x: 0.3, y: 0.8, s: 1.5 }, { p: 'chefe:mamom', x: 0.68, y: 0.8, s: 1.6 }], texto: '[tense] O que a sombra cobre ganha corpo. A ganância tomou um nome. A mentira ganhou rostos. O medo aprendeu a andar.' },
-    { cena: 'cidade', fig: [{ p: 'jogador', x: 0.5, y: 0.84, s: 1.6 }], texto: 'Restou uma aldeia acesa, que chamam Refúgio. E restou você: um peregrino, uma lâmpada, e azeite para pouco.' },
-    { cena: 'luz', titulo: 'SALMO 119:105', texto: 'Lâmpada para os meus pés é a tua palavra, e luz para o meu caminho. Leia. Entenda. E a luz volta, página por página.' }
+    { cena: 'noite', titulo: 'PEREGRINOS', sub: 'O Caminho', texto: 'Ninguém queimou o Livro. Ele só foi ficando fechado. E cada página esquecida, a sombra cobriu.' },
+    { cena: 'sombras', fx: 'brasas', fig: [{ p: 'chefe:mentira', x: 0.3, y: 0.8, s: 1.5 }, { p: 'chefe:mamom', x: 0.68, y: 0.8, s: 1.6 }], texto: '[tense] E o que a sombra cobre ganha corpo.' },
+    { cena: 'cidade', fig: [{ p: 'jogador', x: 0.5, y: 0.84, s: 1.6 }], texto: 'Restou uma aldeia acesa, o Refúgio. E restou você, com uma lâmpada.' },
+    { cena: 'luz', titulo: 'SALMO 119:105', texto: 'Lâmpada para os meus pés é a tua palavra. Leia, e a luz volta.' }
   ] },
   'semana-03': { titulo: semana.titulo, cenas: [
     { cena: 'trono', titulo: 'DANIEL 4', sub: 'O rei que virou fera', fig: [{ p: REI, x: 0.5, y: 0.82, s: 1.7 }], texto: 'Esta é a carta de um rei. Nabucodonosor, senhor da Babilônia, escreve a todos os povos para contar como caiu, e quem o levantou.' },

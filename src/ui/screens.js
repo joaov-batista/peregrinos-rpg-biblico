@@ -64,7 +64,7 @@ export function showAuth(onDone) {
   // aberto por dentro do Instagram, Facebook ou TikTok: lá não dá para instalar, e o salvamento some com facilidade
   const embutido = /Instagram|FBAN|FBAV|FB_IAB|TikTok|musical_ly|Line\//i.test(navigator.userAgent);
   const aviso = embutido && !emQuadro ? h('div', { class: 'porta-aviso', role: 'note' }, h('b', {}, 'Você abriu o jogo por dentro de outro aplicativo.'), h('span', {}, 'Para instalar e não perder o progresso, toque em ⋯ (em cima, à direita) e escolha "Abrir no navegador".')) : '';
-  screen(logo(), quem, h('p', { class: 'week' }, 'Estudo da semana: ', h('b', {}, SEMANA_ATUAL.titulo), ' · ' + SEMANA_ATUAL.estudo), aviso, form, juntos, emQuadro ? '' : baixarJogo());
+  screen(logo(), quem, h('p', { class: 'week' }, 'Um RPG bíblico. Leve a luz com você.'), aviso, form, juntos, emQuadro ? '' : baixarJogo());
 }
 
 // Botão "Instalar app" (aparece só quando dá para instalar)
@@ -123,9 +123,11 @@ export async function showSelect(onPlay, onNew, onLogout) {
   let chars = [];
   try { chars = await net.listChars(); } catch (e) { screen(logo(), h('p', { class: 'form-msg err' }, 'Erro: ' + e.message), h('button', { class: 'btn', onclick: onLogout }, 'Voltar')); return; }
   // quem ainda não tem peregrino: cria um agora. O painel de sala fica à vista, para quem veio jogar com amigos entrar já com o personagem novo
-  if (!chars.length) return screen(logo(), h('h2', { class: 'title' }, 'Bem-vindo, peregrino'), h('p', { class: 'muted' }, 'Você ainda não tem um peregrino. Crie o seu para começar a jornada.'),
-    h('button', { class: 'btn gold wide criar-primeiro', type: 'button', onclick: () => { sfx('click'); onNew(); } }, 'Criar meu peregrino'), saguaoJuntos(true),
-    h('div', { class: 'btn-row' }, h('button', { class: 'btn link', onclick: onLogout }, ONLINE && net.user ? 'Sair da conta' : 'Voltar')));
+  // primeira vez: um botão só. Jogar com amigos fica recolhido (quem veio por um código de sala já o encontra aberto)
+  if (!chars.length) { const comSala = /sala=/.test(location.search); return screen(logo(), h('h2', { class: 'title' }, 'Bem-vindo, peregrino'),
+    h('button', { class: 'btn gold criar-primeiro', type: 'button', onclick: () => { sfx('click'); onNew(); } }, 'Criar meu peregrino'),
+    h('details', { class: 'saguao-recolhido', open: comSala }, h('summary', {}, 'Jogar com amigos'), saguaoJuntos(true)),
+    h('div', { class: 'btn-row' }, h('button', { class: 'btn link', onclick: onLogout }, ONLINE && net.user ? 'Sair da conta' : 'Voltar'))); }
   const list = h('div', { class: 'char-list' });
   for (const c of chars) {
     const conflict = net.conflict(c.id);

@@ -42,17 +42,17 @@ import { venceuRaiz } from './missao.js';
 
 // Primeiros passos: [toque, controle, teclado]
 const PASSOS = [ // t: [toque, controle, teclado]; alvo: o botão de toque que pisca. No Bosque do Treino cada passo tem o seu lugar na trilha.
-  { id: 'andar', titulo: 'Andar', t: ['arraste à esquerda', 'direcional', '← →', 'A D'], txt: 'Siga a trilha para a direita.' },
-  { id: 'saltar', titulo: 'Pular', alvo: 'dodge', t: ['PULAR', 'A', '↑', 'W'], txt: 'Um tronco caído no caminho: pule por cima. Segurar o botão pula mais alto.' },
-  { id: 'pular', titulo: 'Salto duplo', alvo: 'dodge', t: ['PULAR, PULAR', 'A, A', '↑, ↑', 'W, W'], txt: 'O muro adiante é alto demais: pule e, no ar, pule de novo.' },
-  { id: 'golpe', titulo: 'Golpe', alvo: 'attack', t: ['GOLPE', 'X', 'Z ou X', 'clique do mouse'], txt: 'Acerte um boneco de palha. Com o direcional para cima ou para baixo, o golpe muda de direção.' },
-  { id: 'passo', titulo: 'Passo pronto', alvo: 'lock', t: ['PASSO', 'RT', 'C', 'Shift'], txt: 'Um arranco que atravessa o perigo sem ser ferido. Demora um pouco a voltar.' },
-  { id: 'descer', titulo: 'Descer', t: ['puxe para baixo', '↓', '↓', 'S'], txt: 'Suba na tábua de madeira e segure para baixo para atravessá-la.' },
-  { id: 'luz', titulo: 'Lâmpada: luz', alvo: 'defend', t: ['segure LÂMPADA', 'segure LB', 'segure D', 'segure E'], txt: 'Erga a lâmpada perto do barranco: degraus escondidos e um versículo aparecem. A luz mostra o que a sombra cobre.' },
-  { id: 'vigilia', titulo: 'Lâmpada: defesa', alvo: 'defend', t: ['LÂMPADA na hora', 'LB na hora', 'D na hora', 'E na hora'], txt: 'Dardos de treino (não ferem): aperte quando o dardo chegar. É a sua única defesa.' },
-  { id: 'azeite', titulo: 'Azeite', t: ['jarro no alto', 'jarro no alto', 'jarro no alto', 'jarro no alto'], txt: 'Golpes certos e defesas enchem o jarro. O azeite paga a oração, o especial e o ataque mira.' },
-  { id: 'mira', titulo: 'Ataque mira', alvo: 'attack', t: ['segure GOLPE e arraste o dedo', 'segure X e aponte com o analógico', 'segure Z, aponte com as setas e solte', 'segure o clique, aponte e solte'], txt: 'Espere a linha dourada, aponte (há um boneco no alto) e solte. Gasta 40 de azeite: seu jarro foi cheio para treinar.' },
-  { id: 'orar', titulo: 'Orar', alvo: 'botija', t: ['segure ORAR', 'segure B', 'segure A', 'segure Q'], txt: 'Você perdeu dois fôlegos (é só treino). Fique parado e ore: gasta azeite e devolve um fôlego.' }
+  { id: 'andar', titulo: 'Andar', t: ['arraste à esquerda', 'direcional', '← →', 'A D'], txt: 'Siga a trilha.' },
+  { id: 'saltar', titulo: 'Pular', alvo: 'dodge', t: ['PULAR', 'A', '↑', 'W'], txt: 'Pule o tronco.' },
+  { id: 'pular', titulo: 'Salto duplo', alvo: 'dodge', t: ['PULAR, PULAR', 'A, A', '↑, ↑', 'W, W'], txt: 'Pule de novo no ar.' },
+  { id: 'golpe', titulo: 'Golpe', alvo: 'attack', t: ['GOLPE', 'X', 'Z ou X', 'clique do mouse'], txt: 'Acerte o boneco.' },
+  { id: 'passo', titulo: 'Passo pronto', alvo: 'lock', t: ['PASSO', 'RT', 'C', 'Shift'], txt: 'Atravesse o perigo.' },
+  { id: 'descer', titulo: 'Descer', t: ['puxe para baixo', '↓', '↓', 'S'], txt: 'Desça pela tábua.' },
+  { id: 'luz', titulo: 'Lâmpada: luz', alvo: 'defend', t: ['segure LÂMPADA', 'segure LB', 'segure D', 'segure E'], txt: 'Erga a lâmpada: a luz revela.' },
+  { id: 'vigilia', titulo: 'Lâmpada: defesa', alvo: 'defend', t: ['LÂMPADA na hora', 'LB na hora', 'D na hora', 'E na hora'], txt: 'Erga a lâmpada quando o dardo chegar.' },
+  { id: 'azeite', titulo: 'Azeite', t: ['jarro no alto', 'jarro no alto', 'jarro no alto', 'jarro no alto'], txt: 'Golpes e defesas enchem o jarro.' },
+  { id: 'mira', titulo: 'Ataque mira', alvo: 'attack', t: ['segure GOLPE e arraste o dedo', 'segure X e aponte com o analógico', 'segure Z, aponte com as setas e solte', 'segure o clique, aponte e solte'], txt: 'Segure, aponte e solte.' },
+  { id: 'orar', titulo: 'Orar', alvo: 'botija', t: ['segure ORAR', 'segure B', 'segure A', 'segure Q'], txt: 'Fique parado e ore.' }
 ];
 
 // por que os chefes recuperam a vida (quando você cai, quando erra a Escritura, quando para de lutar)
@@ -196,7 +196,7 @@ export class Caminho {
     this.musicaDaArea();
     this.ui.bossBar(null);
     this.ui.banner(def.sem ? def.sem.titulo.toUpperCase() : 'PEREGRINOS', def.nome, def.sub);
-    if (def.fase && !this.avisoNivelado) { this.avisoNivelado = true; setTimeout(() => this.running && this.ui.toast('Página da semana: aqui todos lutam em pé de igualdade. Nível e forja não contam; o que conta é a mão e a lâmpada.', 6500), 3500); }
+    if (def.fase && !this.avisoNivelado) { this.avisoNivelado = true; setTimeout(() => this.running && this.ui.toast('Página da semana: todos em pé de igualdade.', 4000), 3500); }
     if (!o.quieto) this.chegada(def);
     this.salvar();
   }
@@ -575,7 +575,7 @@ export class Caminho {
   }
 
   soltarMoedas(x, y, n) { for (let i = 0; i < n; i++) this.moedas.push({ x, y, vx: rand(-150, 150), vy: rand(-330, -140), t: 0, v: 1 }); }
-  xp(n) { const c = this.char; if (c.level >= MAX_LEVEL) return; c.data.xp += n; let up = false; while (c.data.xp >= xpNeed(c.level) && c.level < MAX_LEVEL) { c.data.xp -= xpNeed(c.level); c.level++; up = true; } if (up) { sfx('level'); this.ui.toast('Nível ' + c.level + ' de peregrino: seus golpes ficaram um pouco mais firmes.'); } }
+  xp(n) { const c = this.char; if (c.level >= MAX_LEVEL) return; c.data.xp += n; let up = false; while (c.data.xp >= xpNeed(c.level) && c.level < MAX_LEVEL) { c.data.xp -= xpNeed(c.level); c.level++; up = true; } if (up) { sfx('level'); this.ui.toast('Nível ' + c.level + '!'); } }
   pontos(n) { this.char.score += n; this.char.week_score += n; }
 
   ferirHeroi(n, origem, o = {}) {
@@ -912,7 +912,7 @@ export class Caminho {
     const el = this.tutEl || (this.tutEl = document.body.appendChild(h('div', { id: 'cmTut' })));
     el.hidden = !!this.luta || this.ui.blocking;
     if (this.tutVisto !== v.tut + ':' + modo) { this.tutVisto = v.tut + ':' + modo; document.querySelectorAll('.tut-alvo').forEach(x => x.classList.remove('tut-alvo')); if (s.alvo && modo === 0) document.querySelector(`[data-act="${s.alvo}"]`)?.classList.add('tut-alvo');
-      el.replaceChildren(h('small', {}, 'Primeiros passos · ' + (v.tut + 1) + ' de ' + PASSOS.length), h('b', {}, s.titulo), h('span', { class: 'kbd' }, s.t[modo] ?? s.t[2]), h('p', {}, s.txt), h('i', {}, ...PASSOS.map((_, i) => h('u', { class: i < v.tut ? 'ok' : i === v.tut ? 'on' : '' })))); el.classList.remove('entra'); void el.offsetWidth; el.classList.add('entra'); }
+      el.replaceChildren(h('span', { class: 'kbd' }, s.t[modo] ?? s.t[2]), h('p', {}, s.txt), h('i', {}, ...PASSOS.map((_, i) => h('u', { class: i < v.tut ? 'ok' : i === v.tut ? 'on' : '' })))); /* compacto: tecla + uma frase + os pontinhos do progresso */ el.classList.remove('entra'); void el.offsetWidth; el.classList.add('entra'); }
     if (this.tutIni !== v.tut) { this.tutIni = v.tut; // o que cada passo prepara ao começar
       if (s.id === 'luz' && this.area === 'refugio') { const tx = Math.floor(p.x / T), ty = Math.floor(p.y / T) - 4;
         for (let k = -2; k <= 3; k++) { const x = tx + (p.face || 1) * 2 + k; if (tileEm(this.N, x, ty) === VAZIO) this.N.tiles[ty * this.N.w + x] = OCULTO; }
@@ -1183,7 +1183,7 @@ export class Caminho {
     this.objs = this.objs.filter(ob => !ob.fora);
     this.perto = perto;
     this.ui.setInteract(perto && input.touch ? perto.rot : null);
-    if (perto && this.ctl.interagir && !this.cena) this.usar(perto);
+    if (perto && this.ctl.interagir && !this.cena) { const u = this.cm.visto.usos = this.cm.visto.usos || {}; u[perto.rot] = (u[perto.rot] || 0) + 1; this.usar(perto); } // depois de 3 usos de cada tipo, o rótulo vira só a tecla
   }
   rotulo(ob) {
     const rn = rotuloNovo(this, ob); if (rn !== undefined) return rn;
@@ -1256,8 +1256,9 @@ export class Caminho {
         else if (ob.area === 'refugio' && this.area === 'clareira') this.entrar('refugio', { portal: 'clareira' });
         else if (ob.area === 'clareira') await this.ui.dialog({ nome: ob.rotulo, texto: 'Atrás do pátio a aldeia acaba e começa a mata. Uma trilha de terra batida entra entre as oliveiras.\n\nLá dentro há uma clareira: a arena de treino, o desafio das ondas e, no fundo, uma porta de ferro guardada pelos zelotes.', acoes: [{ label: 'Seguir a trilha', fn: () => this.entrar('clareira') }, { label: 'Agora não' }], voz: false });
         else if (ob.area === 'refugio') { const falta = cm.visto.tut != null && cm.visto.tut < PASSOS.length;
-          await this.ui.dialog({ nome: ob.rotulo, texto: 'No fim da trilha, luzes: a última aldeia acesa. O Refúgio.' + (falta ? '\n\nVocê ainda não terminou os primeiros passos (faltam ' + (PASSOS.length - cm.visto.tut) + '). Dá para voltar ao bosque quando quiser, pela Praça do poço.' : ''),
-            acoes: [{ label: 'Entrar no Refúgio', fn: () => { if (falta) cm.visto.tut = PASSOS.length; this.entrar('refugio', { portal: 'bosque' }); } }, { label: falta ? 'Terminar o treino' : 'Ficar mais um pouco' }], voz: false }); }
+          // o treino é obrigatório: o portal só abre quando todos os passos foram feitos
+          if (falta) { const prox = PASSOS[cm.visto.tut]; sfx('wrong'); this.textoEm(ob.x, ob.y - 150, 'ainda não', '#C9B88A', 13); await this.ui.dialog({ nome: ob.rotulo, texto: 'O portal não abre. Falta aprender: ' + prox.titulo.toLowerCase() + ' (' + (PASSOS.length - cm.visto.tut) + ' passos).', acoes: [{ label: 'Voltar à trilha' }], voz: false }); }
+          else await this.ui.dialog({ nome: ob.rotulo, texto: 'No fim da trilha, luzes: a última aldeia acesa. O Refúgio.', acoes: [{ label: 'Entrar no Refúgio', fn: () => this.entrar('refugio', { portal: 'bosque' }) }, { label: 'Ficar mais um pouco' }], voz: false }); }
         else if (ob.area === 'conselho' && cm.zelo) { // já é irmão de armas: eles se levantam quando você entra
           const MESA = ['Menaém serve o seu copo antes do dele.\n\n"Eu passei a vida aprendendo a não ser visto. Você me viu. Agora me ensine a outra parte: como é que se guarda a faca e continua sendo homem?"', 'Eleazar parte o pão com as mãos e lhe dá a metade maior.\n\n"Sansão era forte e morreu cego (Jz 16:21). Eu pensava que força era não cair. Você caiu na minha frente, mais de uma vez, e se levantou orando. Isso é mais forte."', 'Jair fica um tempo olhando a lâmpada na sua cintura.\n\n"O meu fogo desce e queima. O seu fica aceso e alumia (Mt 5:15). Estou velho para trocar de fogo, filho… mas não velho demais para pedir que você ore por mim."'];
           const n = cm.falas.mesaZelo = (cm.falas.mesaZelo || 0) + 1;
@@ -1279,7 +1280,7 @@ export class Caminho {
         else this.entrar('refugio', { portal: d.mundo });
         break;
       }
-      case 'poco': p.oleo = this.oleoMax(); p.vida = Math.min(p.vidaMax, p.vida + 1); sfx('heal'); this.efeito('cura', p.x, p.y); this.ui.toast('"Quem beber da água que eu lhe der nunca mais terá sede" (Jo 4:14). Azeite cheio.', 5000); break;
+      case 'poco': p.oleo = this.oleoMax(); p.vida = Math.min(p.vidaMax, p.vida + 1); sfx('heal'); this.efeito('cura', p.x, p.y); this.ui.toast('Azeite cheio. (Jo 4:14)', 3000); break;
       case 'retorno': if (['treino', 'desafio', 'conselho'].includes(d.id)) this.entrar('clareira', { portal: d.id }); else this.entrar('refugio', { portal: d.sem?.id || d.mundo || d.id }); break;
       case 'querubim': this.ovo('querubim', 'Um querubim e uma espada flamejante guardam o caminho da árvore da vida (Gn 3:24). Por aqui não se volta: o caminho de volta é outro.'); await this.ui.dialog({ nome: 'O querubim', texto: 'A espada de fogo se revolve sem ruído. Atrás dela, um verde que você nunca viu e de que, estranhamente, sente saudade.\n\n"E pôs querubins ao oriente do jardim do Éden, e uma espada flamejante que se revolvia, para guardar o caminho da árvore da vida" (Gn 3:24).', acoes: [{ label: 'Falar com o querubim' }] });
         await this.ui.dialog({ nome: 'O querubim', texto: 'Eu guardo a passagem para o Jardim. Em breve ela se abrirá, e você poderá entrar.\n\nMas ainda não, peregrino. A sua jornada ainda é longa: há páginas que você não leu e sombras que ainda não venceu.\n\n"Ao vencedor, dar-lhe-ei que se alimente da árvore da vida, que está no paraíso de Deus" (Ap 2:7).', acoes: [{ label: 'Seguir o caminho' }] }); break;
@@ -1390,7 +1391,7 @@ export class Caminho {
   balcao(id, padrao) { const k = 'b-' + id, n = this.cm.falas[k] = (this.cm.falas[k] || 0) + 1; return falaDaVila(id, n, 'balcao') || padrao; }
   menu(aba) {
     if (this.ui.blocking) return;
-    if (aba === 'mapa' && !this.temMapa()) return this.ui.toast('Você ainda não tem um mapa. Fale com o Velho Peregrino, na praça do Refúgio.', 4500);
+    if (aba === 'mapa' && !this.temMapa()) return this.ui.toast('Ainda sem mapa: fale com o Velho Peregrino.', 3500);
     abrirMenu(this, aba);
   }
   // quem já vinha jogando antes de o mapa existir não precisa voltar para buscá-lo
