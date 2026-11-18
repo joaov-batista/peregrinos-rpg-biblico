@@ -17,6 +17,8 @@ import { rotuloLugar, usarLugar } from './lugares.js';
 import { falarZebedeu, rotuloPescaViva, usarPescaViva } from './pescaviva.js';
 import { falarPedro, semChamado, sardesAoEntrar, rotuloSardesNovo, usarSardesNovo, falarSardesNovo } from './sardesnovo.js';
 import { sitioAoEntrar, rotuloSitio, usarSitio } from './sitio.js';
+import { lojaDeLidia } from './azeites.js';
+import { falarConvite } from './convites.js';
 
 const rand = (a, b) => a + Math.random() * (b - a);
 export const PRECO_BARCO = 150;
@@ -159,6 +161,8 @@ async function barco(G, ob) {
 
 /* ---------------- falas novas ---------------- */
 export async function falarNovo(G, ob) {
+  if (G.area === 'refugio' && await falarConvite(G, ob)) return true; // quem te chamou: o convite vem primeiro
+  if (ob.id === 'lidia' && G.area === 'refugio' && await lojaDeLidia(G, ob)) return true; // Lídia: a púrpura (a loja de sempre) ou os perfumes
   if (await falarPedro(G, ob)) return true; // Pedro dá a missão de Sardes
   if (await falarSardesNovo(G, ob)) return true; // a sinagoga e o mercado novo de Sardes
   const cm = G.cm, p = G.p, c = G.char;

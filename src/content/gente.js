@@ -7,7 +7,8 @@ export const ITENS = {
 
 // o que vem do sítio também vai na bolsa (e pode ser dado de presente)
 import { ITENS_SITIO } from './sitio.js';
-Object.assign(ITENS, ITENS_SITIO);
+import { ITENS_AZEITE } from './azeites.js';
+Object.assign(ITENS, ITENS_SITIO, ITENS_AZEITE);
 // gostos: ama (+muito), gosta, não gosta; os outros itens são aceitos com um "obrigado" simples
 export const GENTE = {
   rode: {

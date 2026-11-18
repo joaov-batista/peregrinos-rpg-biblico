@@ -130,7 +130,7 @@ export class Caminho {
   oleoMax() { return (this.tem('odre_novo') ? 132 : 99) + (this.cm.getsemaniDom === 'azeite' ? 22 : 0) + (this.tem('chifre_azeite') ? 25 : 0); }
   espacos() { return 3 + (this.cm.reliquias.includes('coroa_restituida') ? 1 : 0) + (this.cm.reliquias.includes('perola_preco') ? 1 : 0); }
   temDom(id) { const d = DONS[id], ds = this.cm.dons || {}; if (!d) return false; return d.exige ? d.exige.every(x => this.temDom(x)) && !!ds.lingua : (ds[id] || 0) >= (d.partes || 1); }
-  danoBase() { if (this.nivelado()) return (this.esp > 0 ? 2 : 1) * 10 * 1.24 * 1.24; return (this.cm.getsemaniDom === 'forca' ? 1.08 : 1) * (this.tem('cabelo_sansao') ? 1.2 : 1) * (this.esp > 0 ? 2 : 1) * 10 * (1 + Math.min(0.6, (this.char.level - 1) * 0.03)) * (1 + [0, 0.12, 0.24, 0.36, 0.5][this.cm.fio || 0]); }
+  danoBase() { if (this.nivelado()) return (this.esp > 0 ? 2 : 1) * 10 * 1.24 * 1.24 * (this.danoTemp > 0 ? 2 : 1); return (this.cm.getsemaniDom === 'forca' ? 1.08 : 1) * (this.tem('cabelo_sansao') ? 1.2 : 1) * (this.esp > 0 ? 2 : 1) * 10 * (1 + Math.min(0.6, (this.char.level - 1) * 0.03)) * (1 + [0, 0.12, 0.24, 0.36, 0.5][this.cm.fio || 0]) * (this.dif.dano || 1) * (this.danoTemp > 0 ? 2 : 1); }
   raioLuz() { const o = this.p.oleo / this.oleoMax(), b = (this.tem('lamparina_abismo') ? 150 : 105) + o * 95; return b * (1 + this.p.lampA * 0.6); }
 
   resize() {
@@ -224,8 +224,15 @@ export class Caminho {
     else if ((def.id === 'refugio' || def.id === 'bosque') && !this.cm.visto.intro) {
       this.cm.visto.intro = 1; if (def.id === 'bosque') this.cm.visto.bosque = 1; marco('personagem', { cls: this.char.cls });
       await this.cinema('caminho-prologo');
+      if (!this.cm.difEscolhida) { await new Promise(r => setTimeout(r, 1400)); await this.escolherDificuldade(); }
       this.cm.visto.tut = 0; // os primeiros passos são ensinados fazendo (ver tutorial())
     }
+  }
+  // logo no começo: como o peregrino quer caminhar (dá para mudar depois em Ajustes)
+  async escolherDificuldade() {
+    const op = id => ({ label: DIFICULDADES[id].nome + (id === 'provacao' ? ' (do jeito que é)' : '') }), ids = ['facil', 'provacao', 'hard'];
+    const r = await this.ui.dialog({ nome: 'Como você quer caminhar?', texto: '🌿 FÁCIL: ' + DIFICULDADES.facil.desc + '\n\n⚔ ORIGINAL: ' + DIFICULDADES.provacao.desc + '\n\n🔥 HARD: ' + DIFICULDADES.hard.desc + '\n\n(Dá para mudar depois, no menu, em Ajustes.)', acoes: ids.map(op), voz: false });
+    this.cm.dif = ids.find(id => op(id).label === r) || 'provacao'; this.cm.difEscolhida = 1; this.p.vidaMax = this.vidaMax(); this.p.vida = this.p.vidaMax; this.salvar();
   }
   textoControles() {
     return input.touch
@@ -243,14 +250,14 @@ export class Caminho {
     this.N.spawns.forEach((s, i) => { const tipos = def.inimigos.filter(t => !!s.voa === voadores.includes(t)), lista = tipos.length ? tipos : def.inimigos; if (s.cel?.papel === 'ebenezer' || Math.hypot(s.x - this.N.inicio.x, s.y - this.N.inicio.y) < 300 || this.objs.some(o => o.tipo === 'ebenezer' && Math.abs(o.x - s.x) < 260 && Math.abs(o.y - s.y) < 200)) return; // nada nasce em cima da pedra de descanso nem do ponto de chegada
       this.nascer(lista[i % lista.length], s.x, s.y + 14, false, esc).cel = s.cel; });
   }
-  nascer(tipo, x, y, daLuta, esc = 1) { const e = novoVicio(tipo, x, y, esc); e.daLuta = daLuta; sombraDaNoite(this, e); this.inimigos.push(e); return e; }
+  nascer(tipo, x, y, daLuta, esc = 1) { const e = novoVicio(tipo, x, y, esc); e.daLuta = daLuta; const vv = this.dif.vidaVicio; if (vv) e.hp = e.max = Math.max(1, Math.round(e.hp * vv)); sombraDaNoite(this, e); this.inimigos.push(e); return e; }
   aoOrar() { aoOrar(this); }
 
   temSelos() { const d = this.def, cm = this.cm; return !d.fase || (cm.selos[this.area].length >= (d.rolos || 3) && (d.estacoes || []).every(e => cm.est[this.area].includes(e.id))); }
   conferirPorta(quieto) {
     const d = this.def, cm = this.cm;
     if (!d.chefe) return;
-    if (this.temSelos() && !this.N.portaAberta && (!this.luta || this.mp)) { this.N.portaAberta = true; if (!quieto) { sfx('gate'); this.ui.toast('Os três selos brilham. A porta do chefe se abriu.', 4500); this.tremor(5); } }
+    if (this.temSelos() && !this.N.portaAberta && (!this.luta || this.mp)) { this.N.portaAberta = true; if (!quieto && !this.dif.escondido) { sfx('gate'); this.ui.toast('Os três selos brilham. A porta do chefe se abriu.', 4500); this.tremor(5); } }
   }
 
   /* ================= Laço ================= */
@@ -561,6 +568,7 @@ export class Caminho {
       if (!atk.testa) d *= e.resiste || 1; // quanto maior, mais armado e mais lento, menos sente cada golpe (tanque(), em chefes.js) // o verso fere o chefe, mas repetido ele já espera
       if (e.c.fases[e.fase].golpes.includes('voz') && e.id === 'babilonia') d *= 0.25; // a voz do céu: não é hora de bater
       e.hp -= d; e.flash = 0.1; e.semGolpe = 0; this.postura(e, atk.testa ? 70 : quique || especial ? 0 : atk.carga ? 4 : 2);
+      if (this.dif.cura && !e.curou && e.hp > 0 && e.hp < e.max * 0.15) { e.curou = true; e.hp += e.max * this.dif.cura; sfx('heal'); this.fx.anel(e.x, e.y - e.h / 2, '#9AE8A0', 120); this.textoEm(e.x, e.y - e.h - 20, 'ainda não!', '#9AE8A0', 15); } // no Hard o chefe se refaz uma vez
       if (e.clones.length) { for (const cl of e.clones) this.fx.po(cl.x, cl.y - e.h / 2, 12, e.d.cor || '#C79BFF'); e.clones = []; this.postura(e, 30); this.textoEm(e.x, e.y - e.h - 12, 'A verdadeira!', '#FFE9A8'); sfx('right'); }
       this.fx.faisca(e.x - dir * e.w * 0.3, clamp(p.y - 22, e.y - e.h, e.y), forte ? 12 : 6, forte ? '#FFE9A8' : '#fff'); this.efeito(forte ? 'critico' : 'faiscaLuz', e.x - dir * e.w * 0.3, clamp(p.y - 28, e.y - e.h, e.y), dir);
       if (config.numerosDano !== false) this.textoEm(e.x + rand(-14, 14), e.y - e.h - 4, String(Math.round(d)), forte ? '#FFE9A8' : '#E6E0CF', forte ? 17 : 13);
@@ -586,7 +594,7 @@ export class Caminho {
     if (this.tem('sal_terra') && Math.random() < 0.3) { this.ganharOleo(10); this.textoEm(e.x, e.y - e.h - 6, '+azeite', '#FFD98A', 10); }
     if (this.tem('vara_florida') && Math.random() < 0.08 && this.p.vida < this.p.vidaMax) { this.p.vida++; sfx('heal'); this.textoEm(this.p.x, this.p.y - 70, '+1 fôlego (amêndoa florida)', '#FFE9A8', 12); }
     if (Math.random() < (e.elite ? 0.08 : 0.006)) this.achado({ comum: 60, rara: 30, epica: e.elite ? 10 : 2 }, false, true);
-    this.soltarMoedas(e.x, e.y - e.h / 2, Math.round((Math.max(1, Math.round((d.ouro || 4) / 3)) + (e.elite ? 12 : 0)) * (this.tem('estrela_magos') ? 1.5 : 1)) + (e.roubo || 0));
+    this.soltarMoedas(e.x, e.y - e.h / 2, Math.round((Math.max(1, Math.round((d.ouro || 4) / 3)) + (e.elite ? 12 : 0)) * (this.tem('estrela_magos') ? 1.5 : 1) * (this.aroma?.alegria > 0 ? 2 : 1)) + (e.roubo || 0));
     c.data.stats.kills++; c.data.kills[e.type] = (c.data.kills[e.type] || 0) + 1; this.xp(d.xp || 8); this.pontos(10);
     if (c.data.kills[e.type] === 1 && d.licao) this.ui.toast(d.nome + ' vencida pela primeira vez: ' + d.licao, 5200);
   }
@@ -596,8 +604,9 @@ export class Caminho {
   pontos(n) { this.char.score += n; this.char.week_score += n; }
 
   ferirHeroi(n, origem, o = {}) {
-    if (origem?.kind === 'chefe' && this.cm.dif !== 'peregrino' && origem.c?.fases?.length > 1 && origem.fase === origem.c.fases.length - 1) n = Math.max(n, 2); // na última fase, o chefe fere em dobro
-    if (origem?.kind === 'chefe' && this.cm.dif !== 'peregrino' && origem.pesado) n = Math.max(n, 2); // os pesados batem forte a luta inteira
+    if (origem?.kind === 'chefe' && !this.dif.semDobro && origem.c?.fases?.length > 1 && origem.fase === origem.c.fases.length - 1) n = Math.max(n, 2); // na última fase, o chefe fere em dobro
+    if (origem?.kind === 'chefe' && !this.dif.semDobro && origem.pesado) n = Math.max(n, 2); // os pesados batem forte a luta inteira
+    if (this.dif.ferida) n *= this.dif.ferida; // no Hard, tudo fere em dobro
     const p = this.p;
     if (this.ausente || p !== this.eu || p.morto || p.inv > 0 || this.fade > 0.5) return false;
     if (p.vig > 0 && !o.espinho && !o.semDefesa) {

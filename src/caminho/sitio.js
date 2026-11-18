@@ -72,6 +72,7 @@ export function rotuloSitio(G, ob) {
     case 'pomar': return st(G).pomar[ob.idx]?.pronto !== false ? 'Colher azeitonas' : null;
     case 'cocho': return 'Encher o cocho';
     case 'galinheiro': return 'Jogar grãos às galinhas';
+    case 'essencias': return 'Mesa de essências (óleos e perfumes)';
   }
   return undefined;
 }
@@ -79,6 +80,7 @@ export function rotuloSitio(G, ob) {
 /* ---------------- usar ---------------- */
 export async function usarSitio(G, ob) {
   const S = st(G), hoje = dia(G), b = bolsa(G), p = G.p, d = (nome, texto, acoes = [{ label: 'Ok' }]) => G.ui.dialog({ nome, texto, acoes, voz: false });
+  if (ob.tipo === 'essencias') { const { mesaDeEssencias } = await import('./azeites.js'); await mesaDeEssencias(G); return true; }
   switch (ob.tipo) {
     case 'canteiro': { const c = can(G, ob.idx);
       if (c.estado === 'mato') { c.estado = 'arado'; sfx('dodge'); G.fx.po(ob.x, ob.y - 4, 10, '#8A6A44'); G.textoEm(ob.x, ob.y - 40, 'terra arada', '#C9A06A', 11); G.salvar(); return true; }

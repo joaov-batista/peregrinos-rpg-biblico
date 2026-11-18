@@ -11,6 +11,9 @@ import { passoSitio, falarConjugeSitio, acoesEliabe, sitioId } from './sitio.js'
 import { passoSinagogaSardes } from './sardesnovo.js';
 import { passoPescaViva } from './pescaviva.js';
 import { RX } from './dados.js';
+import { AZEITES } from '../content/azeites.js';
+import { passoConvites } from './convites.js';
+import { passoAzeites } from './azeites.js';
 import { agendaDe, lugarNaSinagoga, passoRonda, passoSinagoga, falarSinagoga, falaDaNoite } from './sinagoga.js';
 
 export const DIA = 600; const rand = (a, b) => a + Math.random() * (b - a);
@@ -35,6 +38,7 @@ const marcaCoracoes = n => '♥'.repeat(Math.min(10, n)) + '♡'.repeat(Math.max
 /* ---------------- a cada quadro ---------------- */
 export function passoVida(G, dt) {
   G.cm.relogio = (G.cm.relogio || 0) + dt;
+  passoAzeites(G, dt);
   // a pé, pela beira do mapa: do fim da trilha (oeste do Refúgio) para o sítio, e de volta (sem portal)
   if (!G.p.morto && !G.ui.blocking && !(G.bordaT > G.T)) { const tutOk = !(G.cm.visto?.tut != null && G.cm.visto.tut < 11);
     if (G.area === 'refugio' && tutOk && G.p.x < (RX * 30 + 1.7) * 32) { G.bordaT = G.T + 2; G.entrar(sitioId(G), { borda: 'direita' }); return; } /* depois do treino, a trilha fica para trás: a oeste da Praça é a estrada do sítio */
@@ -45,6 +49,7 @@ export function passoVida(G, dt) {
   if (G.area !== 'refugio') return;
   passoPescaViva(G, dt); // a pesca na margem e no bote
   passoSinagoga(G, dt);
+  passoConvites(G, dt);
   const p = G.p, gente = G.objs.filter(o => o.tipo === 'morador');
   for (const o of gente) {
     const v = o.vv || (o.vv = { x: o.x, alvo: o.x, t: rand(0, 3), estado: 'parado', face: 1, emote: null, emoteT: 0, papo: null });
@@ -123,8 +128,8 @@ async function darPresente(G, ob) {
   const id = ob.id, g = GENTE[id], b = bolsa(G), a = laco(G, id);
   const acoes = Object.keys(ITENS).filter(k => b[k] > 0).map(k => ({ label: ITENS[k].nome + ' (' + b[k] + ')', fn: async () => {
     b[k]--; a.deu = dia(G);
-    const tipo = k === g.ama ? 'ama' : g.gosta.includes(k) ? 'gosta' : k === g.naoGosta ? 'naoGosta' : 'neutro';
-    somar(G, id, { ama: 2, gosta: 1, naoGosta: -1, neutro: 0 }[tipo]); sfx(tipo === 'naoGosta' ? 'wrong' : 'right');
+    const oleo = AZEITES[k], tipo = oleo ? 'ama' : k === g.ama ? 'ama' : g.gosta.includes(k) ? 'gosta' : k === g.naoGosta ? 'naoGosta' : 'neutro';
+    somar(G, id, (oleo ? (oleo.efeito === 'presente' ? 3 : 2) : { ama: 2, gosta: 1, naoGosta: -1, neutro: 0 }[tipo]) + (G.aroma?.alegria > 0 && tipo !== 'naoGosta' ? 1 : 0)); sfx(tipo === 'naoGosta' ? 'wrong' : 'right');
     if (ob.vv) { ob.vv.emote = tipo === 'naoGosta' ? '…' : '♥'; ob.vv.emoteT = 2.5; }
     await G.ui.dialog({ nome: (VILA[id]?.nome || ob.nome) + '  ' + marcaCoracoes(coracoes(G, id)), look: ob.look, texto: g.reage[tipo], acoes: [{ label: 'Continuar' }] });
     G.salvar();

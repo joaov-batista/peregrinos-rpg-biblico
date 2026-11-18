@@ -116,7 +116,7 @@ export const TEMAS = {
   vale: t(['#0A0618', '#241640', '#5A2E5E'], '#1E1232', '#140C24', '#0A0614', '#C9A6E0', '#FF8A5A', 'dunas', 'brasa', 0.62),
   sardes: t(['#05060C', '#101524', '#2A2438'], '#12141F', '#0C0E17', '#06070C', '#8A8EA6', '#E8C873', 'casas', 'po', 0.86),
   sardes2: t(['#14203A', '#4A4A6A', '#E0A878'], '#22304A', '#172236', '#0C131F', '#E0D6B8', '#FFE08A', 'casas', 'vagalume', 0.3)
-};TEMAS.refugio.skyline = 'campo'; // o fundo do Refúgio é de natureza (colinas e oliveiras), não de prédios
+};
 
 const TEMA_FASE = { jope: 'jope', conves: 'conves', ventre: 'ventre', ninive: 'ninive', sombra: 'sombra' };
 
@@ -298,7 +298,7 @@ export function areaDef(id) {
     { papel: 'vila', nome: 'A lavoura', tiles: sala(), objs: [
       { tipo: 'maquina', qual: 'lagar', col: 3 }, { tipo: 'espantalho', col: 6 }, ...[9, 11, 13, 15, 17, 19, 21, 23, 25, 27].map((col, idx) => ({ tipo: 'canteiro', col, idx })), { tipo: 'ave', col: 14, lin: 12 }] },
     { papel: 'inicio', nome: 'A casa', tiles: sala(), objs: [
-      planta(3, 'oliveira'), { tipo: 'galinheiro', col: 7 }, { tipo: 'flor', col: 11 }, { tipo: 'cesto', col: 13 }, { tipo: 'maquina', qual: 'forno', col: 16 }, { tipo: 'poco', col: 19 },
+      planta(3, 'oliveira'), { tipo: 'galinheiro', col: 7 }, { tipo: 'essencias', col: 10 }, { tipo: 'flor', col: 12 }, { tipo: 'cesto', col: 13 }, { tipo: 'maquina', qual: 'forno', col: 16 }, { tipo: 'poco', col: 19 },
       casa(23, 'peregrino', 'Sua casa'), { tipo: 'placa', col: 27, txt: 'Estrada do Refúgio →' }, { tipo: 'ave', col: 20, lin: 13 }] }
   ] };
   // a sinagoga por dentro: a nave, a arca, a bimá; Jairo conduz as orações e quem veio orar fica de joelhos
@@ -396,8 +396,10 @@ import { MARCAS } from './perigos.js';
 const arenaDe = id => CHEFES[id]?.arena || 'plana';
 
 export const DIFICULDADES = {
-  peregrino: { nome: 'Peregrino', desc: 'Para conhecer a história: um fôlego a mais e avisos um pouco mais longos. Ainda exige atenção.', hp: 1.7, ritmo: 0.92, aviso: 1.05, vel: 1, vidas: 2, oleo: 1.2 },
-  provacao: { nome: 'Provação', desc: 'O padrão, e é difícil: chefes rápidos, que agarram quem fica na cabeça deles e ferem em dobro na última fase. Espere morrer algumas vezes.', hp: 3, ritmo: 0.64, aviso: 0.74, vel: 1.3, vidas: 0, oleo: 1 },
+  facil: { nome: 'Fácil', desc: 'Focado na história: seus golpes ferem mais, chefes e monstros têm menos vida, avisos mais longos e dois fôlegos a mais.', hp: 1.3, ritmo: 1, aviso: 1.2, vel: 0.9, vidas: 2, oleo: 1.3, dano: 1.5, vidaVicio: 0.6, semDobro: true },
+  peregrino: { nome: 'Peregrino', desc: 'Para conhecer a história: um fôlego a mais e avisos um pouco mais longos. Ainda exige atenção.', hp: 1.7, ritmo: 0.92, aviso: 1.05, vel: 1, vidas: 2, oleo: 1.2, semDobro: true },
+  provacao: { nome: 'Original', desc: 'O jogo como ele é, e é difícil pra caramba: chefes rápidos, que agarram quem fica na cabeça deles e ferem em dobro na última fase. Espere morrer algumas vezes.', hp: 3, ritmo: 0.64, aviso: 0.74, vel: 1.3, vidas: 0, oleo: 1 },
+  hard: { nome: 'Hard', desc: 'Você recebe o DOBRO de dano. Chefes com mais vida, mais rápidos, que se curam uma vez quando quase caem, e a porta deles se abre em silêncio, sem brilho nem aviso: é preciso procurar.', hp: 3.8, ritmo: 0.56, aviso: 0.64, vel: 1.4, vidas: 0, oleo: 0.9, ferida: 2, vidaVicio: 1.25, escondido: true, cura: 0.3 },
   fornalha: { nome: 'Fornalha', desc: 'Sete vezes mais quente (Dn 3:19): chefes muito rápidos, avisos curtos e um fôlego a menos.', hp: 3.8, ritmo: 0.5, aviso: 0.6, vel: 1.45, vidas: -1, oleo: 0.9 }
 };
 
