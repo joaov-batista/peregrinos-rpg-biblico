@@ -105,7 +105,7 @@ export function initInput(canvas) {
   addEventListener('keydown', e => {
     if (typing(e) || !document.body.classList.contains('playing')) return;
     const hk = input.perfil === 'caminho', a = (hk ? mapaHK() : KEYMAP)[e.code];
-    if ((hk ? moveHK() : MOVE)[e.code]) { input.keys.add(e.code); input.mouseAim = false; e.preventDefault(); }
+    if ((hk ? moveHK() : MOVE)[e.code]) { input.keys.add(e.code); if (e.code.startsWith('Arrow')) input.mouseAim = false; e.preventDefault(); } /* WASD é mão no teclado e outra no mouse: a mira do mouse continua valendo */
     if (a) { if (!e.repeat) input.press(a, e.code); e.preventDefault(); }
   });
   addEventListener('keyup', e => {

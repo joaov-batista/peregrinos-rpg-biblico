@@ -87,13 +87,14 @@ export function aquecerEfeitos() {
 }
 
 // efeitos vivos: { f, x, y (mundo), vira, t, ang }
-export function soltar(lista, nome, x, y, vira = 1, o = {}) { const f = folha(nome); if (f && lista.length < 40) lista.push({ f, x, y, vira, t: 0, gruda: o.gruda || null, dx: o.dx || 0, dy: o.dy || 0, atras: !!o.atras, vel: o.vel || 1 }); }
+export function soltar(lista, nome, x, y, vira = 1, o = {}) { const f = folha(nome); if (f && lista.length < 40) lista.push({ f, x, y, vira, t: 0, gruda: o.gruda || null, dx: o.dx || 0, dy: o.dy || 0, atras: !!o.atras, vel: o.vel || 1, rot: o.rot || 0 }); }
 export function atualizarEfeitos(lista, dt) { for (const e of lista) e.t += dt * e.vel; for (let i = lista.length - 1; i >= 0; i--) if (lista[i].t * lista[i].f.fps >= lista[i].f.n) lista.splice(i, 1); }
 export function pintarEfeitos(g, lista, cx, cy, atras) {
   for (const e of lista) {
     if (e.atras !== atras) continue;
     const f = e.f, i = Math.min(f.n - 1, Math.floor(e.t * f.fps)), wx = e.gruda ? e.gruda.x + e.dx : e.x, wy = e.gruda ? e.gruda.y + e.dy : e.y, x = Math.round(wx / PX - cx), y = Math.round(wy / PX - cy);
-    if (e.vira < 0) { g.save(); g.translate(x, y); g.scale(-1, 1); g.drawImage(f.cv, i * f.w, 0, f.w, f.h, -f.ox, -f.oy, f.w, f.h); g.restore(); }
+    if (e.rot) { const py = 13; g.save(); g.translate(x, y - py); if (e.vira < 0) g.scale(-1, 1); g.rotate(e.rot); g.drawImage(f.cv, i * f.w, 0, f.w, f.h, -f.ox, -f.oy + py, f.w, f.h); g.restore(); } /* golpe mirado: o corte gira em volta do peito, para o lado apontado */
+    else if (e.vira < 0) { g.save(); g.translate(x, y); g.scale(-1, 1); g.drawImage(f.cv, i * f.w, 0, f.w, f.h, -f.ox, -f.oy, f.w, f.h); g.restore(); }
     else g.drawImage(f.cv, i * f.w, 0, f.w, f.h, x - f.ox, y - f.oy, f.w, f.h);
   }
 }

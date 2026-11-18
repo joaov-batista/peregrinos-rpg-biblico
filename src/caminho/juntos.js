@@ -357,6 +357,7 @@ export class Juntos {
       case 'vf': G.ui.toast(m.ok ? 'A maioria acertou.' : 'A maioria errou.', 3500); break;
       case 'ap': G.aplicarLeitura(m); break;
       case 'rs': G.resetT = G.T; break;
+      case 'col': G.coletaRemota(m, par.nome || 'Seu companheiro'); break;
       case 'pv': if (m.id === this.eu) G.ganharOleo(11); break;
       case 'eco': G.ui.toast(m.txt, m.d || 4000); break;
       case 'qf': G.respostaDoGrupo(m.ok); break;

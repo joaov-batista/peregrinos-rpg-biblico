@@ -267,6 +267,7 @@ export class Caminho {
     c.mira = anguloMira(this, input);
     // com o mouse, o golpe vai para o lado do cursor (sem precisar andar para virar)
     c.ladoMouse = input.mouseAim && !input.touch && !document.body.classList.contains('pad') && Math.abs(Math.cos(c.mira)) > 0.25 ? Math.sign(Math.cos(c.mira)) : 0;
+    c.miraLivre = (input.mouseAim && !input.touch && !document.body.classList.contains('pad')) || input.padAim != null; /* o golpe comum segue a mira em oito direções; os de longe, no ângulo exato */
     if (input.consume('menu') || input.consume('escape')) this.menu();
     if (input.consume('map')) this.menu('mapa');
     c.dom = input.consume('item2'); for (const a of ['mount', 'chat']) input.consume(a);
@@ -300,7 +301,7 @@ export class Caminho {
     }
     // a lâmpada revela
     if (p.lamp) this.revelar();
-    if (p.lamp) for (const ob of this.objs) if (ob.oculto && !this.achou(ob) && Math.hypot(ob.x - p.x, ob.y - p.y) < 260) { this.achou(ob, true); this.salvar(); sfx('level'); this.efeito('coleta', ob.x, ob.y - 40); this.textoEm(ob.x, ob.y - 110, ob.chave === 'getsemani' ? 'uma passagem entre as oliveiras…' : 'uma trilha escondida!', '#B8F0C8', 14); }
+    if (p.lamp) for (const ob of this.objs) if (ob.oculto && !this.achou(ob) && Math.hypot(ob.x - p.x, ob.y - p.y) < 260) { this.achou(ob, true); this.partilhar('achou', ob); this.salvar(); sfx('level'); this.efeito('coleta', ob.x, ob.y - 40); this.textoEm(ob.x, ob.y - 110, ob.chave === 'getsemani' ? 'uma passagem entre as oliveiras…' : 'uma trilha escondida!', '#B8F0C8', 14); }
     for (let i = 0; i < N.revel.length; i++) if (N.revel[i] > 0) N.revel[i] -= dt;
     this.simular(dt);
     passoMira(this, dt); if (this.riscos) { for (const r of this.riscos) r.t -= dt; this.riscos = this.riscos.filter(r => r.t > 0); }
@@ -417,7 +418,8 @@ export class Caminho {
   resetarEncontro() {
     this.resetT = this.T; this.mp?.ev('rs');
     if (this.emb) { const c = this.emb.c; this.inimigos = this.inimigos.filter(v => v.cel !== c); this.trancar(c, false); this.emb = null; sfx('gate'); this.musicaDaArea(); }
-    if (this.luta) { this.inimigos = this.inimigos.filter(e => e.kind !== 'chefe' && !e.daLuta); this.lutaRemota(false); }
+    if (this.luta) { const b = this.chefe || this.inimigos.find(e => e.kind === 'chefe'); if (b && b.max) this.chefeSalvo = { area: this.area, id: b.id, frac: Math.max(0.05, b.hp / b.max) }; /* a sombra não se refaz inteira: a dupla volta e a luta continua de onde parou */
+      this.inimigos = this.inimigos.filter(e => e.kind !== 'chefe' && !e.daLuta); this.lutaRemota(false); }
   }
   // o resultado de uma pergunta votada vale para todos os que estão na área
   aplicarLeitura(m) {
@@ -502,7 +504,7 @@ export class Caminho {
     }
     for (const ob of this.objs) if (ob.tipo === 'boneco' && !atk.hits.has(ob) && toca(cx, { x: ob.x - 14, y: ob.y - 56, w: 28, h: 56 })) { atk.hits.add(ob); acertou = true; this.tutBateu = true; ob.bal = 0.4; ob.dir = Math.sign(ob.x - p.x) || 1; sfx('hit'); this.efeito('faisca', ob.x, ob.y - 30, ob.dir); this.textoEm(ob.x + rand(-10, 10), ob.y - 62, String(Math.round(dano)), '#E6E0CF', 13); this.ganharOleo(6); }
     for (const ob of this.objs) if (ob.tipo === 'vaso' && !ob.quebrado && toca(cx, { x: ob.x - 11, y: ob.y - 24, w: 22, h: 24 })) {
-      ob.quebrado = true; acertou = true; sfx('hit'); this.fx.po(ob.x, ob.y - 10, 10, '#B79A6E'); this.soltarMoedas(ob.x, ob.y - 12, Math.floor(rand(2, 6))); { const r = Math.random(); if (r < 0.05) ganharItem(this, 'mel', 1, ob.x, ob.y - 40); else if (r < 0.2) ganharItem(this, 'pao', 1, ob.x, ob.y - 40); }
+      ob.quebrado = true; this.partilhar('vaso', ob); acertou = true; sfx('hit'); this.fx.po(ob.x, ob.y - 10, 10, '#B79A6E'); this.soltarMoedas(ob.x, ob.y - 12, Math.floor(rand(2, 6))); { const r = Math.random(); if (r < 0.05) ganharItem(this, 'mel', 1, ob.x, ob.y - 40); else if (r < 0.2) ganharItem(this, 'pao', 1, ob.x, ob.y - 40); }
       const st = this.char.data.stats; st.vasos = (st.vasos || 0) + 1;
       if (st.vasos === 153) this.ovo('peixes', '153 vasos quebrados… como os 153 grandes peixes da rede que não se rompeu (Jo 21:11).');
       if (this.tem('cinco_paes') && Math.random() < 0.12 && p.vida < p.vidaMax) { p.vida++; sfx('heal'); this.textoEm(ob.x, ob.y - 30, '+1 fôlego', '#FFE9A8'); }
@@ -1021,6 +1023,7 @@ export class Caminho {
     else { this.congela = true; await this.cinema(CINEMA_CHEFE[d.chefe] || 'chefe-' + d.chefe); this.congela = false; } // todos assistem à entrada do chefe; ele espera
     const b = novoChefe(d.chefe, A, this.dif);
     if (juntos) { b.max = b.hp = Math.round(b.hp * (1 + 0.6 * this.mp.naArea().length)); b.art.max = b.max; } // mais peregrinos, mais fôlego na sombra
+    const sv = this.chefeSalvo; if (sv && sv.area === this.area && sv.id === b.id) { b.hp = Math.round(b.max * Math.min(1, sv.frac + 0.1)); this.chefeSalvo = null; setTimeout(() => this.ui.toast('A sombra ainda está ferida. Vocês continuam de onde pararam.', 4000), 1200); }
     this.inimigos.push(b); this.chefe = b; if (d.mundo && this.mp?.acompanhado()) music('raid'); else music('chefe', d.chefe); /* os gigantes enfrentados em grupo são as raids */ sfx('boss');
     this.ui.banner(b.d.titulo || 'Chefe', b.d.nome, b.d.ref);
     if (b.d.intro) this.fala(b, b.d.intro.replace(/\*/g, ''));
@@ -1177,8 +1180,8 @@ export class Caminho {
     if (p.morto) { this.ui.setInteract(null); return; }
     for (const ob of this.objs) {
       const dd = Math.hypot(ob.x - p.x, ob.y - 20 - (p.y - 20));
-      if (ob.tipo === 'segredo' && dd < 30) { ob.fora = true; this.efeito('coleta', ob.x, ob.y - 10); this.cm.seg[this.area].push(ob.n); this.ganhar(ob.item); continue; }
-      if (ob.tipo === 'fruto' && dd < 30 && !(ob.volta > this.T)) { ob.volta = this.T + 50; sfx('coin'); this.efeito('coleta', ob.x, ob.y - 6); ganharItem(this, 'figo', 1); if (p.vida < p.vidaMax) { p.vida++; this.textoEm(p.x, p.y - 60, 'figo: +1 fôlego', '#B8E6A0', 12); } else { this.char.data.gold += 4; this.ganharOleo(12); this.textoEm(p.x, p.y - 60, 'figo: +4 denários', '#FFD23F', 12); } const st = this.char.data.stats; st.figos = (st.figos || 0) + 1; if (st.figos === 12) this.ovo('figos', 'Zaqueu subiu num sicômoro, a figueira brava (Lc 19:4). Doze figos colhidos.'); continue; }
+      if (ob.tipo === 'segredo' && dd < 30) { ob.fora = true; this.partilhar('seg', ob); this.efeito('coleta', ob.x, ob.y - 10); this.cm.seg[this.area].push(ob.n); this.ganhar(ob.item); continue; }
+      if (ob.tipo === 'fruto' && dd < 30 && !(ob.volta > this.T)) { ob.volta = this.T + 50; this.partilhar('fruto', ob); sfx('coin'); this.efeito('coleta', ob.x, ob.y - 6); ganharItem(this, 'figo', 1); if (p.vida < p.vidaMax) { p.vida++; this.textoEm(p.x, p.y - 60, 'figo: +1 fôlego', '#B8E6A0', 12); } else { this.char.data.gold += 4; this.ganharOleo(12); this.textoEm(p.x, p.y - 60, 'figo: +4 denários', '#FFD23F', 12); } const st = this.char.data.stats; st.figos = (st.figos || 0) + 1; if (st.figos === 12) this.ovo('figos', 'Zaqueu subiu num sicômoro, a figueira brava (Lc 19:4). Doze figos colhidos.'); continue; }
       if (ob.tipo === 'flor' && dd < 26 && this.cm.flores?.[ob.x] !== diaDe(this)) { this.cm.flores = this.cm.flores || {}; this.cm.flores[ob.x] = diaDe(this); sfx('coin'); this.efeito('coleta', ob.x, ob.y - 6); ganharItem(this, 'flor', 1, p.x, p.y - 60); }
       if (ob.tipo === 'sacola' && dd < 30) { ob.fora = true; const s = this.cm.sacola; if (s) { this.char.data.gold += s.gold; this.textoEm(p.x, p.y - 56, '+' + s.gold + ' denários recuperados', '#FFD23F'); sfx('coin'); this.cm.sacola = null; } continue; }
       const rot = this.rotulo(ob); if (rot && dd < pd) { pd = dd; perto = ob; perto.rot = rot; }
@@ -1389,6 +1392,15 @@ export class Caminho {
   }
 
   // passagens que só a lâmpada mostra: uma vez achadas, ficam à vista
+  /* juntos: o que um pega, os outros veem sumir e também recebem (cada um guarda no próprio save) */
+  partilhar(k, ob) { if (this.mp?.acompanhado?.()) this.mp.ev('col', { k, x: Math.round(ob.x), y: Math.round(ob.y) }); }
+  coletaRemota(m, quem) {
+    const ob = this.objs.find(o => Math.abs(o.x - m.x) < 3 && Math.abs(o.y - m.y) < 3 && (m.k === 'achou' ? o.oculto : m.k === 'seg' ? o.tipo === 'segredo' : o.tipo === m.k)); if (!ob) return;
+    if (m.k === 'achou') { if (!this.achou(ob)) { this.achou(ob, true); this.salvar(); this.efeito('coleta', ob.x, ob.y - 40); this.textoEm(ob.x, ob.y - 110, quem + ' achou uma trilha escondida!', '#B8F0C8', 14); } return; }
+    if (m.k === 'vaso') { if (!ob.quebrado) { ob.quebrado = true; this.fx.po(ob.x, ob.y - 10, 10, '#B79A6E'); this.soltarMoedas(ob.x, ob.y - 12, Math.floor(rand(1, 4))); } return; }
+    if (m.k === 'fruto') { ob.volta = this.T + 50; return; }
+    if (m.k === 'seg' && !ob.fora) { ob.fora = true; this.efeito('coleta', ob.x, ob.y - 10); if (!this.cm.seg[this.area].includes(ob.n)) { this.cm.seg[this.area].push(ob.n); this.ganhar(ob.item); this.ui.toast(quem + ' achou um segredo: é seu também.', 3500); } }
+  }
   achou(ob, marcar) { const k = ob.chave || 'trilha', cm = this.cm; if (marcar) { if (k === 'trilha') cm.trilha = true; else (cm.achados = cm.achados || {})[k] = true; } return k === 'trilha' ? !!cm.trilha : !!cm.achados?.[k]; }
   // o que o lojista diz ao abrir a loja: uma fala por visita, girando
   balcao(id, padrao) { const k = 'b-' + id, n = this.cm.falas[k] = (this.cm.falas[k] || 0) + 1; return falaDaVila(id, n, 'balcao') || padrao; }

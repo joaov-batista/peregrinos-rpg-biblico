@@ -14,7 +14,7 @@ const PAL = {
   moedas: ['#5A3A0C', '#A8741C', '#D9A63C', '#FFD23F', '#FFF6C8'], sombra: ['#05030A', '#1E1230', '#3E2A5E', '#7A5AA8', '#C9A6FF'],
   areia: ['#4A3820', '#8A6A3C', '#C9A06A', '#E8C88A', '#FFF0C8'], veneno: ['#1A2A10', '#3E6A2A', '#6FBF4A', '#B8F08A', '#F0FFD8'],
   vento: ['#2A3A44', '#5A7A8A', '#9FC0CC', '#D8EEF2', '#FFFFFF'], magia: ['#1E1040', '#5A2E9E', '#9A6AE8', '#D8B8FF', '#FFF0FF'],
-  luz: ['#5A4A1C', '#C9A63C', '#F2D06A', '#FFF0B8', '#FFFFFF']
+  luz: ['#5A4A1C', '#C9A63C', '#F2D06A', '#FFF0B8', '#FFFFFF'], som: ['#0E3A44', '#3FA8C8', '#9FE6F0', '#DFFBFF', '#FFFFFF']
 };
 export const corDoElemento = el => PAL[el]?.[3];
 const ruido = (a, b) => { const s = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return s - Math.floor(s); };
@@ -61,7 +61,7 @@ function coluna(g, el, x, y, w, h, ativa, k, Tm) {
     if (el === 'sombra') { px(g, P[4], x + w / 2 - 4, y + h * 0.3, 2, 2); px(g, P[4], x + w / 2 + 2, y + h * 0.3, 2, 2); }
     if (el === 'magia') for (let i = 0; i < 4; i++) { const ry = y + ((Tm * 40 + i * 20) % h); px(g, P[4], x + w / 2 - 2, ry, 4, 1); px(g, P[4], x + w / 2, ry - 2, 1, 4); }
     px(g, P[3], x - 2, base - 2, w + 4, 2);
-  } else if (el === 'vento') { // redemoinho: linhas curvas que giram subindo
+  } else if (el === 'vento' || el === 'som') { // redemoinho: linhas curvas que giram subindo
     for (let yy = 0; yy < h; yy += 3) { const r = w / 2 * (0.4 + 0.6 * yy / h), a = Tm * 10 - yy * 0.2; px(g, P[3], x + w / 2 + Math.cos(a) * r, base - yy, 3, 1); px(g, P[2], x + w / 2 + Math.cos(a + 3.1) * r, base - yy, 2, 1); }
   } else { // luz: feixe forte com miolo branco
     for (let i = 0; i < w; i++) { const m = 1 - Math.abs(i - w / 2) / (w / 2); g.globalAlpha = 0.15 + 0.75 * m * m; px(g, m > 0.7 ? P[4] : m > 0.4 ? P[3] : P[2], x + i, y, 1, h); } g.globalAlpha = 1;
@@ -74,7 +74,7 @@ function faixa(g, el, x, y, w, h, ativa, k, Tm) {
   const P = PAL[el], f = Math.floor(Tm * 16);
   if (!ativa) { g.globalAlpha = 0.25 + k * 0.5; for (let i = 0; i < w; i += 3) px(g, P[2 + ((i + f) % 2)], x + i, y + h - 2 - Math.round(ruido(i, f) * 3 * k), 2, 2); g.globalAlpha = 1; return; }
   if (el === 'agua') { for (let i = 0; i < w; i++) { const top = Math.round(h * 0.25 + Math.sin(Tm * 9 - i * 0.12) * h * 0.2); for (let yy = top; yy < h; yy += 2) px(g, P[yy < top + 2 ? 4 : yy < top + 5 ? 3 : 1 + ((i + yy) % 5 === 0 ? 1 : 0)], x + i, y + yy, 1, 2); } return; }
-  if (el === 'vento') { for (let r = 0; r < h; r += 4) for (let i = 0; i < w; i += 14) { const xx = x + ((i + Tm * 220 + r * 9) % w); px(g, P[3], xx, y + r, 8, 1); px(g, P[4], xx + 8, y + r - 1, 2, 1); } return; }
+  if (el === 'vento' || el === 'som') { for (let r = 0; r < h; r += 4) for (let i = 0; i < w; i += 14) { const xx = x + ((i + Tm * 220 + r * 9) % w); px(g, P[3], xx, y + r, 8, 1); px(g, P[4], xx + 8, y + r - 1, 2, 1); } return; }
   if (el === 'fogo') { for (let i = 0; i < w; i++) { const alt = h * (0.5 + 0.5 * Math.abs(Math.sin(Tm * 12 + i * 0.35))); for (let yy = 0; yy < alt; yy += 2) { const q = yy / alt; px(g, P[q > 0.75 ? 1 : q > 0.45 ? 2 : 3], x + i, y + h - yy - 2, 1, 2); } } return; }
   if (el === 'raio') { /* arcos elétricos que atravessam a faixa, com brilho em volta */
     g.globalAlpha = 0.16; px(g, P[2], x, y, w, h); g.globalAlpha = 1;
@@ -112,3 +112,6 @@ export function tiroElemento(g, el, t, x, y, r, Tm) {
   bola(g, P[0], x, y, r + 1); bola(g, P[2], x, y, r); bola(g, P[3], x - 1, y - 1, Math.max(1, r - 2)); px(g, P[4], x - r / 2, y - r / 2, 2, 2);
   return true;
 }
+// os golpes amigos que viram zona (o brado do levita, o fogo da lança, a descida do Espírito) também têm matéria
+const COR_AMIGA = { '#FF8A2A': 'fogo', '#FFB05A': 'fogo', '#BFF0F8': 'som', '#EAFBFF': 'raio' };
+export const elementoAmigo = z => z.el || COR_AMIGA[z.cor] || null;

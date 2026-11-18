@@ -172,16 +172,21 @@ export function atualizarHeroi(G, dt) {
     // virar na hora do golpe: o direcional manda; sem ele, o lado do cursor do mouse. Golpes seguidos não prendem mais o peregrino num lado só.
     if (!emDash && p.travaX <= 0) { if (c.mx) p.face = Math.sign(c.mx); else if (c.ladoMouse) p.face = c.ladoMouse; }
     // oito direções: para os lados, para cima, para baixo (no ar quica; no chão é rasteira) e as diagonais
-    const dir = c.my < -0.5 ? (c.mx ? 'diagC' : 'cima') : c.my > 0.5 ? (p.chao ? 'rasteira' : c.mx ? 'diagB' : 'baixo') : 'lado';
-    const [ux, uy] = DIRS[dir], tiro = arma.tiro && dir !== 'baixo' ? arma.tiro : null, cor = hab.espada ? 'luz' : arma.cor;
+    let dir = c.my < -0.5 ? (c.mx ? 'diagC' : 'cima') : c.my > 0.5 ? (p.chao ? 'rasteira' : c.mx ? 'diagB' : 'baixo') : 'lado';
+    const livre = c.miraLivre && Math.abs(c.my) <= 0.5 && c.mira != null; /* com mouse ou analógico, o golpe sai para onde se aponta */
+    if (livre) { const mx = Math.cos(c.mira), my = Math.sin(c.mira); if (Math.abs(mx) > 0.12 && p.travaX <= 0) p.face = Math.sign(mx);
+      dir = my < -0.88 ? 'cima' : my < -0.36 ? 'diagC' : my > 0.88 ? (p.chao ? 'rasteira' : 'baixo') : my > 0.36 ? (p.chao ? 'lado' : 'diagB') : 'lado'; }
+    const [ux, uy] = DIRS[dir], tiro = arma.tiro && (dir !== 'baixo' || livre) ? arma.tiro : null, cor = hab.espada ? 'luz' : arma.cor;
+    const angTiro = livre ? c.mira : Math.atan2(uy, p.face * ux);
     p.atk = { t: 0, dur: arma.duplo ? 0.24 : 0.17, dir, face: p.face, hits: new Set(), n: p.combo++ };
     p.atkCd = arma.cd; p.atkBuf = 0; sfx(tiro ? 'shoot' : 'swing');
     const corFx = G.esp > 0 ? 'fogo' : cor; // com o Fogo do Espírito, a lâmina arde
     const fxDe = { cima: 'cima_' + corFx, diagC: 'cima_' + corFx, baixo: 'baixo_' + corFx, diagB: 'baixo_' + corFx }[dir] || (G.esp > 0 ? 'corteFogo' : arma.fx);
-    if (fxDe) G.efeito(fxDe === 'corte' && hab.espada ? 'corteLuz' : fxDe, p.x, p.y, p.face, { gruda: p, dx: dir === 'diagC' || dir === 'diagB' ? p.face * 14 : 0, dy: dir === 'baixo' || dir === 'diagB' ? 24 : dir === 'rasteira' ? 20 : 0, vel: 1.25 });
+    if (livre && tiro && arma.fx) G.efeito(G.esp > 0 ? 'corteFogo' : arma.fx, p.x, p.y, p.face, { gruda: p, vel: 1.25, rot: Math.atan2(Math.sin(c.mira), Math.abs(Math.cos(c.mira))) }); /* quem atira: o lampejo do disparo gira para o lado mirado */
+    else if (fxDe) G.efeito(fxDe === 'corte' && hab.espada ? 'corteLuz' : fxDe, p.x, p.y, p.face, { gruda: p, dx: dir === 'diagC' || dir === 'diagB' ? p.face * 14 : 0, dy: dir === 'baixo' || dir === 'diagB' ? 24 : dir === 'rasteira' ? 20 : 0, vel: 1.25 });
     if (arma.avanco && dir === 'lado' && p.chao) p.vx = p.face * arma.avanco * 3;
-    if (tiro) { const n = tiro.n || 1, ang = Math.atan2(uy, ux); for (let i = 0; i < n; i++) { const b = ang + (i - (n - 1) / 2) * (tiro.leque || 0.14), cx2 = Math.cos(b), sy2 = Math.sin(b); // algumas armas atiram várias pedras em leque
-      G.tiros.push({ golpe: p.atk, x: p.x + p.face * cx2 * 16, y: p.y - (dir === 'rasteira' ? 12 : 28) + sy2 * 14, vx: p.face * cx2 * tiro.v, vy: sy2 * tiro.v - (tiro.g ? 60 : 0), g: tiro.g || 0, r: tiro.r, r0: tiro.r, dano: G.danoBase() * arma.d, amigo: true, vida: tiro.vida * (G.tem('aljava_jonatas') ? 1.35 : 1), max: tiro.vida * (G.tem('aljava_jonatas') ? 1.35 : 1), cor: arma.lamina || '#FFF1BE', tipo: tiro.tipo, fura: tiro.fura, basico: true }); } }
+    if (tiro) { const n = tiro.n || 1, ang = angTiro; for (let i = 0; i < n; i++) { const b = ang + (i - (n - 1) / 2) * (tiro.leque || 0.14), cx2 = Math.cos(b), sy2 = Math.sin(b); // algumas armas atiram várias pedras em leque
+      G.tiros.push({ golpe: p.atk, x: p.x + cx2 * 16, y: p.y - (dir === 'rasteira' && !livre ? 12 : 28) + sy2 * 14, vx: cx2 * tiro.v, vy: sy2 * tiro.v - (tiro.g ? 60 : 0), g: tiro.g || 0, r: tiro.r, r0: tiro.r, dano: G.danoBase() * arma.d, amigo: true, vida: tiro.vida * (G.tem('aljava_jonatas') ? 1.35 : 1), max: tiro.vida * (G.tem('aljava_jonatas') ? 1.35 : 1), cor: arma.lamina || '#FFF1BE', tipo: tiro.tipo, fura: tiro.fura, basico: true }); } }
   }
   if (p.atk) {
     const a = p.atk; a.t += dt;

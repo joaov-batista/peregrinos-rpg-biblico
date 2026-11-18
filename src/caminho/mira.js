@@ -48,7 +48,7 @@ export function soltarMira(G, ang) {
   let ux = Math.cos(ang), uy = Math.sin(ang);
   // na parede, mirar para dentro do muro não tem sentido: o golpe sai para o lado de fora, como num pulo de parede
   if (onde === 'parede' && Math.sign(ux) === lado) { ux = -ux; ang = Math.atan2(uy, ux); }
-  const ox = p.x, oy = p.y - 26, fora = -lado;
+  const ox = p.x, oy = p.y - 26, fora = -lado, rot = Math.atan2(uy, Math.abs(ux)); /* os efeitos giram para o lado mirado */
   p.oleo -= G.custoMira ? G.custoMira() : MIRA_CUSTO; p.miraCd = MIRA_ESPERA; if (Math.abs(ux) > 0.15) p.face = Math.sign(ux); p.desliza = 0;
   const tiro = o => G.tiros.push({ semOleo: true, x: ox + ux * 18, y: oy + uy * 18, vx: 0, vy: 0, r: 7, amigo: true, vida: 1, cor: '#FFF1BE', tipo: 'pedra', ...o });
   const depois = (ms, fn) => setTimeout(() => { if (G.running && !G.p.morto && G.p === p) fn(); }, ms);
@@ -59,12 +59,12 @@ export function soltarMira(G, ang) {
     case 'zelote': {
       if (onde === 'chao') { // três cortes num traço só: atravessa quase num piscar
         G.investidaMira = { t: 0, dur: 0.16, ux, uy, vel: 1900, dano: base * 2, larg: 64, atk: novoAtk(), cortes: [], ecos: 2, cor: '#C79BFF', inv: 0.4 };
-        for (let i = 0; i < 3; i++) G.efeito('corteAdaga', ox + ux * (60 + i * 90), oy + uy * (60 + i * 90) + 26, i % 2 ? -p.face : p.face, { vel: 1.2 - i * 0.2 });
+        for (let i = 0; i < 3; i++) G.efeito('corteAdaga', ox + ux * (60 + i * 90), oy + uy * (60 + i * 90) + 26, p.face, { vel: 1.2 - i * 0.2, rot });
         G.risco(ox, oy, ox + ux * 320, oy + uy * 320, '#C79BFF', 5);
       } else if (onde === 'ar') { // dois traços cruzados no ar, em X, e o salto volta (dá para emendar)
         const desce = uy > 0.35, a2b = desce ? ang + (ux >= 0 ? 0.7 : -0.7) : ang + 0.9 * (ux >= 0 ? 1 : -1); // o X segue a mira: mirando para baixo, os dois traços descem
         G.investidaMira = { t: 0, dur: 0.12, ux, uy, vel: 1800, dano: base * 2.2, larg: 60, atk: novoAtk(), cortes: [], cor: '#C79BFF', inv: 0.4, depois: { ux: Math.cos(a2b), uy: Math.sin(a2b), dur: 0.1 }, noFim: () => { if (!desce) p.vy = -380; p.dashAr = true; p.pulos = Math.max(p.pulos, 1); } };
-        G.risco(ox, oy, ox + ux * 220, oy + uy * 220, '#C79BFF', 5); G.efeito('corteAdaga', ox + ux * 90, oy + uy * 90 + 26, p.face, { vel: 1.3 });
+        G.risco(ox, oy, ox + ux * 220, oy + uy * 220, '#C79BFF', 5); G.efeito('corteAdaga', ox + ux * 90, oy + uy * 90 + 26, p.face, { vel: 1.3, rot });
       } else { // da parede: quica de muro em muro, cortando o que estiver no caminho
         G.investidaMira = { t: 0, dur: 0.5, ux, uy, vel: 1500, dano: base * 1.8, larg: 58, atk: novoAtk(), cortes: [], ricocheta: 3, cor: '#C79BFF', inv: 0.6 };
         G.risco(ox, oy, ox + ux * 260, oy + uy * 260, '#C79BFF', 4);
@@ -125,7 +125,7 @@ export function soltarMira(G, ang) {
         G.quedaMira = { fase: 0, t: 0, tx, dano: base * 7, y0: p.y }; p.vy = -1500; p.inv = Math.max(p.inv, 2.2); G.risco(p.x, p.y - 20, p.x + ux * 60, p.y - 420, '#E8C873', 4); G.efeito('baque', p.x, p.y);
       } else if (onde === 'ar' && uy > 0.35) { // mirando para baixo: o valente mergulha com a lança na direção mirada e cai com fogo
         G.quedaMira = { fase: 2, t: 0, tx: p.x, dano: base * 5, y0: p.y, vx: ux * 900, mergulho: true }; p.inv = Math.max(p.inv, 1.2);
-        G.risco(ox, oy, ox + ux * 260, oy + uy * 260, '#E8C873', 5); G.efeito('estocadaLonga', p.x, p.y, p.face, { gruda: p }); sfx('boss');
+        G.risco(ox, oy, ox + ux * 260, oy + uy * 260, '#E8C873', 5); G.efeito('estocadaLonga', p.x, p.y, p.face, { gruda: p, rot }); sfx('boss');
       } else if (onde === 'ar') { // do alto, arremessa uma lança enorme na direção mirada: onde ela cravar, sobe fogo
         G.flutua = 0.45; G.risco(ox, oy, ox + ux * 300, oy + uy * 300, '#E8C873', 4);
         tiro({ vx: ux * 1250, vy: uy * 1250, r: 12, vida: 1.2, tipo: 'lanca', cor: '#E8C873', dano: base * 4, estoura: { raio: 90, dano: base * 2.4, fx: 'explosaoFogo' } });
@@ -139,7 +139,7 @@ export function soltarMira(G, ang) {
     default: { // guerreiro (espada)
       if (onde === 'chao') { // a investida pesada, de espada à frente, que termina batendo no chão
         G.investidaMira = { t: -0.14, dur: 0.24, ux, uy, vel: 1150, dano: base * 6, larg: 72, atk: novoAtk(), cortes: [], cor: '#FFF1BE', inv: 0.55, pesado: true };
-        G.efeito('estocadaLonga', p.x, p.y, p.face, { gruda: p }); G.risco(ox, oy, ox + ux * 280, oy + uy * 280, '#FFF1BE', 6);
+        G.efeito('estocadaLonga', p.x, p.y, p.face, { gruda: p, rot }); G.risco(ox, oy, ox + ux * 280, oy + uy * 280, '#FFF1BE', 6);
       } else if (onde === 'ar') { // no ar não há chão para bater: a espada corta um arco largo e quem for pego sobe junto
         G.investidaMira = { t: -0.06, dur: 0.18, ux, uy, vel: 1250, dano: base * 4.5, larg: 80, atk: novoAtk('cima'), cortes: [], cor: '#FFF1BE', inv: 0.5, arco: true, noFim: () => { p.vy = -260; p.dashAr = true; } };
         G.efeito('giro', p.x, p.y - 10, p.face, { gruda: p }); G.risco(ox, oy, ox + ux * 220, oy + uy * 220, '#FFF1BE', 6);

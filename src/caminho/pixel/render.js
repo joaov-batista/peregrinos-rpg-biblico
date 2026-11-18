@@ -19,7 +19,7 @@ import { pintarPalco } from './palcos.js';
 import { cenaPixel, pintarFundoPixel, pintarSalasPixel, pintarBlocosPixel, pintarLuzPixel, TL, mistura, pontilha } from './mundo.js';
 import { pintarEfeitos } from './efeitos.js';
 import { JESUS_LOOK } from '../getsemani.js';
-import { ELEMENTO_DO_CHEFE, zonaElemento, tiroElemento, corDoElemento } from './elementos.js';
+import { ELEMENTO_DO_CHEFE, zonaElemento, tiroElemento, corDoElemento, elementoAmigo } from './elementos.js';
 
 export const FONTE = '"Pixelify Sans", "Alegreya Sans", monospace';
 const baixa = document.createElement('canvas'), bg = baixa.getContext('2d');
@@ -480,11 +480,11 @@ function pintarZona(g, G, z, X, Y, vw, vh, Tm) {
     g.globalAlpha = 0.9 * k; for (let i = 0; i < (z.tipo === 'col' ? 10 : 26); i++) { const px = z.tipo === 'col' ? x + ((i * 7 + Math.floor(Tm * 30)) % w) : x + ((i * 37 + Math.floor(Tm * 40)) % w), py = z.tipo === 'col' ? y + ((i * 53 + Math.floor(Tm * 120)) % h) : y + ((i * 11 + Math.floor(Tm * 20)) % h); g.fillRect(px, py, 1, 2); }
     g.restore(); return;
   }
-  const el = !z.amigo && !z.isca && G.chefe && ELEMENTO_DO_CHEFE[G.chefe.id];
+  const el = z.isca ? null : z.amigo ? elementoAmigo(z) : G.chefe && ELEMENTO_DO_CHEFE[G.chefe.id];
   if (el && (z.tipo === 'col' || z.tipo === 'faixa')) { /* a matéria do chefe: fogo sobe, raio risca, pedra cai */
     const k = ativa ? 1 : clamp(1 - z.aviso / 0.9, 0, 1);
     if (ativa) { if (zonaElemento(g, el, z, x, y, w, h, true, 1, Tm)) return; }
-    else { zonaElemento(g, el, z, x, y, w, h, false, k, Tm); c = corDoElemento(el) || c; } /* o aviso: pontilhado legível na cor do elemento, com os sinais dele no chão */
+    else { zonaElemento(g, el, z, x, y, w, h, false, k, Tm); if (z.amigo) return; c = corDoElemento(el) || c; } /* golpe amigo não precisa de aviso pontilhado */ /* o aviso: pontilhado legível na cor do elemento, com os sinais dele no chão */
   }
   if (ativa) {
     g.fillStyle = z.tipo === 'poca' ? c : '#fff'; if (z.tipo === 'poca') { for (let i = 0; i < w; i++) g.fillRect(x + i, y + h - 3 - ((i + Math.floor(Tm * 6)) % 3 === 0 ? 1 : 0), 1, 4); g.fillStyle = '#fff'; for (let i = 2; i < w; i += 5) g.fillRect(x + i, y + h - 5 - ((i + Math.floor(Tm * 8)) % 4), 1, 1); return; }
