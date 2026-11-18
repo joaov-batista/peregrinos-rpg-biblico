@@ -41,8 +41,9 @@ export function passoTempo(G, dt) {
   else if (!mansa && G.musicaChuva && G.chuvaK < 0.3) { G.musicaChuva = false; if (!G.levi && !G.cenaPraia) G.musicaDaArea?.(); }
   // o arco-íris: a chuva passou e é de dia
   const L = G.luzDoDiaAgora; if (G.choveuK == null) G.choveuK = 0;
-  if (G.chuvaK > 0.4) G.choveuK = 1; else if (G.choveuK === 1 && G.chuvaK < 0.12) { G.choveuK = 0; if (fora) G.arcoT = 70; }
+  if (G.chuvaK > 0.4) G.choveuK = 1; else if (G.choveuK === 1 && G.chuvaK < 0.12) { G.choveuK = 0; if (fora && (G.luzDoDiaD ?? 1) > 0.35) { G.arcoT = 70; G.aliancaT = 2.5; } }
   if (G.arcoT > 0) G.arcoT -= dt;
+  if (G.aliancaT > 0 && (G.aliancaT -= dt) <= 0) { if (G.arcoT > 8 && !G.ui.blocking && !G.luta && !G.levi && !G.cenaPraia && !G.p.morto) momentoDaAlianca(G); else if (G.arcoT > 8) G.aliancaT = 1; }
   if (G.raioT > 0) G.raioT -= dt;
   if (fora && t === 'tempestade') { G.trovaoT = (G.trovaoT ?? 4) - dt;
     if (G.trovaoT <= 0) { G.trovaoT = (G.levi ? 3 : 7) + Math.random() * 8; G.raioT = 0.35; G.raioX = Math.random(); G.clarao = Math.max(G.clarao || 0, 0.22); setTimeout(() => sfx('trovao'), 200 + Math.random() * 700); } }
@@ -51,10 +52,34 @@ export function passoTempo(G, dt) {
   void L;
 }
 
+/* ---------------- o arco-íris: lembrar a aliança ---------------- */
+// "Porei o meu arco nas nuvens; ele será por sinal da aliança entre mim e a terra" (Gn 9:13). Na primeira vez, o peregrino
+// para e lembra (uma cena curta); depois, cada arco-íris traz um versículo diferente e um pouco de luz para a lâmpada.
+const ALIANCA = [
+  ['"O arco estará nas nuvens; e eu o verei, para me lembrar da aliança eterna" (Gn 9:16).', 'Ele vê o arco também. E lembra.'],
+  ['"As águas não se tornarão mais em dilúvio para destruir toda a carne" (Gn 9:15).', 'A chuva passou. A promessa ficou.'],
+  ['"Como o aspecto do arco que aparece na nuvem em dia de chuva, assim era o resplendor ao redor" (Ez 1:28).', 'Ezequiel viu a glória com as cores da chuva.'],
+  ['"Ao redor do trono há um arco-íris semelhante, na aparência, à esmeralda" (Ap 4:3).', 'O mesmo arco está em volta do trono.'],
+  ['"Enquanto durar a terra, não deixará de haver sementeira e ceifa, frio e calor, verão e inverno, dia e noite" (Gn 8:22).', 'Tudo segue o seu tempo. Você também.']
+];
+async function momentoDaAlianca(G) {
+  const cm = G.cm, p = G.p, luz = () => { p.oleo = G.oleoMax(); p.vida = p.vidaMax; sfx('heal'); G.fx.anel(p.x, p.y - 26, '#FFE9A8', 90); for (const c of ['#E24A4A', '#F2944A', '#F2D24A', '#6ACB5A', '#4A9AE2', '#9A5AC2']) G.fx.sobe(p.x, p.y - 10, 3, c); };
+  if (!cm.alianca) {
+    await G.ui.dialog({ nome: 'Depois da chuva', texto: 'As nuvens se abrem e, de um lado ao outro do céu, aparece o arco. Você para no meio do caminho.\n\nFoi assim, depois do dilúvio, que Deus falou com Noé e com os filhos dele, e com cada bicho que saiu da arca.', acoes: [{ label: 'Continuar' }], cls: 'fala-narra', voz: false });
+    const r = await G.ui.dialog({ nome: 'A aliança', texto: '"Porei o meu arco nas nuvens, e ele será por sinal da aliança entre mim e a terra. E acontecerá que, quando eu trouxer nuvens sobre a terra, aparecerá o arco nas nuvens. Então me lembrarei da minha aliança" (Gn 9:13-15).\n\nNão é você quem precisa lembrar Deus. É Ele quem diz: eu vou lembrar.', acoes: [{ label: 'Lembrar a aliança' }, { label: 'Ficar olhando o arco' }], cls: 'fala-narra', voz: false });
+    cm.alianca = 1; luz(); G.textoEm(p.x, p.y - 96, r === 'Lembrar a aliança' ? '"Eu me lembrarei" (Gn 9:15)' : 'o arco continua lá', '#FFE9A8', 13);
+    G.ovo?.('arco', 'O arco nas nuvens: a aliança lembrada (Gn 9:13).'); G.salvar(); return;
+  }
+  const [vers, eco] = ALIANCA[(cm.alianca - 1) % ALIANCA.length]; cm.alianca++;
+  p.oleo = Math.min(G.oleoMax(), p.oleo + 30); sfx('magic'); G.fx.anel(p.x, p.y - 26, '#FFE9A8', 70);
+  G.textos.push({ x: p.x, y: p.y - 150, txt: '🌈 ' + vers, cor: '#FFF1D6', tam: 12, t: 7 }); G.textos.push({ x: p.x, y: p.y - 128, txt: eco, cor: '#C9D8EC', tam: 11, t: 7 });
+  G.salvar();
+}
+
 /* ---------------- o céu (no fundo, atrás de tudo) ---------------- */
 // chamada pelo desenho do céu (mundo.js), com a escuridão da noite (0 de dia, 1 noite fechada)
 export function pintarCeuDoTempo(g, G, vw, dy, cx, noite) {
-  G.ceuEscuro = noite > 0.6;
+  G.ceuEscuro = noite > 0.6; G.luzDoDiaD = 1 - noite;
   const k = G.chuvaK || 0; if (k > 0.05) { g.globalAlpha = Math.min(0.55, k * 0.5); g.fillStyle = '#5A6474'; g.fillRect(0, dy, vw, 400); g.globalAlpha = 1; } // céu fechado
   if (G.arcoT > 0 && noite < 0.4) { const a = Math.min(1, G.arcoT / 8, (70 - G.arcoT) / 4) * 0.33 * (1 - noite), cxA = Math.round(vw * 0.62 - cx * 0.03), cyA = dy + 230, R = 190;
     const cores = ['#E24A4A', '#F2944A', '#F2D24A', '#6ACB5A', '#4A9AE2', '#6A5AD2', '#9A5AC2'];

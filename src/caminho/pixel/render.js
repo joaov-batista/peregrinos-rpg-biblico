@@ -43,18 +43,28 @@ function sprObj(chave, w, h, pinta) { let s = objs.get(chave); if (!s) { s = new
 const CHAMA = [['..y..', '.yY.', '.yYy.', 'yYWYy', '.yYy.'], ['.y...', '.yy..', '.yYy.', 'yYWYy', '.yYy.'], ['...y.', '..yy.', '.yYy.', 'yYWYy', '.yYy.']];
 function chama(g, x, y, Tm, k = 0) { const f = CHAMA[Math.floor(Tm * 9 + k) % 3]; for (let j = 0; j < f.length; j++) for (let i = 0; i < f[j].length; i++) { const c = f[j][i]; if (c !== '.') { g.fillStyle = c === 'W' ? '#FFFBE6' : c === 'Y' ? '#FFD86A' : '#FF9A3C'; g.fillRect(x - 2 + i, y - 4 + j, 1, 1); } } }
 
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + 0.5) / 16);
 function pintarAgua(g, o, G, x, y, Tm) {
   switch (o.tipo) {
     // o mar e o píer: a água cobre o chão dali até o fim da sala (ou até "ate"); por cima, as tábuas do píer e as estacas
-    case 'aguaAberta': { // o mar aberto: cobre o chão, mais escuro e mais fundo para longe da margem, ondas e espuma na beira
-      const w = (o.ate - o.col + 1) * 16, x0 = x - 8, f3 = Tm * 1.4;
+    case 'aguaAberta': { // o mar aberto: cobre o chão; raso e claro na beira (a areia aparece no fundo), fundo e escuro longe; na beira, a rampa de areia entra na água e a onda sobe e desce nela
+      const w = (o.ate - o.col + 1) * 16, x0 = x - 8, f3 = Tm * 1.4, esq = !!o.esq, R = 46;
       const Lz = G.cm && (G.area === 'refugio' || G.def?.sitio) ? luzDoDia(G) : null, escuro = Lz ? (1 - Lz.d) * 0.62 : 0, poente = Lz ? Lz.poente * 0.22 : 0;
-      const veu = () => { if (escuro > 0.02) { g.globalAlpha = escuro; g.fillStyle = '#060E1E'; g.fillRect(x0, y - 6, w, 48); } if (poente > 0.02) { g.globalAlpha = poente; g.fillStyle = '#E07A4A'; g.fillRect(x0, y - 6, w, 6); } g.globalAlpha = 1; };
-      if (o.esq) { // a praia do sítio: o mar fica à esquerda, a espuma vem e volta na areia
-        for (let i = 0; i < w; i += 2) { const d = 1 - i / w, yy = y - 3 + Math.round(Math.sin(i * 0.12 + f3 * 2) * 1.4); g.fillStyle = d < 0.25 ? '#3A8A9A' : d < 0.6 ? '#1F5A72' : '#123A52'; g.fillRect(x0 + i, yy + 2, 2, 40); g.fillStyle = (i + Math.floor(f3 * 5)) % 22 < 2 ? '#DFF6FA' : d < 0.25 ? '#6AC0CC' : '#3A8AA8'; g.fillRect(x0 + i, yy, 2, 2); }
-        const vai = Math.round((Math.sin(Tm * 0.9) * 0.5 + 0.5) * 14); g.fillStyle = '#DFF6FA'; for (let i = 0; i < vai; i += 2) g.fillRect(x0 + w + i - 2, y - 1 + (i % 4 ? 0 : 1), 2, 1); g.globalAlpha = 0.4; g.fillStyle = '#8FC8D0'; g.fillRect(x0 + w, y, vai + 6, 2); g.globalAlpha = 1; veu(); return; }
-      for (let i = 0; i < w; i += 2) { const d = i / w, yy = y - 3 + Math.round(Math.sin(i * 0.12 + f3 * 2) * 1.4 + Math.sin(i * 0.05 - f3) * 1); g.fillStyle = d < 0.15 ? '#2E7A8A' : d < 0.5 ? '#1F5A72' : '#123A52'; g.fillRect(x0 + i, yy + 2, 2, 40); g.fillStyle = (i + Math.floor(f3 * 5)) % 22 < 2 ? '#DFF6FA' : d < 0.15 ? '#5AB0C0' : '#3A8AA8'; g.fillRect(x0 + i, yy, 2, 2); }
-      g.fillStyle = '#DFF6FA'; for (let k = 0; k < 4; k++) g.fillRect(x0 + ((Math.floor(f3 * 8) + k * 5) % 14), y - 3 + (k % 2), 2, 1); veu(); return; }
+      const PAL = ['#5CC4CC', '#3E9EAE', '#2E7A8A', '#1F5A72', '#163F58', '#123A52'], ESP = ['#B8EEF0', '#8AD4DC', '#5AB0C0', '#3A8AA8', '#2E6E8A', '#2A6080'];
+      const corEm = (d, xx, yy, P) => { const f = Math.min(P.length - 1.001, Math.max(0, d * (P.length - 1))), a = Math.floor(f), t = f - a; return P[BAYER[((yy >> 1) & 3) * 4 + ((xx >> 1) & 3)] < t ? a + 1 : a]; }; // passagem pontilhada entre as cores
+      for (let i = 0; i < w; i += 2) { const dist = esq ? w - i : i, d = Math.min(1, dist / Math.min(w, 420)), yy = y - 3 + Math.round(Math.sin(i * 0.12 + f3 * 2) * 1.4 + Math.sin(i * 0.05 - f3) * 1);
+        for (let r = 2; r < 42; r += 2) { g.fillStyle = corEm(Math.min(1, d + r / 120), x0 + i, yy + r, PAL); g.fillRect(x0 + i, yy + r, 2, 2); }
+        g.fillStyle = (i + Math.floor(f3 * 5)) % 22 < 2 ? '#DFF6FA' : corEm(d, x0 + i, yy, ESP); g.fillRect(x0 + i, yy, 2, 2); }
+      // a rampa da beira: a areia desce para dentro d'água, com a água rasa por cima e a espuma que vai e volta
+      { const bx = esq ? x0 + w : x0, dir = esq ? -1 : 1, vai = Math.sin(Tm * 0.8) * 0.5 + 0.5, pedra = !o.praia;
+        for (let i = 0; i < R; i++) { const xx = bx + dir * i - (esq ? 1 : 0), u = i / R, ys = Math.round(y - 1 + u * u * 14);
+          for (let yy = ys; yy < y + 42; yy++) { const n = ((xx * 7 + yy * 13) % 11) / 11; g.fillStyle = pedra && n > 0.82 ? '#7A7484' : yy < ys + 2 ? '#C9B07A' : n > 0.5 ? '#A8925E' : '#B89E68'; g.fillRect(xx, yy, 1, 1); }
+          if (pedra && i % 9 === 3) { g.fillStyle = '#6A6474'; g.fillRect(xx - 1, ys - 1, 3, 2); g.fillStyle = '#9A94A4'; g.fillRect(xx - 1, ys - 1, 2, 1); } // seixos
+          const wy = y - 3 + Math.round(Math.sin(xx * 0.12 + f3 * 2) * 1), prof = Math.max(0, (ys - wy) / 14); // a água rasa por cima, mais transparente na beirinha
+          if (u > 0.12 + (1 - vai) * 0.18) { g.globalAlpha = Math.min(0.9, 0.25 + prof * 0.8); g.fillStyle = prof < 0.4 ? '#7FD4D8' : '#3E9EAE'; g.fillRect(xx, wy, 1, Math.max(1, ys - wy + 2)); g.globalAlpha = 1; } }
+        const fx = bx + dir * Math.round((0.1 + (1 - vai) * 0.2) * R); g.fillStyle = '#F4FCFF'; for (let k = 0; k < 7; k++) { g.globalAlpha = 0.9 - k * 0.1; g.fillRect(fx + dir * k * 2, y - 2 - (k % 2) + Math.round((0.1 + (1 - vai) * 0.2) * 2), 2, 1); } g.globalAlpha = 0.45; g.fillStyle = '#5A4A30'; g.fillRect(Math.min(bx, bx + dir * 18), y - 1, 18, 1); g.globalAlpha = 1; } // a areia molhada que a onda deixou
+      if (escuro > 0.02) { g.globalAlpha = escuro; g.fillStyle = '#060E1E'; g.fillRect(x0 - (esq ? 0 : 0), y - 6, w, 48); } if (poente > 0.02) { g.globalAlpha = poente; g.fillStyle = '#E07A4A'; g.fillRect(x0, y - 6, w, 6); } g.globalAlpha = 1;
+      return; }
     case 'areia': { // a areia da praia: clara, com riscos de vento e conchinhas; molhada perto da água; no fim, ela se mistura com a grama aos poucos
       const w = (o.ate - o.col + 1) * 16, x0 = x - 8, mist = 112; // os últimos pixels viram grama, pontilhado
       const tem = (xx, yy) => { const d = x0 + w - xx; if (d > mist) return true; const k = d / mist; return ((xx * 7 + yy * 13) % 17) / 17 < k * k * 1.2 - 0.1; };
@@ -67,7 +77,13 @@ function pintarAgua(g, o, G, x, y, Tm) {
       g.fillStyle = '#0C2434'; g.fillRect(x0, y + 4, w, 20); g.fillStyle = '#123A52'; g.fillRect(x0, y + 2, w, 4);
       for (let i = 0; i < w; i += 2) { const yy = y + 1 + Math.round(Math.sin(i * 0.15 + f3 * 2) * 1.2); g.fillStyle = (i + Math.floor(f3 * 6)) % 18 < 2 ? '#BFF0F8' : '#2E6B80'; g.fillRect(x0 + i, yy, 2, 1); }
       g.fillStyle = '#4A3524'; for (let i = 6; i < w; i += 40) g.fillRect(x0 + i, y - 1, 3, 22);
+      g.globalAlpha = 0.5; g.fillStyle = '#05121C'; g.fillRect(x0, y + 1, w, 5); g.globalAlpha = 1; // a sombra debaixo das tábuas
       g.fillStyle = '#17121f'; g.fillRect(x0, y - 3, w, 4); g.fillStyle = '#8A6A44'; g.fillRect(x0, y - 3, w, 2); g.fillStyle = '#6B4A2E'; for (let i = 0; i < w; i += 9) g.fillRect(x0 + i, y - 3, 1, 3);
+      for (const [cx0, dir] of [[x0, 1], [x0 + w, -1]]) { // as cabeceiras: muro de pedra onde o píer encosta na terra, e pedras soltas na água
+        for (let yy = y - 3; yy < y + 26; yy++) for (let i = 0; i < 12; i++) { const xx = cx0 + dir * i - (dir < 0 ? 1 : 0), lin = Math.floor((yy - y + 3) / 4), jun = (yy - y + 3) % 4 === 0 || ((i + lin * 3) % 6 === 0); g.fillStyle = jun ? '#2A2630' : ((xx + yy) % 5 ? '#6A6474' : '#7A7484'); g.fillRect(xx, yy, 1, 1); }
+        g.fillStyle = '#8A8494'; g.fillRect(Math.min(cx0, cx0 + dir * 12), y - 4, 12, 1);
+        for (let k = 0; k < 3; k++) { const px = cx0 + dir * (14 + k * 6), py = y + 2 + (k % 2); g.fillStyle = '#17121f'; g.fillRect(px - 3, py - 1, 7, 4); g.fillStyle = '#5A5464'; g.fillRect(px - 2, py, 5, 2); g.fillStyle = '#8A8494'; g.fillRect(px - 2, py, 2, 1); g.fillStyle = '#DFF6FA'; g.fillRect(px - 3 + (Math.floor(Tm * 3 + k) % 2) * 6, py + 2, 2, 1); } }
+      g.fillStyle = '#17121f'; for (let i = 18; i < w - 18; i += 40) { g.fillRect(x0 + i - 1, y - 1, 5, 24); } g.fillStyle = '#5A3E28'; for (let i = 18; i < w - 18; i += 40) { g.fillRect(x0 + i, y - 1, 3, 23); g.fillStyle = '#7A5A3A'; g.fillRect(x0 + i, y - 1, 1, 23); g.fillStyle = '#5A3E28'; }
       return true; }
     case 'barco': { const bal = Math.round(Math.sin(Tm * 1.4) * 1.5), bx = x, by = y + 4 + bal, vira = o.volta ? -1 : 1;
       g.fillStyle = '#17121f'; g.fillRect(bx - 44, by - 16, 88, 14); g.fillRect(bx - 38, by - 2, 76, 4); g.fillStyle = '#6B4A2E'; g.fillRect(bx - 43, by - 15, 86, 12); g.fillStyle = '#8A6A44'; g.fillRect(bx - 43, by - 15, 86, 2); g.fillStyle = '#4A3524'; for (let i = -36; i < 40; i += 12) g.fillRect(bx + i, by - 12, 1, 9);
