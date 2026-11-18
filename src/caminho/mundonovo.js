@@ -19,6 +19,8 @@ import { falarPedro, semChamado, sardesAoEntrar, rotuloSardesNovo, usarSardesNov
 import { sitioAoEntrar, rotuloSitio, usarSitio } from './sitio.js';
 import { lojaDeLidia } from './azeites.js';
 import { falarConvite } from './convites.js';
+import { ehNatal } from './tempo.js';
+import { RX } from './dados.js';
 
 const rand = (a, b) => a + Math.random() * (b - a);
 export const PRECO_BARCO = 150;
@@ -40,6 +42,12 @@ export function aoEntrar(G, id, o = {}) {
     const k = o.portal ? andarDe(o.portal) : null; montarAndar(G, k ?? G.andarRolos ?? proximoAndar(G)); // voltando de uma página, o salão já está no andar dela // o mercador de além-mar só aparece de vez em quando, e cada visita traz outras coisas
     G.viajante = Math.random() < 0.4 ? sortearViajante(G) : null;
     G.objs = G.objs.filter(o => !o.vezOutra || G.viajante);
+    if (ehNatal(G)) { // o Natal: no lugar da palmeira da Praça do poço, o presépio; e, uma vez por Natal, a história do nascimento
+      G.objs = G.objs.filter(q => !(q.tipo === 'planta' && q.qual === 'palmeira' && q.cel?.cx === RX));
+      G.objs.push({ tipo: 'presepio', x: (RX * 30 + 11.2) * 32 + 16, y: 16 * 32 });
+      const ano = new Date().getMonth() === 0 ? new Date().getFullYear() - 1 : new Date().getFullYear();
+      if (G.cm.natalVisto !== ano && !(G.cm.visto?.tut != null && G.cm.visto.tut < 11)) { G.cm.natalVisto = ano; setTimeout(async () => { G.ui.toast('✦ Feliz Natal! Hoje o Refúgio lembra o nascimento de Jesus: "Hoje vos nasceu o Salvador, que é Cristo, o Senhor" (Lc 2:11).', 7000); await new Promise(r => setTimeout(r, 2500)); await G.cinema('natal', true); G.salvar(); }, 1500); }
+    }
     historiaNoRefugio(G); vidaNoRefugio(G); missaoNoRefugio(G);
     { const i = G.objs.findIndex(q => q.qual === 'sinagoga'); if (i > 0) G.objs.unshift(G.objs.splice(i, 1)[0]); }
     { const cj = G.cm.conjuge && G.objs.find(q => q.tipo === 'morador' && q.id === G.cm.conjuge), casa = G.objs.find(q => q.tipo === 'casa' && q.id === 'peregrino'); if (cj && casa) { cj.x = casa.x + 40; cj.cel = casa.cel; cj.nome = cj.nome.split(',')[0] + ', ' + (G.char.look?.sexo === 'f' ? 'seu marido' : 'sua esposa'); } } /* casados: mora com você */ /* a sinagoga por trás: quem ora lá dentro aparece na frente */
@@ -108,6 +116,7 @@ export function rotuloNovo(G, ob) {
   if (ob.escondido > G.T) return null; // o vizinho que "não era gente" sumiu da rua: não há com quem falar
   switch (ob.tipo) {
     case 'vela': return sar(G).velas[ob.id] ? null : 'Reacender (10 de azeite)';
+    case 'presepio': return 'Ver o presépio: o nascimento de Jesus';
     case 'barco': return ob.volta ? 'Voltar ao Refúgio' : 'Embarcar para Sardes';
     case 'selado': return 'Olhar';
     case 'cenario': return ob.qual === 'quadro' ? 'Ler o quadro' : ob.qual === 'andares' ? 'Escada dos andares' : undefined;
@@ -117,6 +126,7 @@ export function rotuloNovo(G, ob) {
 }
 export async function usarNovo(G, ob) {
   const p = G.p, cm = G.cm, c = G.char;
+  if (ob.tipo === 'presepio') { await G.cinema('natal', true); return true; }
   if (await usarVida(G, ob)) return true;
   if (await usarLugar(G, ob)) return true;
   if (await usarSardesNovo(G, ob)) return true;

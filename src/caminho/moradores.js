@@ -14,7 +14,8 @@ import { RX } from './dados.js';
 import { AZEITES } from '../content/azeites.js';
 import { passoConvites } from './convites.js';
 import { passoAzeites } from './azeites.js';
-import { passoTempo } from './tempo.js';
+import { passoTempo, ehNatal } from './tempo.js';
+const NATAL_FALAS = ['Feliz Natal! Nasceu o Salvador!', 'Feliz Natal, peregrino!', 'Glória a Deus nas alturas!', 'Já viu o presépio na Praça?', 'Emanuel: Deus conosco!', 'Paz na terra! Feliz Natal!'];
 import { passoMarBravo } from './marbravo.js';
 import { agendaDe, lugarNaSinagoga, passoRonda, passoSinagoga, falarSinagoga, falaDaNoite } from './sinagoga.js';
 
@@ -81,7 +82,7 @@ export function passoVida(G, dt) {
     // golpe perto: susto
     if (perto && p.atk && v.estado !== 'susto') { v.estado = 'susto'; v.t = 0.8; v.emote = '!'; v.emoteT = 1; v.alvo = v.x + Math.sign(v.x - p.x) * 40; }
     // você chega: ele se vira e acena (uma vez por visita)
-    else if (perto && !v.acenou && v.estado !== 'conversa') { v.acenou = true; v.estado = 'acena'; v.t = 1.4; v.face = Math.sign(p.x - v.x) || 1; v.emote = coracoes(G, o.id) >= 5 ? '♥' : '…'; v.emoteT = 1.4; const g = GENTE[o.id]; if (g) G.fala({ x: v.x, y: o.y, h: 56 }, g.cumprimenta[Math.floor(rand(0, g.cumprimenta.length))]); }
+    else if (perto && !v.acenou && v.estado !== 'conversa') { v.acenou = true; v.estado = 'acena'; v.t = 1.4; v.face = Math.sign(p.x - v.x) || 1; v.emote = coracoes(G, o.id) >= 5 ? '♥' : '…'; v.emoteT = 1.4; const g = GENTE[o.id]; if (g) G.fala({ x: v.x, y: o.y, h: 56 }, (ehNatal(G) && Math.random() < 0.6 ? NATAL_FALAS[Math.floor(rand(0, NATAL_FALAS.length))] : g.cumprimenta[Math.floor(rand(0, g.cumprimenta.length))])); }
     if (dp > 400) v.acenou = false;
     // conversa de rua com quem estiver perto e parado
     if (v.estado === 'parado' && !v.papo && Math.random() < dt * 0.15) {

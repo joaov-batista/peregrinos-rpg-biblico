@@ -406,6 +406,37 @@ export const CINEMAS = {
 };
 
 // Qual cutscene toca quando um chefe aparece (id do bestiário → id da cutscene)
+// o Natal: o nascimento de Jesus (Lc 2; Mt 1-2). Roda uma vez por Natal e de novo no presépio da Praça do poço.
+CINEMAS['natal'] = {
+  titulo: 'O nascimento de Jesus',
+  cenas: [
+    { cena: 'noite', titulo: 'NATAL', sub: 'Lucas 2',
+      texto: 'Naqueles dias, saiu um decreto de César Augusto para que todo o mundo se recenseasse. E José subiu da Galileia, da cidade de Nazaré, à cidade de Davi, chamada Belém, com Maria, que estava grávida.',
+      fig: [{ p: { skin: '#A0673E', hair: '#3A2314', tunic: '#7A5A3A', cape: '#4A3A2A', style: 'turbante', beard: true }, x: 0.42, y: 0.86, s: 1.5, entra: 'esq', anda: true }, { p: { skin: '#C68B59', hair: '#2B1A10', tunic: '#3E5FA8', cape: '#E8E2D0', style: 'veu' }, x: 0.32, y: 0.86, s: 1.4, entra: 'esq', anda: true }] },
+    { cena: 'belem',
+      texto: 'Não havia lugar para eles na hospedaria. E, estando eles ali, Maria deu à luz o seu filho primogênito, envolveu-o em panos e o deitou numa manjedoura (Lc 2:6-7).',
+      fig: [{ p: 'manjedoura', x: 0.5, y: 0.86, s: 1.6 }, { p: { skin: '#C68B59', hair: '#2B1A10', tunic: '#3E5FA8', cape: '#E8E2D0', style: 'veu' }, x: 0.39, y: 0.88, s: 1.4, vira: 1 }, { p: { skin: '#A0673E', hair: '#3A2314', tunic: '#7A5A3A', cape: '#4A3A2A', style: 'turbante', beard: true }, x: 0.62, y: 0.88, s: 1.5, vira: -1 }] },
+    { cena: 'pastores',
+      texto: 'Havia pastores no campo, guardando o rebanho durante as vigílias da noite. E um anjo do Senhor veio sobre eles, e a glória do Senhor brilhou ao redor deles, e tiveram grande temor.',
+      fig: [{ p: 'serafim', x: 0.5, y: 0.32, s: 1.2, entra: 'cima' }, { p: { skin: '#8A5A3A', hair: '#1C120A', tunic: '#8A7A5A', cape: '#5A4636', style: 'turbante', beard: true }, x: 0.3, y: 0.88, s: 1.4, vira: 1, gesto: 'erguer' }, { p: { skin: '#C68B59', hair: '#6B4423', tunic: '#6A5A3A', cape: 'none', style: 'curto' }, x: 0.7, y: 0.88, s: 1.3, vira: -1 }] },
+    { cena: 'pastores',
+      texto: '"Não temais, porque eis aqui vos trago novas de grande alegria, que será para todo o povo: hoje, na cidade de Davi, vos nasceu o Salvador, que é Cristo, o Senhor" (Lc 2:10-11).',
+      fig: [{ p: 'serafim', x: 0.5, y: 0.3, s: 1.3 }, { p: { skin: '#8A5A3A', hair: '#1C120A', tunic: '#8A7A5A', cape: '#5A4636', style: 'turbante', beard: true }, x: 0.3, y: 0.88, s: 1.4, vira: 1 }, { p: { skin: '#C68B59', hair: '#6B4423', tunic: '#6A5A3A', cape: 'none', style: 'curto' }, x: 0.7, y: 0.88, s: 1.3, vira: -1 }] },
+    { cena: 'pastores', titulo: 'GLÓRIA', sub: 'Lucas 2:14',
+      texto: 'E, de repente, apareceu com o anjo uma multidão dos exércitos celestiais, louvando a Deus: "Glória a Deus nas alturas, paz na terra, boa vontade para com os homens".',
+      fig: [{ p: 'serafim', x: 0.22, y: 0.3, s: 0.9, entra: 'cima' }, { p: 'serafim', x: 0.5, y: 0.22, s: 1.2, entra: 'cima' }, { p: 'serafim', x: 0.78, y: 0.3, s: 0.9, entra: 'cima' }] },
+    { cena: 'belem',
+      texto: 'E foram apressadamente, e acharam Maria, e José, e o menino deitado na manjedoura. E os pastores voltaram glorificando e louvando a Deus por tudo o que tinham ouvido e visto (Lc 2:16,20).',
+      fig: [{ p: 'manjedoura', x: 0.5, y: 0.86, s: 1.6 }, { p: { skin: '#C68B59', hair: '#2B1A10', tunic: '#3E5FA8', cape: '#E8E2D0', style: 'veu' }, x: 0.4, y: 0.88, s: 1.4, vira: 1 }, { p: { skin: '#A0673E', hair: '#3A2314', tunic: '#7A5A3A', cape: '#4A3A2A', style: 'turbante', beard: true }, x: 0.6, y: 0.88, s: 1.5, vira: -1 }, { p: { skin: '#8A5A3A', hair: '#1C120A', tunic: '#8A7A5A', cape: '#5A4636', style: 'turbante', beard: true }, x: 0.2, y: 0.88, s: 1.4, vira: 1, entra: 'esq', anda: true }, { p: { skin: '#C68B59', hair: '#6B4423', tunic: '#6A5A3A', cape: 'none', style: 'curto' }, x: 0.8, y: 0.88, s: 1.3, vira: -1, entra: 'dir', anda: true }] },
+    { cena: 'deserto', sub: 'Mateus 2',
+      texto: 'Uns magos vieram do oriente, seguindo a estrela: "Onde está aquele que é nascido rei dos judeus? Vimos a sua estrela no oriente e viemos adorá-lo" (Mt 2:2). E, vendo a estrela, alegraram-se muito com grande alegria.',
+      fig: [{ p: { skin: '#6B4A2E', hair: '#1C120A', tunic: '#7A2E6A', cape: '#C9A63C', style: 'turbante', beard: true }, x: 0.3, y: 0.86, s: 1.5, entra: 'dir', anda: true, vira: -1 }, { p: { skin: '#E3B48C', hair: '#D9D2C5', tunic: '#2F4A7A', cape: '#C9A63C', style: 'turbante', beard: true }, x: 0.45, y: 0.86, s: 1.5, entra: 'dir', anda: true, vira: -1 }, { p: { skin: '#A0673E', hair: '#1C120A', tunic: '#8E2B2B', cape: '#E8C060', style: 'turbante' }, x: 0.6, y: 0.86, s: 1.4, entra: 'dir', anda: true, vira: -1 }] },
+    { cena: 'belem', titulo: 'EMANUEL', sub: 'Deus conosco · Mateus 1:23',
+      texto: 'Prostrando-se, o adoraram; e, abrindo os seus tesouros, ofertaram-lhe ouro, incenso e mirra. Este é o Natal: Deus veio morar entre nós. Feliz Natal, peregrino.',
+      fig: [{ p: 'manjedoura', x: 0.5, y: 0.86, s: 1.6 }, { p: { skin: '#C68B59', hair: '#2B1A10', tunic: '#3E5FA8', cape: '#E8E2D0', style: 'veu' }, x: 0.41, y: 0.88, s: 1.4, vira: 1 }, { p: { skin: '#6B4A2E', hair: '#1C120A', tunic: '#7A2E6A', cape: '#C9A63C', style: 'turbante', beard: true }, x: 0.66, y: 0.88, s: 1.4, vira: -1 }, { p: { skin: '#E3B48C', hair: '#D9D2C5', tunic: '#2F4A7A', cape: '#C9A63C', style: 'turbante', beard: true }, x: 0.76, y: 0.88, s: 1.4, vira: -1 }, { p: { skin: '#A0673E', hair: '#3A2314', tunic: '#7A5A3A', cape: '#4A3A2A', style: 'turbante', beard: true }, x: 0.3, y: 0.88, s: 1.5, vira: 1 }] }
+  ]
+};
+
 export const CINEMA_CHEFE = { ladrao:'chefe-ladrao', encantadores:'chefe-encantadores', jugo:'chefe-jugo', babilonia:'chefe-babilonia', fera:'chefe-fera', soberba:'chefe-soberba', fuga:'chefe-fuga', pavor:'chefe-pavor', desespero:'chefe-desespero', violencia:'chefe-violencia', ressentimento:'chefe-ressentimento', mamom: 'chefe-mamom', procrastinacao: 'chefe-procrastinacao', mentira: 'chefe-mentira', imoralidade: 'chefe-imoralidade', satanas: 'chefe-satanas', behemote: 'chefe-behemote', leviata: 'chefe-leviata', golias: 'chefe-golias' };
 
 // Agrupa cenas seguidas com a mesma voz: cada grupo vira um arquivo de áudio (public/narracao/<id>-<n>.mp3)

@@ -295,6 +295,36 @@ export const CENAS = {
     serra(g, 380, 60, 3.4, '#4E5E50', 2.4); serra(g, 450, 50, 5.9, '#1E2A20', 3);
     for (let i = 0; i < 4; i++) arvore(g, 120 + i * 250, 456, 120, '#141C14', i % 2 ? 'cipreste' : 'oliveira');
   } },
+  // Belém, a noite do nascimento: a estrela grande com o facho de luz sobre a estrebaria, a cidadezinha nas colinas
+  belem: { luz: [0.5, 0.42, '255,226,170'], pinta(g, t, T) {
+    ceu(g, ['#02030C', '#08102A', '#18204A', '#2A2A48']); estrelas(g, T, 240, 0.7);
+    const sx = 0.5 * VW, sy = 0.17 * VH; g.save(); g.globalCompositeOperation = 'screen';
+    const fe = g.createLinearGradient(0, sy, 0, 420); fe.addColorStop(0, 'rgba(255,240,200,0.32)'); fe.addColorStop(1, 'rgba(255,220,160,0.04)'); g.fillStyle = fe; g.beginPath(); g.moveTo(sx - 6, sy); g.lineTo(sx + 6, sy); g.lineTo(sx + 120, 420); g.lineTo(sx - 120, 420); g.closePath(); g.fill();
+    brilho(g, sx, sy, 90 + Math.sin(T * 1.5) * 6, '255,240,200', 0.7); g.restore();
+    g.fillStyle = '#FFF8E8'; g.beginPath(); for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, r = k % 2 ? 7 : 26 + Math.sin(T * 2) * 2; g.lineTo(sx + Math.cos(a) * r, sy + Math.sin(a) * r); } g.closePath(); g.fill(); g.fillRect(sx - 1.5, sy, 3, 46);
+    serra(g, 380, 46, 5.1, '#0E1430', 2.2); casas(g, 372, 40, 300, '#0A0E22', 7, 0.6, T); casas(g, 376, 690, 940, '#0A0E22', 9, 0.5, T);
+    // a estrebaria: telhado de palha, vigas, o feno, a lanterna
+    g.fillStyle = '#2A1C14'; g.fillRect(300, 300, 360, 160); g.fillStyle = '#3A2818'; for (let x = 306; x < 660; x += 22) g.fillRect(x, 300, 3, 160);
+    g.fillStyle = '#5A4020'; g.beginPath(); g.moveTo(270, 306); g.lineTo(480, 240); g.lineTo(690, 306); g.lineTo(690, 318); g.lineTo(270, 318); g.closePath(); g.fill();
+    g.strokeStyle = 'rgba(200,170,90,0.35)'; g.lineWidth = 1; for (let x = 280; x < 690; x += 9) { g.beginPath(); g.moveTo(x, 312); g.lineTo(x + 4, 322 + hash(x, 3, 1) * 8); g.stroke(); }
+    g.fillStyle = '#4A3018'; g.fillRect(296, 300, 10, 160); g.fillRect(654, 300, 10, 160);
+    g.save(); g.globalCompositeOperation = 'screen'; brilho(g, 480, 420, 230, '255,200,120', 0.55 + Math.sin(T * 7) * 0.03); brilho(g, 340, 330, 40, '255,180,90', 0.6 + Math.sin(T * 9) * 0.1); g.restore();
+    g.fillStyle = '#FFC860'; g.fillRect(336, 324, 8, 10);
+    chao(g, 460, '#1A120C'); g.fillStyle = '#8A6A30'; for (let i = 0; i < 70; i++) { const x = 300 + hash(i, 8, 1) * 360, y = 456 + hash(i, 9, 1) * 18; g.fillRect(x, y, 6 + hash(i, 2, 2) * 8, 1.5); }
+    // o boi e o jumento, de lado, no fundo
+    g.fillStyle = '#1E1610'; g.beginPath(); g.ellipse(360, 430, 36, 18, 0, 0, TAU); g.fill(); g.beginPath(); g.ellipse(326, 416, 12, 10, 0, 0, TAU); g.fill(); g.fillRect(340, 440, 6, 20); g.fillRect(376, 440, 6, 20);
+    g.beginPath(); g.ellipse(610, 434, 28, 14, 0, 0, TAU); g.fill(); g.beginPath(); g.ellipse(638, 414, 8, 12, 0.4, 0, TAU); g.fill(); g.fillRect(640, 396, 3, 12); g.fillRect(646, 398, 3, 12);
+    nevoa(g, 440, 60, '#2A2440', 0.35, T, 3);
+  } },
+  // os campos dos pastores, de noite: as ovelhas, a fogueira, e a glória do Senhor que brilha ao redor (Lc 2:9)
+  pastores: { luz: [0.5, 0.2, '255,236,200'], pinta(g, t, T) {
+    ceu(g, ['#05081A', '#0E1638', '#24305A']); estrelas(g, T, 180, 0.6);
+    g.save(); g.globalCompositeOperation = 'screen'; brilho(g, 0.5 * VW, 0.22 * VH, 420, '255,236,190', Math.min(0.75, t * 0.25)); g.restore();
+    serra(g, 380, 50, 2.7, '#141A34', 2); serra(g, 420, 30, 4.4, '#0E1226', 3);
+    chao(g, 440, '#0C1020');
+    for (let i = 0; i < 9; i++) { const x = 90 + i * 98 + hash(i, 5, 1) * 30, y = 458 + hash(i, 6, 1) * 30; g.fillStyle = 'rgba(230,226,210,0.85)'; g.beginPath(); g.ellipse(x, y, 16, 9, 0, 0, TAU); g.fill(); g.fillStyle = '#2A2630'; g.beginPath(); g.ellipse(x + 15, y - 3, 5, 4, 0, 0, TAU); g.fill(); }
+    g.save(); g.globalCompositeOperation = 'screen'; brilho(g, 200, 470, 60, '255,150,60', 0.7 + Math.sin(T * 10) * 0.1); g.restore(); g.fillStyle = '#FF9A3C'; g.beginPath(); g.moveTo(190, 478); g.lineTo(200, 456 + Math.sin(T * 12) * 3); g.lineTo(210, 478); g.fill();
+  } },
   campos: { luz: [0.25, 0.3, '255,226,160'], pinta(g, t, T) {
     ceu(g, ['#8A9AB0', '#E0C8A0', '#F8D898']);
     astro(g, 0.25 * VW, 0.3 * VH, 26, '255,244,210', '255,220,150');
@@ -1013,6 +1043,15 @@ export function pintarFiguras(g, c, t, T, opts) {
     } else if (f.perfil) {
       const L = lookDe(f.p, opts) || {}, pele = L.skin ? rgb(L.skin).map(v => Math.round(v * 0.75)).join(',') : '150,95,60';
       perfil(g, x, f.y * VH, VH * 0.26 * (f.s || 1.5), { vira: f.vira || 1, barba: !!L.beard, capuz: L.style === 'veu' || L.style === 'turbante' || f.capuz, pele, fala: f.fala ? Math.abs(Math.sin(T * 9)) * 0.04 : 0 }, luz);
+    } else if (f.p === 'manjedoura') { // a manjedoura com o menino envolto em panos, e a luz que sai dele
+      const S = VH * 0.06 * (f.s || 1.5); g.translate(x, f.y * VH);
+      g.save(); g.globalCompositeOperation = 'screen'; brilho(g, 0, -S * 0.6, S * 5, '255,236,190', 0.8); g.restore();
+      g.fillStyle = '#4A3018'; g.beginPath(); g.moveTo(-S * 1.6, -S); g.lineTo(S * 1.6, -S); g.lineTo(S * 1.1, 0); g.lineTo(-S * 1.1, 0); g.closePath(); g.fill();
+      g.fillRect(-S * 1.4, -S * 0.2, S * 0.2, S * 0.9); g.fillRect(S * 1.2, -S * 0.2, S * 0.2, S * 0.9);
+      g.fillStyle = '#C9A050'; for (let k = 0; k < 14; k++) g.fillRect(-S * 1.5 + k * S * 0.22, -S * 1.12 + hash(k, 2, 1) * 3, S * 0.18, S * 0.26);
+      g.fillStyle = '#F4EEDC'; g.beginPath(); g.ellipse(0, -S * 1.15, S * 0.8, S * 0.34, 0, 0, TAU); g.fill(); g.fillStyle = '#E0D6BE'; for (let k = -2; k <= 2; k++) g.fillRect(k * S * 0.26, -S * 1.4, 1.5, S * 0.5);
+      g.fillStyle = '#E8B48C'; g.beginPath(); g.arc(-S * 0.62, -S * 1.24, S * 0.26, 0, TAU); g.fill();
+      g.strokeStyle = 'rgba(255,240,190,0.8)'; g.lineWidth = 2; g.beginPath(); g.arc(-S * 0.62, -S * 1.24, S * 0.42, 0, TAU); g.stroke();
     } else if (f.p === 'serafim') {
       serafim(g, x, f.y * VH, VH * 0.35 * (f.s || 1.5), T * 1.6 + i, '255,214,140', 0.2);
     } else {

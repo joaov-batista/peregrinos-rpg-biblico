@@ -27,6 +27,8 @@ export function pintarCosta(g, G, C, vw, vh, cx, cy, dy, L, pintarCeu) {
   og.clearRect(0, 0, vw, vh);
   // 1) o céu inteiro, de novo, sem a terra do fundo
   pintarCeu(og, G, C, vw, dy, cx, cy);
+  if (L && L.d > 0) { og.globalAlpha = L.d * 0.16; og.fillStyle = L.poente > 0.3 ? '#F2A65A' : '#DCEBFF'; og.fillRect(0, dy, vw, C.H); og.globalAlpha = 1; } // o mesmo véu de luz do fundo (senão aparece uma emenda no céu)
+  if (G.cm && (G.tempoNatal ?? false)) { og.globalAlpha = 0.2; og.fillStyle = '#EAF2FF'; og.fillRect(0, dy, vw, C.H); og.globalAlpha = 1; }
   // 2) o mar de longe: do horizonte (baixo, perto do chão) até a beira
   const chao = 16 * TL - cy, hz = chao - 34, d = L ? L.d : 0.7, po = L ? L.poente : 0, Tm = G.T;
   const corH = mix(mix('#1C2A44', '#9CC4D6', d), '#F0A878', po * 0.7), corP = mix(mix('#08182A', '#2A6A8A', d), '#7A4A5A', po * 0.35);
@@ -51,9 +53,37 @@ export function pintarCosta(g, G, C, vw, vh, cx, cy, dy, L, pintarCeu) {
   // gaivotas ao longe
   for (let i = 0; i < 3; i++) { const x = Math.round(((h(i + 40) * vw + Tm * (6 + i * 2) - cx * 0.15) % (vw + 40) + vw + 40) % (vw + 40)) - 20, y = Math.round(dy + 40 + h(i + 50) * 40 + Math.sin(Tm * 0.8 + i) * 4), bate = Math.sin(Tm * 4 + i * 2) > 0;
     og.fillStyle = mix(corH, '#20242C', 0.65); og.fillRect(x - 2, y + (bate ? -1 : 0), 2, 1); og.fillRect(x, y, 1, 1); og.fillRect(x + 1, y + (bate ? -1 : 0), 2, 1); }
-  // 3) por cima do fundo: do lado do mar, inteiro; na ponta da terra, uma passagem suave (a terra some na névoa do mar)
-  const F = 90; // largura da passagem
-  if (M.lado > 0) { const a = Math.round(M.de); for (let x = Math.max(0, a); x < Math.min(vw, a + F); x += 2) { g.globalAlpha = Math.pow((x - a) / F, 1.4); g.drawImage(oc, x, 0, 2, chao + 4, x, 0, 2, chao + 4); } if (a + F < vw) { g.globalAlpha = 1; const x0 = Math.max(0, a + F); g.drawImage(oc, x0, 0, vw - x0, chao + 4, x0, 0, vw - x0, chao + 4); } }
-  else { const b = Math.round(M.ate); for (let x = Math.min(vw, b) - 2; x >= Math.max(0, b - F); x -= 2) { g.globalAlpha = Math.pow((b - x) / F, 1.4); g.drawImage(oc, x, 0, 2, chao + 4, x, 0, 2, chao + 4); } if (b - F > 0) { g.globalAlpha = 1; const x1 = Math.min(vw, b - F); g.drawImage(oc, 0, 0, x1, chao + 4, 0, 0, x1, chao + 4); } }
+  // 3) a terra termina num promontório desenhado: a rocha desce em degraus até o mar, com mato (ou o muro da cidade) por cima,
+  //    espuma batendo na base; no ponto mais alto, onde a terra do fundo é cortada, um farol (na cidade) ou um bosque (no campo)
+  const F = 170, cidade = (G.tm.skyline || G.tm.deco) === 'casas', pa = Math.round(M.lado > 0 ? M.de : M.ate), lado = M.lado, alto = 64;
+  const rocha = [mix(mix('#141824', '#3A4252', d), corH, 0.18), mix(mix('#1A2030', '#525A6A', d), corH, 0.15), mix(mix('#20283A', '#6A7282', d), corH, 0.12), mix(mix('#0A0C14', '#262A36', d), corH, 0.1)];
+  const verde = [mix(mix('#0C1A14', '#2E5A34', d), corH, 0.2), mix(mix('#102418', '#4A7A40', d), corH, 0.18)], muro = [mix(mix('#141824', '#4A4A58', d), corH, 0.2), mix(mix('#1A1E2A', '#6A6878', d), corH, 0.18)];
+  const perfil = u => { const v = Math.max(0, Math.min(1, (u - 0.12) / 0.88)); return Math.round(hz - alto * Math.pow(1 - v, 1.5) + (v > 0.3 ? Math.round(Math.sin(v * 17) * 2) : 0) - (Math.floor(v * 7) % 2 && v < 0.8 ? 2 : 0)); };
+  const colDe = i => pa + lado * i - (lado < 0 ? 1 : 0);
+  // do lado do mar, além do promontório: céu e mar por inteiro
+  if (lado > 0) { const x0 = Math.max(0, pa + F); if (x0 < vw) g.drawImage(oc, x0, 0, vw - x0, chao + 4, x0, 0, vw - x0, chao + 4); }
+  else { const x1 = Math.min(vw, pa - F); if (x1 > 0) g.drawImage(oc, 0, 0, x1, chao + 4, 0, 0, x1, chao + 4); }
+  for (let i = 0; i < F; i++) { const x = colDe(i); if (x < 0 || x >= vw) continue; const u = i / F, top = u < 0.06 ? 0 : perfil(Math.max(0.12, u));
+    if (top > 0) g.drawImage(oc, x, 0, 1, top, x, 0, 1, top); // o céu volta acima do promontório
+    g.drawImage(oc, x, hz, 1, chao + 4 - hz, x, hz, 1, chao + 4 - hz); // e o mar embaixo dele
+    if (u < 0.06) continue;
+    for (let y = top; y < hz + 2; y++) { const n = h(Math.floor(x / 4) * 3.1 + Math.floor((y + Math.floor(x / 9) * 2) / 3) * 7.7), face = y > top + 4; g.fillStyle = !face ? (cidade ? muro[(x + y) % 3 ? 1 : 0] : verde[n > 0.5 ? 1 : 0]) : ((y + Math.floor(x / 9) * 2) % 7 === 0 ? rocha[0] : n < 0.1 ? rocha[3] : rocha[n > 0.62 ? 2 : 1]); g.fillRect(x, y, 1, 1); }
+    g.fillStyle = rocha[3]; g.fillRect(x, top - 1, 1, 1); if (cidade && i % 6 === 0 && u < 0.7) g.fillRect(x, top - 3, 2, 2); // as ameias do muro, até onde ele vai
+    if (!cidade && h(x) > 0.82) { g.fillStyle = verde[0]; g.fillRect(x, top - 3, 1, 3); } }
+  // a espuma batendo na base da rocha
+  for (let i = Math.round(F * 0.3); i < F + 6; i += 2) { const x = colDe(i); if (x < 0 || x >= vw) continue; const k = Math.sin(Tm * 2 + i * 0.3); if (k > 0.2) { g.globalAlpha = 0.5 + k * 0.4; g.fillStyle = '#F4FCFF'; g.fillRect(x, hz + 1 - (k > 0.8 ? 1 : 0), 2, 1); } }
   g.globalAlpha = 1;
+  // a peça do alto, que fecha o corte da terra do fundo
+  const px = colDe(Math.round(F * 0.1)), base = perfil(0.13) + 2;
+  if (cidade) { // o farol: torre de pedra, a galeria, a lanterna (acesa de noite, com o facho girando)
+    const W = 12, H = 74, tx = px - (lado > 0 ? 4 : W - 4), ty = base - H, faixaV = mix(mix('#3A1A1A', '#B8423A', d), corH, 0.15), faixaB = mix(mix('#3A3A44', '#E8E2D0', d), corH, 0.15);
+    for (let y = ty; y < base; y++) { const k = (y - ty) / H, ww = Math.round(W + k * 6), xx = tx + Math.round((W - ww) / 2); g.fillStyle = rocha[3]; g.fillRect(xx - 1, y, ww + 2, 1); g.fillStyle = Math.floor((y - ty) / 12) % 2 ? faixaV : faixaB; g.fillRect(xx, y, ww, 1); g.fillStyle = rocha[1]; g.fillRect(xx + ww - 3, y, 2, 1); }
+    g.fillStyle = rocha[3]; g.fillRect(tx - 8, base - 4, W + 16, 4); g.fillStyle = muro[1]; g.fillRect(tx - 7, base - 3, W + 14, 2);
+    g.fillStyle = rocha[3]; g.fillRect(tx - 4, ty - 2, W + 8, 3); g.fillRect(tx + 2, ty - 14, W - 4, 12); g.fillStyle = d < 0.4 ? '#FFE08A' : mix('#8A8A94', '#C9D2E0', d); g.fillRect(tx + 4, ty - 12, W - 8, 8); g.fillStyle = rocha[3]; g.beginPath(); g.moveTo(tx, ty - 14); g.lineTo(tx + W / 2, ty - 22); g.lineTo(tx + W, ty - 14); g.fill();
+    if (d < 0.4) { const a = (Tm * 0.8) % (Math.PI * 2), cx0 = tx + W / 2, cy0 = ty - 8, alc = 160, dirx = Math.cos(a) * alc; g.globalAlpha = (0.4 - d) * 0.6 * Math.max(0, Math.cos(a * 0.5) * 0.5 + 0.5); g.fillStyle = '#FFF2C0'; g.beginPath(); g.moveTo(cx0, cy0 - 2); g.lineTo(cx0 + dirx, cy0 - 14); g.lineTo(cx0 + dirx, cy0 + 10); g.lineTo(cx0, cy0 + 2); g.fill(); g.globalAlpha = 1; }
+    for (let k = 0; k < 2; k++) { g.fillStyle = rocha[3]; g.fillRect(tx + 5, ty + 20 + k * 26, 2, 4); } }
+  else { // o bosque que termina na ponta: copas redondas, mais escuras na frente
+    for (let k = 0; k < 7; k++) { const cx0 = px + lado * (k * 9 - 18) + Math.round(h(k) * 6), r = 12 + Math.round(h(k * 3) * 10), cy0 = base - 20 - Math.round(h(k * 5) * 40) + k * 3;
+      g.fillStyle = verde[0]; g.fillRect(cx0, cy0, 3, base - cy0); for (let yy = -r; yy <= r; yy++) { const w = Math.round(Math.sqrt(r * r - yy * yy)); for (let xx = -w; xx <= w; xx++) { if ((xx * xx + yy * yy) > (r - 1) * (r - 1) && (xx + yy) % 2) continue; g.fillStyle = yy < -r * 0.3 ? verde[1] : verde[0]; g.fillRect(cx0 + xx, cy0 + yy, 1, 1); } } } }
 }
+

@@ -165,7 +165,8 @@ export function pintarFundoPixel(g, G, C, vw, vh, cx, cy) {
     faixa(g, cena.longe, cx * 0.1, dy + Math.round(-cy * 0.02), vw); faixa(g, cena.meio, cx * 0.24, dy + Math.round(-cy * 0.05) + 4, vw); faixa(g, cena.perto, cx * 0.45, dy + Math.round(-cy * 0.1) + 10, vw); }
   g.globalAlpha = 1;
   if (L && L.d > 0) { g.globalAlpha = L.d * 0.16; g.fillStyle = L.poente > 0.3 ? '#F2A65A' : '#DCEBFF'; g.fillRect(0, dy, vw, C.H); g.globalAlpha = 1; } /* de dia, as silhuetas ao longe clareiam um pouco */
-  if (G.cm && ehNatal(G) && aoArLivre(G)) { g.globalAlpha = 0.2 + (G.neveK || 0) * 0.12; g.fillStyle = '#EAF2FF'; g.fillRect(0, dy, vw, C.H); g.globalAlpha = 1; } /* no Natal, tudo lá longe está branco de geada */
+  G.tempoNatal = !!(G.cm && ehNatal(G) && aoArLivre(G));
+  if (G.tempoNatal) { g.globalAlpha = 0.2 + (G.neveK || 0) * 0.12; g.fillStyle = '#EAF2FF'; g.fillRect(0, dy, vw, C.H); g.globalAlpha = 1; } /* no Natal, tudo lá longe está branco de geada */
   // a costa: onde há mar, a terra do fundo acaba e se vê o mar aberto até o horizonte, de lado (ver costa.js)
   pintarCosta(g, G, C, vw, vh, cx, cy, dy, L, pintarCeuVivo);
 }
