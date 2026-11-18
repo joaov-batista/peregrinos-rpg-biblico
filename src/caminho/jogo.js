@@ -831,12 +831,17 @@ export class Caminho {
     const voa = tipo === 'papagaio', ax = p.x - p.face * (voa ? 26 : 38), ay = voa ? p.y - 62 + Math.sin(q.t * 3) * 6 : p.y;
     if (q.alvo && q.alvo.hp > 0 && q.mordida > 0) { q.mordida -= dt; q.x = damp(q.x, q.alvo.x, 14, dt); q.y = damp(q.y, q.alvo.y, 14, dt); if (q.mordida <= 0) { this.atingirJa(q.alvo, this.danoBase() * (q.forca || 0.7), q.x - 1, { semOleo: true, hits: new Set(), dir: 'lado' }); this.efeito('faisca', q.alvo.x, q.alvo.y - q.alvo.h / 2); q.alvo = null; } }
     else { q.x = damp(q.x, ax, voa ? 5 : 7, dt); q.y = damp(q.y, ay, voa ? 5 : 12, dt); q.face = Math.abs(ax - q.x) > 4 ? Math.sign(ax - q.x) : p.face; q.anda = Math.abs(ax - q.x) > 6; }
-    if (tipo === 'leao' && q.cd <= 0 && this.souDono()) { const e = this.inimigos.filter(v => v.kind === 'vicio' && v.hp > 0 && Math.hypot(v.x - p.x, v.y - p.y) < 230)[0]; if (e) { q.alvo = e; q.mordida = 0.2; q.cd = 2; q.forca = 2.4; sfx('swing'); } }
+    // cada um ataca o seu: o cão só no chão, o papagaio só no ar, o leão no chão e de vez em quando salta atrás de um que voa
+    const vivo = v => v.kind === 'vicio' && v.hp > 0 && !v.morrendo, perto = (v, r) => Math.hypot(v.x - p.x, v.y - p.y) < r;
+    if (tipo === 'leao' && q.cd <= 0 && this.souDono()) { const chao = this.inimigos.find(v => vivo(v) && !v.voa && perto(v, 230)), ar = (q.saltoCd = (q.saltoCd ?? 0)) <= 0 && this.inimigos.find(v => vivo(v) && v.voa && perto(v, 210));
+      if (ar && (!chao || Math.random() < 0.35)) { q.alvo = ar; q.mordida = 0.32; q.cd = 2.4; q.forca = 2; q.saltoCd = 5.5; q.salto = 0.32; sfx('dodge'); this.textoEm(q.x, q.y - 24, 'salto!', '#FFD86A', 10); } else if (chao) { q.alvo = chao; q.mordida = 0.2; q.cd = 2; q.forca = 2.4; sfx('swing'); } else if (false) { q.alvo = ar; q.mordida = 0.32; q.cd = 2.4; q.forca = 2; q.saltoCd = 5.5; q.salto = 0.32; sfx('dodge'); this.textoEm(q.x, q.y - 24, 'salto!', '#FFD86A', 10); } }
+    if (tipo === 'leao') { q.saltoCd = (q.saltoCd ?? 0) - dt; if (q.salto > 0) q.salto -= dt; }
+    if (tipo === 'papagaio' && q.cd <= 0 && this.souDono()) { const ar = this.inimigos.find(v => vivo(v) && v.voa && perto(v, 280)); if (ar) { q.alvo = ar; q.mordida = 0.26; q.cd = 1.8; q.forca = 1.1; sfx('swing'); } }
     if (tipo === 'leao' && (q.rugido = (q.rugido ?? 6) - dt) <= 0 && this.inimigos.some(v => v.kind === 'vicio' && v.hp > 0 && Math.hypot(v.x - p.x, v.y - p.y) < 240)) { q.rugido = 9; sfx('boss'); this.tremor(6); this.fx.anel(q.x, q.y - 12, '#FFD86A', 220); this.textoEm(q.x, q.y - 34, 'RUGIDO', '#FFD86A', 13); for (const v of this.inimigos) if (v.kind === 'vicio' && Math.hypot(v.x - q.x, v.y - q.y) < 240) { v.stun = 1.8; v.aberto = 1.8; } }
     if (tipo === 'cachorro') {
-      if (q.cd <= 0 && this.souDono()) { const e = this.inimigos.filter(v => v.kind === 'vicio' && v.hp > 0 && Math.hypot(v.x - p.x, v.y - p.y) < 190)[0]; if (e) { q.alvo = e; q.mordida = 0.22; q.cd = 2.6; sfx('swing'); } }
+      if (q.cd <= 0 && this.souDono()) { const e = this.inimigos.find(v => vivo(v) && !v.voa && perto(v, 190)); if (e) { q.alvo = e; q.mordida = 0.22; q.cd = 2.6; q.forca = 0.8; sfx('swing'); } }
       if (q.late <= 0) { q.late = 3.5; const N = this.N, tx = Math.floor(p.x / T), ty = Math.floor(p.y / T); for (let y = ty - 4; y <= ty + 2; y++) for (let x = tx - 6; x <= tx + 6; x++) { const t = tileEm(N, x, y); if ((t === OCULTO || t === FALSA) && !N.desfeita.has(y * N.w + x)) { this.textoEm(q.x, q.y - 26, 'au! au!', '#FFE9A8', 11); sfx('click'); x = 1e9; y = 1e9; } } }
-    } else if (this.chefe && this.chefe.tele > 0 && q.cd <= 0) { q.cd = 1.4; this.textoEm(q.x, q.y - 14, 'VIGIAI!', '#B8E6A0', 12); sfx('key'); }
+    } else if (tipo === 'papagaio' && this.chefe && this.chefe.tele > 0 && q.cd <= 0) { q.cd = 1.4; this.textoEm(q.x, q.y - 14, 'VIGIAI!', '#B8E6A0', 12); sfx('key'); }
   }
   // Nada de ficar parado: vencer em sequência rende mais; demorar-se numa página traz o Medo para perto.
   ritmo(dt) {

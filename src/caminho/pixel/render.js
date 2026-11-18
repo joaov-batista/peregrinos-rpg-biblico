@@ -385,16 +385,23 @@ export function renderPixel(G) {
     g.fillStyle = Math.floor(Tm * 2) % 5 ? '#EF6981' : '#FFFFFF'; g.fillRect(x - 4, y - 20, 2, 3); g.fillRect(x + 3, y - 20, 2, 3);
   }
   for (const m of G.moedas) { const x = X(m.x), y = Y(m.y), f = Math.floor(m.t * 10) % 4, lg = [3, 2, 1, 2][f]; g.fillStyle = '#17121f'; g.fillRect(x - (lg >> 1) - 1, y - 2, lg + 2, 5); g.fillStyle = m.maldita ? '#B8862B' : '#F2C14E'; g.fillRect(x - (lg >> 1), y - 1, lg, 3); g.fillStyle = '#FFF1BE'; g.fillRect(x - (lg >> 1), y - 1, 1, 1); }
-  if (G.pet) { // o companheiro
-    const q = G.pet, x = X(q.x), y = Y(q.y), f = q.face || 1, k = Math.floor(Tm * 8) % 2;
-    if (q.tipo === 'leao') { const pulo = q.anda ? k : 0, D = '#C98A3A', J = '#7A4A1E'; g.fillStyle = '#17121f'; g.fillRect(x - 9, y - 11 - pulo, 18, 9); g.fillRect(x + f * 5 - 4, y - 17 - pulo, 9, 10); g.fillRect(x - f * 11, y - 9 - pulo, 3, 6);
-      g.fillStyle = D; g.fillRect(x - 8, y - 10 - pulo, 16, 7); g.fillStyle = J; g.fillRect(x + f * 5 - 3, y - 16 - pulo, 7, 8); g.fillStyle = D; g.fillRect(x + f * 6 - 1, y - 14 - pulo, 4, 5); g.fillStyle = '#F4E6BC'; g.fillRect(x + f * 8, y - 11 - pulo, 2, 2);
-      g.fillStyle = D; for (const dx of [-6, -3, 3, 6]) g.fillRect(x + dx, y - 3, 2, 3 - ((dx + k * 3) % 2 && q.anda ? 1 : 0)); g.fillStyle = J; g.fillRect(x - f * 11 + (f > 0 ? 0 : 1), y - 10 - pulo - k, 2, 2); g.fillStyle = '#17121f'; g.fillRect(x + f * 7, y - 13 - pulo, 1, 1); }
-    else if (q.tipo === 'cachorro') { const D = '#8A5A3A', L = '#C9A878', pulo = q.anda ? k : 0; g.fillStyle = '#17121f'; g.fillRect(x - 7, y - 9 - pulo, 14, 7); g.fillRect(x + f * 5 - 2, y - 13 - pulo, 6, 6); g.fillRect(x - f * 8, y - 12 - pulo, 2, 5);
-      g.fillStyle = D; g.fillRect(x - 6, y - 8 - pulo, 12, 5); g.fillRect(x + f * 5 - 1, y - 12 - pulo, 4, 4); g.fillStyle = L; g.fillRect(x - 4, y - 5 - pulo, 8, 2); g.fillRect(x + f * 7, y - 10 - pulo, 2, 2);
-      g.fillStyle = D; for (const dx of [-5, -2, 2, 5]) g.fillRect(x + dx, y - 3, 2, 3 - ((dx + k * 3) % 2 && q.anda ? 1 : 0)); g.fillRect(x - f * 8 + (f > 0 ? 0 : 1), y - 12 - pulo - k, 1, 4); g.fillStyle = '#17121f'; g.fillRect(x + f * 6, y - 11 - pulo, 1, 1); g.fillRect(x + f * 4 - 1, y - 14 - pulo, 2, 2); }
-    else { g.fillStyle = '#17121f'; g.fillRect(x - 4, y - 5, 8, 8); g.fillRect(x - f * 6 - 1, y + 1, 4, 5); g.fillStyle = '#3FA35A'; g.fillRect(x - 3, y - 4, 6, 6); g.fillStyle = '#E2463C'; g.fillRect(x - 3, y - 4, 6, 2); g.fillStyle = '#2F6FD0'; g.fillRect(x - f * 6, y + 2, 3, 3);
-      g.fillStyle = '#F2C14E'; g.fillRect(x + f * 3, y - 2, 2, 2); g.fillStyle = '#17121f'; g.fillRect(x + f * 1, y - 3, 1, 1); g.fillStyle = k ? '#2E8A4A' : '#57C274'; g.fillRect(x - 5, y - (k ? 8 : 1), 10, 3); }
+  if (G.pet) { // o companheiro: sprites com contorno, passo animado, rabo que abana, asas que batem
+    const q = G.pet, x = X(q.x), y = Y(q.y), f = q.face || 1, k = Math.floor(Tm * (q.anda || q.alvo ? 10 : 3)) % 2, mord = q.alvo && q.mordida > 0;
+    if (q.tipo === 'cachorro') { const s = sprObj('cao' + k + (mord ? 'm' : ''), 26, 18, s => { const B = rampa('#9A6A3E'), Lr = rampa('#D9B88A');
+        s.bola(11, 10, 7, 4.2, B); s.ret(7, 11, 9, 2, Lr[3]); s.bola(19, 6, 4.2, 3.6, B); s.ret(21, mord ? 6 : 7, 4, 2, Lr[3]); s.px(24, mord ? 6 : 7, TINTA); if (mord) s.ret(21, 9, 4, 1, Lr[2]);
+        s.ret(16, 3, 2, 5, B[1]); s.px(20, 5, TINTA); s.ret(15, 8, 2, 4, cor('#C83A3A')); s.px(16, 11, cor('#F2C14E'));
+        s.linha(4, 9, 1, k ? 3 : 5, 2, B[2]); for (const [lx, o2] of [[6, k], [9, 1 - k], [13, k], [16, 1 - k]]) s.ret(lx, 13 + o2, 2, 4 - o2, B[1]); });
+      carimbar(g, s, x, y + 1, 13, 17, f); }
+    else if (q.tipo === 'leao') { const pulo = q.salto > 0 ? 4 : 0, s = sprObj('leao' + k + (mord ? 'm' : '') + (pulo ? 's' : ''), 30, 22, s => { const C = rampa('#D9A04A'), J = rampa('#8A4A1E');
+        s.bola(13, 13, 8, 4.8, C); s.ret(8, 15, 10, 2, C[4]); s.bola(21, 9, 6, 6, J); s.bola(22, 9, 3.8, 3.4, C); s.ret(24, mord ? 9 : 10, 4, 2, C[4]); s.px(27, mord ? 9 : 10, TINTA); if (mord) s.ret(24, 12, 4, 1, cor('#F4E6BC'));
+        s.px(23, 8, TINTA); s.ret(18, 3, 2, 2, J[2]); s.ret(23, 3, 2, 2, J[2]);
+        s.linha(5, 12, 1, k ? 7 : 9, 2, C[2]); s.ret(0, k ? 5 : 7, 3, 3, J[1]);
+        if (pulo) { s.ret(7, 17, 3, 3, C[1]); s.ret(19, 15, 3, 3, C[1]); } else for (const [lx, o2] of [[7, k], [11, 1 - k], [16, k], [20, 1 - k]]) { s.ret(lx, 17 + o2, 3, 4 - o2, C[1]); s.ret(lx, 20, 3, 1, C[4]); } });
+      carimbar(g, s, x, y + 1, 15, 21, f); }
+    else { const bate = Math.floor(Tm * (mord ? 18 : 9)) % 2, s = sprObj('papagaio' + bate, 18, 20, s => { const V = rampa('#3FA35A'), Az = rampa('#2F6FD0'), Vm = rampa('#E2463C');
+        s.ret(5, 13, 2, 6, Az[2]); s.ret(7, 14, 2, 5, rampa('#F2C14E')[3]); s.bola(8, 10, 3.6, 4.6, V); s.bola(9, 5, 3.4, 3.2, Vm); s.ret(12, 4, 3, 2, rampa('#F2C14E')[3]); s.px(14, 6, TINTA); s.px(10, 4, cor('#FFFFFF')); s.px(11, 4, TINTA);
+        if (bate) s.bola(5, 5, 5, 2.4, Az); else s.bola(5, 12, 5, 2.4, Az); });
+      carimbar(g, s, x, y + 6, 9, 19, f); }
   }
   if (p.pedra && !p.morto) { // a funda carregada: a linha mostra para onde a pedra vai (uma só chance)
     const a = G.ctl?.mira ?? (p.face > 0 ? 0 : Math.PI); let tx = p.x + Math.cos(a) * 14, ty = p.y - 28 + Math.sin(a) * 14, vx = Math.cos(a) * 900, vy = Math.sin(a) * 900;

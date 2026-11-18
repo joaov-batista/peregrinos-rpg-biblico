@@ -6,7 +6,6 @@ import { T, CW, CH, SOLIDO, PONTE, ESPINHO, OCULTO, FALSA, PORTAO, TRANCA, tileE
 import { Sprite, rampa, cor, TINTA, PX } from './raster.js';
 import { fundoSala } from './salas.js';
 import { luzDoDia } from '../moradores.js';
-import { pintarCidade } from './cidade.js';
 
 const TL = T / PX; // 16
 const mistura = (a, b, t) => { const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16), f = (s) => Math.round((pa >> s & 255) * (1 - t) + (pb >> s & 255) * t); return '#' + (f(16) << 16 | f(8) << 8 | f(0)).toString(16).padStart(6, '0'); };
@@ -166,7 +165,6 @@ export function pintarFundoPixel(g, G, C, vw, vh, cx, cy) {
   faixa(g, C.longe, cx * 0.1, dy + Math.round(-cy * 0.02), vw);
   faixa(g, C.meio, cx * 0.24, dy + Math.round(-cy * 0.05) + 4, vw);
   faixa(g, C.perto, cx * 0.45, dy + Math.round(-cy * 0.1) + 10, vw);
-  if (G.area === 'refugio' && G.N?.celulas) pintarCidade(g, G, vw, cx, 16 * TL - cy, !L || L.d < 0.35); /* as camadas da cidade, atrás do chão */
   if (L && L.d > 0) { g.globalAlpha = L.d * 0.16; g.fillStyle = L.poente > 0.3 ? '#F2A65A' : '#DCEBFF'; g.fillRect(0, dy, vw, C.H); g.globalAlpha = 1; } /* de dia, as silhuetas ao longe clareiam um pouco */
 }
 
