@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 globalThis.document ??= { documentElement: { style: { setProperty() {} } }, body: { classList: { add() {}, remove() {}, toggle() {} } } };
 globalThis.localStorage ??= { getItem() { return null; }, setItem() {} };
 const { gerarNivel, alcancaveis, T, tileEm, VAZIO } = await import('../src/caminho/nivel.js');
-const { areaDef, MUNDO, ARMADURA, RELIQUIAS } = await import('../src/caminho/dados.js');
+const { areaDef, MUNDO, ARMADURA, RELIQUIAS, RX } = await import('../src/caminho/dados.js');
 const { CHEFES } = await import('../src/caminho/chefes.js');
 const { TODAS } = await import('../src/content/index.js');
 const { BOSSES } = await import('../src/data/bestiary.js');
@@ -20,7 +20,9 @@ test('toda área é atravessável sem habilidades', () => {
     for (const o of N.objs) {
       if (['vaso', 'ave', 'morador', 'cenario', 'fruto', 'boneco'].includes(o.tipo)) continue; // enfeites
       const onde = `${id}: ${o.tipo} em ${Math.round(o.x / T)},${Math.round(o.y / T)}`;
-      if (o.tipo === 'segredo') assert.ok(tudo.tem(o.x, o.y), onde + ' fora de alcance mesmo com a armadura');
+      const naTrilha = id === 'refugio' && o.x < RX * 30 * T; // a trilha do treino ensina o pulo duplo e a lâmpada: conta-se com eles
+      if (naTrilha && o.tipo === 'escrito') continue; // os versículos escritos no ar da trilha são de ler de longe
+      if (o.tipo === 'segredo' || naTrilha) assert.ok(tudo.tem(o.x, o.y), onde + ' fora de alcance mesmo com a armadura');
       else assert.ok(base.tem(o.x, o.y), onde + ' fora de alcance');
     }
     if (N.porta) assert.ok(base.tem(N.porta.x - T, N.porta.y), id + ': a porta do chefe não é alcançável');

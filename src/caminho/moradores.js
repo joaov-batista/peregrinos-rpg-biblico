@@ -7,7 +7,7 @@ import { GENTE, ITENS, PAPOS } from '../content/gente.js';
 import { VILA } from '../content/vila.js';
 import { coracoesDe, somarCoracoes } from './vida.js';
 import { acoesDoCoracao } from './lar.js';
-import { passoSitio, falarConjugeSitio, acoesEliabe } from './sitio.js';
+import { passoSitio, falarConjugeSitio, acoesEliabe, sitioId } from './sitio.js';
 import { passoSinagogaSardes } from './sardesnovo.js';
 import { agendaDe, lugarNaSinagoga, passoRonda, passoSinagoga, falarSinagoga, falaDaNoite } from './sinagoga.js';
 
@@ -33,6 +33,10 @@ const marcaCoracoes = n => '♥'.repeat(Math.min(10, n)) + '♡'.repeat(Math.max
 /* ---------------- a cada quadro ---------------- */
 export function passoVida(G, dt) {
   G.cm.relogio = (G.cm.relogio || 0) + dt;
+  // a pé, pela beira do mapa: do fim da trilha (oeste do Refúgio) para o sítio, e de volta (sem portal)
+  if (!G.p.morto && !G.ui.blocking && !(G.bordaT > G.T)) { const tutOk = !(G.cm.visto?.tut != null && G.cm.visto.tut < 11);
+    if (G.area === 'refugio' && G.p.x < 1.7 * 32 && tutOk) { G.bordaT = G.T + 2; G.entrar(sitioId(G), { borda: 'direita' }); return; }
+    if (G.def?.sitio && G.p.x > (G.N.w - 1.7) * 32) { G.bordaT = G.T + 2; G.entrar('refugio', { borda: 'esquerda' }); return; } }
   if (G.area === 'sinagoga') { passoSinagoga(G, dt); return; }
   if (G.area === 'sinagoga:sardes') { passoSinagogaSardes(G, dt); return; }
   if (G.def?.sitio) { passoSitio(G, dt); return; }

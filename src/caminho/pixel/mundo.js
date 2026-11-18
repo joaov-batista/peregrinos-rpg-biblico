@@ -6,6 +6,7 @@ import { T, CW, CH, SOLIDO, PONTE, ESPINHO, OCULTO, FALSA, PORTAO, TRANCA, tileE
 import { Sprite, rampa, cor, TINTA, PX } from './raster.js';
 import { fundoSala } from './salas.js';
 import { luzDoDia } from '../moradores.js';
+import { TEMAS, RX } from '../dados.js';
 
 const TL = T / PX; // 16
 const mistura = (a, b, t) => { const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16), f = (s) => Math.round((pa >> s & 255) * (1 - t) + (pb >> s & 255) * t); return '#' + (f(16) << 16 | f(8) << 8 | f(0)).toString(16).padStart(6, '0'); };
@@ -162,9 +163,11 @@ export function pintarFundoPixel(g, G, C, vw, vh, cx, cy) {
     g.globalAlpha = L.d * 0.35; g.fillStyle = L.poente > 0.3 ? '#FFB86A' : '#FFF4C8'; g.beginPath(); g.arc(sx, sy, r + 7, 0, 6.29); g.fill(); g.globalAlpha = L.d; g.beginPath(); g.arc(sx, sy, r, 0, 6.29); g.fill(); g.globalAlpha = 1;
   }
   if (G.N.def.aberto) { g.globalAlpha = 0.8; faixa(g, nuvens(G.tm), cx * 0.05 + G.T * 3, dy + 8 + Math.round(-cy * 0.02), vw); g.globalAlpha = 1; }
-  faixa(g, C.longe, cx * 0.1, dy + Math.round(-cy * 0.02), vw);
-  faixa(g, C.meio, cx * 0.24, dy + Math.round(-cy * 0.05) + 4, vw);
-  faixa(g, C.perto, cx * 0.45, dy + Math.round(-cy * 0.1) + 10, vw);
+  // a oeste do Refúgio, a trilha do treino: o fundo vira mata aos poucos (as muralhas ficam para trás)
+  const mata = G.area === 'refugio' ? Math.max(0, Math.min(1, (RX * 480 + 120 - (cx + vw / 2)) / 260)) : 0;
+  for (const [cena, k] of [[C, 1 - mata], [mata > 0 ? cenaPixel(TEMAS.bosque, 'bosque') : null, mata]]) { if (!cena || k <= 0) continue; g.globalAlpha = k;
+    faixa(g, cena.longe, cx * 0.1, dy + Math.round(-cy * 0.02), vw); faixa(g, cena.meio, cx * 0.24, dy + Math.round(-cy * 0.05) + 4, vw); faixa(g, cena.perto, cx * 0.45, dy + Math.round(-cy * 0.1) + 10, vw); }
+  g.globalAlpha = 1;
   if (L && L.d > 0) { g.globalAlpha = L.d * 0.16; g.fillStyle = L.poente > 0.3 ? '#F2A65A' : '#DCEBFF'; g.fillRect(0, dy, vw, C.H); g.globalAlpha = 1; } /* de dia, as silhuetas ao longe clareiam um pouco */
 }
 

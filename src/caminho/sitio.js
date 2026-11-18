@@ -41,9 +41,9 @@ export function viradaDoDia(G) {
 export function sitioAoEntrar(G) {
   const S = st(G); G.objs = G.objs.filter(o => !o.doSitio);
   const sala = n => n * CW * T;
-  S.animais.forEach((a, i) => { const quintal = ANIMAIS[a.tipo].lugar === 'quintal', x = quintal ? sala(0) + (20 + (i % 5)) * T : sala(2) + (6 + (i * 3) % 12) * T;
-    G.objs.push({ tipo: 'animal', doSitio: true, i, especie: a.tipo, nome: a.nome, x, y: 16 * T, vv: { x, alvo: x, t: rand(0, 3), face: 1, estado: 'parado' }, min: quintal ? sala(0) + 18 * T : sala(2) + 3 * T, max: quintal ? sala(0) + 26 * T : sala(2) + 18 * T }); });
-  const cj = G.cm.conjuge, M = cj && MORADORES.find(m => m.id === cj); if (M) G.objs.push({ tipo: 'npc', doSitio: true, conjuge: true, id: 'conj_' + cj, nome: M.nome.split(',')[0], look: M.look, x: sala(0) + 9 * T + 16, y: 16 * T }); /* casados: o cônjuge mora e ajuda aqui */
+  S.animais.forEach((a, i) => { const quintal = ANIMAIS[a.tipo].lugar === 'quintal', x = quintal ? sala(2) + (4 + (i % 5)) * T : sala(0) + (14 + (i * 3) % 12) * T;
+    G.objs.push({ tipo: 'animal', doSitio: true, i, especie: a.tipo, nome: a.nome, x, y: 16 * T, vv: { x, alvo: x, t: rand(0, 3), face: 1, estado: 'parado' }, min: quintal ? sala(2) + 2 * T : sala(0) + 13 * T, max: quintal ? sala(2) + 10 * T : sala(0) + 28 * T }); });
+  const cj = G.cm.conjuge, M = cj && MORADORES.find(m => m.id === cj); if (M) G.objs.push({ tipo: 'npc', doSitio: true, conjuge: true, id: 'conj_' + cj, nome: M.nome.split(',')[0], look: M.look, x: sala(2) + 21 * T + 16, y: 16 * T }); /* casados: o cônjuge mora e ajuda aqui */
   viradaDoDia(G);
 }
 
@@ -57,7 +57,7 @@ export function passoSitio(G, dt) {
     if (v.estado === 'indo') { const d = v.alvo - v.x; if (Math.abs(d) < 3) { v.estado = 'parado'; v.t = rand(1.5, 5); if (Math.random() < 0.3) v.som = 1.2; } else { v.face = Math.sign(d); v.x += v.face * Math.min(Math.abs(d), (o.especie === 'galinha' ? 30 : 22) * dt); } }
     if (v.som > 0) v.som -= dt; }
   // pastoreio: o rebanho segue o peregrino; andar pelo pasto conta
-  if (S.rebanho > 0) { S.rebanho -= dt; const noPasto = Math.floor(p.x / (CW * T)) === 2; if (noPasto) S.andou = (S.andou || 0) + Math.abs(p.vx) * dt;
+  if (S.rebanho > 0) { S.rebanho -= dt; const noPasto = Math.floor(p.x / (CW * T)) === 0; if (noPasto) S.andou = (S.andou || 0) + Math.abs(p.vx) * dt;
     if (S.andou > 900 || S.rebanho <= 0) { const ok = S.andou > 900; S.rebanho = 0; S.andou = 0; if (ok) { for (const a of S.animais) if (a.tipo !== 'galinha') a.pastou = dia(G); sfx('right'); G.ui.toast(SITIO.pastoreou, 4000); G.salvar(); } else G.ui.toast('O rebanho se dispersou. Ande mais pelo pasto da próxima vez.', 3500); } }
 }
 

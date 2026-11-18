@@ -144,17 +144,38 @@ const terreno = (pls, muros = []) => { const alt = Math.max(1, ...muros.map(m =>
 
 // O Refúgio: uma aldeia a céu aberto (praças, mercado, bairro, pátio, olival, o portão do Éden) e, por baixo dela,
 // os salões de pedra: o Salão dos Rolos (as páginas do Livro), a Casa do Tesouro, a Cripta dos Gigantes e a cisterna.
+// a trilha do treino: as salas do antigo Bosque do Treino. No Refúgio ela fica à esquerda da Praça do poço, espelhada:
+// quem começa sai da pedra Ebenézer e caminha para oeste, aprendendo; no fim da trilha, a estrada segue até o seu sítio.
+const BOSQUE_SALAS = [
+    { papel: 'inicio', nome: 'A trilha', tiles: terreno([], [[13, 14, 3], [22, 23, 5]]), objs: [
+      planta(3, 'cipreste'), planta(8, 'oliveira'), planta(18, 'cipreste'), planta(27, 'oliveira'), { tipo: 'ave', col: 6, lin: 14 }, { tipo: 'ave', col: 17, lin: 12 },
+      { tipo: 'escrito', col: 6, lin: 10, txt: '"Os teus ouvidos ouvirão: este é o caminho, andai por ele" (Is 30:21)' },
+      { tipo: 'placa', col: 11, txt: 'Um tronco caído: pule.' }, { tipo: 'placa', col: 20, txt: 'Alto demais para um pulo só: no ar, pule de novo.' }] },
+    { papel: 'vila', nome: 'A clareira dos troncos', tiles: terreno([[12, 19, 24]]), objs: [
+      planta(2, 'oliveira'), { tipo: 'boneco', col: 7 }, { tipo: 'boneco', col: 10 }, planta(14, 'cipreste'), { tipo: 'boneco', col: 22, lin: 12 }, planta(27, 'cipreste'),
+      { tipo: 'placa', col: 5, txt: 'Bonecos de palha: golpeie à vontade. Cada golpe certo enche o jarro de azeite.' }, { tipo: 'placa', col: 17, txt: 'Suba na tábua. Para descer dela, segure para baixo.' }] },
+    { papel: 'vila', nome: 'A sombra do bosque', tiles: terreno([[12, 7, 9, '~'], [9, 10, 12, '~']], [[14, 19, 9]]), objs: [
+      planta(3, 'cipreste'), { tipo: 'placa', col: 5, txt: 'O barranco é alto demais. Erga a lâmpada: a luz mostra o que a sombra cobre.' },
+      { tipo: 'escrito', col: 10, lin: 5, txt: '"Lâmpada para os meus pés é a tua palavra" (Sl 119:105)' }, planta(23, 'oliveira'), { tipo: 'placa', col: 22, txt: 'Dardos de treino: não ferem. Erga a lâmpada na hora em que o dardo chega.' }, planta(27, 'cipreste')] },
+    { papel: 'vila', nome: 'O fim da trilha', tiles: terreno([[9, 12, 15]]), objs: [
+      planta(2, 'oliveira'), { tipo: 'boneco', col: 14, lin: 9 }, { tipo: 'placa', col: 8, txt: 'O boneco lá no alto: segure o golpe, mire e solte.' }, planta(18, 'cipreste'), { tipo: 'ebenezer', col: 21 },
+      { tipo: 'portal', col: 26, area: 'refugio', rotulo: 'Caminho do Refúgio' }, { tipo: 'ave', col: 24, lin: 13 }] }
+];
+const espelha = c => ({ ...c, papel: 'vila', tiles: c.tiles.map(r => [...r].reverse().join('')), objs: c.objs.filter(o => o.tipo !== 'portal' && o.tipo !== 'ebenezer').map(o => ({ ...o, col: 29 - o.col })) });
+const TRILHA = BOSQUE_SALAS.map((c, k) => ({ ...espelha(c), cx: -1 - k, trilha: true }));
+TRILHA[3].objs.push({ tipo: 'placa', col: 4, txt: '← Estrada do campo: o seu sítio fica logo adiante.' });
 // os soldados da ronda: elmo, túnica vermelha, capa escura
 const SOLDADO = tunic => ({ skin: '#A0673E', hair: '#1C120A', tunic, cape: '#3A2A2A', style: 'curto', acessorio: 'elmo', beard: true, body: 'forte' });
 // deslocamento das salas do Refúgio (as referências fixas somam RX; hoje é zero)
-export const RX = 0;
+export const RX = 4;
 const MIRIA = { skin: '#D9A273', hair: '#3A2314', tunic: '#8E4A6A', cape: '#E3DED2', style: 'trancas' }, SELA = { skin: '#A0673E', hair: '#1C120A', tunic: '#C98A3A', cape: 'none', style: 'veu' };
 const ASAFE = { skin: '#C68B59', hair: '#2B1A10', tunic: '#3F6A8A', cape: '#C9A63C', style: 'cacheado', beard: true }, ELIABE = { skin: '#8A5A3A', hair: '#1C120A', tunic: '#7A6A4A', cape: '#4A3A2A', style: 'curto', beard: true, body: 'forte' };
 const REFUGIO = [
+  ...TRILHA,
   { cx: 0, nome: 'Praça do poço', papel: 'inicio', tiles: sala([13, 20, 23]), objs: [
     { tipo: 'flor', col: 4 }, { tipo: 'flor', col: 25 },
     planta(12, 'palmeira'), casa(21, 'viuva', 'Casa da viúva de Sarepta'), planta(27, 'oliveira'),
-    { tipo: 'portal', col: 2, area: 'bosque', rotulo: 'Bosque do treino' }, { tipo: 'ebenezer', col: 6 }, { tipo: 'poco', col: 14 },
+    { tipo: 'placa', col: 2, txt: '← A trilha do treino e a estrada do campo' }, { tipo: 'ebenezer', col: 6 }, { tipo: 'poco', col: 14 },
     { tipo: 'npc', col: 10, id: 'velho', nome: 'Velho Peregrino', look: velho },
     { tipo: 'npc', col: 17, id: 'pedro', nome: 'Simão, o pescador', look: { skin: '#A0673E', hair: '#3A2314', tunic: '#497A80', cape: 'none', style: 'cacheado', beard: true, body: 'forte' } },
     { tipo: 'npc', col: 26, id: 'jumenta', nome: 'Uma jumenta', bicho: 'jumenta' },
@@ -198,7 +219,7 @@ const REFUGIO = [
   // o olival: figos, sombra e a caravana que às vezes traz algo raro
   { cx: 6, nome: 'Olival', papel: 'vila', tiles: sala([12, 8, 11], [9, 13, 16], [12, 18, 21]), objs: [
     { tipo: 'flor', col: 3 }, { tipo: 'flor', col: 12 }, { tipo: 'flor', col: 17 }, { tipo: 'flor', col: 24 }, // canteiros: uma flor por dia em cada um
-    planta(4, 'oliveira'), planta(10, 'oliveira'), { tipo: 'banco', col: 12, lugar: 'amendoeira' }, { tipo: 'lampiao', col: 14, luz: 90 }, planta(16, 'palmeira'), planta(20, 'oliveira'), planta(25, 'cipreste'), { tipo: 'cenario', col: 23, qual: 'banca' }, { tipo: 'portal', col: 28, area: 'floresta', rotulo: 'Trilha escondida', oculto: true }, { tipo: 'portal', col: 1, area: 'sitio', rotulo: 'Estrada do sítio' },
+    planta(4, 'oliveira'), planta(10, 'oliveira'), { tipo: 'banco', col: 12, lugar: 'amendoeira' }, { tipo: 'lampiao', col: 14, luz: 90 }, planta(16, 'palmeira'), planta(20, 'oliveira'), planta(25, 'cipreste'), { tipo: 'cenario', col: 23, qual: 'banca' }, { tipo: 'portal', col: 28, area: 'floresta', rotulo: 'Trilha escondida', oculto: true },
     { tipo: 'fruto', col: 4, lin: 14 }, { tipo: 'fruto', col: 10, lin: 11 }, { tipo: 'fruto', col: 15, lin: 8 }, { tipo: 'fruto', col: 20, lin: 11 },
     { tipo: 'npc', col: 23, id: 'mercador', nome: 'Mercador', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#7A5A2E', cape: '#3F2E4F', style: 'turbante', beard: true } },
     { tipo: 'poco', col: 7 }, { tipo: 'npc', col: 17, id: 'zelote3', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5E4A3A', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } }, { ...povo(13, 4, VILA.ana.look), id: 'ana', nome: VILA.ana.nome }, { ...povo(6, 4, ELIABE), id: 'eliabe', nome: 'Eliabe, o pastor' }, { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
@@ -268,14 +289,13 @@ export function semanaDe(id) { return TODAS.find(s => s.id === id); }
 export function areaDef(id) {
   // o sítio: a casa do peregrino no campo (cada jogador tem o seu: o id leva o nome do personagem)
   if (id === 'sitio' || id.startsWith('sitio:')) return { id, nome: 'Seu sítio', sub: 'A casa no campo', tema: 'bosque', seed: 'sitio', paz: true, aberto: true, sitio: true, planta: [
-    { papel: 'inicio', nome: 'A casa', tiles: sala(), objs: [
-      { tipo: 'portal', col: 2, area: 'refugio', rotulo: 'Estrada do Refúgio' }, casa(6, 'peregrino', 'Sua casa'), { tipo: 'poco', col: 10 }, { tipo: 'maquina', qual: 'forno', col: 13 }, { tipo: 'cesto', col: 16 },
-      { tipo: 'galinheiro', col: 22 }, planta(27, 'oliveira'), { tipo: 'flor', col: 18 }, { tipo: 'ave', col: 9, lin: 13 }] },
-    { papel: 'vila', nome: 'A lavoura', tiles: sala(), objs: [
-      ...[3, 5, 7, 9, 11, 13, 15, 17, 19, 21].map((col, idx) => ({ tipo: 'canteiro', col, idx })), { tipo: 'espantalho', col: 24 }, { tipo: 'maquina', qual: 'lagar', col: 27 }, { tipo: 'ave', col: 14, lin: 12 }] },
     { papel: 'vila', nome: 'O pasto', tiles: sala(), objs: [
-      { tipo: 'cerca', col: 2, ate: 19 }, { tipo: 'cocho', col: 5 }, { tipo: 'maquina', qual: 'prensa', col: 21 },
-      ...[23, 25, 27].map((col, idx) => ({ tipo: 'pomar', col, idx })), { tipo: 'ave', col: 12, lin: 13 }] }
+      ...[3, 5, 7].map((col, idx) => ({ tipo: 'pomar', col, idx })), { tipo: 'maquina', qual: 'prensa', col: 9 }, { tipo: 'cerca', col: 12, ate: 28 }, { tipo: 'cocho', col: 25 }, { tipo: 'ave', col: 18, lin: 13 }] },
+    { papel: 'vila', nome: 'A lavoura', tiles: sala(), objs: [
+      { tipo: 'maquina', qual: 'lagar', col: 3 }, { tipo: 'espantalho', col: 6 }, ...[9, 11, 13, 15, 17, 19, 21, 23, 25, 27].map((col, idx) => ({ tipo: 'canteiro', col, idx })), { tipo: 'ave', col: 14, lin: 12 }] },
+    { papel: 'inicio', nome: 'A casa', tiles: sala(), objs: [
+      planta(3, 'oliveira'), { tipo: 'galinheiro', col: 7 }, { tipo: 'flor', col: 11 }, { tipo: 'cesto', col: 13 }, { tipo: 'maquina', qual: 'forno', col: 16 }, { tipo: 'poco', col: 19 },
+      casa(23, 'peregrino', 'Sua casa'), { tipo: 'placa', col: 27, txt: 'Estrada do Refúgio →' }, { tipo: 'ave', col: 20, lin: 13 }] }
   ] };
   // a sinagoga por dentro: a nave, a arca, a bimá; Jairo conduz as orações e quem veio orar fica de joelhos
   if (id === 'sinagoga:sardes') return { id, nome: 'Sinagoga de Sardes', sub: 'A casa de oração que esperava', tema: 'sardes', seed: id, paz: true, interior: true, planta: [
@@ -289,20 +309,7 @@ export function areaDef(id) {
     planta: [{ papel: 'inicio', tiles: ['....====............====....', '............................', '..........========..........', '............................', '............................'] }] };
   // o Bosque do Treino: o caminho até o Refúgio. É aqui que o peregrino aprende a andar, golpear e erguer a lâmpada,
   // uma coisa por vez, com tudo à mão (troncos para bater, dardos que não ferem, azeite de sobra).
-  if (id === 'bosque') return { id, nome: 'Bosque do Treino', sub: 'O caminho até o Refúgio', tema: 'bosque', seed: id, paz: true, aberto: true, treino: true, planta: [
-    { papel: 'inicio', nome: 'A trilha', tiles: terreno([], [[13, 14, 3], [22, 23, 5]]), objs: [
-      planta(3, 'cipreste'), planta(8, 'oliveira'), planta(18, 'cipreste'), planta(27, 'oliveira'), { tipo: 'ave', col: 6, lin: 14 }, { tipo: 'ave', col: 17, lin: 12 },
-      { tipo: 'escrito', col: 6, lin: 10, txt: '"Os teus ouvidos ouvirão: este é o caminho, andai por ele" (Is 30:21)' },
-      { tipo: 'placa', col: 11, txt: 'Um tronco caído: pule.' }, { tipo: 'placa', col: 20, txt: 'Alto demais para um pulo só: no ar, pule de novo.' }] },
-    { papel: 'vila', nome: 'A clareira dos troncos', tiles: terreno([[12, 19, 24]]), objs: [
-      planta(2, 'oliveira'), { tipo: 'boneco', col: 7 }, { tipo: 'boneco', col: 10 }, planta(14, 'cipreste'), { tipo: 'boneco', col: 22, lin: 12 }, planta(27, 'cipreste'),
-      { tipo: 'placa', col: 5, txt: 'Bonecos de palha: golpeie à vontade. Cada golpe certo enche o jarro de azeite.' }, { tipo: 'placa', col: 17, txt: 'Suba na tábua. Para descer dela, segure para baixo.' }] },
-    { papel: 'vila', nome: 'A sombra do bosque', tiles: terreno([[12, 7, 9, '~'], [9, 10, 12, '~']], [[14, 19, 9]]), objs: [
-      planta(3, 'cipreste'), { tipo: 'placa', col: 5, txt: 'O barranco é alto demais. Erga a lâmpada: a luz mostra o que a sombra cobre.' },
-      { tipo: 'escrito', col: 10, lin: 5, txt: '"Lâmpada para os meus pés é a tua palavra" (Sl 119:105)' }, planta(23, 'oliveira'), { tipo: 'placa', col: 22, txt: 'Dardos de treino: não ferem. Erga a lâmpada na hora em que o dardo chega.' }, planta(27, 'cipreste')] },
-    { papel: 'vila', nome: 'O fim da trilha', tiles: terreno([[9, 12, 15]]), objs: [
-      planta(2, 'oliveira'), { tipo: 'boneco', col: 14, lin: 9 }, { tipo: 'placa', col: 8, txt: 'O boneco lá no alto: segure o golpe, mire e solte.' }, planta(18, 'cipreste'), { tipo: 'ebenezer', col: 21 },
-      { tipo: 'portal', col: 26, area: 'refugio', rotulo: 'Caminho do Refúgio' }, { tipo: 'ave', col: 24, lin: 13 }] }
+  if (id === 'bosque') return { id, nome: 'Bosque do Treino', sub: 'O caminho até o Refúgio', tema: 'bosque', seed: id, paz: true, aberto: true, treino: true, planta: [ ...BOSQUE_SALAS
   ] };
   // a Clareira das provas: fora da aldeia, no meio da mata. Ali ficam a arena, o desafio das ondas e a porta do Conselho
   if (id === 'clareira') return { id, nome: 'Clareira das Provas', sub: 'Na mata, atrás do pátio', tema: 'bosque', seed: id, paz: true, aberto: true, planta: [
