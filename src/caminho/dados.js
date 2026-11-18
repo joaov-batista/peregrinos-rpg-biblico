@@ -294,15 +294,21 @@ export function semanaDe(id) { return TODAS.find(s => s.id === id); }
 // Descrição de uma área para o gerador de níveis. ids: "refugio", "semana-01:3", "mundo:golias"
 export function areaDef(id) {
   // o sítio: a casa do peregrino no campo (cada jogador tem o seu: o id leva o nome do personagem)
-  if (id === 'sitio' || id.startsWith('sitio:')) return { id, nome: 'Seu sítio', sub: 'A casa no campo', tema: 'bosque', seed: 'sitio', paz: true, aberto: true, sitio: true, planta: [
-    { papel: 'vila', nome: 'O pasto', tiles: sala(), objs: [
-      ...[3, 5, 7].map((col, idx) => ({ tipo: 'pomar', col, idx })), { tipo: 'maquina', qual: 'prensa', col: 9 }, { tipo: 'cerca', col: 12, ate: 28 }, { tipo: 'cocho', col: 25 }, { tipo: 'ave', col: 18, lin: 13 }] },
-    { papel: 'vila', nome: 'A lavoura', tiles: sala(), objs: [
-      { tipo: 'maquina', qual: 'lagar', col: 3 }, { tipo: 'espantalho', col: 6 }, ...[9, 11, 13, 15, 17, 19, 21, 23, 25, 27].map((col, idx) => ({ tipo: 'canteiro', col, idx })), { tipo: 'ave', col: 14, lin: 12 }] },
-    { papel: 'inicio', nome: 'A casa', tiles: sala(), objs: [
-      planta(3, 'oliveira'), { tipo: 'galinheiro', col: 7 }, { tipo: 'essencias', col: 10 }, { tipo: 'flor', col: 12 }, { tipo: 'cesto', col: 13 }, { tipo: 'maquina', qual: 'forno', col: 16 }, { tipo: 'poco', col: 19 },
-      casa(23, 'peregrino', 'Sua casa'), { tipo: 'placa', col: 27, txt: 'Estrada do Refúgio →' }, { tipo: 'ave', col: 20, lin: 13 }] }
-  ] };
+  if (id === 'sitio' || id.startsWith('sitio:')) { // no multijogador, os sítios ficam lado a lado (um para cada peregrino da sala) e, no fim do campo, a praia
+    const donos = id.startsWith('sitio:') ? id.slice(6).split('+') : [''], nomeDe = d => NOMES_SITIO[d] || (d ? d[0].toUpperCase() + d.slice(1) : 'peregrino');
+    const fazenda = (d, k) => [
+      { papel: 'vila', nome: donos.length > 1 ? 'O pasto de ' + nomeDe(d) : 'O pasto', dono: d, tiles: sala(), objs: [
+        ...[3, 5, 7].map((col, idx) => ({ tipo: 'pomar', col, idx, dono: d })), { tipo: 'maquina', qual: 'prensa', col: 10, dono: d }, { tipo: 'cerca', col: 13, ate: 28 }, { tipo: 'cocho', col: 25, dono: d }, { tipo: 'ave', col: 18, lin: 13 }] },
+      { papel: 'vila', nome: donos.length > 1 ? 'A lavoura de ' + nomeDe(d) : 'A lavoura', dono: d, tiles: sala(), objs: [
+        { tipo: 'maquina', qual: 'lagar', col: 3, dono: d }, { tipo: 'espantalho', col: 6 }, ...[9, 11, 13, 15, 17, 19, 21, 23, 25, 27].map((col, idx) => ({ tipo: 'canteiro', col, idx, dono: d })), { tipo: 'ave', col: 14, lin: 12 }] },
+      { papel: k === 0 ? 'inicio' : 'vila', nome: donos.length > 1 ? 'A casa de ' + nomeDe(d) : 'A casa', dono: d, tiles: sala(), objs: [
+        planta(3, 'oliveira'), { tipo: 'galinheiro', col: 6.5, dono: d }, { tipo: 'essencias', col: 10, dono: d }, { tipo: 'flor', col: 12.5 }, { tipo: 'cesto', col: 14.5, dono: d }, { tipo: 'maquina', qual: 'forno', col: 17, dono: d }, { tipo: 'poco', col: 19.5 },
+        casa(23, 'peregrino', donos.length > 1 ? 'Casa de ' + nomeDe(d) : 'Sua casa'), { tipo: 'placa', col: 27, txt: k === 0 ? 'Estrada do Refúgio →' : 'Sítio de ' + nomeDe(d) + ' · o de ' + nomeDe(donos[k - 1]) + ' →' }, { tipo: 'ave', col: 20, lin: 13 }] }];
+    const praia = { papel: 'vila', nome: 'A praia', praia: true, semPostes: true, tiles: sala(), objs: [
+      { tipo: 'areia', col: 0, ate: 29 }, { tipo: 'aguaAberta', col: 0, ate: 6, esq: true, praia: true }, planta(9, 'palmeira'), planta(24, 'palmeira'),
+      { tipo: 'bancoPraia', col: 14 }, { tipo: 'concha', col: 11 }, { tipo: 'concha', col: 18.5 }, { tipo: 'placa', col: 27, txt: '← A praia' }, { tipo: 'ave', col: 12, lin: 9 }, { tipo: 'ave', col: 20, lin: 10 }] };
+    return { id, nome: donos.length > 1 ? 'Os sítios' : 'Seu sítio', sub: donos.length > 1 ? donos.map(nomeDe).join(', ') : 'A casa no campo', tema: 'bosque', seed: 'sitio', paz: true, aberto: true, sitio: true, donos,
+      planta: [praia, ...donos.map((d, k) => ({ d, k })).reverse().flatMap(({ d, k }) => fazenda(d, k))] }; }
   // a sinagoga por dentro: a nave, a arca, a bimá; Jairo conduz as orações e quem veio orar fica de joelhos
   if (id === 'sinagoga:sardes') return { id, nome: 'Sinagoga de Sardes', sub: 'A casa de oração que esperava', tema: 'sardes', seed: id, paz: true, interior: true, planta: [
     { papel: 'inicio', nome: 'A nave', deco: 'sinagoga', tiles: sala(), objs: [{ tipo: 'portal', col: 3, area: 'sardes', porta: true, rotulo: 'Sair da sinagoga' }, { tipo: 'menora', col: 15 }, { tipo: 'npc', col: 19, id: 'natanael', nome: 'Natanael, o último', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#3A3F4C', cape: '#4A4A6A', style: 'turbante', beard: true } }] }] };
@@ -396,6 +402,9 @@ export function areaDef(id) {
 import { CHEFES } from './chefes.js';
 import { MARCAS } from './perigos.js';
 const arenaDe = id => CHEFES[id]?.arena || 'plana';
+
+// os nomes de quem tem sítio (o id da área leva só o nome limpo; sitio.js guarda aqui o nome bonito)
+export const NOMES_SITIO = {};
 
 export const DIFICULDADES = {
   facil: { nome: 'Fácil', desc: 'Focado na história: seus golpes ferem mais, chefes e monstros têm menos vida, avisos mais longos e dois fôlegos a mais.', hp: 1.3, ritmo: 1, aviso: 1.2, vel: 0.9, vidas: 2, oleo: 1.3, dano: 1.5, vidaVicio: 0.6, semDobro: true },

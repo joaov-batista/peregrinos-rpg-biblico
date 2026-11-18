@@ -7,11 +7,21 @@ import { PRECO, PLANTAS, ANIMAIS, MAQUINAS, SITIO } from '../content/sitio.js';
 import { dia, hora, ganhar, bolsa } from './moradores.js';
 import { coracoesDe } from './vida.js';
 import { T, CW } from './nivel.js';
-import { MORADORES } from './dados.js';
+import { MORADORES, NOMES_SITIO } from './dados.js';
 import { chovendo } from './tempo.js';
+import { passoPraia } from './praia.js';
 
 const rand = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
-export const sitioId = G => 'sitio:' + String(G.char.name || 'peregrino').toLowerCase().replace(/[^a-z0-9]/g, '');
+export const limpo = n => String(n || 'peregrino').toLowerCase().replace(/[^a-z0-9]/g, '') || 'peregrino';
+// sozinho: "sitio:joao". Com outros peregrinos na sala: "sitio:ana+joao" (todos calculam o mesmo id e se encontram lá)
+export function sitioId(G) {
+  const eu = limpo(G.char.name); NOMES_SITIO[eu] = G.char.name;
+  const outros = G.mp?.lista?.() || []; for (const o of outros) NOMES_SITIO[limpo(o.nome)] = o.nome;
+  return 'sitio:' + [...new Set([eu, ...outros.map(o => limpo(o.nome))])].sort().join('+');
+}
+// qual é a sua fazenda no mapa (o índice da sala do pasto): a praia é a sala 0; as fazendas vêm depois, da última para a primeira
+const minhaBase = G => { const d = G.def.donos || [''], k = d.indexOf(limpo(G.char.name)); return k < 0 ? -1 : 1 + (d.length - 1 - k) * 3; };
+export const alheio = (G, ob) => ob.dono != null && G.def?.donos && ob.dono !== limpo(G.char.name);
 export const st = G => (G.cm.sitio = G.cm.sitio || { canteiros: [], animais: [], pomar: [], maq: {}, cesto: {}, sementes: {}, ultimoDia: dia(G), cocho: -1, milho: -1 });
 const can = (G, i) => (st(G).canteiros[i] = st(G).canteiros[i] || { estado: 'mato' });
 const nomeItem = (k, n) => n > 1 ? ITENS[k].plural : ITENS[k].nome.toLowerCase();
@@ -41,7 +51,9 @@ export function viradaDoDia(G) {
 /* ---------------- ao entrar: os bichos e o cônjuge aparecem ---------------- */
 export function sitioAoEntrar(G) {
   const S = st(G); G.objs = G.objs.filter(o => !o.doSitio);
-  const sala = n => n * CW * T;
+  const base = minhaBase(G); if (base < 0) { setTimeout(() => G.entrar(sitioId(G), { borda: 'direita' }), 0); return; } // o seu sítio não está neste mapa: vai para o certo
+  G.sitioBase = base; const sala = n => (n + base) * CW * T;
+  for (const o of G.objs) if (alheio(G, o)) { o.alheio = true; if (o.tipo === 'casa') o.id = 'casa_' + o.dono; }
   S.animais.forEach((a, i) => { const quintal = ANIMAIS[a.tipo].lugar === 'quintal', x = quintal ? sala(2) + (4 + (i % 5)) * T : sala(0) + (14 + (i * 3) % 12) * T;
     G.objs.push({ tipo: 'animal', doSitio: true, i, especie: a.tipo, nome: a.nome, x, y: 16 * T, vv: { x, alvo: x, t: rand(0, 3), face: 1, estado: 'parado' }, min: quintal ? sala(2) + 2 * T : sala(0) + 13 * T, max: quintal ? sala(2) + 10 * T : sala(0) + 28 * T }); });
   const cj = G.cm.conjuge, M = cj && MORADORES.find(m => m.id === cj); if (M) G.objs.push({ tipo: 'npc', doSitio: true, conjuge: true, id: 'conj_' + cj, nome: M.nome.split(',')[0], look: M.look, x: sala(2) + 21 * T + 16, y: 16 * T }); /* casados: o cônjuge mora e ajuda aqui */
@@ -52,6 +64,11 @@ export function sitioAoEntrar(G) {
 export function passoSitio(G, dt) {
   viradaDoDia(G);
   const p = G.p, S = st(G);
+  passoPraia(G, dt); // o banco da praia
+  { const mar = G.objs.find(o => o.tipo === 'aguaAberta' && o.praia); if (mar) { const fim = mar.x - 16 + (mar.ate - mar.col + 1) * T; if (p.x < fim + 14) { p.x = fim + 14; p.vx = Math.max(0, p.vx); } } } // a praia: a água não se anda
+  // no multijogador, conta para os outros como está a sua fazenda (eles a veem do lado da deles)
+  if (G.mp && (G.siT = (G.siT || 0) - dt) <= 0) { G.siT = 2.5; const hoje = dia(G);
+    G.mp.ev('si', { d: limpo(G.char.name), c: S.canteiros.map(c => c ? [c.estado, c.planta || '', c.pronto ? 1 : 0, c.regado === hoje ? 1 : 0, c.cresceu || 0] : 0), po: S.pomar.map(q => q?.pronto === false ? 0 : 1), m: Object.fromEntries(Object.entries(S.maq).filter(([, v]) => v).map(([k, v]) => [k, v.feito ? 2 : 1])), co: S.cocho === hoje ? 1 : 0 }); }
   if (chovendo(G)) { const hoje = dia(G); let reg = 0; for (const c of S.canteiros) if (c && c.estado === 'plantado' && c.regado !== hoje) { c.regado = hoje; reg++; } if (reg) G.textoEm(p.x, p.y - 80, 'a chuva regou a lavoura', '#8FD4F0', 11); }
   for (const o of G.objs) if (o.tipo === 'animal') { const v = o.vv; v.t -= dt;
     if (S.rebanho > 0 && o.especie !== 'galinha') { const alvo = p.x - p.face * (30 + (o.i % 4) * 22), d = alvo - v.x; v.estado = Math.abs(d) > 8 ? 'indo' : 'parado'; v.face = Math.sign(d) || v.face; v.x += Math.sign(d) * Math.min(Math.abs(d), 120 * dt); continue; }
@@ -59,13 +76,15 @@ export function passoSitio(G, dt) {
     if (v.estado === 'indo') { const d = v.alvo - v.x; if (Math.abs(d) < 3) { v.estado = 'parado'; v.t = rand(1.5, 5); if (Math.random() < 0.3) v.som = 1.2; } else { v.face = Math.sign(d); v.x += v.face * Math.min(Math.abs(d), (o.especie === 'galinha' ? 30 : 22) * dt); } }
     if (v.som > 0) v.som -= dt; }
   // pastoreio: o rebanho segue o peregrino; andar pelo pasto conta
-  if (S.rebanho > 0) { S.rebanho -= dt; const noPasto = Math.floor(p.x / (CW * T)) === 0; if (noPasto) S.andou = (S.andou || 0) + Math.abs(p.vx) * dt;
+  if (S.rebanho > 0) { S.rebanho -= dt; const noPasto = Math.floor(p.x / (CW * T)) === (G.sitioBase ?? 1); if (noPasto) S.andou = (S.andou || 0) + Math.abs(p.vx) * dt;
     if (S.andou > 900 || S.rebanho <= 0) { const ok = S.andou > 900; S.rebanho = 0; S.andou = 0; if (ok) { for (const a of S.animais) if (a.tipo !== 'galinha') a.pastou = dia(G); sfx('right'); G.ui.toast(SITIO.pastoreou, 4000); G.salvar(); } else G.ui.toast('O rebanho se dispersou. Ande mais pelo pasto da próxima vez.', 3500); } }
 }
 
 /* ---------------- rótulos ---------------- */
 export function rotuloSitio(G, ob) {
   const hoje = dia(G);
+  if (ob.tipo === 'bancoPraia') return G.cenaPraia ? null : 'Sentar no banco e olhar o mar';
+  if (ob.alheio) return ['canteiro', 'pomar', 'maquina', 'cocho', 'galinheiro', 'cesto', 'essencias'].includes(ob.tipo) ? null : undefined; // a fazenda dos outros: só se olha
   switch (ob.tipo) {
     case 'canteiro': { const c = can(G, ob.idx); return c.estado === 'mato' ? 'Limpar e arar' : c.estado === 'arado' ? 'Plantar' : c.pronto ? 'Colher' : c.regado === hoje ? 'Ver a ' + PLANTAS[c.planta].nome.toLowerCase() : 'Regar'; }
     case 'animal': return 'Cuidar de ' + ob.nome;
@@ -82,6 +101,8 @@ export function rotuloSitio(G, ob) {
 /* ---------------- usar ---------------- */
 export async function usarSitio(G, ob) {
   const S = st(G), hoje = dia(G), b = bolsa(G), p = G.p, d = (nome, texto, acoes = [{ label: 'Ok' }]) => G.ui.dialog({ nome, texto, acoes, voz: false });
+  if (ob.tipo === 'bancoPraia') { const { sentarNaPraia } = await import('./praia.js'); sentarNaPraia(G, ob); return true; }
+  if (ob.alheio) return true;
   if (ob.tipo === 'essencias') { const { mesaDeEssencias } = await import('./azeites.js'); await mesaDeEssencias(G); return true; }
   switch (ob.tipo) {
     case 'canteiro': { const c = can(G, ob.idx);

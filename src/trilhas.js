@@ -19,6 +19,9 @@ export const TRILHAS = {
   // o Refúgio: a casa. Caixinha de música sobre harpa, uma frase que sobe e volta
   refugio: { tom: 5, esc: 'maior', bpm: 84, voz: 'caixa', arp: 'harpa', baixo: 'andar', pad: 1, prog: [1, 5, 6, 4, 1, 5, 4, 1],
     mel: "5 - 1' - 3' - 2' 1' | 2' - 7 - 5 - - - | 6 - 1' - 3' - 2' 1' | 6 - - 5 4 - - - | 5 - 1' - 3' - 4' 3' | 2' - 7 - 2' - 5' - | 4' - 3' 2' 1' - 6 - | 1' - - - - - . ." },
+  // a praia do sítio: o banco, o vento, os pelicanos. Uma valsa lenta de piano e harpa, de quem lembra de algo bom
+  praia: { tom: 2, esc: 'maior', bpm: 62, tempos: 3, voz: 'piano', arp: 'harpa', baixo: 'longo', pad: 2, vol: 0.8, eco: 1.6, prog: [1, 3, 4, 1, 6, 4, 5, 1],
+    mel: "3' - 5' - 1'' - | 7' - - 5' - - | 6' - 4' - 1' - | 3' - - - 2' - | 1' - 3' - 6' - | 5' - - 4' 3' - | 2' - 4' - 7 - | 1' - - - - ." },
   // o Bosque do Treino e a arena: leve, de quem está começando
   bosque: { tom: 3, esc: 'maior', bpm: 104, voz: 'flauta', arp: 'harpa', baixo: 'andar', bat: 'leve', prog: [1, 4, 1, 5, 1, 4, 5, 1],
     mel: "1' . 3' . 5' - 3' - | 4' . 6' . 4' - - - | 3' . 1' . 5' - 3' - | 2' - 7 - 5 - - . | 1' . 3' . 5' - 6' - | 6' - 4' - 1' - 4' - | 2' - 4' - 7 - 2' - | 1' - - - - - . ." },

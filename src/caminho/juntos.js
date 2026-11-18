@@ -341,6 +341,7 @@ export class Juntos {
       case 'g': if (this.souDono) G.golpeRemoto(ini(m.id), m); break;
       case 'pa': { const e = this.souDono && ini(m.id); if (!e) break; if (e.kind === 'chefe') G.postura(e, 34); else { e.stun = 1.5; e.aberto = 1.5; e.vx = m.vx || 0; } break; }
       case 'ti': if (this.souDono) G.tiros = G.tiros.filter(t => t.nid !== m.id); break;
+      case 'si': { const al = G.sitiosAlheios = G.sitiosAlheios || {}; al[m.d] = { canteiros: (m.c || []).map(c => c ? { estado: c[0], planta: c[1], pronto: !!c[2], regado: c[3] ? Math.floor((G.cm.relogio || 0) / 600) : -1, cresceu: c[4] } : null), pomar: (m.po || []).map(v => ({ pronto: !!v })), maq: Object.fromEntries(Object.entries(m.m || {}).map(([k, v]) => [k, { feito: v === 2 }])), cocho: m.co ? Math.floor((G.cm.relogio || 0) / 600) : -1 }; break; } // como está o sítio do outro
       case 'mc': { G.moedasFeitas?.add(m.id); for (const q of G.moedas) if (q.cid === m.id) q.pego = true; break; } // a moeda maldita sumiu em outro aparelho (apanhada ou recolhida pela Ganância)
       case 'zp': { const z = this.souDono && G.zonas.find(q => q.nid === m.id); if (z) G.zonaDefendida(z); break; }
       case 'lu': if (this.souDono && G.N.arena && G.def.chefe && !G.luta && !G.chefe) G.iniciarLuta(); break;
