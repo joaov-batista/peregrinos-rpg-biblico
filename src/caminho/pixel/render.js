@@ -236,15 +236,15 @@ function pintarObjeto(g, o, G, x, y, Tm) {
       if (o.escondido > G.T) return true; // em Sardes, às vezes o vizinho não era gente
       const vai = (o.vai || 3) * 32, f = Math.sin(Tm * 0.35 + o.x), dx = Math.round(f * vai / PX), parado = Math.abs(Math.cos(Tm * 0.35 + o.x)) < 0.25;
       carimbar(g, quadroPessoa({ ...o.look, cls: null }, parado ? 0 : Tm * 2.2, 'm' + o.x), x + dx, y - (parado ? 0 : Math.floor(Tm * 6) % 2), 24, 40, Math.cos(Tm * 0.35 + o.x) >= 0 ? 1 : -1); return true; }
-    case 'ave': { // pombas: pousadas onde há onde pousar (e levantam voo quando o peregrino chega); sem poleiro, voam em roda devagar
-      const tx = Math.floor(o.x / 32), ty = Math.floor(o.y / 32), poleiro = G.N && [1, 2].includes(tileEm(G.N, tx, ty)) || o.y >= 16 * 32;
-      const perto = Math.abs(G.p.x - o.x) < 110 && Math.abs(G.p.y - o.y) < 120; if (poleiro && perto && !o.voo) o.voo = Tm; if (o.voo && Tm - o.voo > 9) o.voo = 0;
-      let bx, by, voando; if (!poleiro) { const a = Tm * 0.7 + o.x * 0.01; bx = x + Math.round(Math.cos(a) * 26); by = y - 20 + Math.round(Math.sin(a * 2) * 5); voando = true; }
-      else { const t = o.voo ? Tm - o.voo : 0; if (t > 4) return true; bx = x + Math.round(t * 46 * (o.x % 2 ? 1 : -1)); by = y - 2 - Math.round(t * 34 + Math.sin(t * 9) * 2); voando = !!o.voo; }
-      const asa = voando ? Math.floor(Tm * (poleiro ? 14 : 6) + o.x) % 2 : 0, f = poleiro ? (o.x % 2 ? 1 : -1) : (Math.sin(Tm * 0.7 + o.x * 0.01) > 0 ? -1 : 1), P = (a, b, w, h, c) => { g.fillStyle = c; g.fillRect(bx + (f > 0 ? a : -a - w + 1), by + b, w, h); };
-      P(-4, -4, 9, 5, '#17121f'); P(3, -6, 4, 4, '#17121f'); P(-6, -3, 3, 2, '#17121f'); // contorno: corpo, cabeça, cauda
-      P(-3, -3, 7, 3, '#E8E4DA'); P(-3, -1, 6, 1, '#C9C3B8'); P(4, -5, 2, 2, '#E8E4DA'); P(-5, -3, 2, 1, '#B8B2A8'); P(6, -4, 1, 1, '#E0A070'); P(5, -5, 1, 1, '#17121f'); P(1, -2, 2, 1, '#9AB0A8'); // o pescoço furta-cor
-      if (voando) { if (asa) { P(-2, -9, 5, 6, '#17121f'); P(-1, -8, 3, 5, '#D8D2C6'); } else { P(-3, -2, 7, 4, '#17121f'); P(-2, -1, 5, 2, '#D8D2C6'); } } else { P(-2, -3, 4, 2, '#CFC9BE'); P(0, 1, 1, 1, '#E0A070'); P(2, 1, 1, 1, '#E0A070'); if (Math.floor(Tm * 1.5 + o.x) % 4 === 0) P(6, -3, 1, 1, '#E0A070'); }
+    case 'ave': { // pombas: sempre pousadas em algo (chão, plataforma, telhado); ciscam e, quando o peregrino chega perto, voam embora e voltam depois
+      if (o.yPouso == null) { const tx = Math.floor(o.x / 32); let ty = Math.floor(o.y / 32); while (ty < (G.N?.h || 20) - 1 && ![1, 2].includes(tileEm(G.N, tx, ty))) ty++; o.yPouso = ty * 32; }
+      const yy = y + Math.round((o.yPouso - o.y) / PX), perto = Math.abs(G.p.x - o.x) < 110 && Math.abs(G.p.y - o.yPouso) < 120; if (perto && !o.voo) o.voo = Tm; if (o.voo && Tm - o.voo > 9 && !perto) o.voo = 0;
+      const t = o.voo ? Tm - o.voo : 0; if (t > 4) return true; // longe: foi embora (volta quando o peregrino se afastar)
+      const sentido = o.x % 2 ? 1 : -1, bx = x + Math.round(t * 70 * sentido), by = yy - 2 - Math.round(t * t * 22 + t * 20), voando = !!o.voo, asa = voando ? Math.floor(Tm * 14 + o.x) % 2 : 0, f = voando ? sentido : (Math.floor(Tm * 0.4 + o.x) % 3 ? 1 : -1) * sentido;
+      const ci = !voando && Math.floor(Tm * 1.7 + o.x * 0.1) % 5 === 0, P = (a, b, w, h, c) => { g.fillStyle = c; g.fillRect(bx + (f > 0 ? a : -a - w + 1), by + b, w, h); };
+      P(-4, -4, 9, 5, '#17121f'); P(3, ci ? -3 : -6, 4, 4, '#17121f'); P(-6, -3, 3, 2, '#17121f'); // contorno: corpo, cabeça (abaixa para ciscar), cauda
+      P(-3, -3, 7, 3, '#E8E4DA'); P(-3, -1, 6, 1, '#C9C3B8'); P(4, ci ? -2 : -5, 2, 2, '#E8E4DA'); P(-5, -3, 2, 1, '#B8B2A8'); P(6, ci ? -1 : -4, 1, 1, '#E0A070'); P(5, ci ? -2 : -5, 1, 1, '#17121f'); P(1, -2, 2, 1, '#9AB0A8');
+      if (voando) { if (asa) { P(-2, -9, 5, 6, '#17121f'); P(-1, -8, 3, 5, '#D8D2C6'); } else { P(-3, -2, 7, 4, '#17121f'); P(-2, -1, 5, 2, '#D8D2C6'); } } else { P(-2, -3, 4, 2, '#CFC9BE'); P(0, 1, 1, 1, '#E0A070'); P(2, 1, 1, 1, '#E0A070'); }
       return true; }
     case 'flor': { if (G.cm.flores?.[o.x] === Math.floor((G.cm.relogio || 0) / 600)) { g.fillStyle = '#3F6A3A'; g.fillRect(x, y - 4, 1, 4); return true; } // colhida hoje: fica o talo
       const b = Math.round(Math.sin(Tm * 1.6 + o.x) * 0.6), cores = ['#E86A8A', '#F2D06A', '#B88AE8', '#F2F0E8'], c = cores[Math.floor(o.x / 32) % 4];
