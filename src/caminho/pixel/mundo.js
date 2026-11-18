@@ -101,17 +101,21 @@ const SKYLINE = { colunas: ['coluna', 'templo', 'coluna', 'arco', 'templo'], arc
 
 function pintarCamada(tm, w, h, rng, nivel) {
   // nivel 0 = longe (quase da cor do céu), 1 = meio, 2 = perto
-  const s = new Sprite(w, h), ceu = mistura(tm.ceu[1], tm.ceu[2], 0.5), base = [mistura(ceu, tm.longe, 0.55), mistura(tm.longe, tm.meio, 0.5), mistura(tm.meio, tm.bloco, 0.55)][nivel];
+  const s = new Sprite(w, h), ceu = mistura(tm.ceu[1], tm.ceu[2], 0.5), base0 = [mistura(ceu, tm.longe, 0.55), mistura(tm.longe, tm.meio, 0.5), mistura(tm.meio, tm.bloco, 0.55)][nivel];
+  // as cores do fundo: quentes, de pedra e adobe na cidade (ou de mato no campo); a distância vem do tom, não de transparência
+  const natureza = ['arvores', 'campo', 'dunas'].includes(tm.skyline || tm.deco), quente = natureza ? ['#7A8A62', '#56704A', '#34492E'][nivel] : ['#B8987A', '#94705A', '#644A3A'][nivel];
+  const base = tm.skyline || ['casas', 'muralha', 'colunas', 'arcos', 'tendas', 'arvores'].includes(tm.deco) ? mistura(base0, quente, [0.5, 0.45, 0.35][nivel]) : base0;
   const c = [cor(mistura(base, '#05060c', 0.3)), cor(base), cor(mistura(base, tm.borda, nivel ? 0.2 : 0.1)), cor(mistura(base, tm.acento, nivel === 1 ? 0.7 : 0.3))];
+  const bv = mistura(base, ['#7A8A62', '#56704A', '#3A5230'][nivel], 0.55), cV = [cor(mistura(bv, '#05060c', 0.3)), cor(bv), cor(mistura(bv, '#E8F0C0', 0.12)), cor(mistura(bv, tm.acento, 0.2))]; // as árvores da cidade são verdes, não de pedra
   const chao = h * [0.66, 0.78, 0.93][nivel], lista = SKYLINE[tm.skyline || tm.deco] || SKYLINE.casas, esc = [0.6, 0.95, 1.25][nivel] * (tm.skyline === 'campo' && nivel === 0 ? 0.8 : 1);
   let x = -10;
   const campo = tm.skyline === 'campo';
-  while (x < w) { const r = rng(), nome = lista[Math.floor(rng() * lista.length)], alt = (26 + rng() * 60) * esc * (campo && nome === 'arvore' ? 0.75 + nivel * 0.1 : 1); PECAS[nome](s, x, chao, alt, c, r);
+  while (x < w) { const r = rng(), nome = lista[Math.floor(rng() * lista.length)], alt = (26 + rng() * 60) * esc * (campo && nome === 'arvore' ? 0.75 + nivel * 0.1 : 1); PECAS[nome](s, x, chao, alt, nome === 'arvore' && !natureza ? cV : c, r);
     x += campo ? (nome === 'duna' ? 90 : nome === 'casa' ? 60 : 46) * esc + rng() * 70 * esc + (rng() < 0.25 ? 60 * esc : 0) /* no campo, com respiro e clareiras */ : (nome === 'templo' ? 70 : nome === 'duna' ? 80 : nome === 'mastro' ? 74 : 26) * esc + rng() * 40 * esc; }
   // terreno da camada, com perfil irregular e um fio de luz no topo
   for (let xx = 0; xx < w; xx++) { const hh = chao - 2 - Math.round(Math.sin(xx * 0.05 + nivel) * 2 + Math.sin(xx * 0.013) * 3); s.ret(xx, hh, 1, h - hh, c[1]); s.px(xx, hh, c[2]); if (nivel === 2 && (xx * 7) % 5 === 0) s.px(xx, hh - 1 - ((xx * 3) % 3), c[1]); }
-  // névoa pontilhada na base (perspectiva atmosférica)
-  if (nivel < 2) { const nv = cor(mistura(base, ceu, 0.6)); for (let y = Math.round(chao - 26); y < h; y++) for (let xx = 0; xx < w; xx++) if (pontilha(xx, y, clamp((y - chao + 26) / 60, 0, 0.5))) s.px(xx, y, nv); }
+  // a margem desenhada: um contorno escuro em volta de cada casa, torre e árvore (nada de névoa pontilhada por cima)
+  s.contorno(cor(mistura(base, '#120c14', [0.45, 0.6, 0.75][nivel])));
   return s.tela();
 }
 

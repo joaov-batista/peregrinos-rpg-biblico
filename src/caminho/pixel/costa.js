@@ -56,8 +56,8 @@ export function pintarCosta(g, G, C, vw, vh, cx, cy, dy, L, pintarCeu) {
   // 3) a terra termina num promontório desenhado: a rocha desce em degraus até o mar, com mato (ou o muro da cidade) por cima,
   //    espuma batendo na base; no ponto mais alto, onde a terra do fundo é cortada, um farol (na cidade) ou um bosque (no campo)
   const F = 170, cidade = (G.tm.skyline || G.tm.deco) === 'casas', pa = Math.round(M.lado > 0 ? M.de : M.ate), lado = M.lado, alto = 64;
-  const rocha = [mix(mix('#141824', '#3A4252', d), corH, 0.18), mix(mix('#1A2030', '#525A6A', d), corH, 0.15), mix(mix('#20283A', '#6A7282', d), corH, 0.12), mix(mix('#0A0C14', '#262A36', d), corH, 0.1)];
-  const verde = [mix(mix('#0C1A14', '#2E5A34', d), corH, 0.2), mix(mix('#102418', '#4A7A40', d), corH, 0.18)], muro = [mix(mix('#141824', '#4A4A58', d), corH, 0.2), mix(mix('#1A1E2A', '#6A6878', d), corH, 0.18)];
+  const rocha = [mix(mix('#1A1418', '#6A5246', d), corH, 0.12), mix(mix('#221A1E', '#8A6E5A', d), corH, 0.1), mix(mix('#2A2024', '#A88A70', d), corH, 0.08), mix(mix('#0E0A0E', '#3A2A26', d), corH, 0.06)]; // pedra quente, do mesmo tom das casas
+  const verde = [mix(mix('#0C1A14', '#2E5A34', d), corH, 0.2), mix(mix('#102418', '#4A7A40', d), corH, 0.18)], muro = [mix(mix('#1A1418', '#7A6052', d), corH, 0.12), mix(mix('#221A1E', '#A08670', d), corH, 0.1)];
   const perfil = u => { const v = Math.max(0, Math.min(1, (u - 0.12) / 0.88)); return Math.round(hz - alto * Math.pow(1 - v, 1.5) + (v > 0.3 ? Math.round(Math.sin(v * 17) * 2) : 0) - (Math.floor(v * 7) % 2 && v < 0.8 ? 2 : 0)); };
   const colDe = i => pa + lado * i - (lado < 0 ? 1 : 0);
   // do lado do mar, além do promontório: céu e mar por inteiro
