@@ -17,6 +17,13 @@ export const PEIXES = {
   sandalia: { nome: 'Sandália velha', w: 10, h: 5, vel: 9, faixa: [0, 2], forca: 0.4, v: [0, 0], cor: ['#6B4A2E', '#8A6A44'], peso: 9, lixo: true },
   moeda: { nome: 'Peixe com uma moeda na boca', w: 15, h: 8, vel: 44, faixa: [1, 2], forca: 1.3, v: [120, 120], cor: ['#7E9A6E', '#FFD23F'], peso: 3, brilho: '#FFD23F' },
   dom: { nome: 'Peixe de luz', w: 16, h: 8, vel: 52, faixa: [2, 2], forca: 1.7, v: [0, 0], cor: ['#6FB8E8', '#E8F8FF'], peso: 1.6, brilho: '#BFF0F8' },
+  // os difíceis e os mini monstros do mar aberto: puxam forte, disparam muito e cada um tem a sua manha
+  atum: { nome: 'Atum de Társis', w: 30, h: 12, vel: 70, faixa: [2, 2], forca: 2.3, v: [160, 220], cor: ['#2E4A7A', '#C9D2E0'], peso: 3 },
+  enguia: { nome: 'Enguia elétrica', w: 34, h: 5, vel: 80, faixa: [1, 2], forca: 2.1, v: [120, 170], cor: ['#3A5A2A', '#E8F27A'], peso: 2.2, monstro: 'choque', forma: 'enguia' },
+  caranguejo: { nome: 'Caranguejo-rei', w: 22, h: 12, vel: 20, faixa: [2, 2], forca: 2.6, v: [180, 260], cor: ['#B8322A', '#FF9A6A'], peso: 1.6, monstro: 'pinca', forma: 'caranguejo' },
+  polvo: { nome: 'Polvo das rochas', w: 20, h: 16, vel: 30, faixa: [2, 2], forca: 2.5, v: [200, 280], cor: ['#7A2E6A', '#E88AAE'], peso: 1.3, monstro: 'tinta', forma: 'polvo' },
+  tubarao: { nome: 'Tubarão jovem', w: 40, h: 14, vel: 90, faixa: [2, 2], forca: 3, v: [320, 420], cor: ['#5A6A7A', '#D8E0E8'], peso: 0.8, monstro: 'mordida', forma: 'tubarao' },
+  serpente: { nome: 'Serpente do mar', w: 48, h: 8, vel: 60, faixa: [2, 2], forca: 3.4, v: [600, 800], cor: ['#1F5A5A', '#7FD0B8'], peso: 0.25, monstro: 'serpente', forma: 'enguia', noite: true },
   lingua: { nome: 'Peixe de fogo', w: 16, h: 8, vel: 60, faixa: [2, 2], forca: 2.1, v: [0, 0], cor: ['#E2463C', '#FFD86A'], peso: 0.3, brilho: '#FF9A3C' }
 };
 const ALBUM = ['sardinha', 'tilapia', 'bagre', 'dourado', 'moeda', 'sandalia'];
@@ -25,6 +32,11 @@ const rand = (a, b) => a + Math.random() * (b - a);
 
 export function desenhaPeixe(g, id, x, y, dir, T, claro) {
   const P = PEIXES[id], w = P.w, hh = P.h; x = Math.round(x); y = Math.round(y);
+  if (P.forma === 'caranguejo') { g.fillStyle = '#17121f'; g.fillRect(x - 12, y - 6, 24, 12); g.fillStyle = claro ? '#FFF' : P.cor[0]; g.fillRect(x - 11, y - 5, 22, 10); g.fillStyle = claro ? '#FFF' : P.cor[1]; g.fillRect(x - 9, y - 5, 18, 3); const k = Math.floor(T * 6) % 2; for (const sg of [-1, 1]) { g.fillStyle = P.cor[0]; g.fillRect(x + sg * 13, y - 9 - k, 5, 5); g.fillRect(x + sg * 16, y - 11 - k, 3, 3); for (let i = 0; i < 3; i++) g.fillRect(x + sg * (5 + i * 3), y + 5, 1, 3); } g.fillStyle = '#05060B'; g.fillRect(x - 3, y - 7, 1, 2); g.fillRect(x + 2, y - 7, 1, 2); return; }
+  if (P.forma === 'polvo') { g.fillStyle = '#17121f'; g.fillRect(x - 8, y - 9, 16, 11); g.fillStyle = claro ? '#FFF' : P.cor[0]; g.fillRect(x - 7, y - 8, 14, 9); g.fillStyle = P.cor[1]; g.fillRect(x - 5, y - 7, 4, 3); for (let i = 0; i < 6; i++) { const ond = Math.round(Math.sin(T * 6 + i) * 2); g.fillStyle = P.cor[0]; g.fillRect(x - 7 + i * 3, y + 1, 2, 5 + ond); } g.fillStyle = '#05060B'; g.fillRect(x - 3, y - 4, 2, 2); g.fillRect(x + 2, y - 4, 2, 2); return; }
+  if (P.forma === 'enguia') { for (let i = 0; i < w; i++) { const yy = y + Math.round(Math.sin(i * 0.35 + T * 8) * 2); g.fillStyle = claro ? '#FFF' : P.cor[0]; g.fillRect(x + dir * (w / 2 - i), yy - (hh >> 1), 1, hh); if (i % 4 === 0) { g.fillStyle = P.cor[1]; g.fillRect(x + dir * (w / 2 - i), yy - (hh >> 1), 1, 1); } } g.fillStyle = '#05060B'; g.fillRect(x + dir * (w / 2 - 3), y - 1, 1, 1); if (P.monstro === 'choque' && Math.floor(T * 10) % 3 === 0) { g.fillStyle = '#FFF27A'; g.fillRect(x - 4, y - 6, 1, 3); g.fillRect(x + 5, y + 3, 1, 3); } return; }
+  if (P.forma === 'tubarao') { for (let i = 0; i < w; i++) { const k = i / (w - 1), alt = Math.max(1, Math.round(Math.sin(Math.PI * Math.min(1, k * 1.15)) * hh)); g.fillStyle = claro ? '#FFF' : P.cor[0]; g.fillRect(x + dir * (w / 2 - i), y - (alt >> 1), 1, alt); g.fillStyle = P.cor[1]; g.fillRect(x + dir * (w / 2 - i), y + (alt >> 2), 1, Math.max(1, alt >> 2)); }
+    g.fillStyle = P.cor[0]; for (let j = 0; j < 6; j++) g.fillRect(x + dir * (4 - j), y - hh / 2 - j, 2, j + 1); for (let j = 0; j < 5; j++) g.fillRect(x - dir * (w / 2 + j), y - 2 - j, 1, 3 + j * 2); g.fillStyle = '#05060B'; g.fillRect(x + dir * (w / 2 - 5), y - 2, 2, 2); g.fillStyle = '#FFFFFF'; for (let j = 0; j < 4; j++) g.fillRect(x + dir * (w / 2 - 3 - j * 2), y + 2, 1, 1); return; }
   if (P.lixo) { g.fillStyle = '#17121f'; g.fillRect(x - 6, y - 3, 12, 6); g.fillStyle = P.cor[0]; g.fillRect(x - 5, y - 2, 10, 4); g.fillStyle = P.cor[1]; g.fillRect(x - 3, y - 4, 2, 3); g.fillRect(x + 1, y - 4, 2, 3); return; }
   const bate = Math.floor(T * 8 + x * 0.1) % 2;
   for (let i = 0; i < w; i++) {
