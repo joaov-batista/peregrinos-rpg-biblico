@@ -16,7 +16,8 @@ import { falarMorador } from './moradores.js';
 import { rotuloLugar, usarLugar } from './lugares.js';
 import { falarZebedeu, rotuloPescaViva, usarPescaViva } from './pescaviva.js';
 import { falarPedro, semChamado, sardesAoEntrar, rotuloSardesNovo, usarSardesNovo, falarSardesNovo } from './sardesnovo.js';
-import { sitioAoEntrar, rotuloSitio, usarSitio } from './sitio.js';
+import { sitioAoEntrar, rotuloSitio, usarSitio, falarConjugeSitio } from './sitio.js';
+import { casaAoEntrar, rotuloCasa, usarCasa } from './lar.js';
 import { lojaDeLidia } from './azeites.js';
 import { falarConvite } from './convites.js';
 import { ehNatal } from './tempo.js';
@@ -38,6 +39,7 @@ function luzDaCidade(G) { if (G.area !== 'sardes' || sar(G).feita) return; G.tm 
 export function aoEntrar(G, id, o = {}) {
   G.noturnas = 0; G.sin = null;
   if (G.def?.sitio) sitioAoEntrar(G);
+  if (G.def?.casaDe) casaAoEntrar(G);
   if (id === 'refugio') {
     const k = o.portal ? andarDe(o.portal) : null; montarAndar(G, k ?? G.andarRolos ?? proximoAndar(G)); // voltando de uma página, o salão já está no andar dela // o mercador de além-mar só aparece de vez em quando, e cada visita traz outras coisas
     G.viajante = Math.random() < 0.4 ? sortearViajante(G) : null;
@@ -112,7 +114,8 @@ async function liberarEspirito(G) {
 /* ---------------- rótulos e uso dos objetos novos ---------------- */
 export function rotuloNovo(G, ob) {
   { const rv = rotuloVida(ob) ?? rotuloMissao(ob) ?? rotuloLugar(ob) ?? rotuloSardesNovo(ob) ?? rotuloPescaViva(G, ob); if (rv) return rv; }
-  if (G.def?.sitio) { const rs = rotuloSitio(G, ob); if (rs !== undefined) return rs; }
+  if (G.def?.sitio || G.def?.casaDe) { const rs = rotuloSitio(G, ob); if (rs !== undefined) return rs; }
+  if (G.def?.casaDe) { const rc = rotuloCasa(G, ob); if (rc !== undefined) return rc; }
   if (ob.escondido > G.T) return null; // o vizinho que "não era gente" sumiu da rua: não há com quem falar
   switch (ob.tipo) {
     case 'vela': return sar(G).velas[ob.id] ? null : 'Reacender (10 de azeite)';
@@ -131,7 +134,8 @@ export async function usarNovo(G, ob) {
   if (await usarLugar(G, ob)) return true;
   if (await usarSardesNovo(G, ob)) return true;
   if (await usarPescaViva(G, ob)) return true;
-  if (G.def?.sitio && await usarSitio(G, ob)) return true;
+  if ((G.def?.sitio || G.def?.casaDe) && await usarSitio(G, ob)) return true;
+  if (G.def?.casaDe && await usarCasa(G, ob)) return true;
   if (await usarMissao(G, ob)) return true;
   if (ob.tipo === 'vela') {
     const s = sar(G); if (s.velas[ob.id]) return true;
@@ -171,6 +175,7 @@ async function barco(G, ob) {
 
 /* ---------------- falas novas ---------------- */
 export async function falarNovo(G, ob) {
+  if (G.def?.casaDe && ob.conjuge) return falarConjugeSitio(G, ob);
   if (G.area === 'refugio' && await falarConvite(G, ob)) return true; // quem te chamou: o convite vem primeiro
   if (ob.id === 'lidia' && G.area === 'refugio' && await lojaDeLidia(G, ob)) return true; // Lídia: a púrpura (a loja de sempre) ou os perfumes
   if (await falarPedro(G, ob)) return true; // Pedro dá a missão de Sardes

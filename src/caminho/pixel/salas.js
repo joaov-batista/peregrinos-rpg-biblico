@@ -100,6 +100,30 @@ const PINTA = {
     for (let i = 0; i < 40; i++) { const x = 20 + (i * 53) % (W - 40); s.ret(x, 60 + (i * 17) % 80, 1, 2 + (i % 4), L[2]); }
     for (const x of [80, 190, 300, 410]) { s.ret(x, 80, 1, 6, A[3]); s.ret(x, 150, 1, 2, A[3]); }
   },
+  // A casa do peregrino por dentro: paredes de adobe rebocado (com as manchas e o reboco caído mostrando o tijolo),
+  // o teto de vigas de madeira com palha por cima, prateleiras com potes e cântaros, réstias de cebola e ervas penduradas,
+  // um tapete de lã no chão de terra batida, a porta de madeira à esquerda. Os móveis e as janelas são objetos, por cima.
+  casa(s) {
+    const A = ['#3A2A22', '#5A4232', '#7A5C44', '#94745A', '#AE8E70', '#C4A688'].map(cor), M = rampa('#6B4A2E'), T = cor('#17121f');
+    s.ret(0, 0, W, H, A[2]);
+    for (let y = 0; y < CHAO; y++) for (let x = 0; x < W; x += 1) { const n = ((x * 7 + y * 13) % 23) / 23, mancha = Math.sin(x * 0.03) * Math.sin(y * 0.05) > 0.55; if (n > 0.86 || mancha && n > 0.5) s.px(x, y, mancha ? A[1] : A[3]); }
+    s.ret(0, 40, W, 3, A[1]); for (let y = 44; y < CHAO; y += 70) s.ret(0, y, W, 1, A[1]); // faixas de umidade
+    for (const [x0, y0, w, h] of [[60, 120, 34, 22], [300, 150, 26, 18], [420, 90, 22, 16]]) { s.ret(x0, y0, w, h, A[1]); for (let y = y0; y < y0 + h; y += 5) for (let x = x0 + ((y - y0) / 5 % 2) * 4; x < x0 + w - 2; x += 8) { s.ret(x, y, 7, 4, cor('#8A4A32')); s.ret(x, y, 7, 1, cor('#A86A4A')); } } // o reboco caído, o tijolo à mostra
+    // o teto: vigas grossas atravessadas e a palha entre elas
+    s.ret(0, 0, W, 30, cor('#5A4426')); for (let x = 0; x < W; x += 3) s.ret(x, 0, 1, 30, (x / 3) % 3 ? cor('#7A6234') : cor('#4A3820'));
+    for (let x = 10; x < W; x += 64) { s.ret(x, 0, 14, 34, T); s.ret(x + 1, 0, 12, 33, M[2]); s.ret(x + 1, 0, 3, 33, M[3]); s.ret(x + 10, 0, 3, 33, M[1]); s.ret(x - 2, 30, 18, 4, M[1]); }
+    s.ret(0, 30, W, 4, T); s.ret(0, 30, W, 3, M[2]); s.ret(0, 30, W, 1, M[4]); // a viga mestra
+    // prateleiras com potes e cântaros, e as réstias penduradas
+    for (const [x0, y0, w] of [[150, 128, 70], [336, 112, 64]]) { s.ret(x0, y0, w, 4, T); s.ret(x0 + 1, y0 + 1, w - 2, 2, M[3]);
+      for (let k = 0; k < Math.floor(w / 16); k++) { const px = x0 + 6 + k * 16, cP = ['#B8683A', '#8A7A5A', '#C9A06A', '#6A7A8A'][k % 4]; s.ret(px - 1, y0 - 14, 12, 14, T); s.ret(px, y0 - 13, 10, 13, cor(cP)); s.ret(px + 2, y0 - 16, 6, 3, T); s.ret(px + 3, y0 - 15, 4, 2, cor(cP)); s.ret(px + 1, y0 - 12, 2, 8, cor('#FFFFFF33')); } }
+    for (const [x, n, c] of [[236, 6, '#C9A060'], [252, 5, '#7A9A4A'], [318, 7, '#B86A5A']]) { s.ret(x, 34, 1, 14, cor('#8A7A5A')); for (let k = 0; k < n; k++) { s.ret(x - 3, 48 + k * 7, 7, 6, T); s.ret(x - 2, 49 + k * 7, 5, 4, cor(c)); } }
+    // a porta de madeira (por onde se sai), com a tranca e a luz que passa por baixo
+    s.ret(28, CHAO - 74, 52, 74, T); s.ret(30, CHAO - 72, 48, 72, M[1]); for (let x = 32; x < 76; x += 8) s.ret(x, CHAO - 72, 1, 72, M[0]); s.ret(30, CHAO - 50, 48, 3, M[3]); s.ret(30, CHAO - 22, 48, 3, M[3]); s.ret(70, CHAO - 40, 4, 6, cor('#C9A060'));
+    s.ret(24, CHAO - 78, 60, 5, M[2]); s.ret(24, CHAO - 78, 60, 1, M[4]);
+    // o chão de terra batida e o tapete de lã
+    s.ret(0, CHAO, W, H - CHAO, cor('#4A3628')); s.ret(0, CHAO, W, 1, cor('#6A5038')); for (let i = 0; i < 60; i++) s.px((i * 97) % W, CHAO + 2 + (i * 7) % (H - CHAO - 3), cor('#5A4432'));
+    s.ret(170, CHAO - 2, 150, 4, T); s.ret(172, CHAO - 2, 146, 3, cor('#8E2E3A')); for (let x = 176; x < 316; x += 10) { s.ret(x, CHAO - 2, 4, 3, cor('#C9A63C')); s.ret(x + 5, CHAO - 1, 3, 1, cor('#2F4A7A')); }
+  },
   // A sinagoga por dentro: salão alto de pedra violeta, arcos sobre pilares grossos, o vitral triplo sobre a arca e
   // vitrais nos vãos dos lados (azul, magenta, ouro, com o chumbo escuro), tochas nos pilares, a lâmpada eterna,
   // o piso de lajes com as manchas de luz dos vitrais. Os feixes de luz e a poeira são pintados por cima, a cada quadro.

@@ -93,7 +93,7 @@ function badalar(G, s, b) {
 
 /* ---------------- conversar ---------------- */
 export async function falarSinagoga(G, ob) {
-  if (ob.tipo === 'casa' && ob.id === 'peregrino') { await suaCasa(G, ob); return true; }
+  if (ob.tipo === 'casa' && ob.id === 'peregrino') { if (G.def?.sitio) { sfx('gate'); G.entrar('casa:' + G.area.slice(6)); return true; } await suaCasa(G, ob); return true; } // no sítio, a porta abre: entra-se em casa
   if (ob.tipo === 'casa' && ob.id === 'marta' && horaDaCeia(G)) { await ceia(G, ob); return true; }
   if (ob.id === 'jairo') return jairo(G, ob);
   if (ob.daSin) { const l = ORACOES[ob.id] || ORACOES.qualquer; await G.ui.dialog({ nome: ob.nome, look: ob.look, texto: (ob.vv?.estado === 'orando' ? '(De joelhos, sem abrir os olhos, ele faz sinal para você ficar.)\n\n' : '') + ' + pick(l) + ', acoes: [{ label: 'Ficar em silêncio' }] }); return true; }

@@ -195,6 +195,7 @@ export class Caminho {
     if (o.ebenezer && (cm.ebenezer?.area === id || o.novo) && eb) pos = { x: eb.x - 40, y: eb.y };
     else if (o.borda) pos = { x: o.borda === 'direita' ? (N.w - 3) * T : (id === 'refugio' ? RX * CW + 3 : 3) * T, y: 16 * T }; /* chegando a pé pela beira do mapa (no Refúgio, pela Praça: a trilha ficou para trás) */
     else if (o.junto) { const ob = this.objs.find(x => x.tipo === o.junto); if (ob) pos = { x: ob.x - 70, y: ob.y }; }
+    else if (o.portal?.startsWith?.('casa:')) { const c = this.objs.find(ob => ob.tipo === 'casa' && ob.id === 'peregrino'); if (c) pos = { x: c.x, y: c.y }; } /* saindo de casa: na porta */
     else if (o.portal) { const pt = this.objs.find(ob => ob.tipo === 'portal' && (ob.semana === o.portal || ob.mundo === o.portal || ob.area === o.portal)); if (pt) pos = { x: pt.x, y: pt.y }; }
     const antigo = this.p;
     this.p = this.eu = novoHeroi(pos.x, pos.y - 1, this.vidaMax());
@@ -1248,7 +1249,7 @@ export class Caminho {
       case 'discipulo': return this.cena ? null : 'Olhar';
       case 'biblia': return 'Ler';
       case 'lagar': return 'Olhar';
-      case 'casa': return 'Bater à porta';
+      case 'casa': return ob.id === 'peregrino' && this.def.sitio ? 'Entrar em casa' : 'Bater à porta';
       case 'ebenezer': return 'Descansar';
       case 'portal': return ob.oculto && !this.achou(ob) ? null : ob.porta ? ob.rotulo : ob.rotulo ? 'Entrar · ' + ob.rotulo : ob.mundo ? 'Abrir o túmulo' : ob.slot != null || ob.semana ? 'Ler a página' : 'Entrar';
       case 'saida': return 'Seguir caminho';

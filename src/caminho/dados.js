@@ -302,7 +302,7 @@ export function areaDef(id) {
       { papel: 'vila', nome: donos.length > 1 ? 'A lavoura de ' + nomeDe(d) : 'A lavoura', dono: d, tiles: sala(), objs: [
         { tipo: 'maquina', qual: 'lagar', col: 3, dono: d }, { tipo: 'espantalho', col: 6 }, ...[9, 11, 13, 15, 17, 19, 21, 23, 25, 27].map((col, idx) => ({ tipo: 'canteiro', col, idx, dono: d })), { tipo: 'ave', col: 14, lin: 12 }] },
       { papel: k === 0 ? 'inicio' : 'vila', nome: donos.length > 1 ? 'A casa de ' + nomeDe(d) : 'A casa', dono: d, tiles: sala(), objs: [
-        planta(3, 'oliveira'), { tipo: 'galinheiro', col: 6.5, dono: d }, { tipo: 'essencias', col: 10, dono: d }, { tipo: 'flor', col: 12.5 }, { tipo: 'cesto', col: 14.5, dono: d }, { tipo: 'maquina', qual: 'forno', col: 17, dono: d }, { tipo: 'poco', col: 19.5 }, { tipo: 'velaCasa', col: 21.2, dono: d },
+        planta(3, 'oliveira'), { tipo: 'galinheiro', col: 6.5, dono: d }, { tipo: 'essencias', col: 10, dono: d }, { tipo: 'flor', col: 12.5 }, { tipo: 'cesto', col: 14.5, dono: d }, { tipo: 'maquina', qual: 'forno', col: 17, dono: d }, { tipo: 'poco', col: 19.5 },
         casa(23, 'peregrino', donos.length > 1 ? 'Casa de ' + nomeDe(d) : 'Sua casa'), { tipo: 'placa', col: 27, txt: k === 0 ? 'Estrada do Refúgio →' : 'Sítio de ' + nomeDe(d) + ' · o de ' + nomeDe(donos[k - 1]) + ' →' }, { tipo: 'ave', col: 20, lin: 13 }] }];
     // a estrada até o Refúgio: o caminho de terra, oliveiras e, no fim, a muralha da cidade com o portão aberto
     const estrada = { papel: 'vila', nome: 'A estrada do Refúgio', tiles: sala(), objs: [planta(5, 'oliveira'), { tipo: 'placa', col: 12, txt: 'Refúgio →' }, planta(17, 'cipreste'), { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'portaoCidade', col: 27.6, lado: -1 }] };
@@ -312,6 +312,11 @@ export function areaDef(id) {
       { tipo: 'bancoPraia', col: 19 }, { tipo: 'concha', col: 15.5 }, { tipo: 'concha', col: 22.5 }, { tipo: 'barquinho', col: 13 }, { tipo: 'placa', col: 28, txt: '← A praia' }] };
     return { id, nome: donos.length > 1 ? 'Os sítios' : 'Seu sítio', sub: donos.length > 1 ? donos.map(nomeDe).join(', ') : 'A casa no campo', tema: 'bosque', seed: 'sitio', paz: true, aberto: true, sitio: true, donos,
       planta: [mar, praia, ...donos.map((d, k) => ({ d, k })).reverse().flatMap(({ d, k }) => fazenda(d, k)), estrada] }; }
+  // a casa do peregrino por dentro: entra-se pela porta da casa do sítio (o id leva o mesmo nome do sítio, para voltar ao certo)
+  if (id.startsWith('casa:')) { const suf = id.slice(5); return { id, nome: 'Sua casa', sub: 'O lar no sítio', tema: 'refugio', seed: id, paz: true, interior: true, casaDe: suf, planta: [
+    { papel: 'inicio', nome: 'Sua casa', deco: 'casa', tiles: sala(), objs: [
+      { tipo: 'portal', col: 3.5, area: 'sitio:' + suf, porta: true, rotulo: 'Sair para o sítio' }, { tipo: 'janelaCasa', col: 8.5, lin: 11 }, { tipo: 'velaCasa', col: 11 },
+      { tipo: 'mesaCasa', col: 14.5 }, { tipo: 'lareira', col: 19.5 }, { tipo: 'janelaCasa', col: 23, lin: 11 }, { tipo: 'cama', col: 25.5 }] }] }; }
   // a sinagoga por dentro: a nave, a arca, a bimá; Jairo conduz as orações e quem veio orar fica de joelhos
   if (id === 'sinagoga:sardes') return { id, nome: 'Sinagoga de Sardes', sub: 'A casa de oração que esperava', tema: 'sardes', seed: id, paz: true, interior: true, planta: [
     { papel: 'inicio', nome: 'A nave', deco: 'sinagoga', tiles: sala(), objs: [{ tipo: 'portal', col: 3, area: 'sardes', porta: true, rotulo: 'Sair da sinagoga' }, { tipo: 'menora', col: 15 }, { tipo: 'npc', col: 19, id: 'natanael', nome: 'Natanael, o último', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#3A3F4C', cape: '#4A4A6A', style: 'turbante', beard: true } }] }] };

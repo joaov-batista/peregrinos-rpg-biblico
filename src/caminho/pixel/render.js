@@ -160,6 +160,34 @@ function pintarObjeto(g, o, G, x, y, Tm) {
       g.fillStyle = '#17121f'; g.fillRect(x + 27, y - 6, 12, 6); g.fillStyle = '#EDE8DC'; g.fillRect(x + 28, y - 5, 10, 4); g.fillStyle = '#3A3030'; g.fillRect(x + 37, y - 6, 3, 3); // a ovelha
       const sy = y - 72, b = Math.sin(Tm * 1.6); g.globalAlpha = 0.25; g.fillStyle = '#FFF2C0'; g.beginPath(); g.arc(x, sy, 8 + b, 0, 6.29); g.fill(); g.globalAlpha = 1; g.fillStyle = '#FFF8E0'; g.fillRect(x - 1, sy - 6, 2, 12); g.fillRect(x - 5, sy - 1, 10, 2); g.fillRect(x - 2, sy - 2, 4, 4); // a estrela
       return true; }
+    case 'janelaCasa': { // a janela de casa: moldura funda no adobe, as grades de madeira e o céu de fora conforme a hora (sol, poente, noite com lua)
+      const L = luzDoDia(G), dS = L.d, ceu1 = dS > 0.05 ? (L.poente > 0.3 ? '#E8905A' : '#7AB4E8') : '#0E1430', ceu2 = dS > 0.05 ? (L.poente > 0.3 ? '#F2C870' : '#C8E4F4') : '#1A2448';
+      g.fillStyle = '#17121f'; g.fillRect(x - 22, y - 30, 44, 40); g.fillStyle = '#3A2A22'; g.fillRect(x - 21, y - 29, 42, 38);
+      for (let k = 0; k < 30; k++) { g.fillStyle = k < 15 ? ceu1 : ceu2; g.fillRect(x - 17, y - 25 + k, 34, 1); }
+      if (dS > 0.05) { g.fillStyle = '#3A6A3A'; g.fillRect(x - 17, y - 2, 34, 7); g.fillStyle = '#5A8A4A'; for (let i = 0; i < 34; i += 5) g.fillRect(x - 17 + i, y - 4 + (i % 3), 4, 3); } // o campo lá fora
+      else { g.fillStyle = '#E8ECF8'; g.fillRect(x + 6, y - 20, 4, 4); g.fillStyle = '#FFFFFF'; for (let i = 0; i < 5; i++) g.fillRect(x - 14 + i * 7, y - 23 + (i * 5) % 11, 1, 1); }
+      g.fillStyle = '#6B4A2E'; g.fillRect(x - 1, y - 25, 2, 30); g.fillRect(x - 17, y - 11, 34, 2); g.fillStyle = '#17121f'; g.fillRect(x - 24, y + 8, 48, 4); g.fillStyle = '#7A5C44'; g.fillRect(x - 23, y + 8, 46, 2); // as grades e o peitoril
+      if (dS > 0.2) { g.globalAlpha = 0.12 * dS; g.fillStyle = L.poente > 0.3 ? '#FFB060' : '#FFF4C8'; g.beginPath(); g.moveTo(x - 17, y + 8); g.lineTo(x + 17, y + 8); g.lineTo(x + 50, y + 150); g.lineTo(x + 6, y + 150); g.fill(); g.globalAlpha = 1; } // a réstia de luz no chão
+      return true; }
+    case 'mesaCasa': { // a mesa baixa, com o pão no pano, o cântaro, a lamparina e duas almofadas
+      g.fillStyle = '#17121f'; g.fillRect(x - 30, y - 18, 60, 5); g.fillRect(x - 26, y - 14, 5, 14); g.fillRect(x + 21, y - 14, 5, 14); g.fillStyle = '#7A5636'; g.fillRect(x - 29, y - 17, 58, 3); g.fillStyle = '#9A7448'; g.fillRect(x - 29, y - 17, 58, 1); g.fillStyle = '#5A3E28'; g.fillRect(x - 25, y - 14, 3, 14); g.fillRect(x + 22, y - 14, 3, 14);
+      g.fillStyle = '#E8DCC8'; g.fillRect(x - 18, y - 21, 16, 4); g.fillStyle = '#C9904A'; g.fillRect(x - 15, y - 24, 10, 4); g.fillStyle = '#17121f'; g.fillRect(x + 4, y - 30, 9, 13); g.fillStyle = '#B8683A'; g.fillRect(x + 5, y - 29, 7, 12); g.fillStyle = '#D88A50'; g.fillRect(x + 6, y - 28, 2, 8);
+      g.fillStyle = '#17121f'; g.fillRect(x + 16, y - 21, 8, 4); g.fillStyle = '#C9A060'; g.fillRect(x + 17, y - 20, 6, 2); { const f = Math.floor(Tm * 9) % 3; g.fillStyle = '#FF9A3C'; g.fillRect(x + 22, y - 24 - f, 2, 3 + f); g.fillStyle = '#FFE08A'; g.fillRect(x + 22, y - 23, 1, 2); }
+      for (const ax of [-42, 34]) { g.fillStyle = '#17121f'; g.fillRect(x + ax, y - 6, 10, 6); g.fillStyle = ax < 0 ? '#8E2E3A' : '#2F4A7A'; g.fillRect(x + ax + 1, y - 5, 8, 4); }
+      return true; }
+    case 'lareira': { // o fogão de pedra com a chaminé, o fogo aceso e a panela de barro; a luz quente dança na parede
+      g.fillStyle = '#17121f'; g.fillRect(x - 26, y - 40, 52, 40); g.fillRect(x - 12, y - 110, 24, 72);
+      for (let r = 0; r < 10; r++) for (let c = 0; c < 6; c++) { const bx = x - 25 + c * 9 + (r % 2 ? 4 : 0); if (bx > x + 22) continue; g.fillStyle = (r + c) % 3 ? '#7A6A5A' : '#8A7A68'; g.fillRect(bx, y - 39 + r * 4, Math.min(8, x + 25 - bx), 3); }
+      for (let r = 0; r < 18; r++) { g.fillStyle = r % 2 ? '#6A5A4A' : '#7A6A5A'; g.fillRect(x - 11, y - 109 + r * 4, 22, 3); }
+      g.fillStyle = '#120C0C'; g.fillRect(x - 16, y - 26, 32, 26); { const f = Math.floor(Tm * 10) % 3; g.fillStyle = '#E2463C'; g.fillRect(x - 12, y - 12 - f, 24, 12 + f); g.fillStyle = '#FF9A3C'; g.fillRect(x - 9, y - 10 - f, 18, 9 + f); g.fillStyle = '#FFE08A'; g.fillRect(x - 5, y - 7, 10, 5); }
+      g.fillStyle = '#3A2A1A'; g.fillRect(x - 14, y - 3, 28, 3); g.fillStyle = '#17121f'; g.fillRect(x - 9, y - 22, 18, 10); g.fillStyle = '#8A4A2A'; g.fillRect(x - 8, y - 21, 16, 8); g.fillStyle = '#A86A3A'; g.fillRect(x - 8, y - 21, 16, 1); // a panela
+      g.globalAlpha = 0.16 + Math.sin(Tm * 7) * 0.03; g.fillStyle = '#FFA050'; g.beginPath(); g.arc(x, y - 16, 70, 0, 6.29); g.fill(); g.globalAlpha = 1;
+      g.fillStyle = '#9AA0AE'; g.globalAlpha = 0.4; for (let i = 0; i < 4; i++) { const t = (Tm * 0.5 + i / 4) % 1; g.fillRect(x - 3 + Math.round(Math.sin(t * 6 + i) * 3), y - 112 - Math.round(t * 20), 3, 2); } g.globalAlpha = 1;
+      return true; }
+    case 'cama': { // a esteira de palha sobre o estrado baixo, o cobertor de lã de ovelha, o travesseiro
+      g.fillStyle = '#17121f'; g.fillRect(x - 34, y - 12, 68, 12); g.fillStyle = '#6B4A2E'; g.fillRect(x - 33, y - 6, 66, 6); g.fillStyle = '#C9A050'; g.fillRect(x - 33, y - 11, 66, 5); for (let i = -32; i < 32; i += 3) { g.fillStyle = '#A88038'; g.fillRect(x + i, y - 11, 1, 5); }
+      g.fillStyle = '#17121f'; g.fillRect(x - 14, y - 16, 46, 7); g.fillStyle = '#EDE8DC'; g.fillRect(x - 13, y - 15, 44, 5); g.fillStyle = '#C9C0B0'; for (let i = -12; i < 30; i += 4) g.fillRect(x + i, y - 12, 2, 2); g.fillStyle = '#8E2E3A'; g.fillRect(x - 13, y - 15, 44, 1); // o cobertor
+      g.fillStyle = '#17121f'; g.fillRect(x - 32, y - 16, 16, 6); g.fillStyle = '#E8DCC8'; g.fillRect(x - 31, y - 15, 14, 4); return true; }
     case 'velaCasa': { // o castiçal de bronze com a vela de casa: a chama dança, o brilho cresce de noite; apagada, só um fio de fumaça
       const acesa = o.alheio ? !!G.sitiosAlheios?.[o.dono]?.vela : (G.cm.velaAte ?? 0) > (G.cm.relogio || 0), resto = o.alheio ? 0.6 : Math.max(0, Math.min(1, ((G.cm.velaAte ?? 0) - (G.cm.relogio || 0)) / 600 / 7)), hv = 4 + Math.round(resto * 9);
       g.fillStyle = '#17121f'; g.fillRect(x - 6, y - 3, 13, 3); g.fillRect(x - 2, y - 24, 5, 22); g.fillRect(x - 5, y - 26, 11, 3); g.fillStyle = '#B8862B'; g.fillRect(x - 5, y - 2, 11, 1); g.fillRect(x - 1, y - 23, 3, 21); g.fillRect(x - 4, y - 25, 9, 1); g.fillStyle = '#E8C060'; g.fillRect(x - 1, y - 23, 1, 21);
@@ -591,6 +619,7 @@ export function renderPixel(G) {
   if (G.def.mundo === 'leviata' && G.N.arena) { // o mar bate no costado: ondas na frente de tudo
     const yy = Y(G.N.arena.chao) + 4; for (let xx = 0; xx < vw; xx++) { const h1 = Math.round(Math.sin((xx + cx) * 0.09 + Tm * 2.2) * 2 + Math.sin((xx + cx) * 0.031 - Tm * 1.3) * 3); g.fillStyle = '#123847'; g.fillRect(xx, yy + h1, 1, vh - yy); g.fillStyle = (xx + Math.floor(Tm * 6)) % 9 < 3 ? '#BFF0F8' : '#3A9AB0'; g.fillRect(xx, yy + h1, 1, 1); if ((xx * 7 + Math.floor(Tm * 3)) % 23 === 0) { g.fillStyle = '#1C5A6E'; g.fillRect(xx, yy + h1 + 5, 4, 1); } }
   }
+  if (G.def?.casaDe) { const y0 = Y(16 * 32) - 240; for (let k = -1; k < 10; k++) { const bx = Math.round((k * 140 - (G.vista.cam.x / PX) * 0.25) % 1400); g.fillStyle = '#17121f'; g.fillRect(bx, y0 - 30, 20, 40); g.fillStyle = '#4A3420'; g.fillRect(bx + 1, y0 - 30, 18, 38); g.fillStyle = '#5A4028'; g.fillRect(bx + 1, y0 - 30, 4, 38); } } // as vigas da frente, mais perto da câmara (a camada da frente)
   if (chefe) pintarPalco(g, G, chefe, X, Y, Tm, true);
   pintarLuzPixel(g, G, vw, vh, cx, cy, luzCv);
   pintarClima(g, G, vw, vh, cx, Tm);

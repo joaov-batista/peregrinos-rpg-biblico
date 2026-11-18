@@ -6,6 +6,7 @@ import { GENTE, ITENS, CASAMENTO, CEIA } from '../content/gente.js';
 import { coracoesDe, somarCoracoes } from './vida.js';
 import { hora, dia, ganhar } from './moradores.js';
 import { noiteN } from './sinagoga.js';
+import { MORADORES } from './dados.js';
 
 export const ANEL_PRECO = 500, LACO_CEIA = 4;
 const pick = a => a[Math.floor(Math.random() * a.length)];
@@ -29,6 +30,37 @@ export async function ceia(G, ob) {
   await G.ui.dialog({ nome: 'À mesa', texto: falas, acoes: [{ label: 'Partir o pão' }], voz: false });
   const p = G.p; p.vida = p.vidaMax; p.oleo = G.oleoMax(); for (const id of irmaos) somarCoracoes(G, id, 1); sfx('heal'); G.salvar();
   await G.ui.dialog({ nome: 'A ceia dos irmãos', texto: CEIA.fecha + '\n\nFôlegos e azeite refeitos. ♥ +1 com ' + irmaos.map(nomes).join(', ') + '.', acoes: [{ label: 'Amém' }], cls: 'fala-narra', voz: false });
+}
+
+/* ---------------- a casa por dentro ---------------- */
+// o cônjuge fica em casa (perto da lareira, ou à mesa na hora da ceia)
+export function casaAoEntrar(G) {
+  const cj = G.cm.conjuge, M = cj && MORADORES.find(m => m.id === cj); G.objs = G.objs.filter(o => !o.daCasa);
+  if (M) { const mesa = G.objs.find(o => o.tipo === 'mesaCasa'), lar = G.objs.find(o => o.tipo === 'lareira'), x = (horaDaCeia(G) ? mesa : lar)?.x + 40 || G.p.x + 100;
+    G.objs.push({ tipo: 'npc', daCasa: true, conjuge: true, id: 'conj_' + cj, nome: M.nome.split(',')[0], look: M.look, x, y: 16 * 32 }); }
+}
+export function rotuloCasa(G, ob) {
+  if (ob.tipo === 'cama') return 'Deitar na esteira';
+  if (ob.tipo === 'mesaCasa') return G.cm.conjuge && horaDaCeia(G) && G.cm.ceiaCasa !== noiteN(G) ? 'Ceiar em casa' : 'A mesa';
+  if (ob.tipo === 'lareira') return 'Esquentar-se à lareira';
+  if (ob.tipo === 'janelaCasa') return null;
+  return undefined;
+}
+export async function usarCasa(G, ob) {
+  const p = G.p, cm = G.cm;
+  if (ob.tipo === 'cama') { const h = hora(G), noite = h >= 19 || h < 5.5;
+    const r = await G.ui.dialog({ nome: 'A esteira', texto: noite ? 'Já é noite. A casa está quieta; lá fora, só os grilos.' : 'Uma esteira de palha, um cobertor de lã de ovelha. Dá para cochilar um pouco.', voz: false, acoes: [...(noite ? [{ label: 'Dormir até de manhã' }] : []), { label: 'Cochilar' }, { label: 'Levantar' }] });
+    if (r === 'Dormir até de manhã') { cm.relogio = (Math.floor((cm.relogio || 0) / 600) + 1) * 600; /* o dia começa às 7 */ G.fade = 1; p.vida = p.vidaMax; p.oleo = G.oleoMax(); sfx('heal');
+      await G.ui.dialog({ nome: 'De manhã', texto: 'Você acorda com o galo e a luz entrando pela janela. "As misericórdias do Senhor… renovam-se cada manhã" (Lm 3:22-23).\n\nFôlegos e lâmpada cheios.', acoes: [{ label: 'Levantar' }], cls: 'fala-narra', voz: false }); }
+    else if (r === 'Cochilar') { p.vida = p.vidaMax; p.oleo = G.oleoMax(); sfx('heal'); G.efeito('cura', p.x, p.y, 1, { gruda: p }); G.textoEm(p.x, p.y - 80, 'Descansou em casa', '#FFE9A8', 12); }
+    G.salvar(); return true; }
+  if (ob.tipo === 'mesaCasa') { const c = cm.conjuge, cj = c && G.objs.find(o => o.conjuge), nomeC = cj?.nome;
+    if (c && horaDaCeia(G) && cm.ceiaCasa !== noiteN(G)) { cm.ceiaCasa = noiteN(G); somarCoracoes(G, c, 1); p.vida = p.vidaMax; p.oleo = G.oleoMax(); sfx('heal'); G.salvar();
+      await G.ui.dialog({ nome: 'Ceia em casa', look: cj?.look, texto: 'Pão, azeite e o que sobrou do dia. ' + nomeC + ' dá graças em voz baixa e conta como foi o dia.\n\n"' + pick(CASAMENTO.bomDia) + '"\n\nFôlegos e azeite refeitos.', acoes: [{ label: 'Amém' }] }); }
+    else await G.ui.dialog({ nome: 'A mesa', texto: 'Uma mesa baixa de madeira, um cântaro, o pão coberto com um pano.' + (c ? '' : ' Um dia, quem sabe, alguém para partir o pão com você.') + (horaDaCeia(G) ? '' : '\n\n(A ceia é à noite.)'), acoes: [{ label: 'Ok' }], voz: false });
+    return true; }
+  if (ob.tipo === 'lareira') { p.vida = Math.min(p.vidaMax, p.vida + 1); sfx('heal'); G.textoEm(p.x, p.y - 80, 'o fogo esquenta as mãos', '#FFC870', 12); return true; }
+  return false;
 }
 
 /* ---------------- a sua casa ---------------- */

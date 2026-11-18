@@ -207,8 +207,8 @@ export function pintarFundoPixel(g, G, C, vw, vh, cx, cy) {
   // a oeste do Refúgio, a trilha do treino: o fundo vira mata aos poucos (as muralhas ficam para trás)
   const mata = G.area === 'refugio' ? Math.max(0, Math.min(1, (RX * 480 + 120 - (cx + vw / 2)) / 260)) : 0;
   // no sítio, chegando à estrada do Refúgio, as muralhas e torres da cidade vão aparecendo no fundo, por trás das árvores
-  const cidade = G.def?.sitio && G.N ? Math.max(0, Math.min(1, ((cx + vw / 2) - (G.N.w * 16 - 700)) / 380)) : 0;
-  for (const [cena, k] of [[C, 1 - mata - cidade * 0.85], [mata > 0 ? cenaPixel(TEMAS.bosque, 'bosque') : null, mata], [cidade > 0 ? cenaPixel(TEMAS.refugio, 'refugio') : null, cidade * 0.85]]) { if (!cena || k <= 0) continue; g.globalAlpha = k;
+  const cidade = G.def?.sitio && G.N ? Math.max(0, Math.min(1, ((cx + vw / 2) - (G.N.w * 16 - 420)) / 160)) : 0; // só na estrada (a última sala): a cidade aparece inteira, sem ficar misturada com a mata
+  for (const [cena, k] of [[C, 1 - mata - cidade], [mata > 0 ? cenaPixel(TEMAS.bosque, 'bosque') : null, mata], [cidade > 0 ? cenaPixel(TEMAS.refugio, 'refugio') : null, cidade]]) { if (!cena || k <= 0) continue; g.globalAlpha = k;
     faixa(g, cena.longe, cx * 0.1, dy + Math.round(-cy * 0.02), vw); faixa(g, cena.meio, cx * 0.24, dy + Math.round(-cy * 0.05) + 4, vw); faixa(g, cena.perto, cx * 0.45, dy + Math.round(-cy * 0.1) + 10, vw); }
   g.globalAlpha = 1;
   if (L && L.d > 0) { g.globalAlpha = L.d * 0.16; g.fillStyle = L.poente > 0.3 ? '#F2A65A' : '#DCEBFF'; g.fillRect(0, dy, vw, C.H); g.globalAlpha = 1; } /* de dia, as silhuetas ao longe clareiam um pouco */
