@@ -153,7 +153,7 @@ function nuvens(tm) { if (nuvemCv) return nuvemCv; const s = new Sprite(520, 70)
 export function pintarFundoPixel(g, G, C, vw, vh, cx, cy) {
   const dy = Math.round((vh - C.H) / 2);
   faixa(g, C.ceu, cx * 0.02, dy, vw);
-  const L = G.area === 'refugio' && G.cm ? luzDoDia(G) : null; /* o Refúgio tem relógio: manhã azul, poente laranja, noite estrelada */
+  const L = (G.area === 'refugio' || G.def?.sitio) && G.cm ? luzDoDia(G) : null; /* o Refúgio tem relógio: manhã azul, poente laranja, noite estrelada */
   if (L && L.d > 0) {
     const gr = g.createLinearGradient(0, dy, 0, dy + C.H * 0.75), mix = (a, b, k) => '#' + [0, 2, 4].map(i => Math.round(parseInt(a.substr(1 + i, 2), 16) * (1 - k) + parseInt(b.substr(1 + i, 2), 16) * k).toString(16).padStart(2, '0')).join('');
     gr.addColorStop(0, mix('#5E9AD6', '#3E4A8A', L.poente)); gr.addColorStop(0.6, mix('#A9CDEB', '#E07A4A', L.poente)); gr.addColorStop(1, mix('#F2E2C0', '#F2B25A', L.poente));

@@ -7,6 +7,7 @@ import { GENTE, ITENS, PAPOS } from '../content/gente.js';
 import { VILA } from '../content/vila.js';
 import { coracoesDe, somarCoracoes } from './vida.js';
 import { acoesDoCoracao } from './lar.js';
+import { passoSitio, falarConjugeSitio, acoesEliabe } from './sitio.js';
 import { agendaDe, lugarNaSinagoga, passoRonda, passoSinagoga, falarSinagoga, falaDaNoite } from './sinagoga.js';
 
 export const DIA = 600; const rand = (a, b) => a + Math.random() * (b - a);
@@ -32,6 +33,7 @@ const marcaCoracoes = n => '♥'.repeat(Math.min(10, n)) + '♡'.repeat(Math.max
 export function passoVida(G, dt) {
   G.cm.relogio = (G.cm.relogio || 0) + dt;
   if (G.area === 'sinagoga') { passoSinagoga(G, dt); return; }
+  if (G.def?.sitio) { passoSitio(G, dt); return; }
   if (G.area !== 'refugio') return;
   passoSinagoga(G, dt);
   const p = G.p, gente = G.objs.filter(o => o.tipo === 'morador');
@@ -81,6 +83,7 @@ export function passoVida(G, dt) {
 
 /* ---------------- conversar, dar presente, pedido ---------------- */
 export async function falarMorador(G, ob) {
+  if (G.def?.sitio) return falarConjugeSitio(G, ob);
   if ((G.area === 'refugio' || G.area === 'sinagoga') && await falarSinagoga(G, ob)) return true;
   const id = ob.id, g = GENTE[id], V = VILA[id]; if (!g || G.area !== 'refugio') return false;
   const a = laco(G, id), d = dia(G), n = G.cm.falas[id] = (G.cm.falas[id] || 0) + 1, nome = (V?.nome || ob.nome) + '  ' + marcaCoracoes(coracoes(G, id));
@@ -92,7 +95,7 @@ export async function falarMorador(G, ob) {
   if (Object.keys(ITENS).some(k => b[k] > 0) && a.deu !== d) acoes.push({ label: 'Dar um presente', fn: () => darPresente(G, ob) });
   if (a.pedido === 0 && coracoes(G, id) >= 2) acoes.push({ label: 'Precisa de alguma coisa?', fn: () => pedir(G, ob) });
   if (a.pedido === 1) acoes.push({ label: (b[P.item] || 0) >= P.n ? 'Trouxe o que você pediu' : 'Sobre o pedido…', fn: () => pedir(G, ob) });
-  acoes.push(...acoesDoCoracao(G, ob));
+  acoes.push(...acoesDoCoracao(G, ob)); acoes.push(...acoesEliabe(G, ob));
   acoes.push({ label: 'Até mais' });
   // quando ele(a) tem um presente para você, o encontro é só isso (o resto fica para a próxima conversa)
   if (presente) { a.presentes.push(presente.nivel); await receber(G, ob, presente); G.salvar(); return true; }

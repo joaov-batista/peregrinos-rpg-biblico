@@ -175,7 +175,7 @@ const REFUGIO = [
   // o bairro: casas de teto plano (dá para andar por cima), a estalagem e o oleiro
   { cx: 3, nome: 'Bairro', papel: 'vila', tiles: sala([13, 3, 6], [13, 10, 13], [10, 15, 17], [13, 19, 22]), objs: [
     casa(4, 'estalagem', 'Estalagem do caminho'), planta(8, 'palmeira'), casa(11, 'marta', 'Casa de Marta e Maria'), planta(16, 'oliveira'), casa(20, 'oleiro', 'Casa do oleiro'), planta(27, 'cipreste'),
-    casa(25, 'peregrino', 'Sua casa'), { tipo: 'vaso', col: 23 }, { tipo: 'npc', col: 18, id: 'zelote2', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#4A3A36', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } },
+    { tipo: 'vaso', col: 24 }, { tipo: 'vaso', col: 25 }, { tipo: 'vaso', col: 23 }, { tipo: 'npc', col: 18, id: 'zelote2', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#4A3A36', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } },
     { ...povo(8, 5, VILA.rute.look), id: 'rute', nome: VILA.rute.nome }, { ...povo(16, 3, VILA.eutico.look), id: 'eutico', nome: VILA.eutico.nome },
     { tipo: 'ave', col: 5, lin: 13 }, { tipo: 'ave', col: 16, lin: 10 }, { tipo: 'ave', col: 21, lin: 13 }] },
   // o pátio das provas; a escada do meio desce à cisterna
@@ -196,7 +196,7 @@ const REFUGIO = [
   // o olival: figos, sombra e a caravana que às vezes traz algo raro
   { cx: 6, nome: 'Olival', papel: 'vila', tiles: sala([12, 8, 11], [9, 13, 16], [12, 18, 21]), objs: [
     { tipo: 'flor', col: 3 }, { tipo: 'flor', col: 12 }, { tipo: 'flor', col: 17 }, { tipo: 'flor', col: 24 }, // canteiros: uma flor por dia em cada um
-    planta(4, 'oliveira'), { tipo: 'amendoeira', col: 11 }, { tipo: 'banco', col: 13, lugar: 'amendoeira' }, { tipo: 'lampiao', col: 14, luz: 90 }, planta(16, 'palmeira'), planta(20, 'oliveira'), planta(25, 'cipreste'), { tipo: 'cenario', col: 23, qual: 'banca' }, { tipo: 'portal', col: 28, area: 'floresta', rotulo: 'Trilha escondida', oculto: true },
+    planta(4, 'oliveira'), { tipo: 'amendoeira', col: 11 }, { tipo: 'banco', col: 13, lugar: 'amendoeira' }, { tipo: 'lampiao', col: 14, luz: 90 }, planta(16, 'palmeira'), planta(20, 'oliveira'), planta(25, 'cipreste'), { tipo: 'cenario', col: 23, qual: 'banca' }, { tipo: 'portal', col: 28, area: 'floresta', rotulo: 'Trilha escondida', oculto: true }, { tipo: 'portal', col: 1, area: 'sitio', rotulo: 'Estrada do sítio' },
     { tipo: 'fruto', col: 4, lin: 14 }, { tipo: 'fruto', col: 10, lin: 11 }, { tipo: 'fruto', col: 15, lin: 8 }, { tipo: 'fruto', col: 20, lin: 11 },
     { tipo: 'npc', col: 23, id: 'mercador', nome: 'Mercador', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#7A5A2E', cape: '#3F2E4F', style: 'turbante', beard: true } },
     { tipo: 'poco', col: 7 }, { tipo: 'npc', col: 17, id: 'zelote3', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5E4A3A', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } }, { ...povo(13, 4, VILA.ana.look), id: 'ana', nome: VILA.ana.nome }, { ...povo(6, 4, ELIABE), id: 'eliabe', nome: 'Eliabe, o pastor' }, { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
@@ -253,6 +253,17 @@ export function semanaDe(id) { return TODAS.find(s => s.id === id); }
 
 // Descrição de uma área para o gerador de níveis. ids: "refugio", "semana-01:3", "mundo:golias"
 export function areaDef(id) {
+  // o sítio: a casa do peregrino no campo (cada jogador tem o seu: o id leva o nome do personagem)
+  if (id === 'sitio' || id.startsWith('sitio:')) return { id, nome: 'Seu sítio', sub: 'A casa no campo', tema: 'bosque', seed: 'sitio', paz: true, aberto: true, sitio: true, planta: [
+    { papel: 'inicio', nome: 'A casa', tiles: sala(), objs: [
+      { tipo: 'portal', col: 2, area: 'refugio', rotulo: 'Estrada do Refúgio' }, casa(6, 'peregrino', 'Sua casa'), { tipo: 'poco', col: 10 }, { tipo: 'maquina', qual: 'forno', col: 13 }, { tipo: 'cesto', col: 16 },
+      { tipo: 'galinheiro', col: 22 }, planta(27, 'oliveira'), { tipo: 'flor', col: 18 }, { tipo: 'ave', col: 9, lin: 13 }] },
+    { papel: 'vila', nome: 'A lavoura', tiles: sala(), objs: [
+      ...[3, 5, 7, 9, 11, 13, 15, 17, 19, 21].map((col, idx) => ({ tipo: 'canteiro', col, idx })), { tipo: 'espantalho', col: 24 }, { tipo: 'maquina', qual: 'lagar', col: 27 }, { tipo: 'ave', col: 14, lin: 12 }] },
+    { papel: 'vila', nome: 'O pasto', tiles: sala(), objs: [
+      { tipo: 'cerca', col: 2, ate: 19 }, { tipo: 'cocho', col: 5 }, { tipo: 'maquina', qual: 'prensa', col: 21 },
+      ...[23, 25, 27].map((col, idx) => ({ tipo: 'pomar', col, idx })), { tipo: 'ave', col: 12, lin: 13 }] }
+  ] };
   // a sinagoga por dentro: a nave, a arca, a bimá; Jairo conduz as orações e quem veio orar fica de joelhos
   if (id === 'sinagoga') return { id, nome: 'Sinagoga do Refúgio', sub: 'Casa de oração', tema: 'refugio', seed: id, paz: true, interior: true, planta: [
     { papel: 'inicio', nome: 'A nave', deco: 'sinagoga', tiles: sala(), objs: [

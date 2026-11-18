@@ -5,6 +5,9 @@ export const ITENS = {
   flor: { nome: 'Flor do campo', plural: 'flores' }, mel: { nome: 'Mel', plural: 'potes de mel' }
 };
 
+// o que vem do sítio também vai na bolsa (e pode ser dado de presente)
+import { ITENS_SITIO } from './sitio.js';
+Object.assign(ITENS, ITENS_SITIO);
 // gostos: ama (+muito), gosta, não gosta; os outros itens são aceitos com um "obrigado" simples
 export const GENTE = {
   rode: {

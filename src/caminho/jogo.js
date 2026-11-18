@@ -42,6 +42,7 @@ import { venceuRaiz } from './missao.js';
 import { passoVida, periodo, ganhar as ganharItem, dia as diaDe } from './moradores.js';
 import { aoOrar, sombraDaNoite, venceuNoturno } from './sinagoga.js';
 import { corcaVenceu } from './corca.js';
+import { sitioId } from './sitio.js';
 
 // Primeiros passos: [toque, controle, teclado]
 // os trechos do Bosque do Treino onde cada passo conta (em blocos, da esquerda): [de, até, barreira]. A barreira não deixa seguir antes.
@@ -1276,7 +1277,9 @@ export class Caminho {
         if (ob.area === 'getsemani') await this.ui.dialog({ nome: ob.rotulo, texto: this.cm.getsemani ? 'O caminho entre as oliveiras, de volta ao jardim onde ele orou.' : 'A lâmpada mostrou um vão entre duas oliveiras velhas, tão velhas que parecem de outro tempo.\n\nDo outro lado, um cheiro de azeite e de terra molhada. E uma voz, muito baixa, orando.', acoes: [{ label: 'Atravessar', fn: () => this.entrar('getsemani') }, { label: 'Agora não' }], voz: false });
         else if (ob.area === 'floresta' && this.area === 'getsemani') await this.ui.dialog({ nome: ob.rotulo, texto: 'O caminho de volta à floresta escura, e ao seu tempo.', acoes: [{ label: 'Voltar', fn: () => this.entrar('floresta', { portal: 'getsemani' }) }, { label: 'Ficar mais um pouco' }], voz: false });
         else if (ob.area === 'floresta') await this.ui.dialog({ nome: ob.rotulo, texto: 'Entre as últimas oliveiras, a luz mostrou uma trilha que ninguém mais vê. Do outro lado, uma floresta escura, e lá no fundo, dizem, um jardim guardado por um querubim e uma porta que respira.\n\nSem a lâmpada erguida, ali não se enxerga o chão.', acoes: [{ label: 'Seguir a trilha', fn: () => this.entrar('floresta') }, { label: 'Agora não' }] });
-        else if (ob.porta) { sfx('gate'); this.entrar(ob.area, { portal: this.area }); } /* portas de casa (a sinagoga): entra e sai sem perguntar */
+        else if (ob.porta) { sfx('gate'); this.entrar(ob.area, { portal: this.area }); }
+        else if (ob.area === 'sitio') { sfx('gate'); this.entrar(sitioId(this), { portal: 'refugio' }); } /* cada um tem o seu sítio */
+        else if (ob.area === 'refugio' && this.def.sitio) { sfx('gate'); this.entrar('refugio', { portal: 'sitio' }); } /* portas de casa (a sinagoga): entra e sai sem perguntar */
         else if (ob.area === 'refugio' && this.area === 'clareira') this.entrar('refugio', { portal: 'clareira' });
         else if (ob.area === 'clareira') await this.ui.dialog({ nome: ob.rotulo, texto: 'Atrás do pátio a aldeia acaba e começa a mata. Uma trilha de terra batida entra entre as oliveiras.\n\nLá dentro há uma clareira: a arena de treino, o desafio das ondas e, no fundo, uma porta de ferro guardada pelos zelotes.', acoes: [{ label: 'Seguir a trilha', fn: () => this.entrar('clareira') }, { label: 'Agora não' }], voz: false });
         else if (ob.area === 'refugio') { const falta = cm.visto.tut != null && cm.visto.tut < PASSOS.length;

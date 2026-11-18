@@ -77,6 +77,7 @@ const DE = {
   chifre_azeite: ['chifre', '#E8C24A'], oleo_viuva: ['vaso', '#C98A4E'], manto_elias: ['manto', '#7A5A3A'], pena_aguia: ['pena', '#E9E6DC'], cabelo_sansao: ['tranca', '#6B4A2E'],
   brasa_altar: ['fogo', '#FF6A2A'], jarro_gideao: ['vaso', '#B8744C'], pedra_angular: ['tijolo', '#C9C4B2'], sal_terra: ['sal', '#E9E6DC'], semente_mostarda: ['semente', '#B8D06A'],
   vaso_alabastro: ['vaso', '#F0E6D8'], lenco_paulo: ['lenco', '#E9E6DC'], porcao_dobrada: ['espiral', '#FFC94A'], aljava_jonatas: ['flecha', '#C9A06A'], mana_deserto: ['odre', '#F0DDA8'],
+  trigo: ['semente', '#E8C24A'], uva: ['perola', '#7A3A9A'], azeitona: ['gota', '#5A6A2A'], leite: ['vaso', '#F0EEE6'], ovo: ['perola', '#F2E6CC'], la: ['tunica', '#EDE8DC'], azeite: ['odre', '#C9B83A'], vinho: ['odre', '#7A1E3A'],
   figo: ['gota', '#8E3B5E'], peixe: ['peixe', '#9FC8D8'], flor: ['flor', '#E86A8A'], mel: ['odre', '#E8B030'], pao: ['pao', '#D9A86A'],
     ancora_esperanca: ['ancora', '#9FB0C0'], vela_paulo: ['barquinho', '#E8E2CF'], estrela_magos: ['estrela', '#FFE08A'], veste_branca: ['tunica', '#F4F1E6'],
   vara_florida: ['flor', '#F2B8D0'], cantico_novo: ['onda', '#E8C24A'], pomba_jordao: ['pomba', '#FFF4CF'],

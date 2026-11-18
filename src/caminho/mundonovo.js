@@ -14,6 +14,7 @@ import { vidaNoRefugio, rotuloVida, usarVida, amizade } from './vida.js';
 import { missaoNoRefugio, rotuloMissao, usarMissao, zeloteDepois, inv } from './missao.js';
 import { falarMorador } from './moradores.js';
 import { rotuloLugar, usarLugar } from './lugares.js';
+import { sitioAoEntrar, rotuloSitio, usarSitio } from './sitio.js';
 
 const rand = (a, b) => a + Math.random() * (b - a);
 export const PRECO_BARCO = 150;
@@ -30,6 +31,7 @@ function luzDaCidade(G) { if (G.area !== 'sardes' || sar(G).feita) return; G.tm 
 /* ---------------- ao entrar numa área ---------------- */
 export function aoEntrar(G, id, o = {}) {
   G.noturnas = 0; G.sin = null;
+  if (G.def?.sitio) sitioAoEntrar(G);
   if (id === 'refugio') {
     const k = o.portal ? andarDe(o.portal) : null; montarAndar(G, k ?? G.andarRolos ?? proximoAndar(G)); // voltando de uma página, o salão já está no andar dela // o mercador de além-mar só aparece de vez em quando, e cada visita traz outras coisas
     G.viajante = Math.random() < 0.4 ? sortearViajante(G) : null;
@@ -97,6 +99,7 @@ async function liberarEspirito(G) {
 /* ---------------- rótulos e uso dos objetos novos ---------------- */
 export function rotuloNovo(G, ob) {
   { const rv = rotuloVida(ob) ?? rotuloMissao(ob) ?? rotuloLugar(ob); if (rv) return rv; }
+  if (G.def?.sitio) { const rs = rotuloSitio(G, ob); if (rs !== undefined) return rs; }
   if (ob.escondido > G.T) return null; // o vizinho que "não era gente" sumiu da rua: não há com quem falar
   switch (ob.tipo) {
     case 'vela': return sar(G).velas[ob.id] ? null : 'Reacender (10 de azeite)';
@@ -111,6 +114,7 @@ export async function usarNovo(G, ob) {
   const p = G.p, cm = G.cm, c = G.char;
   if (await usarVida(G, ob)) return true;
   if (await usarLugar(G, ob)) return true;
+  if (G.def?.sitio && await usarSitio(G, ob)) return true;
   if (await usarMissao(G, ob)) return true;
   if (ob.tipo === 'vela') {
     const s = sar(G); if (s.velas[ob.id]) return true;
