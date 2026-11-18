@@ -23,6 +23,7 @@ import { cultoAgora } from '../sinagoga.js';
 import { hora, periodo, luzDoDia } from '../moradores.js';
 import { pintarLuzSinagoga } from './salas.js';
 import { visualPortal, pintarConstrucao } from './construcoes.js';
+import { pintarLoja } from './lojas.js';
 import { pintarPescaViva } from '../pescaviva.js';
 import { ELEMENTO_DO_CHEFE, zonaElemento, tiroElemento, corDoElemento, elementoAmigo } from './elementos.js';
 
@@ -227,6 +228,7 @@ function pintarObjeto(g, o, G, x, y, Tm) {
       return true; }
     case 'selado': case 'covil': { if (o.tipo === 'covil') { g.fillStyle = '#E4DFCF'; for (const [dx, dy] of [[-30, 0], [-18, -2], [12, 0], [26, -1], [34, 0]]) { g.fillRect(x + dx, y - 3 + dy, 8, 2); g.fillRect(x + dx - 1, y - 4 + dy, 2, 2); } g.fillStyle = '#8A6A44'; g.fillRect(x - 40, y - 2, 80, 2); } return true; }
     case 'cenario': { const q = o.qual, f2 = Math.floor(Tm * 8) % 2;
+      if (pintarLoja(g, q, o, x, y, Tm)) return true; // as lojas e oficinas, desenhadas como construções
       if (q === 'forja') { g.fillStyle = '#17121f'; g.fillRect(x + 14, y - 46, 30, 46); g.fillRect(x + 22, y - 62, 10, 16); g.fillStyle = '#4A4658'; g.fillRect(x + 15, y - 45, 28, 44); g.fillRect(x + 23, y - 61, 8, 15); g.fillStyle = '#17121f'; g.fillRect(x + 20, y - 26, 18, 20); g.fillStyle = f2 ? '#FF8A2A' : '#FFD86A'; g.fillRect(x + 22, y - 22, 14, 14); g.fillStyle = '#C9281F'; g.fillRect(x + 22, y - 12, 14, 5); g.fillStyle = '#17121f'; g.fillRect(x - 30, y - 14, 20, 14); g.fillRect(x - 34, y - 20, 28, 7); g.fillStyle = '#7F8C9C'; g.fillRect(x - 33, y - 19, 26, 5); g.fillRect(x - 28, y - 13, 16, 12); g.fillStyle = '#C3DCEA'; g.fillRect(x - 33, y - 19, 26, 1); if (f2) { g.fillStyle = '#FFE26B'; g.fillRect(x + 28, y - 66 - (Math.floor(Tm * 5) % 5), 1, 1); g.fillRect(x + 25, y - 70, 1, 1); } }
       else if (q === 'arca') { // a mini arca de Noé, com os bichos espiando
         g.fillStyle = '#17121f'; g.fillRect(x + 20, y - 26, 84, 26); g.fillRect(x + 34, y - 50, 56, 26); g.fillRect(x + 30, y - 56, 64, 7); g.fillStyle = '#6B4A2E'; g.fillRect(x + 21, y - 25, 82, 24); g.fillStyle = '#8A6A44'; g.fillRect(x + 35, y - 49, 54, 24); g.fillStyle = '#4A3524'; g.fillRect(x + 31, y - 55, 62, 5); for (let i = 0; i < 9; i++) g.fillRect(x + 24 + i * 9, y - 25, 1, 24); g.fillStyle = '#17121f'; for (const dx of [42, 58, 74]) g.fillRect(x + dx, y - 44, 9, 10); g.fillRect(x + 56, y - 20, 12, 20);
