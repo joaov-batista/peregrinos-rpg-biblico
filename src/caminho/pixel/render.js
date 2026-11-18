@@ -573,7 +573,8 @@ export function renderPixel(G) {
   if (p.arpao && !p.morto) { const hx = X(p.x) - p.face * 4, hy = Y(p.y) - 34; g.fillStyle = '#A0662A'; g.fillRect(hx, hy, 1, 26); g.fillStyle = '#EEF6FB'; g.fillRect(hx - 1, hy - 4, 3, 4); }
   // outros peregrinos (multijogador) e o herói
   for (const o of G.outros) pintarJogador(g, o.corpo, o.look, o.cls, o.arma, Tm, o.hab, X, Y, false, o.armaCor, o.armaRar);
-  if (G.cenaPraia) pintarSentado(g, G, X, Y, Tm); else if (!p.morto) pintarJogador(g, p, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab, X, Y, true, G.arma?.lamina, G.arma?.rar);
+  const aguaN = (p.nada || G.nado) && G.objs.find(o => o.tipo === 'aguaAberta');
+  if (G.cenaPraia) pintarSentado(g, G, X, Y, Tm); else if (!p.morto && aguaN) pintarNadando(g, G, p, aguaN, X, Y, Tm, vw); else if (!p.morto) pintarJogador(g, p, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab, X, Y, true, G.arma?.lamina, G.arma?.rar);
   if (G.pomba) pintarPomba(g, G.pomba, X, Y, Tm);
   else if (G.mortoT > 1.2) { const s = quadroHeroi({ ...p, morto: true, atk: null }, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab); s.dissolve(clamp((1.9 - G.mortoT) / 0.7, 0, 1), 5); carimbar(g, s, X(p.x), Y(p.y), AX, AY, p.face); }
   pintarEfeitos(g, G.fxPx, cx, cy, false);
@@ -618,6 +619,27 @@ function pintarChicote(g, p, X, Y, dir, face, k, alc, cor) {
   }
 }
 
+// nadando: o corpo afunda até os ombros (o resto fica debaixo d'água), a cabeça sobe e desce com a onda, os braços
+// fazem braçadas alternadas por cima da água, a espuma se abre em volta e um rastro em V fica para trás quando ele avança.
+// Mergulhado (Leviatã), some de vez e só sobem bolhas.
+function pintarNadando(g, G, p, A, X, Y, Tm, vw) {
+  const look = G.char.look || {}, sup = Y(A.y) - 3, fora = Math.max(0, A.y - p.y), mergulho = p.mergulho > 0, bob = Math.round(Math.sin(Tm * 3.2) * 1.2), anda = Math.abs(p.vx) > 20;
+  const afunda = mergulho ? 80 : Math.max(0, 30 - fora * 0.9) + bob * 2; // quanto mais alto o pulo, mais o corpo sai da água
+  if (!mergulho) { g.save(); g.beginPath(); g.rect(0, 0, vw + 40, sup + 1); g.clip(); pintarJogador(g, { ...p, y: p.y + afunda, atk: null, capa: null, lampA: 0, vig: 0 }, { ...look, cape: 'none' }, G.char.cls, null, Tm * (anda ? 0.6 : 0.3), G.hab, X, Y, true, G.arma?.lamina, G.arma?.rar); g.restore(); }
+  const x = X(p.x), f = p.face, pele = look.skin || '#C68B59', manga = look.tunic || '#5A6A8A';
+  if (!mergulho && afunda > 8) { // as braçadas: cada braço gira para a frente por cima da água e entra de novo, alternando
+    const ritmo = anda ? 7 : 3.2;
+    for (const k of [0, Math.PI]) { const a = Tm * ritmo + k, s = Math.sin(a), c = Math.cos(a); if (s < -0.25) continue;
+      const ox = x + f * 1, oy = sup - 3, tx = ox + f * Math.round(c * 9 + 3), ty = oy - Math.round(s * 8);
+      for (let i = 0; i <= 8; i++) { const u = i / 8, px = Math.round(ox + (tx - ox) * u), py = Math.round(oy + (ty - oy) * u - Math.sin(u * Math.PI) * 2); g.fillStyle = '#17121f'; g.fillRect(px - 1, py - 1, 3, 3); }
+      for (let i = 0; i <= 8; i++) { const u = i / 8, px = Math.round(ox + (tx - ox) * u), py = Math.round(oy + (ty - oy) * u - Math.sin(u * Math.PI) * 2); g.fillStyle = u < 0.45 ? manga : pele; g.fillRect(px, py, 2, 1); }
+      if (s < 0.15) { g.fillStyle = '#F4FCFF'; g.fillRect(tx - 2, sup - 2, 2, 1); g.fillRect(tx + 1, sup - 3, 1, 1); g.fillRect(tx + 3, sup - 1, 2, 1); } } } // o respingo onde a mão entra
+  // a água em volta do corpo: o anel de espuma que sobe e desce, e o rastro em V
+  for (let i = -9; i <= 9; i++) { const yy = sup + Math.round(Math.sin(i * 0.7 + Tm * 6) * 1); g.fillStyle = Math.abs(i) > 6 ? '#8FD4E0' : '#F4FCFF'; g.globalAlpha = mergulho ? 0.4 : 0.85; g.fillRect(x + i, yy, 1, 1); }
+  if (anda && !mergulho) for (let k = 1; k <= 5; k++) { const bx = x - f * (6 + k * 6), ab = k * 2; g.globalAlpha = 0.6 - k * 0.1; g.fillStyle = '#DFF6FA'; g.fillRect(bx, sup - 1 + (k % 2), 3, 1); g.fillRect(bx - f * 2, sup + ab, 2, 1); g.fillRect(bx - f * 2, sup - 2 - (k > 2 ? 1 : 0), 2, 1); }
+  if (mergulho) for (let i = 0; i < 4; i++) { const t = (Tm * 1.5 + i / 4) % 1; g.globalAlpha = 1 - t; g.fillStyle = '#BFF0F8'; g.fillRect(x - 4 + i * 3, sup + 8 - Math.round(t * 10), 2, 2); }
+  g.globalAlpha = 1;
+}
 function pintarJogador(g, p, look, cls, arma, Tm, hab, X, Y, eu, armaCor, armaRar) {
   if (arma === 'chicote' && p.atk && !p.atk.semCaixa) pintarChicote(g, p, X, Y, p.atk.dir, p.atk.face, Math.min(1, p.atk.t / p.atk.dur), 118, '#C48A4E');
   if (p.acoite) pintarChicote(g, p, X, Y, 'lado', p.acoite.face, Math.min(1, p.acoite.t / p.acoite.dur), p.acoite.alc, '#FFE08A');

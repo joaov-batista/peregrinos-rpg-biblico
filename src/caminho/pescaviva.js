@@ -145,9 +145,6 @@ export function pintarPescaViva(g, G, X, Y, Tm, desenhaBote) {
   const A = agua(G); if (!A) return; const S = G.pesca, p = G.p;
   if (S) for (const s of S.sombras) { g.globalAlpha = 0.35; g.fillStyle = '#05141E'; const x = X(s.x), y = Y(s.y), w = Math.round(s.tam); g.fillRect(x - w, y, w * 2, Math.max(2, Math.round(w / 3))); g.fillRect(x + (s.vx > 0 ? -w - 2 : w), y, 2, 2); g.globalAlpha = 1; }
   if (p.noBote) desenhaBote(g, X(p.x), Y(p.y));
-  if (p.nada && !p.morto && !G.levi) { const x = X(p.x), y = Y(p.y), cobre = p.chao ? 11 : Math.max(0, 11 - Math.round((A.y - p.y) / 2)); // nadando: a água até o peito, e as braçadas
-    if (cobre > 0) { for (let i = -10; i <= 10; i++) { const yy = y - cobre + Math.round(Math.sin(i * 0.5 + Tm * 6) * 1); g.fillStyle = '#1F5A72'; g.fillRect(x + i, yy, 1, cobre + 2); g.fillStyle = (i + Math.floor(Tm * 8)) % 5 ? '#5AB0C0' : '#DFF6FA'; g.fillRect(x + i, yy, 1, 1); }
-      if (p.chao && Math.abs(p.vx) > 20 && Math.floor(Tm * 8) % 2) { g.fillStyle = '#DFF6FA'; g.fillRect(x + (p.face > 0 ? 8 : -10), y - 12, 3, 2); g.fillRect(x + (p.face > 0 ? -10 : 8), y - 13, 2, 1); } } }
   if (!S || !G.naAgua) return;
   const mx = X(p.x + p.face * 6), my = Y(p.y - 24), tx = X(p.x + p.face * 22), ty = Y(p.y - 44);
   g.fillStyle = '#6B4A2E'; for (let k = 0; k <= 10; k++) g.fillRect(Math.round(mx + (tx - mx) * k / 10), Math.round(my + (ty - my) * k / 10), 1, 1); // a vara

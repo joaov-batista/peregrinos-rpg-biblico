@@ -855,7 +855,8 @@ export class Caminho {
     const tipo = this.cm.pet, p = this.eu; if (!tipo) { this.pet = null; return; }
     const q = this.pet = this.pet && this.pet.tipo === tipo ? this.pet : { tipo, x: p.x - 30, y: p.y, t: 0, cd: 2, alvo: null, late: 0 };
     q.t += dt; q.cd -= dt; q.late -= dt;
-    const voa = tipo === 'papagaio', ax = p.x - p.face * (voa ? 26 : 38), ay = voa ? p.y - 62 + Math.sin(q.t * 3) * 6 : p.y;
+    const voa = tipo === 'papagaio', ay = voa ? p.y - 62 + Math.sin(q.t * 3) * 6 : p.y; let ax = p.x - p.face * (voa ? 26 : 38);
+    { const A = !voa && this.objs.find(o => o.tipo === 'aguaAberta' && o.x0 != null); q.espera = false; if (A) { const beira = A.esq ? A.x1 : A.x0, mar = A.esq ? -1 : 1; if ((ax - beira) * mar > -14) { ax = beira - mar * 24; q.espera = true; } } } // o cão e o leão não entram no mar: esperam na beira (o papagaio voa junto)
     if (q.alvo && q.alvo.hp > 0 && q.mordida > 0) { q.mordida -= dt; q.x = damp(q.x, q.alvo.x, 14, dt); q.y = damp(q.y, q.alvo.y, 14, dt); if (q.mordida <= 0) { this.atingirJa(q.alvo, this.danoBase() * (q.forca || 0.7), q.x - 1, { semOleo: true, hits: new Set(), dir: 'lado' }); this.efeito('faisca', q.alvo.x, q.alvo.y - q.alvo.h / 2); q.alvo = null; } }
     else { q.x = damp(q.x, ax, voa ? 5 : 7, dt); q.y = damp(q.y, ay, voa ? 5 : 12, dt); q.face = Math.abs(ax - q.x) > 4 ? Math.sign(ax - q.x) : p.face; q.anda = Math.abs(ax - q.x) > 6; }
     // cada um ataca o seu: o cão só no chão, o papagaio só no ar, o leão no chão e de vez em quando salta atrás de um que voa
