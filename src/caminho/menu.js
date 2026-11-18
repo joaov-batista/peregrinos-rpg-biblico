@@ -23,6 +23,7 @@ import { RARIDADES, rarDe, especiaisDe, ESPECIAIS, precoArma, valorTroca, AVISO_
 import { quadroChefe } from './pixel/chefespx.js';
 import { CHEFES } from './chefes.js';
 import { CAPITULOS, ARCO } from '../content/historia.js';
+import { anelNaForja } from './lar.js';
 import { ESPECIAIS as ESPECIAL_ITEM, temEspecial, alternarEspecial } from './corca.js';
 
 const ABAS = [['inventario', 'Inventário'], ['jornada', 'Diário'], ['bestiario', 'Bestiário'], ['mapa', 'Mapa'], ['biblia', 'Bíblia'], ['juntos', 'Juntos'], ['ajustes', 'Ajustes']];
@@ -406,6 +407,7 @@ export function forja(G) {
       const fio = cm.fio || 0; lista.replaceChildren(h('p', { class: 'muted' }, 'Você tem ' + Math.floor(c.data.gold) + ' denários. Fio atual: ' + (fio ? FORJA[fio - 1].nome : 'comum') + '.'));
       FORJA.forEach((f, i) => lista.append(h('button', { class: 'fase-row cm-rel' + (i < fio ? ' on' : ''), disabled: i !== fio || c.data.gold < f.preco, onclick: () => { c.data.gold -= f.preco; cm.fio = i + 1; sfx('level'); G.salvar(); desenha(); } },
         h('span', { class: 'cm-ico' }, i < fio ? '✓' : String(i + 1)), h('div', {}, h('b', {}, f.nome + (i < fio ? '' : ' — ' + f.preco + ' denários')), h('small', {}, f.desc + (i > fio ? ' (forje o anterior primeiro)' : ''))))));
+      { const an = anelNaForja(G, h, desenha); if (an) lista.append(h('h4', {}, 'Outras encomendas'), an); }
     };
     p.append(h('div', { class: 'p-head' }, h('h3', {}, 'Tubalcaim, o ferreiro'), h('button', { class: 'x', onclick: () => close(), 'aria-label': 'Fechar' }, '✕')),
       h('p', { class: 'fala-balcao' }, G.balcao('ferreiro', 'Bronze e ferro eu conheço desde antes do dilúvio (Gn 4:22). A mão é sua; o fio, eu melhoro. Vale para qualquer arma: espada, funda, cajado, o que você carrega.')), lista);

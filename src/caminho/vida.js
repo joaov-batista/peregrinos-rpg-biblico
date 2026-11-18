@@ -2,6 +2,7 @@
 // as amizades com os moradores e o Livro do Refúgio, que reúne tudo isso e deixa rever as páginas vivas já abertas.
 // Nada daqui é exigido para a campanha nem para as páginas da semana. Fica em cm.vida.
 import { sfx } from '../audio.js';
+import { RX } from './dados.js';
 import { FESTAS, AMIGOS, AMIGO_QUALQUER } from '../content/vida.js';
 import { CAPITULOS } from '../content/historia.js';
 import { T, CW } from './nivel.js';
@@ -15,7 +16,7 @@ const coracoes = n => '♥'.repeat(Math.min(10, n)) + '♡'.repeat(Math.max(0, 1
 // enfeites da festa, a mesa e o Livro, postos no Refúgio a cada entrada
 export function vidaNoRefugio(G) {
   if (G.area !== 'refugio') return;
-  const f = festaDeHoje(), em = (sala, col, o) => G.objs.push({ daVida: true, x: (sala * CW + col) * T + 16, y: 16 * T, ...o });
+  const f = festaDeHoje(), em = (sala, col, o) => G.objs.push({ daVida: true, x: ((sala + RX) * CW + col) * T + 16, y: 16 * T, ...o });
   G.objs = G.objs.filter(o => !o.daVida);
   // a Praça do poço é a chegada: fica só com o essencial. O Livro mora no Mercado e a mesa da festa, no Bairro
   em(1, 11, { tipo: 'livroRefugio', luz: 90 }); em(3, 23, { tipo: 'festa', festa: f.id, luz: 110 });

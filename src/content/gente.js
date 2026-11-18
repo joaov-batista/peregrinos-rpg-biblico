@@ -44,6 +44,50 @@ export const GENTE = {
   }
 };
 
+// os moradores da Rua das casas e do Portão das vinhas: com eles dá para criar laço até o casamento (casavel: 'f' ou 'm')
+Object.assign(GENTE, {
+  miria: { casavel: 'f', ama: 'flor', gosta: ['mel', 'figo'], naoGosta: 'peixe',
+    cumprimenta: ['Olá! Cuidado com o fio, está esticado na rua.', 'Peregrino! Veio ver o tear?', 'Bom te ver.'],
+    reage: { ama: 'Flores… vou tingir um fio com a cor delas. Obrigada.', gosta: 'Que delícia. Obrigada!', naoGosta: 'Peixe no meio da lã? Ai… mas obrigada.', neutro: 'Obrigada!' },
+    pedido: { item: 'flor', n: 3, texto: 'Estou tecendo um manto para a filha de Jairo, que vai casar. Preciso de três flores do campo para tingir a barra.', obrigado: 'Ficou da cor do pôr do sol. Ela chorou quando viu.', ouro: 70 },
+    presentes: [{ nivel: 2, item: 'mel', n: 1, fala: 'Me deram mel pelo manto. Divido com você.' }, { nivel: 4, ouro: 120, fala: 'Vendi um tapete. Fica com uma parte: você me trouxe as flores.' }, { nivel: 5, item: 'flor', n: 3, fala: 'Colhi estas pensando em você.' }] },
+  sela: { casavel: 'f', ama: 'figo', gosta: ['mel', 'flor'], naoGosta: 'peixe',
+    cumprimenta: ['Chegou na hora do pão quente!', 'Ei, peregrino! Tem farinha no meu nariz?', 'Bom dia, bom dia!'],
+    reage: { ama: 'Figos! Vou fazer pão de figo. O primeiro é seu.', gosta: 'Hum, que bom. Obrigada!', naoGosta: 'Peixe… na padaria não. Mas obrigada.', neutro: 'Obrigada, de coração.' },
+    pedido: { item: 'figo', n: 3, texto: 'Quero fazer pão de figo para a ceia dos irmãos. Me traz três figos?', obrigado: 'O pão de figo acabou em um instante. Disseram que nunca comeram igual.', ouro: 60 },
+    presentes: [{ nivel: 2, item: 'pao', n: 3, fala: 'Três pães quentes. Leve para a estrada.' }, { nivel: 4, ouro: 100, fala: 'Vendi bem hoje. Isto é seu.' }, { nivel: 5, item: 'pao', n: 5, fala: 'Fiz uma fornada só para você.' }] },
+  asafe: { casavel: 'm', ama: 'mel', gosta: ['figo', 'pao'], naoGosta: 'flor',
+    cumprimenta: ['Ouça este acorde… bonito, não?', 'Peregrina! Ou peregrino… sente-se, vou tocar.', 'Paz!'],
+    reage: { ama: 'Mel! A voz agradece. "Quão doces são as tuas palavras" (Sl 119:103).', gosta: 'Obrigado, de verdade.', naoGosta: 'Flores fazem eu espirrar no meio do salmo… mas obrigado.', neutro: 'Obrigado!' },
+    pedido: { item: 'mel', n: 1, texto: 'Vou cantar no culto da noite e minha voz está rouca. Um pouco de mel salvaria o salmo.', obrigado: 'Cantei o Salmo 23 inteiro sem falhar. Jairo sorriu.', ouro: 70 },
+    presentes: [{ nivel: 2, item: 'figo', n: 2, fala: 'Me deram figos depois do culto. Leve.' }, { nivel: 4, ouro: 120, fala: 'Uma oferta pelos salmos. Fica com você.' }, { nivel: 5, item: 'mel', n: 2, fala: 'Mel, para a sua voz também.' }] },
+  eliabe: { casavel: 'm', ama: 'pao', gosta: ['peixe', 'figo'], naoGosta: 'mel',
+    cumprimenta: ['As ovelhas conhecem a minha voz. Você também já conhece.', 'Paz, peregrino.', 'Fique à vontade na eira.'],
+    reage: { ama: 'Pão! No pasto, pão é festa. Obrigado.', gosta: 'Isso enche o alforje. Obrigado.', naoGosta: 'Mel atrai abelha para o rebanho… mas obrigado.', neutro: 'Obrigado.' },
+    pedido: { item: 'pao', n: 2, texto: 'Vou passar três noites no pasto com uma ovelha que se perdeu e voltou machucada. Dois pães me sustentam.', obrigado: 'Ela sarou. Deixei as noventa e nove e fui atrás dela. Valeu cada noite.', ouro: 60 },
+    presentes: [{ nivel: 2, item: 'peixe', n: 1, fala: 'Troquei lã por peixe no porto. É seu.' }, { nivel: 4, ouro: 110, fala: 'Vendi a lã da tosquia. Uma parte é sua.' }, { nivel: 5, item: 'figo', n: 4, fala: 'Figos do pé que fica no pasto. Os melhores.' }] }
+});
+
+// namoro, pedido e casamento (o anel é forjado por Tubalcaim)
+export const CASAMENTO = {
+  falta: (nome) => 'Você gosta de ' + nome + ', dá para ver. Mas casamento é laço de dez corações e um anel na mão.',
+  pedido: { miria: 'Eu… sim. Sim! Vou tecer o véu eu mesma.', sela: 'Você está pedindo… com um anel? Ai, a farinha! Sim. Sim!', asafe: 'Eu tinha um salmo pronto para este dia e esqueci tudo. Sim.', eliabe: 'O pastor deixa tudo pela ovelha que ama. Sim, eu deixo.' },
+  festa: ['Na sinagoga, Jairo ergue as mãos: "O Senhor te abençoe e te guarde" (Nm 6:24).', 'A aldeia inteira veio. Sela fez pão, Asafe tocou, Miriã teceu, Eliabe trouxe um cordeiro. Ana chorou de alegria na primeira fila.', '"Por isso deixará o homem o seu pai e a sua mãe, e se unirá à sua mulher, e serão os dois uma só carne" (Gn 2:24).'],
+  bomDia: ['Bom dia, meu amor. Dormiu bem?', 'Separei pão para você levar.', 'Volte cedo. A casa fica grande sem você.', 'Orei por você hoje de manhã.'],
+  presenteDia: 'Guardei isto para você.'
+};
+// a ceia dos irmãos: toda noite, na casa de Marta e Maria, para quem já criou laço (4 corações ou mais)
+export const CEIA = {
+  falta: 'A mesa é grande, mas a ceia é de irmãos. Volte quando tiver laço de verdade com pelo menos dois daqui. (4 corações ou mais)',
+  hora: 'A ceia é depois do culto da noite, entre as nove e as dez e meia.',
+  abre: '"E perseveravam… no partir do pão e nas orações" (At 2:42). Marta põe a mesa; Maria já está sentada, ouvindo.',
+  falas: {
+    rode: 'Hoje bateu alguém na porta de novo e eu abri na hora. Na hora!', bartimeu: 'Me passa o pão? Gosto de sentir o calor dele nas mãos.', rute: 'Noemi mandou dizer que está melhor. Comeu tudo hoje.', eutico: 'Prometo não dormir na mesa. (…) Pelo menos não antes da sobremesa.', ana: 'Vamos dar graças primeiro. Velha não come sem agradecer.',
+    miria: 'Teci a toalha da mesa. Repararam no barrado?', sela: 'O pão é de figo. Comam enquanto está quente!', asafe: 'Depois da ceia eu toco um salmo. Só um. Talvez dois.', eliabe: 'As ovelhas dormiram cedo. Hoje eu fico até o fim.'
+  },
+  fecha: 'Partem o pão, dão graças, cantam um salmo. Quando você sai, a noite parece menos escura.'
+};
+
 // quando dois se encontram na rua: conversas curtas, ditas em balões
 export const PAPOS = [
   ['Viu o céu hoje cedo?', 'Vi. Parecia pintado.'],

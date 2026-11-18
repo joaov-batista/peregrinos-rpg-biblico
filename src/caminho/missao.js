@@ -2,6 +2,7 @@
 // "Tem gente definhando na aldeia." Três sinais para achar, uma dedução para fazer e, no fundo da cisterna,
 // o que estava consumindo as pessoas: a Raiz de Amargura (Hb 12:15). Ficção do Refúgio; os versículos são os do texto.
 import { h } from '../util.js';
+import { RX } from './dados.js';
 import { sfx } from '../audio.js';
 import { RELIQUIAS, ARMAS_ALT } from './dados.js';
 import { DOS_ZELOTES, valorTroca, rarDe, especiaisDe, ESPECIAIS } from './arsenal.js';
@@ -18,7 +19,7 @@ const nPistas = G => Object.keys(inv(G).pistas).length;
 // o que a investigação põe no Refúgio: os sinais, e depois a fenda no fundo da cisterna
 export function missaoNoRefugio(G) {
   if (G.area !== 'refugio') return; const s = inv(G); G.objs = G.objs.filter(o => !o.daMissao);
-  const em = (d, o) => G.objs.push({ daMissao: true, x: (d.sala * CW + d.col) * T + 16, y: (d.cy * CH + 16) * T, ...o });
+  const em = (d, o) => G.objs.push({ daMissao: true, x: ((d.sala + RX) * CW + d.col) * T + 16, y: (d.cy * CH + 16) * T, ...o });
   if (s.est === 1) for (const [id, d] of Object.entries(PISTAS)) if (!s.pistas[id]) em(d, { tipo: 'pista', id, nome: d.nome, luz: 60 });
   if (s.est >= 2) em({ sala: 4, cy: 1, col: 19 }, { tipo: 'portal', area: 'raiz', rotulo: 'A fenda da raiz', luz: 80 });
 }

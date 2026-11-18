@@ -6,6 +6,7 @@ import { sfx } from '../audio.js';
 import { GENTE, ITENS, PAPOS } from '../content/gente.js';
 import { VILA } from '../content/vila.js';
 import { coracoesDe, somarCoracoes } from './vida.js';
+import { acoesDoCoracao } from './lar.js';
 import { agendaDe, lugarNaSinagoga, passoRonda, passoSinagoga, falarSinagoga, falaDaNoite } from './sinagoga.js';
 
 export const DIA = 600; const rand = (a, b) => a + Math.random() * (b - a);
@@ -46,6 +47,10 @@ export function passoVida(G, dt) {
       if (Math.abs(d) > 5) { v.estado = 'indo'; v.face = Math.sign(d); v.x += v.face * Math.min(Math.abs(d), (longe ? 600 : 70) * dt); }
       else if (v.estado !== 'dentro') { v.estado = 'dentro'; } /* entrou na sinagoga: de fora não se vê mais; lá dentro, está de joelhos */
       continue; } }
+    // a ceia dos irmãos: quem tem laço vai à casa de Marta e Maria e espera à porta, conversando
+    if (ag === 'ceia') { const m = G.objs.find(c => c.tipo === 'casa' && c.id === 'marta'); if (m) { const i = gente.filter(q => agendaDe(G, q) === 'ceia').indexOf(o), alvo = m.x + (i % 2 ? 1 : -1) * (40 + Math.floor(i / 2) * 30), d = alvo - v.x;
+      v.papo = null; if (Math.abs(d) > 5) { v.estado = 'indo'; v.face = Math.sign(d); v.x += v.face * Math.min(Math.abs(d), (longe ? 600 : 60) * dt); } else { v.estado = 'ceia'; v.face = Math.sign(m.x - v.x) || 1; if (Math.random() < dt * 0.08) { v.emote = '♪'; v.emoteT = 1.4; } } continue; } }
+    if (v.estado === 'ceia') v.estado = 'parado';
     if (v.estado === 'orando' || v.estado === 'dentro') { v.estado = 'parado'; v.t = rand(0.5, 2); v.emote = '☀'; v.emoteT = 1.5; }
     // longe de casa (voltando do culto): volta direto
     if (v.estado !== 'indo' && Math.abs(v.x - o.x) > raio * 2 + 40 && ag !== 'casa') { v.alvo = o.x + rand(-raio, raio) * 0.5; v.estado = 'indo'; }
@@ -87,6 +92,7 @@ export async function falarMorador(G, ob) {
   if (Object.keys(ITENS).some(k => b[k] > 0) && a.deu !== d) acoes.push({ label: 'Dar um presente', fn: () => darPresente(G, ob) });
   if (a.pedido === 0 && coracoes(G, id) >= 2) acoes.push({ label: 'Precisa de alguma coisa?', fn: () => pedir(G, ob) });
   if (a.pedido === 1) acoes.push({ label: (b[P.item] || 0) >= P.n ? 'Trouxe o que você pediu' : 'Sobre o pedido…', fn: () => pedir(G, ob) });
+  acoes.push(...acoesDoCoracao(G, ob));
   acoes.push({ label: 'Até mais' });
   // quando ele(a) tem um presente para você, o encontro é só isso (o resto fica para a próxima conversa)
   if (presente) { a.presentes.push(presente.nivel); await receber(G, ob, presente); G.salvar(); return true; }

@@ -6,11 +6,13 @@
 // - à tarde, um feirante de passagem no Mercado; de madrugada, orar no Refúgio rende maná (Sl 119:147);
 // - nas páginas, à noite, algumas sombras saem mais fortes (e deixam mais).
 import { sfx } from '../audio.js';
+import { RX } from './dados.js';
 import { CULTOS, VIGILIA, ORACOES, LITURGIA, JAIRO, GUARDAS, NOITE, FEIRA } from '../content/sinagoga.js';
 import { ITENS } from '../content/gente.js';
 import { hora, periodo, ganhar, bolsa } from './moradores.js';
 import { somarCoracoes } from './vida.js';
 import { falarHabacuque } from './corca.js';
+import { ceia, suaCasa, horaDaCeia, vaiACeia } from './lar.js';
 import { T, CW } from './nivel.js';
 import { MORADORES } from './dados.js';
 
@@ -25,6 +27,7 @@ export function cultoAgora(G) { const h = hora(G); for (const c of CULTOS) if (h
 export function agendaDe(G, o) {
   if (o.patrulha) return 'ronda';
   if (cultoAgora(G)) return 'culto';
+  if (horaDaCeia(G) && vaiACeia(G, o.id)) return 'ceia';
   const h = hora(G);
   if (h < 5) return VIGILIA.includes(o.id) ? 'vigilia' : 'casa';
   if (h >= 21 || h < 5.5) return 'casa';
@@ -77,7 +80,7 @@ export function passoSinagoga(G, dt) {
   if (s.dentro) { passoInterior(G, dt); return; }
   // a feira da tarde
   const tarde = h >= 12 && h < 18.4, feirante = G.objs.find(o => o.id === 'feirante');
-  if (tarde && !feirante) G.objs.push({ tipo: 'npc', id: 'feirante', nome: FEIRA.nome, look: FEIRA.look, daFeira: true, x: (1 * CW + 11) * T + 16, y: 16 * T });
+  if (tarde && !feirante) G.objs.push({ tipo: 'npc', id: 'feirante', nome: FEIRA.nome, look: FEIRA.look, daFeira: true, x: ((1 + RX) * CW + 11) * T + 16, y: 16 * T });
   if (!tarde && feirante) G.objs = G.objs.filter(o => o !== feirante);
 }
 function tocar(G, n, aviso) { const S = G.sin; S.sinos = []; for (let i = 0; i < n; i++) S.sinos.push({ t: 0.4 + i * 1.5, i, n, aviso: i === 0 ? aviso : null }); }
@@ -90,6 +93,8 @@ function badalar(G, s, b) {
 
 /* ---------------- conversar ---------------- */
 export async function falarSinagoga(G, ob) {
+  if (ob.tipo === 'casa' && ob.id === 'peregrino') { await suaCasa(G, ob); return true; }
+  if (ob.tipo === 'casa' && ob.id === 'marta' && horaDaCeia(G)) { await ceia(G, ob); return true; }
   if (ob.id === 'jairo') return jairo(G, ob);
   if (ob.daSin) { const l = ORACOES[ob.id] || ORACOES.qualquer; await G.ui.dialog({ nome: ob.nome, look: ob.look, texto: (ob.vv?.estado === 'orando' ? '(De joelhos, sem abrir os olhos, ele faz sinal para você ficar.)\n\n' : '') + ' + pick(l) + ', acoes: [{ label: 'Ficar em silêncio' }] }); return true; }
   if (ob.id === 'habacuque') { await falarHabacuque(G, ob); return true; }

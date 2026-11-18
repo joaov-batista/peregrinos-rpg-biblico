@@ -144,7 +144,20 @@ const terreno = (pls, muros = []) => { const alt = Math.max(1, ...muros.map(m =>
 // os salões de pedra: o Salão dos Rolos (as páginas do Livro), a Casa do Tesouro, a Cripta dos Gigantes e a cisterna.
 // os soldados da ronda: elmo, túnica vermelha, capa escura
 const SOLDADO = tunic => ({ skin: '#A0673E', hair: '#1C120A', tunic, cape: '#3A2A2A', style: 'curto', acessorio: 'elmo', beard: true, body: 'forte' });
+// o Refúgio cresceu para a esquerda: tudo o que já existia anda RX salas para a direita (as referências usam RX)
+export const RX = 2;
+const MIRIA = { skin: '#D9A273', hair: '#3A2314', tunic: '#8E4A6A', cape: '#E3DED2', style: 'trancas' }, SELA = { skin: '#A0673E', hair: '#1C120A', tunic: '#C98A3A', cape: 'none', style: 'veu' };
+const ASAFE = { skin: '#C68B59', hair: '#2B1A10', tunic: '#3F6A8A', cape: '#C9A63C', style: 'cacheado', beard: true }, ELIABE = { skin: '#8A5A3A', hair: '#1C120A', tunic: '#7A6A4A', cape: '#4A3A2A', style: 'curto', beard: true, body: 'forte' };
 const REFUGIO = [
+  // o portão das vinhas: a entrada leste da aldeia, a eira, o lagar e os pastos de Eliabe
+  { cx: -2, nome: 'Portão das vinhas', papel: 'vila', tiles: sala([12, 14, 17]), objs: [
+    planta(3, 'cipreste'), planta(7, 'oliveira'), { tipo: 'lagar', col: 11 }, planta(19, 'palmeira'), casa(23, 'casa_eliabe', 'Casa de Eliabe'), planta(27, 'oliveira'),
+    { ...povo(21, 4, ELIABE), id: 'eliabe', nome: 'Eliabe, o pastor' }, { tipo: 'flor', col: 5 }, { tipo: 'flor', col: 16 }, { tipo: 'ave', col: 8, lin: 13 }, { tipo: 'ave', col: 26, lin: 14 }] },
+  // a rua das casas: a sua casa, a de Miriã, a de Sela e a de Asafe
+  { cx: -1, nome: 'Rua das casas', papel: 'vila', tiles: sala([13, 3, 6], [13, 18, 21]), objs: [
+    casa(5, 'peregrino', 'Sua casa'), planta(9, 'palmeira'), casa(12, 'casa_miria', 'Casa de Miriã'), planta(16, 'oliveira'), casa(20, 'casa_sela', 'Casa de Sela'), casa(25, 'casa_asafe', 'Casa de Asafe'),
+    { ...povo(13, 3, MIRIA), id: 'miria', nome: 'Miriã, a tecelã' }, { ...povo(19, 3, SELA), id: 'sela', nome: 'Sela, a padeira' }, { ...povo(24, 3, ASAFE), id: 'asafe', nome: 'Asafe, o tocador de lira' },
+    { tipo: 'vaso', col: 8 }, { tipo: 'vaso', col: 17 }, { tipo: 'ave', col: 14, lin: 13 }] },
   { cx: 0, nome: 'Praça do poço', papel: 'inicio', tiles: sala([13, 20, 23]), objs: [
     { tipo: 'flor', col: 4 }, { tipo: 'flor', col: 25 },
     planta(12, 'palmeira'), casa(21, 'viuva', 'Casa da viúva de Sarepta'), planta(27, 'oliveira'),
@@ -152,7 +165,7 @@ const REFUGIO = [
     { tipo: 'npc', col: 10, id: 'velho', nome: 'Velho Peregrino', look: velho },
     { tipo: 'npc', col: 17, id: 'pedro', nome: 'Simão, o pescador', look: { skin: '#A0673E', hair: '#3A2314', tunic: '#497A80', cape: 'none', style: 'cacheado', beard: true, body: 'forte' } },
     { tipo: 'npc', col: 26, id: 'jumenta', nome: 'Uma jumenta', bicho: 'jumenta' },
-    { ...povo(19, 3, VILA.rode.look), id: 'rode', nome: VILA.rode.nome }, { ...povo(8, 2, SOLDADO('#8E2B2B')), id: 'guarda1', nome: 'Cornélio, o centurião', patrulha: [5 * 32, (3 * 30 + 25) * 32] }, { tipo: 'ave', col: 9, lin: 16 }, { tipo: 'ave', col: 22, lin: 13 }] },
+    { ...povo(19, 3, VILA.rode.look), id: 'rode', nome: VILA.rode.nome }, { ...povo(8, 2, SOLDADO('#8E2B2B')), id: 'guarda1', nome: 'Cornélio, o centurião', patrulha: [(-2 * 30 + 5) * 32, (3 * 30 + 25) * 32] }, { tipo: 'ave', col: 9, lin: 16 }, { tipo: 'ave', col: 22, lin: 13 }] },
   // a rua do mercado; no meio dela, a escada que desce ao Salão dos Rolos
   { cx: 1, nome: 'Mercado', papel: 'vila', desce: true, tiles: sala([10, 22, 26], [13, 19, 23]), objs: [
     planta(2, 'palmeira'), { tipo: 'cenario', col: 5, qual: 'banca' }, { tipo: 'cenario', col: 8, qual: 'forja' }, { tipo: 'cenario', col: 14, qual: 'descida', rotulo: 'Salão dos Rolos' },
@@ -242,6 +255,7 @@ const SARDES = [
 SARDES.forEach((c, i) => c.objs.forEach(o => { if (o.tipo === 'vela') o.id = 'v' + i + '_' + o.col; }));
 
 // os moradores do Refúgio (para a sinagoga por dentro saber quem é quem)
+for (const c of REFUGIO) { c.cx += RX; for (const o of c.objs) if (o.patrulha) o.patrulha = o.patrulha.map(x => x + RX * 30 * 32); }
 export const MORADORES = REFUGIO.flatMap(c => c.objs.filter(o => o.tipo === 'morador' && !o.patrulha));
 export function semanaDe(id) { return TODAS.find(s => s.id === id); }
 

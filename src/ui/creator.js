@@ -109,12 +109,12 @@ export function mountCreator(root, onCreated, onBack) {
       },h('span',{class:'vocation-emblem'},icon(C.arma,27)),h('span',{class:'vocation-label'},h('b',{},SHORT[key]),h('small',{},ROLES[key])),h('span',{class:'selection-mark'},cls===key?icon('check',13):'')));
       body.append(grid,classDetails());
     }else if(step===1){
-      body.append(h('div',{class:'section-heading'},h('span',{class:'overline'},'02 / A PRESENÇA'),h('h2',{tabindex:-1},'Dê forma ao seu peregrino'),h('p',{},'Cada detalhe conta uma parte da sua história.')));
+      body.append(h('div',{class:'section-heading'},h('span',{class:'overline'},'02 / A PRESENÇA'),h('h2',{tabindex:-1},look.sexo==='f'?'Dê forma à sua peregrina':'Dê forma ao seu peregrino'),h('p',{},'Cada detalhe conta uma parte da sua história.')));
       const tabs=h('div',{class:'appearance-tabs','aria-label':'Grupos de aparência'});
       for(const [key,title] of [['rosto','Rosto e cabelo'],['vestes','Corpo e vestes']])tabs.append(h('button',{type:'button',class:appearance===key?'on':'','aria-pressed':String(appearance===key),onclick:()=>{appearance=key;render();}},title));
       body.append(tabs);
       const options=h('div',{class:'appearance-fields'});
-      if(appearance==='rosto')options.append(field('Tom de pele',swatches('skin')),field('Cor do cabelo',swatches('hair')),field('Cabelo e cobertura',choices('style')),field('Barba',choices('beard')));
+      if(appearance==='rosto')options.append(field('Você é',h('div',{class:'ink-choices'},LOOK_OPTIONS.sexo.map(o=>h('button',{type:'button',class:(look.sexo||'m')===o.id?'on':'','aria-pressed':String((look.sexo||'m')===o.id),onclick:()=>{look.sexo=o.id;if(o.id==='f'){look.beard=false;if(['curto','careca','espetado'].includes(look.style))look.style='longo';}sfx('click');render();}},o.nome)))),field('Tom de pele',swatches('skin')),field('Cor do cabelo',swatches('hair')),field('Cabelo e cobertura',choices('style')),field('Barba',choices('beard')));
       else options.append(field('Constituição',choices('body')),field('Na cabeça',choices('acessorio')),field('Cor da túnica',swatches('tunic')),field('Cor da capa',swatches('cape')));
       body.append(options,h('button',{type:'button',class:'random-look',onclick:()=>{
         customCloth=true;for(const key of ['skin','hair','tunic','cape'])look[key]=pick(LOOK_OPTIONS[key]);
@@ -123,7 +123,7 @@ export function mountCreator(root, onCreated, onBack) {
     }else{
       const C=CLASSES[cls];
       body.append(h('div',{class:'section-heading'},h('span',{class:'overline'},'03 / A JORNADA'),h('h2',{tabindex:-1},'Um nome para sua história'),h('p',{},'Sua jornada começa na Cidade de Refúgio.')),
-        h('label',{class:'name-field',for:'pilgrim-name'},'Nome do peregrino',name),h('p',{id:'name-help',class:'name-help'},'De 3 a 16 letras ou números. Espaços, hífen e sublinhado são aceitos.'),
+        h('label',{class:'name-field',for:'pilgrim-name'},(look.sexo==='f'?'Nome da peregrina':'Nome do peregrino'),name),h('p',{id:'name-help',class:'name-help'},'De 3 a 16 letras ou números. Espaços, hífen e sublinhado são aceitos.'),
         h('div',{class:'journey-summary'},h('span',{class:'overline'},'SEU CHAMADO'),h('h3',{},icon(C.arma,23),C.nome),h('p',{},ROLES[cls]),
           h('div',{class:'starting-stats'},[['heart','Vida',C.base.hp],['spark','Fé',C.base.fe],['shield','Defesa',C.base.def+(ITEMS.escudo_madeira.def||0)]].map(([art,title,v])=>h('div',{},icon(art,17),h('span',{},title),h('b',{},v)))),
           h('div',{class:'starting-gear'},itemIcon(ITEMS[C.armaInicial],C.armaInicial,33),h('span',{},h('small',{},'EQUIPAMENTO INICIAL'),h('b',{},ITEMS[C.armaInicial].nome+' + escudo')))),

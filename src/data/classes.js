@@ -87,9 +87,11 @@ export const LOOK_OPTIONS = {
     { id: 'medio', nome: 'Médio' }, { id: 'magro', nome: 'Magro' }, { id: 'forte', nome: 'Forte' },
     { id: 'robusto', nome: 'Robusto' }, { id: 'baixo', nome: 'Baixo' }, { id: 'alto', nome: 'Alto' }
   ],
-  beard: [{ id: false, nome: 'Sem barba' }, { id: true, nome: 'Com barba' }]
+  beard: [{ id: false, nome: 'Sem barba' }, { id: true, nome: 'Com barba' }],
+  // homem ou mulher: muda o cabelo de partida, tira a barba e define com quem se pode casar no Refúgio
+  sexo: [{ id: 'm', nome: 'Homem' }, { id: 'f', nome: 'Mulher' }]
 };
 
 export function defaultLook() {
-  return { skin: '#C68B59', hair: '#3A2314', tunic: '#526C78', cape: '#394F62', style: 'curto', body: 'medio', beard: false };
+  return { skin: '#C68B59', hair: '#3A2314', tunic: '#526C78', cape: '#394F62', style: 'curto', body: 'medio', beard: false, sexo: 'm' };
 }
