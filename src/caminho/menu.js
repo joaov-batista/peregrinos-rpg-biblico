@@ -22,8 +22,9 @@ import { mapaCamadas, temMapaMundo } from './mapamundo.js';
 import { RARIDADES, rarDe, especiaisDe, ESPECIAIS, precoArma, valorTroca, AVISO_UMA_ARMA } from './arsenal.js';
 import { quadroChefe } from './pixel/chefespx.js';
 import { CHEFES } from './chefes.js';
+import { CAPITULOS, ARCO } from '../content/historia.js';
 
-const ABAS = [['inventario', 'Inventário'], ['jornada', 'Jornada'], ['bestiario', 'Bestiário'], ['mapa', 'Mapa'], ['biblia', 'Bíblia'], ['juntos', 'Juntos'], ['ajustes', 'Ajustes']];
+const ABAS = [['inventario', 'Inventário'], ['jornada', 'Diário'], ['bestiario', 'Bestiário'], ['mapa', 'Mapa'], ['biblia', 'Bíblia'], ['juntos', 'Juntos'], ['ajustes', 'Ajustes']];
 
 export function abrirMenu(G, aba = 'inventario') {
   const cm = G.cm, c = G.char;
@@ -38,17 +39,25 @@ export function abrirMenu(G, aba = 'inventario') {
     const t = (txt, cls = '') => h('p', { class: cls }, txt);
 
     function jornada() {
-      const d = G.def, out = [h('h4', {}, d.nome), t(d.sub || '', 'muted')];
-      if (d.fase) {
-        out.push(t(d.fase.objetivo), t('Rolos lidos: ' + cm.selos[G.area].length + ' de 3' + (d.estacoes ? ' · Decisões de estudo: ' + cm.est[G.area].length + ' de ' + d.estacoes.length : '') + '.'));
-        if (CHEFES[d.chefe]?.dica && (G.mortosAqui || cm.chefes[d.chefe])) out.push(h('div', { class: 'porque' }, h('b', {}, 'Sobre o chefe'), t(CHEFES[d.chefe].dica)));
-      } else if (d.id === 'refugio') out.push(t('Os portais levam às páginas do Livro. Comece por Corinto (Atos 18): cada sombra de lá guarda uma peça da Armadura de Deus.'));
-      out.push(h('h4', {}, c.name + ' · ' + 'nível ' + c.level), t('Fôlegos: ' + G.p.vida + '/' + G.p.vidaMax + ' · Maná: ' + cm.mana + ' (a cada 3, um fôlego) · Pedras lisas: ' + cm.pedras + '/5 · Quedas: ' + cm.mortes));
-      out.push(t('Pontos: ' + Math.floor(c.score) + ' · Perguntas certas: ' + (c.data.stats.quizOk || 0) + ' · Segredos da Escritura achados: ' + cm.ovos.length, 'muted'));
+      /* o Diário: o que fazer agora, em uma frase; depois as duas trilhas (a história do Refúgio e as páginas da semana) */
+      const d = G.def, out = [], hs = cm.hist || { cap: 0, est: 0 }, cap = CAPITULOS[hs.cap];
+      const semP = TODAS.find(s2 => s2.fases.some(f => !cm.feitas[s2.id + ':' + f.n])), passo = cap ? [cm.mapa ? 'Fale com ' + cap.quemNome + ' (tem um ! sobre a cabeça).' : 'Fale com o Velho Peregrino.', 'Entre na página ' + cap.ref + ' e vença a sombra.', 'Volte ao Refúgio e conte a ' + cap.quemNome + '.'][hs.est || 0] : 'Converse com quem tem um ! sobre a cabeça.';
+      const agora = d.fase ? d.fase.objetivo : !cm.mapa ? 'Fale com o Velho Peregrino, no Refúgio.' : semP ? 'Próxima página: ' + semP.titulo + ' (' + semP.estudo + '). A seta dourada leva ao portal.' : passo;
+      out.push(h('div', { class: 'dia-agora' }, h('small', {}, 'AGORA · ' + d.nome), h('p', {}, agora)));
+      if (d.fase) { out.push(t('Rolos lidos: ' + cm.selos[G.area].length + ' de 3' + (d.estacoes ? ' · Decisões: ' + cm.est[G.area].length + ' de ' + d.estacoes.length : '') + '.', 'muted')); if (CHEFES[d.chefe]?.dica && (G.mortosAqui || cm.chefes[d.chefe])) out.push(h('div', { class: 'porque' }, h('b', {}, 'Sobre o chefe'), t(CHEFES[d.chefe].dica))); }
+      const linha = (marca, titulo, sub, cls) => h('div', { class: 'dia-l ' + cls }, h('span', { class: 'dia-m' }, marca), h('div', {}, h('b', {}, titulo), sub ? h('small', {}, sub) : ''));
+      out.push(h('h4', {}, ARCO.titulo + ' · ' + Math.min(hs.cap, CAPITULOS.length) + ' de ' + CAPITULOS.length));
+      out.push(h('div', { class: 'dia-trilha' }, ...CAPITULOS.map((c2, i) => i < hs.cap ? linha('✓', c2.n + '. ' + c2.titulo, c2.mudanca, 'feito')
+        : i === hs.cap ? linha('▶', c2.n + '. ' + c2.titulo, [cm.mapa ? 'Fale com ' + c2.quemNome + ', no Refúgio.' : 'Primeiro, fale com o Velho Peregrino.', 'A página está aberta: entre nela (' + c2.ref + ').', 'A sombra caiu. Volte e conte a ' + c2.quemNome + '.'][hs.est || 0], 'atual')
+        : linha('·', c2.n + '. ???', '', 'falta'))));
+      out.push(h('h4', {}, 'Páginas da semana · Armadura ' + Object.keys(cm.hab).length + ' de 6'));
+      out.push(h('div', { class: 'dia-trilha' }, ...TODAS.map(s2 => { const n = s2.fases.filter(f => cm.feitas[s2.id + ':' + f.n]).length; return linha(n >= s2.fases.length ? '✓' : n ? '▶' : '·', s2.titulo, s2.estudo + ' · ' + n + ' de ' + s2.fases.length + ' páginas', n >= s2.fases.length ? 'feito' : n ? 'atual' : 'falta'); })));
+      out.push(t(c.name + ' · nível ' + c.level + ' · fôlegos ' + G.p.vida + '/' + G.p.vidaMax + ' · maná ' + cm.mana + ' · pedras ' + cm.pedras + '/5 · segredos ' + cm.ovos.length, 'muted'));
       out.push(h('div', { class: 'btn-row' }, h('button', { class: 'btn gold', onclick: () => close() }, 'Continuar'),
         G.area !== 'refugio' ? h('button', { class: 'btn', onclick: () => { close(); G.entrar('refugio'); } }, 'Voltar ao Refúgio') : ''));
       return out;
     }
+
     // caminhar juntos: abrir uma sala e passar o código, ou entrar na sala de alguém
     function juntos() {
       const mp = G.mp, local = new URLSearchParams(location.search).has('redelocal');
