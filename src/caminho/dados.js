@@ -198,13 +198,13 @@ const REFUGIO = [
   // o olival: figos, sombra e a caravana que às vezes traz algo raro
   { cx: 6, nome: 'Olival', papel: 'vila', tiles: sala([12, 8, 11], [9, 13, 16], [12, 18, 21]), objs: [
     { tipo: 'flor', col: 3 }, { tipo: 'flor', col: 12 }, { tipo: 'flor', col: 17 }, { tipo: 'flor', col: 24 }, // canteiros: uma flor por dia em cada um
-    planta(4, 'oliveira'), { tipo: 'amendoeira', col: 11 }, { tipo: 'banco', col: 13, lugar: 'amendoeira' }, { tipo: 'lampiao', col: 14, luz: 90 }, planta(16, 'palmeira'), planta(20, 'oliveira'), planta(25, 'cipreste'), { tipo: 'cenario', col: 23, qual: 'banca' }, { tipo: 'portal', col: 28, area: 'floresta', rotulo: 'Trilha escondida', oculto: true }, { tipo: 'portal', col: 1, area: 'sitio', rotulo: 'Estrada do sítio' },
+    planta(4, 'oliveira'), planta(10, 'oliveira'), { tipo: 'banco', col: 12, lugar: 'amendoeira' }, { tipo: 'lampiao', col: 14, luz: 90 }, planta(16, 'palmeira'), planta(20, 'oliveira'), planta(25, 'cipreste'), { tipo: 'cenario', col: 23, qual: 'banca' }, { tipo: 'portal', col: 28, area: 'floresta', rotulo: 'Trilha escondida', oculto: true }, { tipo: 'portal', col: 1, area: 'sitio', rotulo: 'Estrada do sítio' },
     { tipo: 'fruto', col: 4, lin: 14 }, { tipo: 'fruto', col: 10, lin: 11 }, { tipo: 'fruto', col: 15, lin: 8 }, { tipo: 'fruto', col: 20, lin: 11 },
     { tipo: 'npc', col: 23, id: 'mercador', nome: 'Mercador', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#7A5A2E', cape: '#3F2E4F', style: 'turbante', beard: true } },
     { tipo: 'poco', col: 7 }, { tipo: 'npc', col: 17, id: 'zelote3', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5E4A3A', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } }, { ...povo(13, 4, VILA.ana.look), id: 'ana', nome: VILA.ana.nome }, { ...povo(6, 4, ELIABE), id: 'eliabe', nome: 'Eliabe, o pastor' }, { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
   // o porto: o píer sobre o mar, o barqueiro que leva a Sardes, o pescador e, às vezes, um mercador de além-mar
   { cx: 7, nome: 'Porto do Refúgio', papel: 'vila', tiles: sala([12, 3, 6]), objs: [
-    { tipo: 'amendoeira', col: 2, verde: true }, { tipo: 'banco', col: 3, lugar: 'mirante' }, { tipo: 'cenario', col: 5, qual: 'redes' }, { tipo: 'mar', col: 11 },
+    planta(2, 'palmeira'), { tipo: 'banco', col: 3, lugar: 'mirante' }, { tipo: 'cenario', col: 5, qual: 'redes' }, { tipo: 'mar', col: 11 },
     { tipo: 'npc', col: 8, id: 'zebedeu', nome: 'Zebedeu, o pescador', look: { skin: '#A0673E', hair: '#D9D2C5', tunic: '#3F5A6A', cape: 'none', style: 'curto', beard: true, body: 'forte' } },
     { tipo: 'npc', col: 15, id: 'viajante', nome: 'Mercador de além-mar', look: { skin: '#6B4A2E', hair: '#1C120A', tunic: '#2E5E6A', cape: '#C9A63C', style: 'turbante', beard: true }, vezOutra: true },
     { tipo: 'npc', col: 22, id: 'barqueiro', nome: 'Jonatã, o barqueiro', look: { skin: '#8A5A3A', hair: '#2B1A10', tunic: '#5A4636', cape: '#3A3456', style: 'cacheado', beard: true } },
