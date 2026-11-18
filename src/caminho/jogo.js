@@ -409,7 +409,7 @@ export class Caminho {
     else { e.stun = Math.max(e.stun, 0.2); e.estado = 'idle'; e.tele = 0; if (m.vx != null) { e.vx = m.vx; e.vy = m.vy; e.chao = false; } }
   }
   chefeMorre(e) { e.hp = 0; e.morrendo = 1.7; e.mov = null; e.raios = null; e.clones = []; this.limparPerigos(); this.puxao = null; this.hitstop = 0.3; this.tremor(16); sfx('boss'); for (const v of this.inimigos) if (v.kind === 'vicio') v.hp = 0, v.sumiu = false; }
-  chefeSeFortalece(b, nome) { b.hp = Math.min(b.max, b.hp + b.max * 0.08); this.textoEm(b.x, b.y - b.h - 20, (nome || 'Um peregrino') + ' caiu: a sombra se fortalece', '#FF8A7A', 13); }
+  chefeSeFortalece(b, nome) { if (this.mp && this.mp.naArea().every(o => o.h.morto) && this.p.morto) return; /* a dupla inteira caiu: a luta recomeça, sem cura extra */ b.hp = Math.min(b.max, b.hp + b.max * 0.03); this.textoEm(b.x, b.y - b.h - 20, (nome || 'Um peregrino') + ' caiu: a sombra se fortalece', '#FF8A7A', 13); }
   zonaDefendida(z) { if (z.expoe && z.dono) { z.dono.exposto = 2.3; this.textoEm(z.dono.x, z.dono.y - z.dono.h - 22, 'A TESTA ESTÁ EXPOSTA!', '#FFE9A8', 17); } z.dur = 0; }
   // a luta começou ou se desfez no aparelho do dono da área
   lutaRemota(on) {
@@ -1026,7 +1026,7 @@ export class Caminho {
     else { this.congela = true; await this.cinema(CINEMA_CHEFE[d.chefe] || 'chefe-' + d.chefe); this.congela = false; } // todos assistem à entrada do chefe; ele espera
     const b = novoChefe(d.chefe, A, this.dif);
     if (juntos) { b.max = b.hp = Math.round(b.hp * (1 + 0.6 * this.mp.naArea().length)); b.art.max = b.max; } // mais peregrinos, mais fôlego na sombra
-    const sv = this.chefeSalvo; if (sv && sv.area === this.area && sv.id === b.id) { b.hp = Math.round(b.max * Math.min(1, sv.frac + 0.1)); this.chefeSalvo = null; setTimeout(() => this.ui.toast('A sombra ainda está ferida. Vocês continuam de onde pararam.', 4000), 1200); }
+    const sv = this.chefeSalvo; if (sv && sv.area === this.area && sv.id === b.id) { b.hp = Math.round(b.max * Math.min(1, sv.frac + 0.05)); this.chefeSalvo = null; setTimeout(() => this.ui.toast('A sombra ainda está ferida. Vocês continuam de onde pararam.', 4000), 1200); }
     this.inimigos.push(b); this.chefe = b; if (d.mundo && this.mp?.acompanhado()) music('raid'); else music('chefe', d.chefe); /* os gigantes enfrentados em grupo são as raids */ sfx('boss');
     this.ui.banner(b.d.titulo || 'Chefe', b.d.nome, b.d.ref);
     if (b.d.intro) this.fala(b, b.d.intro.replace(/\*/g, ''));
@@ -1045,7 +1045,7 @@ export class Caminho {
       const dano = b.max * (this.tem('anel_beltessazar') ? 0.03 : 0); b.hp = Math.max(1, b.hp - dano); b.post = 0; b.quebrado = 1; // a resposta certa só abre uma brecha curta: o chefe se vence no golpe
       this.textoEm(b.x, b.y - b.h - 20, 'ESTÁ ESCRITO!', '#FFE9A8', 22); this.efeito('pilar', b.x, this.N.arena.chao); this.clarao = 0.25; this.fx.anel(b.x, b.y - b.h / 2, '#FFE9A8', 160); this.tremor(12); sfx('right');
     } else {
-      b.hp = Math.min(b.max, b.hp + b.max * 0.12); b.furia = 14; sfx('wrong');
+      b.hp = Math.min(b.max, b.hp + b.max * 0.06); b.furia = 14; sfx('wrong'); /* o erro fortalece, mas não desfaz a luta */
       this.textoEm(b.x, b.y - b.h - 20, 'O engano o fortalece', '#FF8A7A', 16);
     }
   }
