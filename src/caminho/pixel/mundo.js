@@ -57,9 +57,7 @@ function pintarCeu(tm, w, h, rng) {
   const ax = w * 0.7, ay = h * 0.24, luz = rampa(mistura(tm.acento, '#ffffff', 0.55));
   for (let y = -30; y <= 30; y++) for (let x = -30; x <= 30; x++) { const d = Math.hypot(x, y); if (d < 11) s.px(ax + x, ay + y, d < 9 && x + y < 4 ? luz[4] : luz[3]); else if (d < 22 && pontilha(ax + x | 0, ay + y | 0, (1 - d / 22) * 0.4)) s.px(ax + x, ay + y, cor(mistura(tm.ceu[1], tm.acento, 0.35))); }
   for (let i = 0; i < 70; i++) { const x = rng() * w, y = rng() * h * 0.55; s.px(x, y, rng() < 0.2 ? luz[4] : luz[2]); }
-  // nuvens em faixas
-  const nuv = cor(mistura(tm.ceu[1], tm.ceu[2], 0.55)), nuv2 = cor(mistura(tm.ceu[1], '#ffffff', 0.12));
-  for (let k = 0; k < 7; k++) { const cx = rng() * w, cy = h * (0.18 + rng() * 0.45), lg = 30 + rng() * 60; for (let j = 0; j < 4; j++) { const l2 = lg * (1 - j * 0.22), yy = cy - j * 2; for (let x = -l2; x < l2; x++) { const xx = ((cx + x) % w + w) % w; if (Math.abs(x) < l2 - 3 * Math.abs(Math.sin(x * 0.4 + k))) s.px(xx, yy, j === 3 ? nuv2 : nuv); } } }
+  // (as nuvens agora são as de faixaDeNuvens, que andam; aqui o céu fica limpo: nada de risco parado que pareça pássaro)
   return s.tela();
 }
 
@@ -232,9 +230,15 @@ export function pintarCeuVivo(g, G, C, vw, dy, cx, cy) {
     const { chave, cores } = corNuvens(G, L), chuva = Math.min(0.6, (G.chuvaK || 0) * 0.6);
     g.globalAlpha = 0.92; faixa(g, faixaDeNuvens(cores, false, chave), cx * 0.03 + G.T * 1.5, dy + 6 + Math.round(-cy * 0.02), vw);
     g.globalAlpha = 1; faixa(g, faixaDeNuvens(cores, true, chave), cx * 0.07 + G.T * 3.2, dy + 30 + Math.round(-cy * 0.03), vw); g.globalAlpha = 1;
-    // bandos de pássaros cruzando o céu, longe, em V (de dia e no poente; à noite, só um ou outro morcego... não: só de dia)
-    if (!L || L.d > 0.25) for (let b = 0; b < 2; b++) { const P = 38 + b * 17, u = ((G.T + b * 21) % P) / P, n = 5 + b * 2, x0 = Math.round(vw + 30 - u * (vw + 120)), y0 = Math.round(dy + 46 + b * 34 + Math.sin(G.T * 0.3 + b) * 6), cB = L && L.poente > 0.4 ? '#3A2A34' : '#3A4458';
-      g.globalAlpha = 0.75; g.fillStyle = cB; for (let i = 0; i < n; i++) { const fila = Math.ceil(i / 2), lado = i % 2 ? 1 : -1, bx = x0 + fila * 7, by = y0 + (i ? lado * fila * 4 : 0), bate = Math.sin(G.T * 7 + i * 1.3) > 0; g.fillRect(bx - 2, by + (bate ? -1 : 0), 2, 1); g.fillRect(bx, by, 1, 1); g.fillRect(bx + 1, by + (bate ? -1 : 0), 2, 1); } g.globalAlpha = 1; }
+    // bandos de pássaros voando de verdade: atravessam o céu (uns para cada lado), em V, batendo as asas e planando, cada um no seu ritmo
+    if (!L || L.d > 0.2) { const cB = L && L.poente > 0.4 ? '#2E2230' : '#2E3648';
+      for (let b = 0; b < 3; b++) { const P = 14 + b * 6, u = ((G.T + b * 9.3) % P) / P, dir = b % 2 ? -1 : 1, n = [5, 3, 7][b], esc = b === 1 ? 2 : 1, faixaY = dy + 36 + b * 30;
+        const xa = dir > 0 ? -60 + u * (vw + 140) : vw + 60 - u * (vw + 140), ya = faixaY + Math.sin(u * 6.28 + b) * 10;
+        g.fillStyle = cB;
+        for (let i = 0; i < n; i++) { const fila = Math.ceil(i / 2), lado = i % 2 ? 1 : -1, bx = Math.round(xa - dir * fila * 9 * esc), by = Math.round(ya + (i ? lado * fila * 5 * esc : 0) + Math.sin(G.T * 2 + i) * 1.5);
+          const fase = (G.T * (6 + (i % 3)) + i * 1.7) % 6.28, plana = Math.sin(G.T * 0.7 + i + b) > 0.6, cima = !plana && Math.sin(fase) > 0;
+          const P2 = (a, c, w = 1, h = 1) => g.fillRect(bx + a * esc, by + c * esc, w * esc, h * esc);
+          P2(0, 0); P2(-1, 0); if (cima) { P2(-2, -1); P2(-3, -2); P2(1, -1); P2(2, -2); } else if (plana) { P2(-2, 0); P2(-3, 0); P2(1, 0); P2(2, 0); P2(-4, 1); P2(3, 1); } else { P2(-2, 1); P2(-3, 1); P2(1, 1); P2(2, 1); } } } }
     if (chuva > 0.02) { g.globalAlpha = chuva; faixa(g, faixaDeNuvens(cores.map(c => mistura(c, '#4A5060', 0.6)), true, chave + 'c'), cx * 0.09 + G.T * 6, dy + 2, vw); g.globalAlpha = 1; } }
   return L;
 }
