@@ -1,5 +1,5 @@
 // Gente com vida: os moradores do Refúgio andam com destino, param, conversam entre si, acenam quando você chega,
-// se assustam com golpe perto, vão para casa à noite. Por cima das amizades de vida.js (corações de 0 a 10), cada um tem
+// se assustam com golpe perto, à noite ficam à porta de casa. Por cima das amizades de vida.js (corações de 0 a 10), cada um tem
 // gostos de presente, um pedido e presentes para dar quando a amizade cresce (aos 5, 9 e 10 corações; os de 3 e 7 são
 // os eventos de vida.js). O dia tem três partes (manhã, tarde, noite) e dura 10 minutos de jogo.
 import { sfx } from '../audio.js';
@@ -35,8 +35,8 @@ export function passoVida(G, dt) {
     const raio = (o.vai || 3) * 32;
     if (v.emoteT > 0) v.emoteT -= dt;
     // à noite, quem tem casa na rua vai para ela e some lá dentro; de manhã, sai
-    if (noite && casa) { if (v.estado !== 'casa') { v.alvo = casa.x; v.estado = 'indo'; } if (Math.abs(v.x - casa.x) < 6) { v.estado = 'casa'; o.escondido = Infinity; } }
-    else if (v.estado === 'casa') { v.estado = 'parado'; o.escondido = 0; v.x = casa ? casa.x : o.x; v.emote = '♪'; v.emoteT = 2; }
+    if (noite && casa) { if (v.estado !== 'casa') { v.alvo = casa.x; v.estado = 'indo'; } if (Math.abs(v.x - casa.x) < 6 && v.estado !== 'casa') { v.estado = 'casa'; v.emote = '…'; v.emoteT = 2.5; } } /* fica à porta: quem tem pedido ou história nunca some da rua */
+    else if (v.estado === 'casa') { v.estado = 'parado'; v.emote = '☀'; v.emoteT = 2; }
     if (v.estado === 'casa') continue;
     const dp = Math.abs(p.x - v.x), perto = dp < 90 && Math.abs(p.y - o.y) < 80;
     // golpe perto: susto

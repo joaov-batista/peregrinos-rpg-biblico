@@ -1071,7 +1071,7 @@ export class Caminho {
     b.fora = true; this.chefe = null; this.luta = false; this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.peso = 0; this.puxao = null; this.invertido = 0; this.amarra = 0;
     this.ui.bossBar(null); this.musicaDaArea(); sfx('level');
     // juntos, a vitória só conta para quem leu os rolos desta página
-    if (this.mp && !this.temSelos()) { this.ui.toast(b.d.nome + ' caiu, mas a recompensa é de quem leu os três rolos desta página. Leia-os e enfrente-o de novo.', 8000); this.semLutaAte = this.T + 8; return; }
+    if (this.mp && !this.temSelos()) { this.ui.toast(b.d.nome + ' caiu. A recompensa pede os três rolos desta página: leia-os e volte.', 8000); this.semLutaAte = this.T + 8; return; }
     this.venceu = true; this.N.portaAberta = true;
     this.fx.anel(b.x, b.y - b.h / 2, '#FFE9A8', 260); this.soltarMoedas(b.x, b.y - b.h / 2, 18);
     cm.chefes[b.id] = (cm.chefes[b.id] || 0) + 1; marco('chefe:' + b.id); c.data.stats.bosses = c.data.stats.bosses || {}; c.data.stats.bosses[b.id] = (c.data.stats.bosses[b.id] || 0) + 1;
@@ -1166,7 +1166,7 @@ export class Caminho {
     const esp = arma ? especiaisDe(x).map(k => ESPECIAIS[k].nome + ': ' + ESPECIAIS[k].desc).join('\n') : '';
     if (quieto) { this.ui.toast(R.marca + ' ' + (arma ? 'Arma' : 'Relíquia') + ' ' + R.nome.toLowerCase() + ': ' + x.nome + (arma ? '' : ' — ' + x.desc), 6500); return; }
     await this.ui.dialog({ nome: R.marca + ' ' + x.nome, texto: (arma ? 'ARMA ' : 'RELÍQUIA ') + R.nome.toUpperCase() + ' · ' + x.ref + '\n\n' + x.desc + (esp ? '\n\n' + esp : '') + (arma ? '' : cm.eq.includes(id) ? '\n\nJá está com você.' : '\n\nEquipe no menu › Relíquias.'), cls: 'achado-' + (x.rar || 'comum'),
-      acoes: arma ? [{ label: 'Empunhar agora', fn: () => { cm.armaAlt = cm.armaAlt || {}; const volta = valorTroca(ARMAS_ALT[this.tipoArma][cm.armaAlt[c.cls]]); c.data.gold += volta; cm.armas[c.cls + ':' + id] = 2; cm.armaAlt[c.cls] = id; this.equiparArma(); this.salvar(); if (volta) this.ui.toast('Peregrino carrega uma arma só: a antiga ficou pelo caminho e rendeu ' + volta + ' denários.', 5000); } }, { label: 'Deixar com Jael (busque de graça)' }] : [{ label: 'Guardar' }] });
+      acoes: arma ? [{ label: 'Empunhar agora', fn: () => { cm.armaAlt = cm.armaAlt || {}; const volta = valorTroca(ARMAS_ALT[this.tipoArma][cm.armaAlt[c.cls]]); c.data.gold += volta; cm.armas[c.cls + ':' + id] = 2; cm.armaAlt[c.cls] = id; this.equiparArma(); this.salvar(); if (volta) this.ui.toast('Uma arma por vez: a antiga rendeu ' + volta + ' denários.', 5000); } }, { label: 'Deixar com Jael (busque de graça)' }] : [{ label: 'Guardar' }] });
   }
 
   ovo(id, texto) { if (this.cm.ovos.includes(id)) return false; this.cm.ovos.push(id); sfx('right'); this.pontos(200); this.ui.toast('✦ ' + texto, 7500); return true; }

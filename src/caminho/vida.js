@@ -20,7 +20,7 @@ export function vidaNoRefugio(G) {
   // a Praça do poço é a chegada: fica só com o essencial. O Livro mora no Mercado e a mesa da festa, no Bairro
   em(1, 11, { tipo: 'livroRefugio', luz: 90 }); em(3, 23, { tipo: 'festa', festa: f.id, luz: 110 });
   for (const [sala, col] of [[1, 19], [2, 16], [3, 9], [5, 13], [6, 13]]) em(sala, col, { tipo: 'enfeite', qual: f.enfeite });
-  const v = vida(G); if (v.avisoFesta !== f.id) { v.avisoFesta = f.id; setTimeout(() => { if (G.running && G.area === 'refugio') G.ui.toast('No Refúgio é tempo de: ' + f.nome + '. Há uma mesa posta no Bairro.', 7000); }, 5000); }
+  const v = vida(G); if (v.avisoFesta !== f.id && G.cm.mapa) { /* o novato chega sem esse aviso: primeiro o Velho Peregrino */ v.avisoFesta = f.id; setTimeout(() => { if (G.running && G.area === 'refugio') G.ui.toast('Tempo de ' + f.nome + ': há uma mesa posta no Bairro.', 5000); }, 5000); }
 }
 
 // a mesa da festa: uma visita por dia; três dias contam a história da festa e o terceiro traz um presente melhor
