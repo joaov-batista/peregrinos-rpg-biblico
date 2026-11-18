@@ -14,6 +14,8 @@ import { RX } from './dados.js';
 import { AZEITES } from '../content/azeites.js';
 import { passoConvites } from './convites.js';
 import { passoAzeites } from './azeites.js';
+import { passoTempo } from './tempo.js';
+import { passoMarBravo } from './marbravo.js';
 import { agendaDe, lugarNaSinagoga, passoRonda, passoSinagoga, falarSinagoga, falaDaNoite } from './sinagoga.js';
 
 export const DIA = 600; const rand = (a, b) => a + Math.random() * (b - a);
@@ -38,7 +40,7 @@ const marcaCoracoes = n => '♥'.repeat(Math.min(10, n)) + '♡'.repeat(Math.max
 /* ---------------- a cada quadro ---------------- */
 export function passoVida(G, dt) {
   G.cm.relogio = (G.cm.relogio || 0) + dt;
-  passoAzeites(G, dt);
+  passoAzeites(G, dt); passoTempo(G, dt);
   // a pé, pela beira do mapa: do fim da trilha (oeste do Refúgio) para o sítio, e de volta (sem portal)
   if (!G.p.morto && !G.ui.blocking && !(G.bordaT > G.T)) { const tutOk = !(G.cm.visto?.tut != null && G.cm.visto.tut < 11);
     if (G.area === 'refugio' && tutOk && G.p.x < (RX * 30 + 1.7) * 32) { G.bordaT = G.T + 2; G.entrar(sitioId(G), { borda: 'direita' }); return; } /* depois do treino, a trilha fica para trás: a oeste da Praça é a estrada do sítio */
@@ -48,6 +50,7 @@ export function passoVida(G, dt) {
   if (G.def?.sitio) { passoSitio(G, dt); return; }
   if (G.area !== 'refugio') return;
   passoPescaViva(G, dt); // a pesca na margem e no bote
+  passoMarBravo(G, dt); // na tempestade, o Leviatã
   passoSinagoga(G, dt);
   passoConvites(G, dt);
   const p = G.p, gente = G.objs.filter(o => o.tipo === 'morador');

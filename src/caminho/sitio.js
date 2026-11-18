@@ -8,6 +8,7 @@ import { dia, hora, ganhar, bolsa } from './moradores.js';
 import { coracoesDe } from './vida.js';
 import { T, CW } from './nivel.js';
 import { MORADORES } from './dados.js';
+import { chovendo } from './tempo.js';
 
 const rand = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
 export const sitioId = G => 'sitio:' + String(G.char.name || 'peregrino').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -51,6 +52,7 @@ export function sitioAoEntrar(G) {
 export function passoSitio(G, dt) {
   viradaDoDia(G);
   const p = G.p, S = st(G);
+  if (chovendo(G)) { const hoje = dia(G); let reg = 0; for (const c of S.canteiros) if (c && c.estado === 'plantado' && c.regado !== hoje) { c.regado = hoje; reg++; } if (reg) G.textoEm(p.x, p.y - 80, 'a chuva regou a lavoura', '#8FD4F0', 11); }
   for (const o of G.objs) if (o.tipo === 'animal') { const v = o.vv; v.t -= dt;
     if (S.rebanho > 0 && o.especie !== 'galinha') { const alvo = p.x - p.face * (30 + (o.i % 4) * 22), d = alvo - v.x; v.estado = Math.abs(d) > 8 ? 'indo' : 'parado'; v.face = Math.sign(d) || v.face; v.x += Math.sign(d) * Math.min(Math.abs(d), 120 * dt); continue; }
     if (v.estado === 'parado' && v.t <= 0) { v.alvo = Math.max(o.min, Math.min(o.max, v.x + rand(-90, 90))); v.estado = 'indo'; }

@@ -74,6 +74,10 @@ export function sfx(n) {
     case 'step': noiseBurst(0.03, 0.03, 400); break;
     case 'sino': sino(0.22, false); break;
     case 'sinoLonge': sino(0.09, true); break;
+    case 'trovao': noiseBurst(1.8, 0.32, 90); noiseBurst(0.6, 0.18, 260); tone(50, 30, 1.6, 'sine', 0.12); break;
+    case 'onda': noiseBurst(0.9, 0.16, 500); noiseBurst(1.2, 0.1, 220); break;
+    case 'rugido': tone(95, 38, 1.5, 'sawtooth', 0.2); tone(140, 52, 1.3, 'square', 0.07, 0.05); noiseBurst(1.2, 0.14, 300); break;
+    case 'splash': noiseBurst(0.35, 0.16, 1400); noiseBurst(0.5, 0.08, 500); break;
   }
 }
 

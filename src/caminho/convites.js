@@ -44,7 +44,7 @@ export function passoConvites(G, dt) {
   const pend = G.cm.convite;
   if (pend && (rel > pend.ate || pend.dia !== hoje && rel > pend.ate)) { G.cm.convite = null; }
   if (G.cm.convite) { const o = G.objs.find(q => q.id === G.cm.convite.id && q.tipo === 'morador'); if (o?.vv) { o.vv.emote = '✉'; o.vv.emoteT = Math.max(o.vv.emoteT || 0, 0.3); } return; }
-  if (G.ui.blocking || p.morto || G.luta || (G.cm.visto?.tut != null && G.cm.visto.tut < 11)) return;
+  if (G.ui.blocking || p.morto || G.luta || G.levi || (G.cm.visto?.tut != null && G.cm.visto.tut < 11)) return;
   if (!C.prox) C.prox = rel + rand(60, 120);
   if (rel < C.prox || C.n >= 2) return; C.prox = rel + rand(90, 170);
   const h = hora(G), tipos = Object.keys(CONVITES).filter(k => CONVITES[k].pode(h)); if (!tipos.length) return;

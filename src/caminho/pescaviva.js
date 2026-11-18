@@ -7,6 +7,7 @@ import { PEIXES, desenhaPeixe } from './pesca.js';
 import { DONS } from './dados.js';
 import { periodo } from './moradores.js';
 import { T } from './nivel.js';
+import { leviataMorde } from './marbravo.js';
 
 const rand = (a, b) => a + Math.random() * (b - a), ISCA = 3;
 // as varas (aguentam mais tensão e recolhem mais rápido) e as iscas (cada uma chama um tipo de peixe)
@@ -55,9 +56,9 @@ export function passoPescaViva(G, dt) {
   if (!A) { G.naAgua = false; G.pescaTrava = false; return; }
   A.x0 = A.x0 ?? A.x - 16; A.x1 = A.x1 ?? A.x - 16 + (A.ate - A.col + 1) * T;
   // a água não se anda: fora do bote, para na margem; no bote, fica no mar
-  if (p.noBote) { p.x = Math.max(A.x0 + 30, Math.min(A.x1 - 30, p.x)); if (p.vy < 0) p.vy = 0; } else if (p.x > A.x0 - 10 && p.x < A.x1) { p.x = A.x0 - 10; p.vx = Math.min(p.vx, 0); }
+  if (p.noBote) { p.x = Math.max(A.x0 + 30, Math.min(A.x1 - 30, p.x)); if (p.vy < 0) p.vy = 0; } else if (!G.nado && p.x > A.x0 - 10 && p.x < A.x1) { p.x = A.x0 - 10; p.vx = Math.min(p.vx, 0); }
   const naBeira = !p.noBote && p.x > A.x0 - 90 && p.x < A.x0 + 5 && p.face > 0;
-  G.naAgua = (naBeira || p.noBote) && !!G.cm.vara; if (G.cm.vara === 1) G.cm.vara = 'cedro';
+  G.naAgua = (naBeira || p.noBote) && !!G.cm.vara && !G.nado; if (G.cm.vara === 1) G.cm.vara = 'cedro';
   if (p.noBote && c.interagir && p.x < A.x0 + 80) { p.noBote = false; p.x = A.x0 - 20; S.est = 'livre'; G.textoEm(p.x, p.y - 70, 'de volta à margem', '#C9D2E0', 11); }
   // as sombras dos peixes: andam debaixo d'água, mais e maiores longe da margem
   while (S.sombras.length < 5) { const x = rand(A.x0 + 20, A.x1 - 20), d = fundura(A, x); S.sombras.push({ x, y: p.y + 8 + d * 14, vx: rand(-20, 20), t: rand(0, 4), tam: 4 + d * 8 + rand(0, 3) }); }
@@ -71,6 +72,7 @@ export function passoPescaViva(G, dt) {
     case 'voo': { S.v += dt / 0.55; const k = Math.min(1, S.v); S.bx = (p.x + p.face * 14) + (S.alvo - (p.x + p.face * 14)) * k; S.by = (p.y - 36) + (p.y - 2 - (p.y - 36)) * k - Math.sin(k * Math.PI) * 50; if (k >= 1) { S.est = 'espera'; S.esp = rand(2.2, 5.5) * (ISCAS[S.isca]?.morde || 1) * ((G.cm.iscaMar || 0) > 0 ? 0.35 : 1); S.bx = S.alvo; S.by = p.y - 2; sfx('step'); for (let i = 0; i < 6; i++) G.parts.push({ x: S.bx, y: S.by, vx: rand(-40, 40), vy: rand(-80, -30), t: 0.4, max: 0.4, r: 1.5, cor: '#BFF0F8', g: 300 }); } break; }
     case 'espera': { S.esp -= dt; const sm = S.sombras.reduce((m, s) => Math.abs(s.x - S.bx) < Math.abs(m.x - S.bx) ? s : m, S.sombras[0]); sm.alvo = true; sm.x += Math.sign(S.bx - sm.x) * Math.min(Math.abs(S.bx - sm.x), 30 * dt);
       if (aperto) { S.est = 'livre'; sm.alvo = false; G.textoEm(p.x, p.y - 70, 'cedo demais', '#C9D2E0', 11); break; }
+      if (S.esp <= 0 && leviataMorde(G, fundura(A, S.bx))) { S.est = 'livre'; sm.alvo = false; break; }
       if (S.esp <= 0) { S.est = 'mordida'; S.m = 0.85; S.peixe = sortear(G, fundura(A, S.bx)); S.som = sm; sfx('click'); } break; }
     case 'mordida': S.m -= dt; if (aperto) { S.mar = (G.cm.iscaMar || 0) > 0; if (S.mar) G.cm.iscaMar--; S.est = 'briga'; S.dist = 1; S.tens = 0.15; S.disp = 0; S.dispT = rand(1, 2.2); sfx('hit'); G.tremor(3); G.textoEm(S.bx, S.by - 20, 'FISGOU!', '#FFE9A8', 13); }
       else if (S.m <= 0) { S.est = 'espera'; S.esp = rand(2, 5); if (S.som) { S.som.alvo = false; S.som.vx = rand(-40, 40); } G.textoEm(S.bx, S.by - 20, 'escapou', '#C9D2E0', 11); } break;

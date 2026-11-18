@@ -25,6 +25,8 @@ import { pintarLuzSinagoga } from './salas.js';
 import { visualPortal, pintarConstrucao } from './construcoes.js';
 import { pintarLoja } from './lojas.js';
 import { pintarPescaViva } from '../pescaviva.js';
+import { pintarMarBravo } from '../marbravo.js';
+import { pintarTempo } from '../tempo.js';
 import { ELEMENTO_DO_CHEFE, zonaElemento, tiroElemento, corDoElemento, elementoAmigo } from './elementos.js';
 
 export const FONTE = '"Pixelify Sans", "Alegreya Sans", monospace';
@@ -468,7 +470,7 @@ export function renderPixel(G) {
   if (G.pomba) pintarPomba(g, G.pomba, X, Y, Tm);
   else if (G.mortoT > 1.2) { const s = quadroHeroi({ ...p, morto: true, atk: null }, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab); s.dissolve(clamp((1.9 - G.mortoT) / 0.7, 0, 1), 5); carimbar(g, s, X(p.x), Y(p.y), AX, AY, p.face); }
   pintarEfeitos(g, G.fxPx, cx, cy, false);
-  if (G.area === 'refugio') pintarPescaViva(g, G, X, Y, Tm, desenhaBote);
+  if (G.area === 'refugio') { pintarPescaViva(g, G, X, Y, Tm, desenhaBote); if (G.levi) pintarMarBravo(g, G, X, Y, Tm); }
   elAtual = G.chefe && ELEMENTO_DO_CHEFE[G.chefe.id]; for (const t of G.tiros) pintarTiro(g, t, X(t.x), Y(t.y), Tm);
   for (const o of G.outros) if (o.corpo.ts) for (const t of o.corpo.ts) pintarTiro(g, { x: t[0], y: t[1], vx: t[2], vy: t[3], r: t[4], tipo: t[5], cor: t[6], amigo: true }, X(t[0]), Y(t[1]), Tm);
   // poeira do pulo e da queda: duas nuvenzinhas que se abrem para os lados, crescem e se desfazem
@@ -484,6 +486,7 @@ export function renderPixel(G) {
   if (chefe) pintarPalco(g, G, chefe, X, Y, Tm, true);
   pintarLuzPixel(g, G, vw, vh, cx, cy, luzCv);
   pintarClima(g, G, vw, vh, cx, Tm);
+  pintarTempo(g, G, vw, vh, cx, Tm);
   pintarHud(g, G, vw); barraChefe(g, G, vw);
 
   // amplia: primeiro por um fator inteiro (pixels nítidos), depois ajusta à tela
