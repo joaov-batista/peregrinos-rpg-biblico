@@ -117,6 +117,10 @@ function silhueta(g, x, chao, L, ver, cam) {
   if (/praça do poço|poço/.test(n)) { casa(x - 26, 36, 40); ret(x + 10, chao - 18, 24, 18, pedra); ret(x + 10, chao - 30, 2, 12, mad); ret(x + 32, chao - 30, 2, 12, mad); ret(x + 8, chao - 32, 28, 3, mad); return; }
   if (/mercado/.test(n)) { ret(x - 36, chao - 50, 72, 6, '#8E2E5E'); ret(x - 34, chao - 44, 2, 44, mad); ret(x + 32, chao - 44, 2, 44, mad); ret(x - 30, chao - 18, 60, 18, mad); arvore(x + 46, 50); return; }
   if (/armas/.test(n)) { casa(x, 60, 44); ret(x - 40, chao - 40, 3, 40, '#9FB0C0'); ret(x + 37, chao - 40, 3, 40, '#9FB0C0'); return; }
+  if (/sinagoga/.test(n)) { /* o salão de telhado em duas águas e a torre do sino */
+    ret(x - 36, chao - 40, 72, 40, tinta); ret(x - 34, chao - 38, 68, 38, '#8A7A62'); g.fillStyle = tinta; g.beginPath(); g.moveTo(x - 40, chao - 38); g.lineTo(x - 4, chao - 56); g.lineTo(x + 32, chao - 38); g.fill(); g.fillStyle = '#7A4A36'; g.beginPath(); g.moveTo(x - 36, chao - 39); g.lineTo(x - 4, chao - 53); g.lineTo(x + 28, chao - 39); g.fill();
+    for (const wx of [-26, -14, 6, 18]) ret(x + wx, chao - 30, 6, 12, luz); ret(x - 6, chao - 14, 8, 14, tinta);
+    ret(x + 24, chao - 70, 14, 70, tinta); ret(x + 26, chao - 68, 10, 68, '#8A7A62'); ret(x + 28, chao - 62, 6, 8, '#C9A63C'); return; }
   if (/bairro/.test(n)) { casa(x - 24, 40, 46); casa(x + 22, 40, 36); return; }
   if (/pátio|provas/.test(n)) { ret(x - 30, chao - 34, 4, 34, mad); ret(x - 36, chao - 30, 16, 4, mad); ret(x + 20, chao - 34, 4, 34, mad); ret(x + 14, chao - 30, 16, 4, mad); ret(x - 6, chao - 10, 12, 10, pedra); return; }
   if (/olival|oliveira|jardim|getsêmani/.test(n)) { arvore(x - 26, 54); arvore(x + 4, 66); arvore(x + 32, 48); return; }
