@@ -142,6 +142,8 @@ const terreno = (pls, muros = []) => { const alt = Math.max(1, ...muros.map(m =>
 
 // O Refúgio: uma aldeia a céu aberto (praças, mercado, bairro, pátio, olival, o portão do Éden) e, por baixo dela,
 // os salões de pedra: o Salão dos Rolos (as páginas do Livro), a Casa do Tesouro, a Cripta dos Gigantes e a cisterna.
+// os soldados da ronda: elmo, túnica vermelha, capa escura
+const SOLDADO = tunic => ({ skin: '#A0673E', hair: '#1C120A', tunic, cape: '#3A2A2A', style: 'curto', acessorio: 'elmo', beard: true, body: 'forte' });
 const REFUGIO = [
   { cx: 0, nome: 'Praça do poço', papel: 'inicio', tiles: sala([13, 20, 23]), objs: [
     { tipo: 'flor', col: 4 }, { tipo: 'flor', col: 25 },
@@ -150,7 +152,7 @@ const REFUGIO = [
     { tipo: 'npc', col: 10, id: 'velho', nome: 'Velho Peregrino', look: velho },
     { tipo: 'npc', col: 17, id: 'pedro', nome: 'Simão, o pescador', look: { skin: '#A0673E', hair: '#3A2314', tunic: '#497A80', cape: 'none', style: 'cacheado', beard: true, body: 'forte' } },
     { tipo: 'npc', col: 26, id: 'jumenta', nome: 'Uma jumenta', bicho: 'jumenta' },
-    { ...povo(19, 3, VILA.rode.look), id: 'rode', nome: VILA.rode.nome }, { tipo: 'ave', col: 9, lin: 16 }, { tipo: 'ave', col: 22, lin: 13 }] },
+    { ...povo(19, 3, VILA.rode.look), id: 'rode', nome: VILA.rode.nome }, { ...povo(8, 2, SOLDADO('#8E2B2B')), id: 'guarda1', nome: 'Cornélio, o centurião', patrulha: [5 * 32, (3 * 30 + 25) * 32] }, { tipo: 'ave', col: 9, lin: 16 }, { tipo: 'ave', col: 22, lin: 13 }] },
   // a rua do mercado; no meio dela, a escada que desce ao Salão dos Rolos
   { cx: 1, nome: 'Mercado', papel: 'vila', desce: true, tiles: sala([10, 22, 26], [13, 19, 23]), objs: [
     planta(2, 'palmeira'), { tipo: 'cenario', col: 5, qual: 'banca' }, { tipo: 'cenario', col: 8, qual: 'forja' }, { tipo: 'cenario', col: 14, qual: 'descida', rotulo: 'Salão dos Rolos' },
@@ -177,17 +179,23 @@ const REFUGIO = [
     planta(2, 'cipreste'), { tipo: 'cenario', col: 14, qual: 'descida', rotulo: 'Cisterna' },
     { tipo: 'npc', col: 4, id: 'mestre', nome: 'Benaia, mestre das provas', look: { skin: '#8A5A3A', hair: '#D9D2C5', tunic: '#343F51', cape: '#877451', style: 'curto', beard: true, body: 'forte' } },
     { tipo: 'boneco', col: 7 }, { tipo: 'boneco', col: 23 },
-    planta(10, 'oliveira'), { tipo: 'portal', col: 20, area: 'clareira', rotulo: 'Trilha da mata' },
+    planta(10, 'oliveira'), { tipo: 'portal', col: 20, area: 'clareira', rotulo: 'Trilha da mata' }, { ...povo(6, 2, SOLDADO('#7A2E2E')), id: 'guarda2', nome: 'Um soldado da ronda', patrulha: [(4 * 30 + 3) * 32, (6 * 30 + 26) * 32] },
     { tipo: 'npc', col: 27, id: 'samuel', nome: 'Samuel, o que unge', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#D2CFBB', cape: '#55516D', style: 'longo', beard: true } }, { tipo: 'ave', col: 24, lin: 12 }] },
+  // a sinagoga: a casa de oração da aldeia. Tem sino (à meia-noite a aldeia inteira ouve), cultos de manhã, à tarde e à noite,
+  // e quem ora de madrugada. Os moradores vão até lá de verdade; de perto dá para ouvir o que cada um pede e agradece.
+  { cx: 5, nome: 'Sinagoga', papel: 'vila', tiles: sala(), objs: [
+    planta(2, 'cipreste'), { tipo: 'cenario', col: 14, qual: 'sinagoga' }, planta(27, 'cipreste'), { tipo: 'vaso', col: 25 },
+    { tipo: 'npc', col: 14, id: 'jairo', nome: 'Jairo, chefe da sinagoga', look: { skin: '#C68B59', hair: '#3A2314', tunic: '#E3DED2', cape: '#2F4A7A', style: 'turbante', beard: true } },
+    { tipo: 'ave', col: 6, lin: 12 }] },
   // o olival: figos, sombra e a caravana que às vezes traz algo raro
-  { cx: 5, nome: 'Olival', papel: 'vila', tiles: sala([12, 8, 11], [9, 13, 16], [12, 18, 21]), objs: [
+  { cx: 6, nome: 'Olival', papel: 'vila', tiles: sala([12, 8, 11], [9, 13, 16], [12, 18, 21]), objs: [
     { tipo: 'flor', col: 3 }, { tipo: 'flor', col: 12 }, { tipo: 'flor', col: 17 }, { tipo: 'flor', col: 24 }, // canteiros: uma flor por dia em cada um
     planta(4, 'oliveira'), planta(10, 'oliveira'), planta(15, 'palmeira'), planta(20, 'oliveira'), planta(25, 'cipreste'), { tipo: 'cenario', col: 23, qual: 'banca' }, { tipo: 'portal', col: 28, area: 'floresta', rotulo: 'Trilha escondida', oculto: true },
     { tipo: 'fruto', col: 4, lin: 14 }, { tipo: 'fruto', col: 10, lin: 11 }, { tipo: 'fruto', col: 15, lin: 8 }, { tipo: 'fruto', col: 20, lin: 11 },
     { tipo: 'npc', col: 23, id: 'mercador', nome: 'Mercador', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#7A5A2E', cape: '#3F2E4F', style: 'turbante', beard: true } },
     { tipo: 'poco', col: 7 }, { tipo: 'npc', col: 17, id: 'zelote3', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5E4A3A', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } }, { ...povo(13, 4, VILA.ana.look), id: 'ana', nome: VILA.ana.nome }, { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
   // o porto: o píer sobre o mar, o barqueiro que leva a Sardes, o pescador e, às vezes, um mercador de além-mar
-  { cx: 6, nome: 'Porto do Refúgio', papel: 'vila', tiles: sala([12, 3, 6]), objs: [
+  { cx: 7, nome: 'Porto do Refúgio', papel: 'vila', tiles: sala([12, 3, 6]), objs: [
     planta(2, 'palmeira'), { tipo: 'cenario', col: 5, qual: 'redes' }, { tipo: 'mar', col: 11 },
     { tipo: 'npc', col: 8, id: 'zebedeu', nome: 'Zebedeu, o pescador', look: { skin: '#A0673E', hair: '#D9D2C5', tunic: '#3F5A6A', cape: 'none', style: 'curto', beard: true, body: 'forte' } },
     { tipo: 'npc', col: 15, id: 'viajante', nome: 'Mercador de além-mar', look: { skin: '#6B4A2E', hair: '#1C120A', tunic: '#2E5E6A', cape: '#C9A63C', style: 'turbante', beard: true }, vezOutra: true },

@@ -6,8 +6,9 @@ import { sfx } from '../audio.js';
 import { GENTE, ITENS, PAPOS } from '../content/gente.js';
 import { VILA } from '../content/vila.js';
 import { coracoesDe, somarCoracoes } from './vida.js';
+import { agendaDe, lugarNaSinagoga, passoRonda, passoSinagoga, falarSinagoga, falaDaNoite } from './sinagoga.js';
 
-const DIA = 600, rand = (a, b) => a + Math.random() * (b - a);
+export const DIA = 600; const rand = (a, b) => a + Math.random() * (b - a);
 // ---- o relógio ----
 export const hora = G => ((G.cm.relogio || 0) / DIA * 24 + 7) % 24; // começa às 7 da manhã
 export const dia = G => Math.floor((G.cm.relogio || 0) / DIA);
@@ -30,14 +31,25 @@ const marcaCoracoes = n => '♥'.repeat(Math.min(10, n)) + '♡'.repeat(Math.max
 export function passoVida(G, dt) {
   G.cm.relogio = (G.cm.relogio || 0) + dt;
   if (G.area !== 'refugio') return;
-  const p = G.p, noite = periodo(G) === 'noite', gente = G.objs.filter(o => o.tipo === 'morador');
+  passoSinagoga(G, dt);
+  const p = G.p, gente = G.objs.filter(o => o.tipo === 'morador');
   for (const o of gente) {
     const v = o.vv || (o.vv = { x: o.x, alvo: o.x, t: rand(0, 3), estado: 'parado', face: 1, emote: null, emoteT: 0, papo: null });
     const casa = G.objs.find(c => c.tipo === 'casa' && c.cel === o.cel && Math.abs(c.x - o.x) < 640);
-    const raio = (o.vai || 3) * 32;
+    const raio = (o.vai || 3) * 32, ag = agendaDe(G, o), longe = Math.abs(v.x - p.x) > 760; /* fora da vista, andam depressa: ninguém perde o culto por morar longe */
     if (v.emoteT > 0) v.emoteT -= dt;
-    // à noite, quem tem casa na rua vai para ela e some lá dentro; de manhã, sai
-    if (noite && casa) { if (v.estado !== 'casa') { v.alvo = casa.x; v.estado = 'indo'; } if (Math.abs(v.x - casa.x) < 6 && v.estado !== 'casa') { v.estado = 'casa'; v.emote = '…'; v.emoteT = 2.5; } } /* fica à porta: quem tem pedido ou história nunca some da rua */
+    if (ag === 'ronda') { if (v.estado === 'acena') { v.t -= dt; if (v.t <= 0) v.estado = 'parado'; } else passoRonda(G, o, v, dt); continue; }
+    // hora de orar: vai até a sinagoga, ajoelha no seu lugar e fica até o culto acabar (ou a madrugada passar)
+    if (ag === 'culto' || ag === 'vigilia') { const lugar = lugarNaSinagoga(G, o); if (lugar != null) {
+      v.papo = null; const d = lugar - v.x;
+      if (Math.abs(d) > 5) { v.estado = 'indo'; v.face = Math.sign(d); v.x += v.face * Math.min(Math.abs(d), (longe ? 600 : 70) * dt); }
+      else if (v.estado !== 'orando') { v.estado = 'orando'; v.face = Math.sign((G.objs.find(q => q.qual === 'sinagoga')?.x ?? v.x) - v.x) || 1; }
+      continue; } }
+    if (v.estado === 'orando') { v.estado = 'parado'; v.t = rand(0.5, 2); v.emote = '☀'; v.emoteT = 1.5; }
+    // longe de casa (voltando do culto): volta direto
+    if (v.estado !== 'indo' && Math.abs(v.x - o.x) > raio * 2 + 40 && ag !== 'casa') { v.alvo = o.x + rand(-raio, raio) * 0.5; v.estado = 'indo'; }
+    // à noite, quem tem casa vai para a porta e cochila ali; de manhã, sai
+    if (ag === 'casa' && casa) { if (v.estado !== 'casa') { v.alvo = casa.x; v.estado = 'indo'; } if (Math.abs(v.x - casa.x) < 6 && v.estado !== 'casa') { v.estado = 'casa'; v.emote = '…'; v.emoteT = 2.5; } else if (v.estado === 'indo') { const d = casa.x - v.x; v.face = Math.sign(d); v.x += v.face * Math.min(Math.abs(d), (longe ? 600 : 40) * dt); continue; } } /* fica à porta: quem tem pedido ou história nunca some da rua */
     else if (v.estado === 'casa') { v.estado = 'parado'; v.emote = '☀'; v.emoteT = 2; }
     if (v.estado === 'casa') continue;
     const dp = Math.abs(p.x - v.x), perto = dp < 90 && Math.abs(p.y - o.y) < 80;
@@ -57,17 +69,18 @@ export function passoVida(G, dt) {
     if (v.estado === 'acena' || v.estado === 'susto') { if (v.t <= 0) v.estado = 'parado'; if (v.estado === 'susto') v.x += Math.sign(v.alvo - v.x) * Math.min(Math.abs(v.alvo - v.x), 90 * dt); continue; }
     if (v.estado === 'conversa') continue;
     if (v.estado === 'parado' && v.t <= 0 && !perto) { v.alvo = o.x + rand(-raio, raio); v.estado = 'indo'; }
-    if (v.estado === 'indo') { const d = v.alvo - v.x; if (Math.abs(d) < 4) { v.estado = 'parado'; v.t = rand(2.5, 6); if (Math.random() < 0.25) { v.emote = ['♪', '…', '☀'][Math.floor(rand(0, 3))]; v.emoteT = 1.6; } } else { v.face = Math.sign(d); v.x += v.face * Math.min(Math.abs(d), (periodo(G) === 'manha' ? 46 : 36) * dt); } }
+    if (v.estado === 'indo') { const d = v.alvo - v.x; if (Math.abs(d) < 4) { v.estado = 'parado'; v.t = rand(2.5, 6); if (Math.random() < 0.25) { v.emote = ['♪', '…', '☀'][Math.floor(rand(0, 3))]; v.emoteT = 1.6; } } else { v.face = Math.sign(d); v.x += v.face * Math.min(Math.abs(d), (longe && Math.abs(d) > 200 ? 600 : periodo(G) === 'manha' ? 46 : 36) * dt); } }
   }
 }
 
 /* ---------------- conversar, dar presente, pedido ---------------- */
 export async function falarMorador(G, ob) {
+  if (G.area === 'refugio' && await falarSinagoga(G, ob)) return true;
   const id = ob.id, g = GENTE[id], V = VILA[id]; if (!g || G.area !== 'refugio') return false;
   const a = laco(G, id), d = dia(G), n = G.cm.falas[id] = (G.cm.falas[id] || 0) + 1, nome = (V?.nome || ob.nome) + '  ' + marcaCoracoes(coracoes(G, id));
   if (ob.vv) { ob.vv.estado = 'acena'; ob.vv.t = 3; ob.vv.face = Math.sign(G.p.x - ob.vv.x) || 1; }
   const conv = V?.conversa || g.cumprimenta, volta = V?.volta || 0, k = n <= conv.length ? n - 1 : volta + ((n - 1 - volta) % Math.max(1, conv.length - volta));
-  const texto = conv[Math.max(0, Math.min(conv.length - 1, k))];
+  const texto = (ob.vv?.estado === 'casa' && falaDaNoite(G, id)) || conv[Math.max(0, Math.min(conv.length - 1, k))]; /* à porta, de noite, a conversa é outra */
   const presente = g.presentes.find(pr => coracoes(G, id) >= ({ 2: 5, 4: 9, 5: 10 })[pr.nivel] && !a.presentes.includes(pr.nivel));
   const b = bolsa(G), P = g.pedido, acoes = [];
   if (Object.keys(ITENS).some(k => b[k] > 0) && a.deu !== d) acoes.push({ label: 'Dar um presente', fn: () => darPresente(G, ob) });

@@ -28,11 +28,13 @@ function luzDaCidade(G) { if (G.area !== 'sardes' || sar(G).feita) return; G.tm 
 
 /* ---------------- ao entrar numa área ---------------- */
 export function aoEntrar(G, id, o = {}) {
+  G.noturnas = 0; G.sin = null;
   if (id === 'refugio') {
     const k = o.portal ? andarDe(o.portal) : null; montarAndar(G, k ?? G.andarRolos ?? proximoAndar(G)); // voltando de uma página, o salão já está no andar dela // o mercador de além-mar só aparece de vez em quando, e cada visita traz outras coisas
     G.viajante = Math.random() < 0.4 ? sortearViajante(G) : null;
     G.objs = G.objs.filter(o => !o.vezOutra || G.viajante);
     historiaNoRefugio(G); vidaNoRefugio(G); missaoNoRefugio(G);
+    { const i = G.objs.findIndex(q => q.qual === 'sinagoga'); if (i > 0) G.objs.unshift(G.objs.splice(i, 1)[0]); } /* a sinagoga por trás: quem ora lá dentro aparece na frente */
     // quem já caiu muitas vezes recebe uma visita: um estrangeiro de branco junto ao poço, que aponta (sem contar) para onde está o Mestre
     if ((G.cm.mortes || 0) >= 5 && !G.cm.getsemani) { const poco = G.objs.find(o => o.tipo === 'poco'); if (poco) { G.objs.push({ tipo: 'npc', id: 'mensageiro', nome: 'Um estrangeiro de branco', x: poco.x + 58, y: poco.y, luz: 130, cel: poco.cel, look: MENSAGEIRO });
       if (!G.cm.visto.mensageiro) { G.cm.visto.mensageiro = 1; setTimeout(() => { if (G.area === 'refugio') G.ui.toast('Há um estrangeiro de branco junto ao poço. Ninguém o viu chegar.', 7000); }, 2500); } } }

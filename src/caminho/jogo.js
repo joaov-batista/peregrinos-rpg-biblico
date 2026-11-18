@@ -39,7 +39,8 @@ import { marco } from '../telemetria.js';
 import { conviteOpiniao } from './opiniao.js';
 import { vencerCapitulo, alvoDaHistoria } from './historia.js';
 import { venceuRaiz } from './missao.js';
-import { passoVida, ganhar as ganharItem, dia as diaDe } from './moradores.js';
+import { passoVida, periodo, ganhar as ganharItem, dia as diaDe } from './moradores.js';
+import { aoOrar, sombraDaNoite, venceuNoturno } from './sinagoga.js';
 
 // Primeiros passos: [toque, controle, teclado]
 const PASSOS = [ // t: [toque, controle, teclado]; alvo: o botão de toque que pisca. No Bosque do Treino cada passo tem o seu lugar na trilha.
@@ -234,7 +235,8 @@ export class Caminho {
     this.N.spawns.forEach((s, i) => { const tipos = def.inimigos.filter(t => !!s.voa === voadores.includes(t)), lista = tipos.length ? tipos : def.inimigos; if (s.cel?.papel === 'ebenezer' || Math.hypot(s.x - this.N.inicio.x, s.y - this.N.inicio.y) < 300 || this.objs.some(o => o.tipo === 'ebenezer' && Math.abs(o.x - s.x) < 260 && Math.abs(o.y - s.y) < 200)) return; // nada nasce em cima da pedra de descanso nem do ponto de chegada
       this.nascer(lista[i % lista.length], s.x, s.y + 14, false, esc).cel = s.cel; });
   }
-  nascer(tipo, x, y, daLuta, esc = 1) { const e = novoVicio(tipo, x, y, esc); e.daLuta = daLuta; this.inimigos.push(e); return e; }
+  nascer(tipo, x, y, daLuta, esc = 1) { const e = novoVicio(tipo, x, y, esc); e.daLuta = daLuta; sombraDaNoite(this, e); this.inimigos.push(e); return e; }
+  aoOrar() { aoOrar(this); }
 
   temSelos() { const d = this.def, cm = this.cm; return !d.fase || (cm.selos[this.area].length >= (d.rolos || 3) && (d.estacoes || []).every(e => cm.est[this.area].includes(e.id))); }
   conferirPorta(quieto) {
@@ -507,7 +509,7 @@ export class Caminho {
     }
     for (const ob of this.objs) if (ob.tipo === 'boneco' && !atk.hits.has(ob) && toca(cx, { x: ob.x - 14, y: ob.y - 56, w: 28, h: 56 })) { atk.hits.add(ob); acertou = true; this.tutBateu = true; ob.bal = 0.4; ob.dir = Math.sign(ob.x - p.x) || 1; sfx('hit'); this.efeito('faisca', ob.x, ob.y - 30, ob.dir); this.textoEm(ob.x + rand(-10, 10), ob.y - 62, String(Math.round(dano)), '#E6E0CF', 13); this.ganharOleo(6); }
     for (const ob of this.objs) if (ob.tipo === 'vaso' && !ob.quebrado && toca(cx, { x: ob.x - 11, y: ob.y - 24, w: 22, h: 24 })) {
-      ob.quebrado = true; this.partilhar('vaso', ob); acertou = true; sfx('hit'); this.fx.po(ob.x, ob.y - 10, 10, '#B79A6E'); this.soltarMoedas(ob.x, ob.y - 12, Math.floor(rand(2, 6))); { const r = Math.random(); if (r < 0.05) ganharItem(this, 'mel', 1, ob.x, ob.y - 40); else if (r < 0.2) ganharItem(this, 'pao', 1, ob.x, ob.y - 40); }
+      ob.quebrado = true; this.partilhar('vaso', ob); acertou = true; sfx('hit'); this.fx.po(ob.x, ob.y - 10, 10, '#B79A6E'); this.soltarMoedas(ob.x, ob.y - 12, Math.floor(rand(2, 6))); { const r = Math.random(); if (r < 0.05) ganharItem(this, 'mel', 1, ob.x, ob.y - 40); else if (r < (periodo(this) === 'manha' ? 0.4 : 0.2)) ganharItem(this, 'pao', 1, ob.x, ob.y - 40); } /* de manhã o pão é fresco: os vasos rendem mais */
       const st = this.char.data.stats; st.vasos = (st.vasos || 0) + 1;
       if (st.vasos === 153) this.ovo('peixes', '153 vasos quebrados… como os 153 grandes peixes da rede que não se rompeu (Jo 21:11).');
       if (this.tem('cinco_paes') && Math.random() < 0.12 && p.vida < p.vidaMax) { p.vida++; sfx('heal'); this.textoEm(ob.x, ob.y - 30, '+1 fôlego', '#FFE9A8'); }
@@ -571,7 +573,7 @@ export class Caminho {
   matar(e) {
     const c = this.char, d = e.d;
     e.sumiu = true; if (this.mp && e.nid) { this.mp.mortos.add(e.nid); if (this.mp.souDono) this.mp.ev('mo', { id: e.nid }); } sfx('kill'); this.efeito('sumico', e.x, e.y); this.fx.po(e.x, e.y - e.h / 2, 16, d.cor || '#8E98BE'); this.fx.anel(e.x, e.y - e.h / 2, d.cor || '#fff', 44);
-    aoMatar(this, e);
+    aoMatar(this, e); venceuNoturno(this, e);
     if (e.daLuta) return;
     if (this.tem('sal_terra') && Math.random() < 0.3) { this.ganharOleo(10); this.textoEm(e.x, e.y - e.h - 6, '+azeite', '#FFD98A', 10); }
     if (this.tem('vara_florida') && Math.random() < 0.08 && this.p.vida < this.p.vidaMax) { this.p.vida++; sfx('heal'); this.textoEm(this.p.x, this.p.y - 70, '+1 fôlego (amêndoa florida)', '#FFE9A8', 12); }
@@ -1182,7 +1184,7 @@ export class Caminho {
     const p = this.p; let perto = null, pd = 58;
     if (p.morto) { this.ui.setInteract(null); return; }
     for (const ob of this.objs) {
-      const dd = Math.hypot(ob.x - p.x, ob.y - 20 - (p.y - 20));
+      const dd = Math.hypot((ob.vv ? ob.vv.x : ob.x) - p.x, ob.y - 20 - (p.y - 20)); /* morador que anda: fala-se com ele onde ele está */
       if (ob.tipo === 'segredo' && dd < 30) { ob.fora = true; this.partilhar('seg', ob); this.efeito('coleta', ob.x, ob.y - 10); this.cm.seg[this.area].push(ob.n); this.ganhar(ob.item); continue; }
       if (ob.tipo === 'fruto' && dd < 30 && !(ob.volta > this.T)) { ob.volta = this.T + 50; this.partilhar('fruto', ob); sfx('coin'); this.efeito('coleta', ob.x, ob.y - 6); ganharItem(this, 'figo', 1); if (p.vida < p.vidaMax) { p.vida++; this.textoEm(p.x, p.y - 60, 'figo: +1 fôlego', '#B8E6A0', 12); } else { this.char.data.gold += 4; this.ganharOleo(12); this.textoEm(p.x, p.y - 60, 'figo: +4 denários', '#FFD23F', 12); } const st = this.char.data.stats; st.figos = (st.figos || 0) + 1; if (st.figos === 12) this.ovo('figos', 'Zaqueu subiu num sicômoro, a figueira brava (Lc 19:4). Doze figos colhidos.'); continue; }
       if (ob.tipo === 'flor' && dd < 26 && this.cm.flores?.[ob.x] !== diaDe(this)) { this.cm.flores = this.cm.flores || {}; this.cm.flores[ob.x] = diaDe(this); sfx('coin'); this.efeito('coleta', ob.x, ob.y - 6); ganharItem(this, 'flor', 1, p.x, p.y - 60); }

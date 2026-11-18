@@ -60,6 +60,8 @@ export const ARMAS = {
   funda: { alc: 46, alt: 40, cd: 0.34, d: 1.3, len: 20, fx: 'corteCurto', cor: 'aco', tiro: { tipo: 'pedra', v: 720, r: 6, vida: 0.95, g: 300, fura: true } }
 };
 // direção do golpe → vetor (x multiplicado pela face)
+// alcance dos golpes de longe (cajado, funda, trombeta e as armas deles): voam mais longe e caem menos
+const ALCANCE = { vida: 1.6, v: 1.12 };
 export const DIRS = { lado: [1, 0], cima: [0, -1], baixo: [0, 1], diagC: [0.72, -0.7], diagB: [0.72, 0.7], rasteira: [1, 0] };
 const damp = (a, b, k, dt) => a + (b - a) * (1 - Math.exp(-k * dt));
 const aprox = (a, b, d) => a < b ? Math.min(b, a + d) : Math.max(b, a - d);
@@ -102,7 +104,7 @@ export function atualizarHeroi(G, dt) {
   const custoOra = G.custoOracao();
   if (c.orar && p.chao && !preso && !emDash && !p.lamp && p.oleo >= custoOra && p.vida < p.vidaMax) {
     p.orando += dt; if (p.orando < dt * 1.5) sfx('magic');
-    if (p.orando >= 0.95) { p.orando = 0; p.oleo -= custoOra; p.vida = Math.min(p.vidaMax, p.vida + (G.tem('lenho_mara') ? 2 : 1)); sfx('heal'); G.efeito('cura', p.x, p.y, 1, { gruda: p }); G.fx.anel(p.x, p.y - 20, '#FFE9A8', 60); G.fx.sobe(p.x, p.y - 10, 14, '#FFE9A8');
+    if (p.orando >= 0.95) { G.aoOrar?.(); p.orando = 0; p.oleo -= custoOra; p.vida = Math.min(p.vidaMax, p.vida + (G.tem('lenho_mara') ? 2 : 1)); sfx('heal'); G.efeito('cura', p.x, p.y, 1, { gruda: p }); G.fx.anel(p.x, p.y - 20, '#FFE9A8', 60); G.fx.sobe(p.x, p.y - 10, 14, '#FFE9A8');
       if (G.tem('vaso_alabastro')) { p.inv = Math.max(p.inv, 1.5); G.fx.anel(p.x, p.y - 26, '#F0E6D8', 90); G.textoEm(p.x, p.y - 72, 'perfume de alabastro', '#F0E6D8', 11); } }
   } else p.orando = 0;
 
@@ -186,7 +188,7 @@ export function atualizarHeroi(G, dt) {
     else if (fxDe) G.efeito(fxDe === 'corte' && hab.espada ? 'corteLuz' : fxDe, p.x, p.y, p.face, { gruda: p, dx: dir === 'diagC' || dir === 'diagB' ? p.face * 14 : 0, dy: dir === 'baixo' || dir === 'diagB' ? 24 : dir === 'rasteira' ? 20 : 0, vel: 1.25 });
     if (arma.avanco && dir === 'lado' && p.chao) p.vx = p.face * arma.avanco * 3;
     if (tiro) { const n = tiro.n || 1, ang = angTiro; for (let i = 0; i < n; i++) { const b = ang + (i - (n - 1) / 2) * (tiro.leque || 0.14), cx2 = Math.cos(b), sy2 = Math.sin(b); // algumas armas atiram várias pedras em leque
-      G.tiros.push({ golpe: p.atk, x: p.x + cx2 * 16, y: p.y - (dir === 'rasteira' && !livre ? 12 : 28) + sy2 * 14, vx: cx2 * tiro.v, vy: sy2 * tiro.v - (tiro.g ? 60 : 0), g: tiro.g || 0, r: tiro.r, r0: tiro.r, dano: G.danoBase() * arma.d, amigo: true, vida: tiro.vida * (G.tem('aljava_jonatas') ? 1.35 : 1), max: tiro.vida * (G.tem('aljava_jonatas') ? 1.35 : 1), cor: arma.lamina || '#FFF1BE', tipo: tiro.tipo, fura: tiro.fura, basico: true }); } }
+      G.tiros.push({ golpe: p.atk, x: p.x + cx2 * 16, y: p.y - (dir === 'rasteira' && !livre ? 12 : 28) + sy2 * 14, vx: cx2 * tiro.v * ALCANCE.v, vy: sy2 * tiro.v * ALCANCE.v - (tiro.g ? 60 : 0), g: (tiro.g || 0) * 0.7, r: tiro.r, r0: tiro.r, dano: G.danoBase() * arma.d, amigo: true, vida: tiro.vida * ALCANCE.vida * (G.tem('aljava_jonatas') ? 1.35 : 1), max: tiro.vida * ALCANCE.vida * (G.tem('aljava_jonatas') ? 1.35 : 1), cor: arma.lamina || '#FFF1BE', tipo: tiro.tipo, fura: tiro.fura, basico: true }); } }
   }
   if (p.atk) {
     const a = p.atk; a.t += dt;

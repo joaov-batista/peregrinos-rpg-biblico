@@ -3,6 +3,7 @@
 // 2) FUNDO: o anzol afunda sozinho; segurar o recolhe. É assim que se escolhe o peixe: os grandes e os raros andam no fundo.
 // 3) BRIGA: segurar puxa o peixe para o barco, mas estica a linha. Quando ele dispara (fica claro e treme), solte, ou a linha arrebenta.
 import { h } from '../util.js';
+import { periodo } from './moradores.js';
 import { sfx } from '../audio.js';
 import { DONS } from './dados.js';
 
@@ -49,8 +50,9 @@ export function pesca(G) {
     let forcaT = 0, hx = BX + 20, hy = MAR - 30, alvoX = 0, voo = 0, preso = null, dist = 1, tens = 0, surto = 0, aviso = 0, prox = 2, sequencia = 0, premio = null, tremor = 0;
 
     const nasce = (jaDentro) => {
-      const tot = Object.values(PEIXES).reduce((s, P) => s + P.peso, 0); let r = Math.random() * tot, id = 'sardinha';
-      for (const [k, P] of Object.entries(PEIXES)) { if ((r -= P.peso) <= 0) { id = k; break; } }
+      const cedo = periodo(G) === 'manha', peso = (k, P) => P.peso * (cedo && (k === 'tilapia' || k === 'bagre' || k === 'dourado') ? 1.8 : 1); /* de manhã cedo o peixe bom morde mais */
+      const tot = Object.entries(PEIXES).reduce((s, [k, P]) => s + peso(k, P), 0); let r = Math.random() * tot, id = 'sardinha';
+      for (const [k, P] of Object.entries(PEIXES)) { if ((r -= peso(k, P)) <= 0) { id = k; break; } }
       if (id === 'lingua' && cm.dons?.lingua) id = 'dourado';
       const P = PEIXES[id], fx = FAIXAS[P.faixa[0] + Math.floor(Math.random() * (P.faixa[1] - P.faixa[0] + 1))], dir = Math.random() < 0.5 ? 1 : -1;
       peixes.push({ id, dir, x: jaDentro ? rand(120, W - 10) : dir > 0 ? 96 : W + 20, y: rand(fx[0], fx[1]), vel: P.vel * rand(0.8, 1.2), fase: Math.random() * 6 });

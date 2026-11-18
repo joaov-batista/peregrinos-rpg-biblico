@@ -10,7 +10,7 @@ import { T, CW, CH } from './nivel.js';
 export const inv = G => (G.cm.inv = G.cm.inv || { est: 0, pistas: {} }); // est: 0 = não começou · 1 = investigando · 2 = a fenda está aberta · 3 = a raiz foi arrancada
 const PISTAS = {
   porta: { sala: 3, cy: 0, col: 6, nome: 'A porta arranhada', texto: 'A porta da estalagem tem riscos fundos, do lado de DENTRO. Ninguém tentou entrar: alguém tentou sair, e desistiu.\n\nNo batente, uma coisa escura e fina como cabelo, grudada na madeira. Tem cheiro de fel.\n\nNão é fome. Quem tem fome sai de casa.' },
-  oliveira: { sala: 5, cy: 0, col: 22, nome: 'A oliveira seca', texto: 'A última oliveira do olival secou de um lado só. No pé dela, a terra foi revirada de baixo para cima.\n\nUma raiz preta, que não é de oliveira, sobe pelo tronco e some para dentro do chão, na direção da aldeia.\n\nNão é doença de árvore. Isto veio de baixo.' },
+  oliveira: { sala: 6, cy: 0, col: 22, nome: 'A oliveira seca', texto: 'A última oliveira do olival secou de um lado só. No pé dela, a terra foi revirada de baixo para cima.\n\nUma raiz preta, que não é de oliveira, sobe pelo tronco e some para dentro do chão, na direção da aldeia.\n\nNão é doença de árvore. Isto veio de baixo.' },
   agua: { sala: 4, cy: 1, col: 15, nome: 'A água amarga', texto: 'A água da cisterna está amarga. Você prova na ponta do dedo e cospe.\n\n"Não puderam beber as águas de Mara, porque eram amargas" (Êx 15:23).\n\nDo fundo sobem fios escuros, como os da porta e os da oliveira. Todos vêm do mesmo lugar: daqui de baixo.' }
 };
 const nPistas = G => Object.keys(inv(G).pistas).length;
