@@ -18,6 +18,7 @@ import { VICIOS } from './bichos.js';
 import { quadroVicio } from './pixel/viciospx.js';
 import { iconeItem, iconeArma } from './pixel/icones.js';
 import { abrirOpiniao } from './opiniao.js';
+import { mapaCamadas, temMapaMundo } from './mapamundo.js';
 import { RARIDADES, rarDe, especiaisDe, ESPECIAIS, precoArma, valorTroca, AVISO_UMA_ARMA } from './arsenal.js';
 import { quadroChefe } from './pixel/chefespx.js';
 import { CHEFES } from './chefes.js';
@@ -136,6 +137,7 @@ export function abrirMenu(G, aba = 'inventario') {
       return out;
     }
     function mapa() {
+      if (temMapaMundo(G)) return [mapaCamadas(G)]; // no mundo do Refúgio: o mapa em camadas; nas páginas, a área em miniatura
       // o mapa é a própria área em miniatura: cada bloco vira um ponto, com marcas para gente, portais, rolos e o chefe
       const N = G.N, s = Math.max(3, Math.min(6, Math.round(840 / N.w))), topo = 16, W = N.w * s, H = N.h * s + topo * N.rows;
       const cv = h('canvas', { width: W, height: H, class: 'cm-mapa' }), g = cv.getContext('2d'); g.imageSmoothingEnabled = false;

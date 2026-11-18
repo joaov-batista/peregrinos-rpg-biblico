@@ -151,7 +151,8 @@ export class Caminho {
 
   /* ================= Áreas ================= */
   entrar(id, o = {}) {
-    const def = areaDef(id), cm = this.cm; this.figurantes = [];
+    const def = areaDef(id), cm = this.cm;
+    (cm.visitou = cm.visitou || {})[id.split(':')[0]] = 1; // para o mapa: o que não foi visitado fica em névoa this.figurantes = [];
     if (id === 'sardes' && cm.sar?.feita) def.tema = 'sardes2'; // depois de restaurada, Sardes tem outro céu
     if (id === 'getsemani' && cm.getsemani) { def.tema = 'getsemani2'; def.sub = 'A manhã seguinte'; } // depois do encontro, o jardim amanhece vazio
     this.area = id; this.def = def; this.tm = tema(def.tema); if (this.p && this.tem('mana_deserto')) this.p.oleo = Math.min(this.oleoMax(), this.p.oleo + 12);

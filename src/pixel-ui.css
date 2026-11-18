@@ -367,3 +367,19 @@ html.remake #cmTut p { margin: 0; font-size: 21px; }
 html.remake #cmTut i { flex-basis: 100%; display: flex; justify-content: center; gap: 4px; margin-top: 2px; }
 html.remake #cmTut u { width: 14px; }
 .inv-q { position: relative; } .inv-n { position: absolute; right: 3px; bottom: 1px; font-size: 14px; color: #FFE9A8; text-shadow: 0 1px 0 #000; }
+
+/* ---------- o mapa em camadas ---------- */
+.mm { outline: none; }
+.mm-abas { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-bottom: 8px; }
+.mm-aba { background: #141826; color: #A7ACBF; border: 2px solid #232A3D; padding: 4px 10px; font-size: 17px; cursor: pointer; }
+.mm-aba.on { background: #E8C873; color: #1A1406; border-color: #E8C873; } .mm-aba.nevoa { color: #4A5068; }
+.mm-nav { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; margin-bottom: 6px; }
+.mm-titulo { text-align: center; display: grid; } .mm-titulo b { font-size: 26px; color: #E8C873; } .mm-titulo span { color: #A7ACBF; font-size: 16px; }
+.mm-quadro { box-shadow: 0 0 0 2px #05060B, 0 0 0 4px #9A7B3A, 0 0 0 6px #05060B; }
+.mm-cv { display: block; width: 100%; height: auto; image-rendering: pixelated; cursor: pointer; }
+.mm-info { min-height: 64px; margin-top: 10px; } .mm-info b { color: #FFE9A8; font-size: 20px; } .mm-info ul { list-style: none; margin: 4px 0 0; padding: 0; columns: 2; font-size: 17px; color: #D9DCEA; }
+.mm-loja { color: #E8C873; } .mm-gente { color: #9BE0B4; } .mm-portal { color: #7FE0E8; } .mm-dica { color: #7C8296; margin: 0; }
+.mm-legenda { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 6px; font-size: 15px; color: #A7ACBF; }
+.mm-legenda span::before { content: ''; display: inline-block; width: 9px; height: 9px; margin-right: 5px; box-shadow: 0 0 0 1px #05060B; }
+.l-loja::before { background: #E8C873; } .l-gente::before { background: #9BE0B4; } .l-portal::before { background: #7FE0E8; } .l-missao::before { background: #FFD23F; transform: rotate(45deg); } .l-voce::before { background: #fff; }
+@media (max-width: 600px) { .mm-info ul { columns: 1; } .mm-titulo b { font-size: 20px; } }
