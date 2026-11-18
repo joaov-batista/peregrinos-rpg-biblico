@@ -144,20 +144,11 @@ const terreno = (pls, muros = []) => { const alt = Math.max(1, ...muros.map(m =>
 // os salões de pedra: o Salão dos Rolos (as páginas do Livro), a Casa do Tesouro, a Cripta dos Gigantes e a cisterna.
 // os soldados da ronda: elmo, túnica vermelha, capa escura
 const SOLDADO = tunic => ({ skin: '#A0673E', hair: '#1C120A', tunic, cape: '#3A2A2A', style: 'curto', acessorio: 'elmo', beard: true, body: 'forte' });
-// o Refúgio cresceu para a esquerda: tudo o que já existia anda RX salas para a direita (as referências usam RX)
-export const RX = 2;
+// deslocamento das salas do Refúgio (as referências fixas somam RX; hoje é zero)
+export const RX = 0;
 const MIRIA = { skin: '#D9A273', hair: '#3A2314', tunic: '#8E4A6A', cape: '#E3DED2', style: 'trancas' }, SELA = { skin: '#A0673E', hair: '#1C120A', tunic: '#C98A3A', cape: 'none', style: 'veu' };
 const ASAFE = { skin: '#C68B59', hair: '#2B1A10', tunic: '#3F6A8A', cape: '#C9A63C', style: 'cacheado', beard: true }, ELIABE = { skin: '#8A5A3A', hair: '#1C120A', tunic: '#7A6A4A', cape: '#4A3A2A', style: 'curto', beard: true, body: 'forte' };
 const REFUGIO = [
-  // o portão das vinhas: a entrada leste da aldeia, a eira, o lagar e os pastos de Eliabe
-  { cx: -2, nome: 'Portão das vinhas', papel: 'vila', tiles: sala([12, 14, 17]), objs: [
-    planta(3, 'cipreste'), planta(7, 'oliveira'), { tipo: 'lagar', col: 11 }, planta(19, 'palmeira'), casa(23, 'casa_eliabe', 'Casa de Eliabe'), planta(27, 'oliveira'),
-    { ...povo(21, 4, ELIABE), id: 'eliabe', nome: 'Eliabe, o pastor' }, { tipo: 'flor', col: 5 }, { tipo: 'flor', col: 16 }, { tipo: 'ave', col: 8, lin: 13 }, { tipo: 'ave', col: 26, lin: 14 }] },
-  // a rua das casas: a sua casa, a de Miriã, a de Sela e a de Asafe
-  { cx: -1, nome: 'Rua das casas', papel: 'vila', tiles: sala([13, 3, 6], [13, 18, 21]), objs: [
-    casa(5, 'peregrino', 'Sua casa'), planta(9, 'palmeira'), casa(12, 'casa_miria', 'Casa de Miriã'), planta(16, 'oliveira'), casa(20, 'casa_sela', 'Casa de Sela'), casa(25, 'casa_asafe', 'Casa de Asafe'),
-    { ...povo(13, 3, MIRIA), id: 'miria', nome: 'Miriã, a tecelã' }, { ...povo(19, 3, SELA), id: 'sela', nome: 'Sela, a padeira' }, { ...povo(24, 3, ASAFE), id: 'asafe', nome: 'Asafe, o tocador de lira' },
-    { tipo: 'vaso', col: 8 }, { tipo: 'vaso', col: 17 }, { tipo: 'ave', col: 14, lin: 13 }] },
   { cx: 0, nome: 'Praça do poço', papel: 'inicio', tiles: sala([13, 20, 23]), objs: [
     { tipo: 'flor', col: 4 }, { tipo: 'flor', col: 25 },
     planta(12, 'palmeira'), casa(21, 'viuva', 'Casa da viúva de Sarepta'), planta(27, 'oliveira'),
@@ -165,26 +156,26 @@ const REFUGIO = [
     { tipo: 'npc', col: 10, id: 'velho', nome: 'Velho Peregrino', look: velho },
     { tipo: 'npc', col: 17, id: 'pedro', nome: 'Simão, o pescador', look: { skin: '#A0673E', hair: '#3A2314', tunic: '#497A80', cape: 'none', style: 'cacheado', beard: true, body: 'forte' } },
     { tipo: 'npc', col: 26, id: 'jumenta', nome: 'Uma jumenta', bicho: 'jumenta' },
-    { ...povo(19, 3, VILA.rode.look), id: 'rode', nome: VILA.rode.nome }, { ...povo(8, 2, SOLDADO('#8E2B2B')), id: 'guarda1', nome: 'Cornélio, o centurião', patrulha: [(-2 * 30 + 5) * 32, (3 * 30 + 25) * 32] }, { tipo: 'ave', col: 9, lin: 16 }, { tipo: 'ave', col: 22, lin: 13 }] },
+    { ...povo(19, 3, VILA.rode.look), id: 'rode', nome: VILA.rode.nome }, { ...povo(8, 2, SOLDADO('#8E2B2B')), id: 'guarda1', nome: 'Cornélio, o centurião', patrulha: [5 * 32, (3 * 30 + 25) * 32] }, { tipo: 'ave', col: 9, lin: 16 }, { tipo: 'ave', col: 22, lin: 13 }] },
   // a rua do mercado; no meio dela, a escada que desce ao Salão dos Rolos
   { cx: 1, nome: 'Mercado', papel: 'vila', desce: true, tiles: sala([10, 22, 26], [13, 19, 23]), objs: [
     planta(2, 'palmeira'), { tipo: 'cenario', col: 5, qual: 'banca' }, { tipo: 'cenario', col: 8, qual: 'forja' }, { tipo: 'cenario', col: 14, qual: 'descida', rotulo: 'Salão dos Rolos' },
     { tipo: 'npc', col: 5, id: 'lidia', nome: 'Lídia, vendedora de púrpura', look: lidia },
     { tipo: 'npc', col: 8, id: 'ferreiro', nome: 'Tubalcaim, o ferreiro', look: { skin: '#8A5A3A', hair: '#1E1612', tunic: '#5A4636', cape: 'none', style: 'curto', beard: true, body: 'forte' } },
     { tipo: 'npc', col: 17, id: 'zelote1', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5A4636', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } },
-    { tipo: 'arvore', col: 23 }, { tipo: 'fruto', col: 20, lin: 9 }, { tipo: 'fruto', col: 22, lin: 8 }, { tipo: 'fruto', col: 25, lin: 9 }, { tipo: 'fruto', col: 26, lin: 12 }, { tipo: 'npc', col: 24, lin: 10, id: 'zaqueu', nome: 'Zaqueu', look: zaqueu }] },
+    { tipo: 'arvore', col: 23 }, { tipo: 'fruto', col: 20, lin: 9 }, { tipo: 'fruto', col: 22, lin: 8 }, { tipo: 'fruto', col: 25, lin: 9 }, { tipo: 'fruto', col: 26, lin: 12 }, { tipo: 'npc', col: 24, lin: 10, id: 'zaqueu', nome: 'Zaqueu', look: zaqueu }, { ...povo(11, 3, SELA), id: 'sela', nome: 'Sela, a padeira' }] },
   // a praça das armas: armas, roupas e os bichos de Noé
   { cx: 2, nome: 'Praça das armas', papel: 'vila', tiles: sala([12, 4, 8], [12, 21, 25]), objs: [
     { tipo: 'cenario', col: 6, qual: 'armas' }, { tipo: 'cenario', col: 13, qual: 'tear' }, { tipo: 'cenario', col: 20, qual: 'arca' }, planta(27, 'oliveira'),
     { tipo: 'npc', col: 6, id: 'armeiro', nome: 'Jael, a armeira', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5E4A3A', cape: '#713E49', style: 'trancas', body: 'forte' } },
     { tipo: 'npc', col: 13, id: 'dorcas', nome: 'Dorcas, a costureira', look: { skin: '#E3B48C', hair: '#6B4423', tunic: '#A18C61', cape: '#C8C9BC', style: 'veu' } },
-    { ...povo(17, 4, VILA.bartimeu.look), id: 'bartimeu', nome: VILA.bartimeu.nome },
+    { ...povo(17, 4, VILA.bartimeu.look), id: 'bartimeu', nome: VILA.bartimeu.nome }, { ...povo(11, 3, MIRIA), id: 'miria', nome: 'Miriã, a tecelã' },
     { tipo: 'npc', col: 20, id: 'noe', nome: 'Noé, criador de animais', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#4C665E', cape: '#877451', style: 'longo', beard: true } },
     { tipo: 'vaso', col: 10 }, { tipo: 'vaso', col: 26 }, { tipo: 'ave', col: 5, lin: 12 }, { tipo: 'ave', col: 23, lin: 12 }] },
   // o bairro: casas de teto plano (dá para andar por cima), a estalagem e o oleiro
   { cx: 3, nome: 'Bairro', papel: 'vila', tiles: sala([13, 3, 6], [13, 10, 13], [10, 15, 17], [13, 19, 22]), objs: [
     casa(4, 'estalagem', 'Estalagem do caminho'), planta(8, 'palmeira'), casa(11, 'marta', 'Casa de Marta e Maria'), planta(16, 'oliveira'), casa(20, 'oleiro', 'Casa do oleiro'), planta(27, 'cipreste'),
-    { tipo: 'vaso', col: 24 }, { tipo: 'vaso', col: 25 }, { tipo: 'vaso', col: 26 }, { tipo: 'npc', col: 18, id: 'zelote2', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#4A3A36', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } },
+    casa(25, 'peregrino', 'Sua casa'), { tipo: 'vaso', col: 23 }, { tipo: 'npc', col: 18, id: 'zelote2', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#4A3A36', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } },
     { ...povo(8, 5, VILA.rute.look), id: 'rute', nome: VILA.rute.nome }, { ...povo(16, 3, VILA.eutico.look), id: 'eutico', nome: VILA.eutico.nome },
     { tipo: 'ave', col: 5, lin: 13 }, { tipo: 'ave', col: 16, lin: 10 }, { tipo: 'ave', col: 21, lin: 13 }] },
   // o pátio das provas; a escada do meio desce à cisterna
@@ -200,14 +191,15 @@ const REFUGIO = [
     planta(2, 'cipreste'), { tipo: 'cenario', col: 14, qual: 'sinagoga' }, planta(27, 'cipreste'), { tipo: 'vaso', col: 25 },
     { tipo: 'portal', col: 14, area: 'sinagoga', porta: true, rotulo: 'Entrar na sinagoga' },
     { tipo: 'npc', col: 22, lin: 9, id: 'habacuque', nome: 'Habacuque, o vigia', look: { skin: '#B07A4E', hair: '#D9D2C5', tunic: '#5A5A7A', cape: '#8A6A44', style: 'longo', beard: true } },
-    { tipo: 'ave', col: 6, lin: 12 }] },
+    { ...povo(8, 3, ASAFE), id: 'asafe', nome: 'Asafe, o tocador de lira' }, { tipo: 'ave', col: 6, lin: 12 }] },
+
   // o olival: figos, sombra e a caravana que às vezes traz algo raro
   { cx: 6, nome: 'Olival', papel: 'vila', tiles: sala([12, 8, 11], [9, 13, 16], [12, 18, 21]), objs: [
     { tipo: 'flor', col: 3 }, { tipo: 'flor', col: 12 }, { tipo: 'flor', col: 17 }, { tipo: 'flor', col: 24 }, // canteiros: uma flor por dia em cada um
     planta(4, 'oliveira'), planta(10, 'oliveira'), planta(15, 'palmeira'), planta(20, 'oliveira'), planta(25, 'cipreste'), { tipo: 'cenario', col: 23, qual: 'banca' }, { tipo: 'portal', col: 28, area: 'floresta', rotulo: 'Trilha escondida', oculto: true },
     { tipo: 'fruto', col: 4, lin: 14 }, { tipo: 'fruto', col: 10, lin: 11 }, { tipo: 'fruto', col: 15, lin: 8 }, { tipo: 'fruto', col: 20, lin: 11 },
     { tipo: 'npc', col: 23, id: 'mercador', nome: 'Mercador', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#7A5A2E', cape: '#3F2E4F', style: 'turbante', beard: true } },
-    { tipo: 'poco', col: 7 }, { tipo: 'npc', col: 17, id: 'zelote3', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5E4A3A', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } }, { ...povo(13, 4, VILA.ana.look), id: 'ana', nome: VILA.ana.nome }, { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
+    { tipo: 'poco', col: 7 }, { tipo: 'npc', col: 17, id: 'zelote3', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5E4A3A', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } }, { ...povo(13, 4, VILA.ana.look), id: 'ana', nome: VILA.ana.nome }, { ...povo(6, 4, ELIABE), id: 'eliabe', nome: 'Eliabe, o pastor' }, { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
   // o porto: o píer sobre o mar, o barqueiro que leva a Sardes, o pescador e, às vezes, um mercador de além-mar
   { cx: 7, nome: 'Porto do Refúgio', papel: 'vila', tiles: sala([12, 3, 6]), objs: [
     planta(2, 'palmeira'), { tipo: 'cenario', col: 5, qual: 'redes' }, { tipo: 'mar', col: 11 },
