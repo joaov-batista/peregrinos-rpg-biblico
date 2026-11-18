@@ -58,3 +58,7 @@ export async function amizade(G, ob) {
   G.ui.toast('Amizade com ' + (AMIGOS[ob.id]?.nome || ob.nome) + ': ' + n + ' de 10. ' + premio(G, pr) + '.', 5000); G.salvar();
   return true;
 }
+
+// os corações de um morador (0 a 10), para os presentes e pedidos de moradores.js
+export const coracoesDe = (G, id) => vida(G).amigos[id] || 0;
+export function somarCoracoes(G, id, n) { const v = vida(G); v.amigos[id] = Math.max(0, Math.min(10, (v.amigos[id] || 0) + n)); if (n > 0) G.textoEm(G.p.x, G.p.y - 84, '♥ ' + v.amigos[id], '#FF8FB8', 12); }

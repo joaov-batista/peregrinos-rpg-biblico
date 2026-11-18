@@ -144,6 +144,7 @@ const terreno = (pls, muros = []) => { const alt = Math.max(1, ...muros.map(m =>
 // os salões de pedra: o Salão dos Rolos (as páginas do Livro), a Casa do Tesouro, a Cripta dos Gigantes e a cisterna.
 const REFUGIO = [
   { cx: 0, nome: 'Praça do poço', papel: 'inicio', tiles: sala([13, 20, 23]), objs: [
+    { tipo: 'flor', col: 4 }, { tipo: 'flor', col: 25 },
     planta(12, 'palmeira'), casa(21, 'viuva', 'Casa da viúva de Sarepta'), planta(27, 'oliveira'),
     { tipo: 'portal', col: 2, area: 'bosque', rotulo: 'Bosque do treino' }, { tipo: 'ebenezer', col: 6 }, { tipo: 'poco', col: 14 },
     { tipo: 'npc', col: 10, id: 'velho', nome: 'Velho Peregrino', look: velho },
@@ -180,6 +181,7 @@ const REFUGIO = [
     { tipo: 'npc', col: 27, id: 'samuel', nome: 'Samuel, o que unge', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#D2CFBB', cape: '#55516D', style: 'longo', beard: true } }, { tipo: 'ave', col: 24, lin: 12 }] },
   // o olival: figos, sombra e a caravana que às vezes traz algo raro
   { cx: 5, nome: 'Olival', papel: 'vila', tiles: sala([12, 8, 11], [9, 13, 16], [12, 18, 21]), objs: [
+    { tipo: 'flor', col: 3 }, { tipo: 'flor', col: 12 }, { tipo: 'flor', col: 17 }, { tipo: 'flor', col: 24 }, // canteiros: uma flor por dia em cada um
     planta(4, 'oliveira'), planta(10, 'oliveira'), planta(15, 'palmeira'), planta(20, 'oliveira'), planta(25, 'cipreste'), { tipo: 'cenario', col: 23, qual: 'banca' }, { tipo: 'portal', col: 28, area: 'floresta', rotulo: 'Trilha escondida', oculto: true },
     { tipo: 'fruto', col: 4, lin: 14 }, { tipo: 'fruto', col: 10, lin: 11 }, { tipo: 'fruto', col: 15, lin: 8 }, { tipo: 'fruto', col: 20, lin: 11 },
     { tipo: 'npc', col: 23, id: 'mercador', nome: 'Mercador', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#7A5A2E', cape: '#3F2E4F', style: 'turbante', beard: true } },

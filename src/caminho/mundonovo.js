@@ -12,6 +12,7 @@ import { marco } from '../telemetria.js';
 import { falaHistoria, historiaNoRefugio } from './historia.js';
 import { vidaNoRefugio, rotuloVida, usarVida, amizade } from './vida.js';
 import { missaoNoRefugio, rotuloMissao, usarMissao, zeloteDepois, inv } from './missao.js';
+import { falarMorador } from './moradores.js';
 
 const rand = (a, b) => a + Math.random() * (b - a);
 export const PRECO_BARCO = 150;
@@ -146,6 +147,7 @@ export async function falarNovo(G, ob) {
   const cm = G.cm, p = G.p, c = G.char;
   if (await amizade(G, ob)) return true; // o primeiro papo do dia vale um coração; nos marcos, o morador conta algo
   if (await falaHistoria(G, ob)) return true; // a campanha: pedidos, páginas vivas e a volta
+  if (await falarMorador(G, ob)) return true; // presentes, pedidos e a conversa da vez
   if (ob.id?.startsWith?.('zelote')) { // amargurados, cada um aponta para o conselho do seu jeito
     const k = +ob.id.slice(-1) - 1, n = cm.falas[ob.id] = (cm.falas[ob.id] || 0) + 1, F = cm.zelo ? ZELOTES_DEPOIS : ZELOTES;
     if (cm.zelo) { await zeloteDepois(G, ob, inv(G).est >= 3 ? ZELOTES_FIM[k] : F[k][(n - 1) % F[k].length]); return true; } // venceu o conselho: eles vendem o que é deles e entregam a investigação

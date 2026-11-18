@@ -77,7 +77,7 @@ export function pesca(G) {
         c.data.gold += 150; sfx('coin'); return volta('O peixe de luz não tinha mais dom para dar: deixou 150 denários.', 'bom'); }
       const mult = 1 + Math.min(1, (sequencia - 1) * 0.25), v = Math.round(rand(P.v[0], P.v[1]) * mult); c.data.gold += v; ps[id] = (ps[id] || 0) + 1; sfx('coin');
       if (id === 'moeda') return volta('Um peixe com uma moeda na boca! "Abre-lhe a boca e acharás um estáter" (Mt 17:27). +' + v + ' denários.', 'bom');
-      cm.peixes = (cm.peixes || 0) + 1; if (cm.peixes === 153) G.ovo('rede', 'Cento e cinquenta e três grandes peixes, e a rede não se rompeu (Jo 21:11).');
+      cm.peixes = (cm.peixes || 0) + 1; cm.bolsa = cm.bolsa || {}; cm.bolsa.peixe = (cm.bolsa.peixe || 0) + 1; if (cm.peixes === 153) G.ovo('rede', 'Cento e cinquenta e três grandes peixes, e a rede não se rompeu (Jo 21:11).');
       volta(P.nome + ': +' + v + ' denários' + (mult > 1 ? ' (' + sequencia + ' seguidos)' : '') + '. Total: ' + cm.peixes + ' peixes.', 'bom');
     };
 

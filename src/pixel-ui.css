@@ -366,3 +366,4 @@ html.remake #cmTut .kbd { margin: 0; font-size: 18px; padding: 2px 10px; }
 html.remake #cmTut p { margin: 0; font-size: 21px; }
 html.remake #cmTut i { flex-basis: 100%; display: flex; justify-content: center; gap: 4px; margin-top: 2px; }
 html.remake #cmTut u { width: 14px; }
+.inv-q { position: relative; } .inv-n { position: absolute; right: 3px; bottom: 1px; font-size: 14px; color: #FFE9A8; text-shadow: 0 1px 0 #000; }
