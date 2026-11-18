@@ -2,7 +2,7 @@
 import { sfx } from '../audio.js';
 import { AZEITES } from '../content/azeites.js';
 import { ITENS } from '../content/gente.js';
-import { bolsa, ganhar, dia } from './moradores.js';
+import { bolsa, ganhar } from './moradores.js';
 import { somarCoracoes } from './vida.js';
 import { st } from './sitio.js';
 import { PLANTAS } from '../content/sitio.js';
@@ -64,4 +64,4 @@ async function lojaPerfumes(G, ob) {
   await G.ui.dialog({ nome: ob.nome + ' · perfumes', look: ob.look, texto: '"Púrpura de Tiatira e perfume de todo canto. Cada cor tem um uso; quem tem sítio faz em casa, mais barato, com azeite da prensa."\n\nDenários: ' + Math.floor(c.data.gold),
     acoes: [...Object.entries(AZEITES).map(([k, A]) => ({ label: A.nome + ' — ' + A.preco + ' (tem ' + (bolsa(G)[k] || 0) + ')', fn: () => { if (c.data.gold < A.preco) return G.ui.toast('Faltam denários.', 2500); c.data.gold -= A.preco; ganhar(G, k, 1, G.p.x, G.p.y - 80); sfx('coin'); G.salvar(); reabre(); } })), { label: 'Só olhando' }] });
 }
-export { AZEITES, dia };
+export { AZEITES };
