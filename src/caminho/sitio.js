@@ -51,7 +51,7 @@ export function viradaDoDia(G) {
   for (const m of Object.values(S.maq)) if (m && m.prontoDia != null && m.prontoDia <= hoje) m.feito = true;
   if (G.cm.conjuge) msgs.push(SITIO.conjuge(G.objs.find(o => o.id === G.cm.conjuge)?.nome?.split(',')[0] || 'Seu bem'));
   S.ultimoDia = hoje; G.salvar();
-  if (msgs.length && G.def.sitio) setTimeout(() => G.ui.toast(msgs.join('\n'), 7000), 800);
+  if (msgs.length && G.def.sitio) setTimeout(() => { if (!G.cenaPraia) G.ui.toast(msgs.join('\n'), 7000); }, 800);
 }
 
 /* ---------------- ao entrar: os bichos e o cônjuge aparecem ---------------- */

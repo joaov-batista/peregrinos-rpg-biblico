@@ -9,6 +9,7 @@ import { sfx, music } from '../audio.js';
 import { dia } from './moradores.js';
 import { quadroPessoa } from './pixel/humano.js';
 import { carimbar } from './pixel/raster.js';
+import { pintarVista as vistaNova } from './vista.js';
 
 const FALAS = [
   [3, 'O vento vem do mar, salgado e morno.'],
@@ -64,7 +65,7 @@ export function pintarSentado(g, G, X, Y, Tm) {
 // por cima de tudo
 export function pintarPraia(g, G, X, Y, vw, vh, Tm) {
   const C = G.cenaPraia; if (!C) return;
-  if (C.modo === 'vista') { pintarVista(g, G, vw, vh, Tm, Math.min(1, C.mt / 1.2)); return; }
+  if (C.modo === 'vista') { vistaNova(g, G, vw, vh, Tm, Math.min(1, C.mt / 1.2)); return; }
   const t = C.t, k = Math.min(1, t / 2.5);
   if (C.modo === 'descansa') { // a luz dourada do fim de tarde, o sol baixo e o rastro dele na água
     const gr = g.createLinearGradient(0, 0, 0, vh); gr.addColorStop(0, 'rgba(255,150,80,0.28)'); gr.addColorStop(0.55, 'rgba(255,190,120,0.18)'); gr.addColorStop(1, 'rgba(60,30,60,0.12)');
@@ -90,62 +91,3 @@ function pelicano(g, x, y, bate, a) {
   g.globalAlpha = 1;
 }
 
-/* ---------------- a vista, em primeira pessoa ---------------- */
-// o que o peregrino vê do banco: o céu de verdade (manhã azul, poente laranja, noite de estrelas), nuvens grandes e
-// pontilhadas que andam devagar, a ilha verde à esquerda com a pedra rosada na base, o mar em faixas (escuro no
-// horizonte, turquesa perto), as ondas que chegam e voltam deixando espuma, a areia em listras e uma boia que balança.
-const mix = (a, b, k) => '#' + [0, 2, 4].map(i => Math.round(parseInt(a.substr(1 + i, 2), 16) * (1 - k) + parseInt(b.substr(1 + i, 2), 16) * k).toString(16).padStart(2, '0')).join('');
-function luzDaHora(G) { const hh = ((G.cm.relogio || 0) / 600 * 24 + 7) % 24; return { d: Math.max(0, Math.min(1, (hh - 5) / 2, (19.5 - hh) / 2.5)), poente: Math.max(0, 1 - Math.abs(hh - 18) / 1.6), hh }; }
-function nuvem(g, x, y, w, a, claro, sombra, seed) { // um cúmulo: muitas bolas juntas, base reta, sombra azulada embaixo, borda pontilhada
-  const n = 14, base = y + w * 0.16;
-  for (let b = 0; b < n; b++) { const u = b / (n - 1), cx = x + u * w, alto = Math.sin(u * Math.PI) * (0.55 + h(seed * 7 + b) * 0.35), r = w * (0.09 + alto * 0.14), cy = base - r * 0.6 - alto * w * 0.12;
-    for (let yy = -r; yy <= r; yy++) { const py = Math.round(cy + yy); if (py > base) continue; for (let xx = -r; xx <= r; xx++) { const dd = (xx * xx + yy * yy) / (r * r); if (dd > 1) continue; const px = Math.round(cx + xx);
-      if (dd > 0.8 && (px + py) % 2) continue; g.globalAlpha = a; g.fillStyle = py > base - r * 0.55 ? sombra : claro; g.fillRect(px, py, 1, 1); } } }
-  // fiapos pontilhados ao redor (a nuvem se desfazendo no céu)
-  for (let i = 0; i < 40; i++) { const px = Math.round(x - w * 0.1 + h(seed * 31 + i) * w * 1.2), py = Math.round(base - h(seed * 17 + i) * w * 0.3 + 4); if ((px + py) % 2) continue; g.globalAlpha = a * 0.6; g.fillStyle = sombra; g.fillRect(px, py, 2, 1); }
-  g.globalAlpha = 1;
-}
-function pintarVista(g, G, vw, vh, Tm, k) {
-  const L = luzDaHora(G), d = L.d, po = L.poente, hz = Math.round(vh * 0.52), areia = Math.round(vh * 0.8);
-  const c1 = mix(mix('#0A1230', '#1FA8EC', d), '#4A3A7A', po * 0.6), c2 = mix(mix('#1A2A50', '#8ED8F2', d), '#F2A070', po * 0.8);
-  g.globalAlpha = 1;
-  // o céu
-  for (let y = 0; y < hz; y++) { const t = y / hz; g.fillStyle = mix(c1, c2, Math.pow(t, 1.4)); g.fillRect(0, y, vw, 1); }
-  if (d < 0.4) for (let i = 0; i < 120; i++) { g.globalAlpha = (0.4 - d) * 2.2 * (0.4 + h(i) * 0.6) * (0.7 + 0.3 * Math.sin(Tm * 2 + i)); g.fillStyle = '#E8EEFF'; g.fillRect(Math.round(h(i * 3) * vw), Math.round(h(i * 7) * hz * 0.9), 1, 1); }
-  g.globalAlpha = 1;
-  // o sol (ou a lua), baixo quando é poente
-  { const sx = Math.round(vw * (d > 0.05 ? 0.66 : 0.3)), sy = Math.round(po > 0.2 ? hz - 18 + (1 - po) * 10 : vh * 0.16), cS = d > 0.05 ? (po > 0.3 ? '#FFD08A' : '#FFF8E0') : '#E8ECF4';
-    g.globalAlpha = 0.18; g.fillStyle = cS; g.beginPath(); g.arc(sx, sy, 22, 0, 6.29); g.fill(); g.globalAlpha = 1; g.beginPath(); g.arc(sx, sy, 10, 0, 6.29); g.fill(); }
-  // as nuvens grandes, devagar
-  const claro = mix(mix('#3A4A70', '#FFFFFF', d), '#FFE0C8', po * 0.6), sombra = mix(mix('#2A3458', '#BCE6F4', d), '#E09A8A', po * 0.6);
-  for (let i = 0; i < 4; i++) { const w = 110 + h(i + 2) * 150, x = ((h(i) * vw * 1.5 + Tm * (2 + i * 0.6)) % (vw + w * 1.4)) - w * 0.7, y = 40 + h(i + 9) * (hz - 120); nuvem(g, Math.round(x), Math.round(y), w, 1, claro, sombra, i + 1); }
-  // a ilha à esquerda: morro verde com textura, pedra rosada na base
-  { const iw = Math.round(vw * 0.36), cV = [mix('#0A2A1A', '#2E7A2E', d), mix('#0E3420', '#4A9A3A', d), mix('#12402A', '#7CC44A', d)];
-    for (let x = 0; x < iw; x++) { const u = x / iw, top = Math.round(hz - 6 - Math.pow(1 - u, 1.6) * 62 - Math.sin(u * 18) * 2); for (let y = top; y < hz; y++) { const n = h(x * 13 + y * 7); g.fillStyle = cV[n < 0.25 ? 0 : n < 0.7 ? 1 : 2]; g.fillRect(x, y, 1, 1); } }
-    for (let x = 0; x < iw + 6; x++) { g.fillStyle = h(x * 3) > 0.5 ? mix('#5A2A3A', '#E26A8A', d) : mix('#4A2A30', '#C84A6A', d); g.fillRect(x, hz - 3 - (h(x) > 0.7 ? 1 : 0), 1, 3); } }
-  // o mar em faixas: escuro no horizonte, turquesa perto
-  const m1 = mix(mix('#081830', '#1580A8', d), '#5A4A7A', po * 0.4), m2 = mix(mix('#0C2A44', '#22A8B8', d), '#C07A6A', po * 0.3), m3 = mix(mix('#123A52', '#3ED6C8', d), '#E0A08A', po * 0.25);
-  for (let y = hz; y < areia; y++) { const t = (y - hz) / (areia - hz); g.fillStyle = t < 0.35 ? mix(m1, m2, t / 0.35) : mix(m2, m3, (t - 0.35) / 0.65); g.fillRect(0, y, vw, 1); }
-  g.fillStyle = mix(m1, '#FFFFFF', 0.25); g.fillRect(0, hz, vw, 1);
-  // o brilho na água: riscos que tremem, mais compridos perto
-  for (let i = 0; i < 160; i++) { const t = h(i + 5), y = Math.round(hz + 2 + t * t * (areia - hz - 18)), w = 2 + Math.round(t * 10), x = Math.round(((h(i) * vw + Tm * (4 + t * 10) * (i % 2 ? 1 : -1)) % vw + vw) % vw);
-    g.globalAlpha = 0.25 + 0.35 * t * (0.6 + 0.4 * Math.sin(Tm * 3 + i)); g.fillStyle = i % 5 ? mix(m2, '#FFFFFF', 0.35) : '#FFFFFF'; g.fillRect(x, y, w, 1); }
-  g.globalAlpha = 1;
-  // a boia que balança, lá no meio
-  { const bx = Math.round(vw * 0.85), by = Math.round(hz + (areia - hz) * 0.38 + Math.sin(Tm * 1.5) * 2); g.fillStyle = '#17121f'; g.fillRect(bx - 5, by - 6, 11, 10); g.fillStyle = mix('#1A4A3A', '#3AA878', d); g.fillRect(bx - 4, by - 5, 9, 8); g.fillStyle = mix('#3A6A5A', '#A8F0D0', d); g.fillRect(bx - 3, by - 4, 2, 2); g.fillRect(bx + 1, by - 1, 2, 2); g.fillRect(bx - 1, by - 2, 2, 2); g.globalAlpha = 0.4; g.fillStyle = '#FFFFFF'; g.fillRect(bx - 7, by + 4, 15, 1); g.globalAlpha = 1; }
-  // as ondas que chegam: uma linha de espuma desce até a areia, se espalha e volta
-  for (let i = 0; i < 3; i++) { const P = 4.2, u = ((Tm + i * P / 3) % P) / P, y = Math.round(areia - 26 + u * 30), a = Math.min(1, u * 3) * (1 - Math.max(0, (u - 0.75) / 0.25));
-    for (let x = 0; x < vw; x++) { const oy = Math.round(Math.sin(x * 0.05 + i * 2 + Tm * 0.8) * 2 + Math.sin(x * 0.13 - Tm) * 1); if (h(x + i * 999) > 0.15 + u * 0.4) { g.globalAlpha = a * (0.55 + 0.45 * h(x * 3 + i)); g.fillStyle = '#F4FCFF'; g.fillRect(x, y + oy, 1, 1 + (h(x) > 0.6 ? 1 : 0)); } } }
-  g.globalAlpha = 1;
-  // a areia: molhada na beira, depois listras quentes
-  const s1 = mix(mix('#3A3040', '#E8B48A', d), '#E89A70', po * 0.3), s2 = mix(mix('#4A3A48', '#F8D2A6', d), '#F4B48A', po * 0.3), s3 = mix(mix('#2A2430', '#D8A07A', d), '#C8806A', po * 0.3);
-  const vai = Math.round(Math.sin(Tm * 0.75) * 3);
-  for (let y = areia + vai; y < vh; y++) { const t = (y - areia) / (vh - areia); g.fillStyle = t < 0.08 ? s3 : (Math.floor((y - areia) / 5) % 2 ? s1 : s2); g.fillRect(0, y, vw, 1); }
-  for (let i = 0; i < 70; i++) { const x = Math.round(h(i * 11) * vw), y = Math.round(areia + 6 + h(i * 5) * (vh - areia - 8)); g.fillStyle = h(i) > 0.5 ? s3 : mix(s2, '#FFFFFF', 0.3); g.fillRect(x, y, 3 + Math.round(h(i * 2) * 8), 1); }
-  // gaivotas passando de vez em quando
-  for (let i = 0; i < 2; i++) { const P = 14 + i * 5, u = ((Tm + i * 6) % P) / P, x = Math.round(vw + 20 - u * (vw + 60)), y = Math.round(hz * (0.3 + i * 0.2) + Math.sin(Tm * 1.2 + i) * 4), bate = Math.sin(Tm * 6 + i) > 0;
-    g.fillStyle = mix('#3A3A48', '#5A5A6A', d); g.fillRect(x - 3, y + (bate ? -1 : 0), 3, 1); g.fillRect(x, y, 1, 1); g.fillRect(x + 1, y + (bate ? -1 : 0), 3, 1); }
-  // a entrada da vista (um piscar) e o lembrete discreto
-  if (k < 1) { g.globalAlpha = 1 - k; g.fillStyle = '#05060C'; g.fillRect(0, 0, vw, vh); }
-  g.globalAlpha = 0.45 + 0.15 * Math.sin(Tm * 2); g.fillStyle = '#FFFFFF'; for (let i = 0; i < 3; i++) g.fillRect(vw - 14 + i * 4, vh - 8, 2, 2); g.globalAlpha = 1;
-}
