@@ -4,7 +4,8 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/painel", "destination": "/painel.html" },
-    { "source": "/((?!painel).*)", "destination": "/index.html" }
+    { "source": "/site", "destination": "/site.html" },
+    { "source": "/((?!painel|site).*)", "destination": "/index.html" }
   ],
   "headers": [
     {

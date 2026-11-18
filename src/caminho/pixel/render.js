@@ -13,7 +13,9 @@ import { MUNDO } from '../dados.js';
 import { OLEO_USO } from '../heroi.js';
 import { Sprite, rampa, cor, carimbar, TINTA, BRANCO, PX } from './raster.js';
 import { quadroHeroi, quadroPessoa, vulto, AX, AY } from './humano.js';
+import { tanque } from '../chefes.js';
 import { quadroChefe } from './chefespx.js';
+import { pintarPalco } from './palcos.js';
 import { cenaPixel, pintarFundoPixel, pintarSalasPixel, pintarBlocosPixel, pintarLuzPixel, TL, mistura, pontilha } from './mundo.js';
 import { pintarEfeitos } from './efeitos.js';
 import { JESUS_LOOK } from '../getsemani.js';
@@ -107,8 +109,8 @@ function pintarObjeto(g, o, G, x, y, Tm) {
       g.globalAlpha = 0.16 * al; g.fillStyle = '#FFF1BE'; for (let r = 30; r > 8; r -= 7) { for (let a = 0; a < 40; a++) { const an = a / 40 * TAU; if ((a + Math.floor(Tm * 3)) % 2) g.fillRect(Math.round(x + Math.cos(an) * r), Math.round(yy - 22 + Math.sin(an) * r * 0.9), 1, 1); } }
       g.globalAlpha = 0.07 * al; g.fillRect(x - 3, 0, 6, yy - 30); // um raio do alto (Lc 22:43)
       g.globalAlpha = al; carimbar(g, quadroPessoa(JESUS_LOOK, Tm, 'jesus-' + (o.pose || 'pe'), o.pose), x, yy, 24, 40, o.vira || 1); g.globalAlpha = 1; return true; }
-    case 'discipulo': carimbar(g, quadroPessoa(o.look, Tm, 'disc-' + o.nome, 'dorme'), x, y, 24, 40, 1);
-      if (Math.floor(Tm * 1.2 + o.x) % 3 === 0) { g.fillStyle = '#9AA6C8'; const zy = y - 34 - Math.floor((Tm * 6) % 6); g.fillRect(x + 8, zy, 3, 1); g.fillRect(x + 10, zy + 1, 1, 1); g.fillRect(x + 9, zy + 2, 1, 1); g.fillRect(x + 8, zy + 3, 3, 1); } return true;
+    case 'discipulo': g.globalAlpha = o.alfa ?? 1; carimbar(g, quadroPessoa(o.look, Tm, 'disc-' + o.nome, o.acordado ? o.pose : 'dorme'), x, y, 24, 40, o.vira || 1); g.globalAlpha = 1;
+      if (!o.acordado && Math.floor(Tm * 1.2 + o.x) % 3 === 0) { g.fillStyle = '#9AA6C8'; const zy = y - 34 - Math.floor((Tm * 6) % 6); g.fillRect(x + 8, zy, 3, 1); g.fillRect(x + 10, zy + 1, 1, 1); g.fillRect(x + 9, zy + 2, 1, 1); g.fillRect(x + 8, zy + 3, 3, 1); } return true;
     case 'rocha': { const sp = sprObj('rocha-getsemani', 56, 22, s => { const R = rampa('#6E6A78'); s.bola(28, 14, 26, 9, R, 0.3, -0.8); s.bola(16, 15, 12, 6, R, 0.3, -0.8); s.ret(4, 18, 48, 4, R[1]); for (let i = 0; i < 18; i++) s.px(6 + (i * 13) % 44, 10 + (i * 7) % 9, R[3]); const M = rampa('#3F6A4A'); for (let i = 0; i < 9; i++) s.px(5 + i * 5, 20 - (i % 2), M[2]); });
       carimbar(g, sp, x, y, 28, 21); return true; }
     case 'lagar': { const sp = sprObj('lagar', 72, 46, s => { const P = rampa('#8E8A98'), M = rampa('#6B4A2E'), A = rampa('#C9B23A');
@@ -120,9 +122,23 @@ function pintarObjeto(g, o, G, x, y, Tm) {
     case 'biblia': { const b = Math.floor(Tm * 1.5) % 2; g.globalAlpha = 0.18; g.fillStyle = '#FFE9A8'; g.fillRect(x - 14, y - 16, 28, 16); g.globalAlpha = 1;
       g.fillStyle = '#17121f'; g.fillRect(x - 12, y - 8, 24, 8); g.fillStyle = '#6B2E2E'; g.fillRect(x - 11, y - 3, 22, 3); g.fillStyle = '#F1E9D2'; g.fillRect(x - 10, y - 8, 9, 5); g.fillRect(x + 1, y - 8, 9, 5); g.fillStyle = '#C9B88A'; for (let i = 0; i < 3; i++) { g.fillRect(x - 9, y - 7 + i * 1.5, 7, 1); g.fillRect(x + 2, y - 7 + i * 1.5, 7, 1); }
       g.fillStyle = '#B8423A'; g.fillRect(x, y - 8, 1, 7); if (b) { g.fillStyle = '#FFF1BE'; g.fillRect(x - 1, y - 12, 2, 2); } return true; }
-    case 'tocha': { const f = Math.floor(Tm * 10 + (o.fase || 0) * 5) % 2, bx = x, by = y; // um soldado contra a luz da tocha
-      g.fillStyle = '#05060B'; g.fillRect(bx - 4, by - 34, 9, 34); g.fillRect(bx - 3, by - 40, 7, 6); g.fillRect(bx - 5, by - 42, 11, 3); g.fillRect(bx + 4, by - 30, 6, 2); g.fillRect(bx + 8, by - 44, 2, 16);
-      g.fillStyle = '#FF8A2A'; g.fillRect(bx + 7, by - 50 + f, 4, 6); g.fillStyle = '#FFD86A'; g.fillRect(bx + 8, by - 48 + f, 2, 3); g.globalAlpha = 0.15; g.fillStyle = '#FF8A2A'; g.fillRect(bx - 10, by - 60, 30, 40); g.globalAlpha = 1; return true; }
+    case 'tocha': { const f = Math.floor(Tm * 10 + (o.fase || 0) * 5) % 2, d = o.vira || 1, bx = x, by = y, al = o.alfa ?? 1, R = (xx, yy, w, h) => g.fillRect(d > 0 ? bx + xx : bx - xx - w + 1, by + yy, w, h); // um soldado contra a luz da tocha
+      if (al <= 0) return true; g.globalAlpha = al; g.fillStyle = '#05060B';
+      if (o.caido) { R(-18, -8, 34, 7); R(-24, -10, 7, 6); R(14, -4, 12, 2); g.fillStyle = '#FF8A2A'; R(24, -7 + f, 4, 4); g.globalAlpha = 1; return true; } // caído de costas (Jo 18:6), a tocha no chão
+      const passo = o.indo != null ? Math.floor(Tm * 8 + (o.fase || 0)) % 2 : 0;
+      R(-4, -34, 9, 30); R(-4 + passo, -4, 3, 4); R(2 - passo, -4, 3, 4); R(-3, -40, 7, 6); R(-5, -42, 11, 3); R(4, -30, 6, 2); R(8, -44, 2, 16);
+      g.fillStyle = '#FF8A2A'; R(7, -50 + f, 4, 6); g.fillStyle = '#FFD86A'; R(8, -48 + f, 2, 3); g.globalAlpha = 0.22 * al; g.fillStyle = '#FF8A2A'; for (let a = 0; a < 16; a++) R(9 + Math.round(Math.cos(a * 0.39 + Tm * 2) * 7), -47 + Math.round(Math.sin(a * 0.39 + Tm * 2) * 7), 1, 1); g.globalAlpha = 1; return true; } // um halo pontilhado em volta da chama (a luz de verdade vem de o.luz)
+    case 'pessoa': { // Judas e Malco: gente de verdade no meio da escolta
+      const al = o.alfa ?? 1; if (al <= 0) return true; g.globalAlpha = al; carimbar(g, quadroPessoa(o.look, Tm, 'p-' + o.nome, o.pose), x, y, 24, 40, o.vira || 1);
+      if (o.ferido) { g.fillStyle = '#B8312A'; g.fillRect(x - (o.vira || 1) * 2, y - 33, 2, 3 + (Math.floor(Tm * 4) % 2)); } g.globalAlpha = 1; return true; }
+    case 'anjo': { // quase invisíveis: só um tremor de luz no ar, que a lâmpada mostra um pouco mais
+      const al = o.alfa ?? 0; if (al <= 0.01) return true; const p0 = G.p, lamp = p0.lamp && Math.hypot(o.x - p0.x, o.y - p0.y) < G.raioLuz() ? 1 : 0, k = al * (0.3 + 0.35 * lamp) * (0.7 + 0.3 * Math.sin(Tm * 3 + o.fase));
+      const cy = y - Math.round(Math.sin(Tm * 1.3 + o.fase) * 2) - (o.curva ? -3 : 0); g.globalAlpha = k; g.fillStyle = '#F4F1FF';
+      const tt = Math.floor(Tm * 6); for (let yy = -30; yy < 0; yy++) { const lg = 3 + Math.round((yy + 30) / 8); for (let xx = -lg; xx < lg; xx++) if ((xx + yy + tt) % 2 === 0 || Math.abs(xx) >= lg - 1) g.fillRect(x + xx, cy + yy, 1, 1); } // a veste, pontilhada como ar que tremula
+      g.fillRect(x - 2, cy - 36 + (o.curva ? 3 : 0), 5, 5); // a cabeça (baixa quando se curva)
+      for (const lado of [-1, 1]) for (let i = 0; i < 14; i++) { const ax = x + lado * (4 + i), ay = cy - 28 - Math.round(Math.sin(i / 14 * Math.PI) * 10) + i; if ((i + Math.floor(Tm * 8)) % 2) g.fillRect(ax, ay, 1, 3); } // as asas
+      if (o.espada > 0.05) { g.globalAlpha = Math.min(1, k * 2.4); g.fillStyle = '#FFFFFF'; const L = Math.round(4 + o.espada * 16); g.fillRect(x + 6, cy - 22 - L, 1, L); g.fillStyle = '#FFE9A8'; g.fillRect(x + 4, cy - 22, 5, 1); } // a espada, meio desembainhada
+      g.globalAlpha = 1; return true; }
     case 'mar': case 'barco': return true; // desenhados depois dos blocos (pintarAgua), por cima do chão
     // uma vela de rua (lampadário): apagada solta fumaça; acesa, chama e brilho
     case 'vela': { const aceso = !!G.cm.sar?.velas?.[o.id]; o.luz = aceso ? 130 : 0;
@@ -168,6 +184,20 @@ function pintarObjeto(g, o, G, x, y, Tm) {
       else if (q === 'banca') { g.fillStyle = '#17121f'; g.fillRect(x - 40, y - 52, 3, 52); g.fillRect(x + 22, y - 52, 3, 52); g.fillRect(x - 44, y - 58, 72, 8); g.fillRect(x - 40, y - 16, 64, 16); g.fillStyle = '#7A3F8A'; g.fillRect(x - 43, y - 57, 70, 6); for (let i = 0; i < 9; i++) { g.fillStyle = i % 2 ? '#9A5AB0' : '#5E2C6E'; g.fillRect(x - 43 + i * 8, y - 51, 8, 4 + (i % 2) * 2); } g.fillStyle = '#6B4A2E'; g.fillRect(x - 39, y - 15, 62, 14); for (const [dx, c] of [[-34, '#8E2B45'], [-22, '#7A3F8A'], [-10, '#C9A63C'], [2, '#5E2C6E'], [12, '#B03A6E']]) { g.fillStyle = c; g.fillRect(x + dx, y - 24, 9, 9); g.fillStyle = '#17121f'; g.fillRect(x + dx, y - 16, 9, 1); } }
       else if (q === 'armas') { g.fillStyle = '#17121f'; g.fillRect(x + 16, y - 44, 46, 4); g.fillRect(x + 18, y - 44, 3, 44); g.fillRect(x + 57, y - 44, 3, 44); g.fillStyle = '#6B4A2E'; g.fillRect(x + 17, y - 43, 44, 2); for (const [dx, h2, c] of [[24, 30, '#C3DCEA'], [32, 22, '#A0662A'], [40, 34, '#C3DCEA'], [48, 26, '#C48A4E']]) { g.fillStyle = '#17121f'; g.fillRect(x + dx - 1, y - 41, 4, h2 + 2); g.fillStyle = c; g.fillRect(x + dx, y - 40, 2, h2); g.fillStyle = '#D9A63C'; g.fillRect(x + dx - 1, y - 40 + h2 - 6, 4, 2); } g.fillStyle = '#17121f'; g.fillRect(x + 66, y - 22, 16, 22); g.fillStyle = '#7F8C9C'; g.fillRect(x + 67, y - 21, 14, 14); g.fillStyle = '#D9A63C'; g.fillRect(x + 72, y - 16, 4, 4); }
       else if (q === 'tear') { g.fillStyle = '#17121f'; g.fillRect(x + 16, y - 46, 3, 46); g.fillRect(x + 46, y - 46, 3, 46); g.fillRect(x + 14, y - 48, 37, 4); g.fillRect(x + 14, y - 12, 37, 4); g.fillStyle = '#6B4A2E'; g.fillRect(x + 15, y - 47, 35, 2); g.fillRect(x + 15, y - 11, 35, 2); for (let i = 0; i < 9; i++) { g.fillStyle = ['#C8C9BC', '#713E49', '#394F62'][i % 3]; g.fillRect(x + 20 + i * 3, y - 44, 2, 20 + ((i * 5 + Math.floor(Tm * 2)) % 9)); } g.fillStyle = '#A18C61'; g.fillRect(x + 54, y - 8, 14, 8); g.fillStyle = '#C8C9BC'; g.fillRect(x + 56, y - 14, 10, 6); g.fillStyle = '#713E49'; g.fillRect(x + 58, y - 18, 6, 4); }
+      return true; }
+    case 'pedraFunda': { const b = Math.floor(Tm * 4) % 2, pisca = o.t < 2.5 && Math.floor(Tm * 10) % 2; if (pisca) return true; g.fillStyle = '#17121f'; g.fillRect(x - 4, y - 9 - b, 8, 7); g.fillStyle = '#C9C4B2'; g.fillRect(x - 3, y - 8 - b, 6, 5); g.fillStyle = '#FFFFFF'; g.fillRect(x - 2, y - 8 - b, 2, 1); g.fillStyle = '#FFE9A8'; for (let i = 0; i < 4; i++) { const a = Tm * 3 + i * 1.57; g.fillRect(Math.round(x + Math.cos(a) * 11), Math.round(y - 6 + Math.sin(a) * 8), 1, 1); } g.fillRect(x, y - 16 - b * 2, 1, 4); return true; }
+    case 'placa': { g.fillStyle = '#17121f'; g.fillRect(x - 1, y - 14, 3, 14); g.fillRect(x - 8, y - 24, 17, 11); g.fillStyle = '#6B4A2E'; g.fillRect(x, y - 13, 1, 13); g.fillStyle = '#A0794A'; g.fillRect(x - 7, y - 23, 15, 9); g.fillStyle = '#5A3E22'; g.fillRect(x - 5, y - 21, 11, 1); g.fillRect(x - 5, y - 18, 8, 1); return true; }
+    case 'lamparina': { const f = Math.floor(Tm * 8) % 3; g.fillStyle = '#17121f'; g.fillRect(x - 1, y - 40, 3, 40); g.fillRect(x - 5, y - 50, 11, 11); g.fillStyle = '#6B4A2E'; g.fillRect(x, y - 39, 1, 39); g.fillStyle = '#3A2A1A'; g.fillRect(x - 4, y - 49, 9, 9); g.fillStyle = '#FFB84A'; g.fillRect(x - 2, y - 47, 5, 6); g.fillStyle = '#FFF1BE'; g.fillRect(x - 1, y - 46 - (f === 1 ? 1 : 0), 3, 4); g.fillStyle = '#D9A63C'; g.fillRect(x - 5, y - 51, 11, 1); return true; }
+    case 'pista': { const b = Math.floor(Tm * 3) % 2; g.fillStyle = '#0B0F0A'; g.fillRect(x - 9, y - 3, 18, 3); g.fillRect(x - 5, y - 6, 9, 3); g.fillRect(x + 4, y - 5, 2, 2); g.fillStyle = '#1E2A18'; g.fillRect(x - 7, y - 2, 13, 1); g.fillStyle = '#B8E060'; g.fillRect(x - 3 + b * 4, y - 5, 1, 1); g.fillRect(x + 2 - b * 3, y - 2, 1, 1); g.fillStyle = '#FFD23F'; g.fillRect(x - 1, y - 22 - b, 3, 5); g.fillRect(x + 1, y - 17 - b, 1, 3); g.fillRect(x, y - 12 - b, 2, 2); return true; }
+    case 'livroRefugio': { const b = Math.floor(Tm * 2) % 2; g.fillStyle = '#17121f'; g.fillRect(x - 6, y - 18, 12, 18); g.fillRect(x - 11, y - 25, 22, 8); g.fillStyle = '#6E6A78'; g.fillRect(x - 5, y - 17, 10, 17); g.fillStyle = '#8A8696'; g.fillRect(x - 5, y - 17, 2, 17); g.fillStyle = '#E9E6DC'; g.fillRect(x - 10, y - 24, 9, 6); g.fillRect(x + 1, y - 24, 9, 6); g.fillStyle = '#8A6A2C'; g.fillRect(x - 1, y - 24, 2, 6); g.fillStyle = '#5A544A'; for (let i = 0; i < 3; i++) { g.fillRect(x - 8, y - 23 + i * 2, 5, 1); g.fillRect(x + 3, y - 23 + i * 2, 5, 1); } g.fillStyle = '#FFE9A8'; g.fillRect(x - 3 + b * 5, y - 29 - b, 1, 2); return true; }
+    case 'festa': { g.fillStyle = '#17121f'; g.fillRect(x - 17, y - 13, 34, 4); g.fillRect(x - 15, y - 10, 3, 10); g.fillRect(x + 12, y - 10, 3, 10); g.fillStyle = '#C9C4B2'; g.fillRect(x - 16, y - 12, 32, 2); g.fillStyle = '#8E2B45'; g.fillRect(x - 16, y - 10, 32, 1); g.fillStyle = '#6B4A2E'; g.fillRect(x - 14, y - 9, 1, 9); g.fillRect(x + 13, y - 9, 1, 9); g.fillStyle = '#D9A63C'; g.fillRect(x - 10, y - 16, 5, 4); g.fillStyle = '#B8733E'; g.fillRect(x - 1, y - 17, 4, 5); g.fillRect(x, y - 19, 2, 2); g.fillStyle = '#E8D9A8'; g.fillRect(x + 7, y - 15, 6, 3); g.fillStyle = '#FFB84A'; g.fillRect(x - 13, y - 19 - (Math.floor(Tm * 8) % 2), 1, 3); g.fillRect(x + 14, y - 19 - (Math.floor(Tm * 8 + 1) % 2), 1, 3); return true; }
+    case 'enfeite': { const q = o.qual;
+      if (q === 'cabana') { g.fillStyle = '#17121f'; g.fillRect(x - 15, y - 30, 2, 30); g.fillRect(x + 13, y - 30, 2, 30); g.fillRect(x - 18, y - 34, 36, 5); g.fillStyle = '#6B4A2E'; g.fillRect(x - 14, y - 29, 1, 29); g.fillRect(x + 14, y - 29, 1, 29); for (let i = 0; i < 12; i++) { g.fillStyle = i % 2 ? '#3F7A4A' : '#5E9A56'; g.fillRect(x - 17 + i * 3, y - 35 - (i % 3), 3, 5 + (i % 2) * 2); } g.fillStyle = '#C9A63C'; g.fillRect(x - 8, y - 27, 2, 3); g.fillRect(x + 5, y - 26, 2, 3); }
+      else if (q === 'feixe') { g.fillStyle = '#17121f'; g.fillRect(x - 6, y - 20, 12, 20); g.fillStyle = '#D9A63C'; for (let i = 0; i < 5; i++) g.fillRect(x - 5 + i * 2, y - 19 - (i % 2) * 3, 2, 19 + (i % 2) * 3); g.fillStyle = '#FFE08A'; for (let i = 0; i < 5; i++) g.fillRect(x - 5 + i * 2, y - 22 - (i % 2) * 3, 1, 4); g.fillStyle = '#8E2B45'; g.fillRect(x - 6, y - 10, 12, 2); }
+      else if (q === 'cestos') { for (const [dx, c] of [[-7, '#7A3F8A'], [5, '#5E7A3A']]) { g.fillStyle = '#17121f'; g.fillRect(x + dx - 5, y - 9, 11, 9); g.fillStyle = '#A0794A'; g.fillRect(x + dx - 4, y - 7, 9, 7); g.fillStyle = '#6B4A2E'; g.fillRect(x + dx - 4, y - 4, 9, 1); g.fillStyle = c; g.fillRect(x + dx - 3, y - 10, 7, 3); g.fillRect(x + dx - 1, y - 12, 3, 2); } }
+      else if (q === 'estrela') { const b = Math.floor(Tm * 4) % 2; g.fillStyle = '#17121f'; g.fillRect(x - 1, y - 46, 2, 46); g.fillStyle = '#6B4A2E'; g.fillRect(x, y - 45, 1, 45); g.fillStyle = b ? '#FFFFFF' : '#FFE9A8'; g.fillRect(x - 1, y - 58, 2, 14); g.fillRect(x - 6, y - 52, 12, 2); g.fillStyle = '#FFD23F'; g.fillRect(x - 3, y - 55, 6, 8); g.fillRect(x - 4 - b, y - 56 - b, 1, 1); g.fillRect(x + 3 + b, y - 56 - b, 1, 1); g.fillRect(x - 4 - b, y - 47 + b, 1, 1); g.fillRect(x + 3 + b, y - 47 + b, 1, 1); }
+      else if (q === 'amendoeira') { g.fillStyle = '#17121f'; g.fillRect(x - 1, y - 30, 3, 30); g.fillStyle = '#6B4A2E'; g.fillRect(x, y - 29, 1, 29); for (let i = 0; i < 14; i++) { const a = i * 0.9, r = 6 + (i % 4) * 3; g.fillStyle = i % 3 ? '#FFD9E8' : '#FFFFFF'; g.fillRect(Math.round(x + Math.cos(a) * r), Math.round(y - 34 + Math.sin(a) * r * 0.7), 2, 2); } g.fillStyle = '#FF8FB8'; g.fillRect(x - 3 + (Math.floor(Tm * 2) % 7), y - 20 + (Math.floor(Tm * 5) % 18), 1, 1); }
+      else { g.fillStyle = '#17121f'; g.fillRect(x - 13, y - 11, 26, 3); g.fillRect(x - 11, y - 8, 2, 8); g.fillRect(x + 9, y - 8, 2, 8); g.fillStyle = '#E9E6DC'; g.fillRect(x - 12, y - 10, 24, 1); g.fillStyle = '#C9A86A'; g.fillRect(x - 8, y - 13, 6, 2); g.fillRect(x + 2, y - 13, 6, 2); g.fillStyle = '#5E7A3A'; g.fillRect(x - 1, y - 14, 2, 3); }
       return true; }
     case 'arpao': { const b = Math.floor(Tm * 3) % 2; g.fillStyle = '#17121f'; g.fillRect(x - 1, y - 24 - b, 3, 24); g.fillStyle = '#A0662A'; g.fillRect(x, y - 23 - b, 1, 22); g.fillStyle = '#EEF6FB'; g.fillRect(x - 1, y - 28 - b, 3, 5); g.fillRect(x, y - 30 - b, 1, 2); g.fillStyle = '#BFF0F8'; g.fillRect(x - 3 + b * 5, y - 32, 1, 1); return true; }
     case 'arvore': { // o sicômoro de Zaqueu: tronco torto, copa em três massas, figos
@@ -246,22 +276,28 @@ export function renderPixel(G) {
   pintarSalasPixel(g, G, C, vw, vh, cx, cy);
   for (const o of G.objs) { const x = X(o.x); if (x < -60 || x > vw + 60) continue; if (o.oculto && !G.achou(o)) { const k = G.p.lampA * clamp(1 - (Math.hypot(o.x - G.p.x, o.y - G.p.y) - 200) / 160, 0, 1); if (k < 0.05) continue; g.globalAlpha = k; } if (!pintarObjeto(g, o, G, x, Y(o.y), Tm)) antigo(() => desenharObjeto(g, o, G)); g.globalAlpha = 1; }
   if (G.def.mundo && G.N.arena) pintarArenaTema(g, G, X, Y, Tm);
+  const chefe = G.N.arena && G.inimigos.find(e => e.kind === 'chefe' && e.cen);
+  if (chefe) pintarPalco(g, G, chefe, X, Y, Tm, false); // o cenário que muda durante a luta
   pintarBlocosPixel(g, G, C, vw, vh, cx, cy);
   for (const o of G.objs) if (o.tipo === 'mar' || o.tipo === 'barco') pintarAgua(g, o, G, X(o.x), Y(o.y), Tm);
   // avisos de golpe: áreas pontilhadas que fecham até o impacto
   for (const z of G.zonas) pintarZona(g, G, z, X, Y, vw, vh, Tm);
   pintarEfeitos(g, G.fxPx, cx, cy, true);
+  // figurantes: os zelotes de pé na sala, depois da luta, fazendo o gesto de respeito
+  for (const e of G.figurantes || []) { e.alpha = Math.min(1, (e.alpha ?? 1) + 0.035); const q = quadroChefe(e, Tm, G); if (!q) continue; const k = q.esc || 1; g.save(); g.translate(X(e.x), Y(e.y)); g.scale((e.face > 0 ? 1 : -1) * k, k); g.drawImage(q.s.tela(), -q.ax, -q.ay); g.restore(); }
   for (const e of G.inimigos) {
     if (Math.abs(e.x - p.x) > 1200) continue;
     if (e.kind === 'chefe') {
       const q = quadroChefe(e, Tm, G);
       if (q) {
-        const vira = e.face > 0 || e.c.semVirar ? 1 : -1, luz = p.lamp ? G.raioLuz() : 0;
+        const vira = (e.face > 0 || e.c.semVirar ? 1 : -1) * (q.inv ? -1 : 1), luz = p.lamp ? G.raioLuz() : 0;
         // os clones da Mentira: iguais ao verdadeiro, mas tremem dentro da luz da lâmpada
         for (const cl of e.clones) { const naLuz = luz && Math.hypot(cl.x - p.x, cl.y - p.y) < luz; carimbar(g, q.s, X(cl.x), Y(cl.y), q.ax, q.ay, vira, (cl.alpha ?? 1) * (naLuz ? 0.22 + 0.12 * Math.sin(Tm * 40) : 1) * Math.min(1, cl.t * 2)); }
+        medirChefe(e, q, vira);
         if (q.esc > 1) { const cv = q.s.tela(), k = q.esc; g.save(); g.translate(X(e.x), Y(e.y)); g.scale(vira * k, k); g.drawImage(cv, -q.ax, -q.ay); g.restore(); }
         else carimbar(g, q.s, X(e.x), Y(e.y), q.ax, q.ay, vira);
         pintarExtrasChefe(g, e, G, X, Y, Tm);
+        if (window.__verHb && e.hb) { g.strokeStyle = '#0F0'; g.lineWidth = 2; g.strokeRect(X(e.x + e.hb.dx - e.hb.w / 2), Y(e.y + e.hb.y0), e.hb.w / PX, e.hb.h / PX); } // depuração: a caixa de dano
       }
       else antigo(() => desenharChefe(g, e, Tm, G));
     } else {
@@ -290,6 +326,11 @@ export function renderPixel(G) {
     else { g.fillStyle = '#17121f'; g.fillRect(x - 4, y - 5, 8, 8); g.fillRect(x - f * 6 - 1, y + 1, 4, 5); g.fillStyle = '#3FA35A'; g.fillRect(x - 3, y - 4, 6, 6); g.fillStyle = '#E2463C'; g.fillRect(x - 3, y - 4, 6, 2); g.fillStyle = '#2F6FD0'; g.fillRect(x - f * 6, y + 2, 3, 3);
       g.fillStyle = '#F2C14E'; g.fillRect(x + f * 3, y - 2, 2, 2); g.fillStyle = '#17121f'; g.fillRect(x + f * 1, y - 3, 1, 1); g.fillStyle = k ? '#2E8A4A' : '#57C274'; g.fillRect(x - 5, y - (k ? 8 : 1), 10, 3); }
   }
+  if (p.pedra && !p.morto) { // a funda carregada: a linha mostra para onde a pedra vai (uma só chance)
+    const a = G.ctl?.mira ?? (p.face > 0 ? 0 : Math.PI); let tx = p.x + Math.cos(a) * 14, ty = p.y - 28 + Math.sin(a) * 14, vx = Math.cos(a) * 900, vy = Math.sin(a) * 900;
+    for (let i = 0; i < 22; i++) { vy += 240 * 0.03; tx += vx * 0.03; ty += vy * 0.03; if (i % 2 === (Math.floor(Tm * 12) % 2)) { g.fillStyle = i < 16 ? '#FFE9A8' : '#8A6A2C'; g.fillRect(X(tx), Y(ty), 2, 2); } }
+    const hx = X(p.x) + p.face * 5, hy = Y(p.y) - 30; g.fillStyle = '#17121f'; g.fillRect(hx - 2, hy - 2, 5, 5); g.fillStyle = '#E8E4D6'; g.fillRect(hx - 1, hy - 1, 3, 3);
+  }
   if (p.arpao && !p.morto) { const hx = X(p.x) - p.face * 4, hy = Y(p.y) - 34; g.fillStyle = '#A0662A'; g.fillRect(hx, hy, 1, 26); g.fillStyle = '#EEF6FB'; g.fillRect(hx - 1, hy - 4, 3, 4); }
   // outros peregrinos (multijogador) e o herói
   for (const o of G.outros) pintarJogador(g, o.corpo, o.look, o.cls, o.arma, Tm, o.hab, X, Y, false, o.armaCor, o.armaRar);
@@ -299,11 +340,17 @@ export function renderPixel(G) {
   pintarEfeitos(g, G.fxPx, cx, cy, false);
   for (const t of G.tiros) pintarTiro(g, t, X(t.x), Y(t.y), Tm);
   for (const o of G.outros) if (o.corpo.ts) for (const t of o.corpo.ts) pintarTiro(g, { x: t[0], y: t[1], vx: t[2], vy: t[3], r: t[4], tipo: t[5], cor: t[6], amigo: true }, X(t[0]), Y(t[1]), Tm);
+  // poeira do pulo e da queda: duas nuvenzinhas que se abrem para os lados, crescem e se desfazem
+  for (const d of G.poeiras || []) { const k = 1 - d.t / d.max, cx0 = X(d.x), cy0 = Y(d.y);
+    for (const sd of [-1, 1]) for (const [dx, dy, rr, at] of [[3, -1, 2.6, 0], [6, -2, 2, 0.12], [9, -1, 1.5, 0.22]]) { const kk = clamp((k - at) / (1 - at), 0, 1); if (kk <= 0) continue; const r = Math.max(1, Math.round(rr * d.f * (0.5 + Math.sin(kk * Math.PI) * 0.9))), x = cx0 + sd * Math.round((dx + kk * 9) * d.f), y = cy0 + dy - Math.round(kk * 3 * d.f);
+      for (let yy = -r; yy <= r; yy++) for (let xx = -r; xx <= r; xx++) if (xx * xx + yy * yy <= r * r + 1) { if (kk > 0.55 && (xx + yy + cx0) % 2) continue; g.fillStyle = yy < 0 ? '#E8E0D0' : yy === r ? '#8A7E70' : '#C9BFAE'; g.fillRect(x + xx, y + yy, 1, 1); } }
+    for (let i = 0; i < 3; i++) { const kk = clamp(k * 1.3 - i * 0.1, 0, 1); if (kk > 0 && kk < 1) { g.fillStyle = '#D8CFC0'; g.fillRect(cx0 + Math.round((i - 1) * 5 * d.f * (1 + kk)), cy0 - 3 - Math.round(kk * 8 * d.f), 1, 1); } } }
   for (const q of G.parts) { const k = q.t / q.max, x = X(q.x), y = Y(q.y); g.fillStyle = q.cor; if (q.anel) { const r = Math.round(q.r / PX * (1 - k)); g.globalAlpha = k > 0.5 ? 1 : 0.6; for (let a = 0; a < 24; a++) if ((a + Math.floor(Tm * 20)) % 3) g.fillRect(x + Math.round(Math.cos(a / 24 * TAU) * r), y + Math.round(Math.sin(a / 24 * TAU) * r), k > 0.6 ? 2 : 1, k > 0.6 ? 2 : 1); g.globalAlpha = 1; } else { const lg = k > 0.5 && q.r > 2 ? 2 : 1; g.fillRect(x, y, lg, lg); } }
   if (G.N.pocos) for (const o of G.N.pocos) { const x = X(o.x), y = Y(o.y) + 3; if (x < -20 || x > vw + 4) continue; for (let i = 0; i < 16; i++) { const h1 = Math.round(Math.sin((o.x + i) * 0.4 + Tm * 3) * 1.5); g.fillStyle = '#123847'; g.fillRect(x + i, y + h1, 1, 40); g.fillStyle = (i + Math.floor(Tm * 6)) % 5 < 2 ? '#BFF0F8' : '#3A9AB0'; g.fillRect(x + i, y + h1, 1, 1); } }
   if (G.def.mundo === 'leviata' && G.N.arena) { // o mar bate no costado: ondas na frente de tudo
     const yy = Y(G.N.arena.chao) + 4; for (let xx = 0; xx < vw; xx++) { const h1 = Math.round(Math.sin((xx + cx) * 0.09 + Tm * 2.2) * 2 + Math.sin((xx + cx) * 0.031 - Tm * 1.3) * 3); g.fillStyle = '#123847'; g.fillRect(xx, yy + h1, 1, vh - yy); g.fillStyle = (xx + Math.floor(Tm * 6)) % 9 < 3 ? '#BFF0F8' : '#3A9AB0'; g.fillRect(xx, yy + h1, 1, 1); if ((xx * 7 + Math.floor(Tm * 3)) % 23 === 0) { g.fillStyle = '#1C5A6E'; g.fillRect(xx, yy + h1 + 5, 4, 1); } }
   }
+  if (chefe) pintarPalco(g, G, chefe, X, Y, Tm, true);
   pintarLuzPixel(g, G, vw, vh, cx, cy, luzCv);
   pintarClima(g, G, vw, vh, cx, Tm);
   pintarHud(g, G, vw); barraChefe(g, G, vw);
@@ -402,6 +449,10 @@ function pintarTiro(g, t, x, y, Tm) {
 
 function pintarZona(g, G, z, X, Y, vw, vh, Tm) {
   const A = G.N.arena, p = G.p, ativa = z.aviso <= 0, c = !z.cor ? '#D8C8F0' : z.cor.startsWith('#') ? z.cor : `rgb(${z.cor})`, pisca = Math.floor(Tm * 12) % 2;
+  const luzPerto = p.lamp && Math.hypot(z.x + (z.tipo === 'muro' ? z.w / 2 : 0) - p.x, (z.y ?? p.y) - p.y) < G.raioLuz();
+  if (z.oculta && !ativa && !luzPerto) { if (pisca && Math.floor(Tm * 3) % 3 === 0) { g.fillStyle = c; g.globalAlpha = 0.25; g.fillRect(X(z.x), Y(z.y + z.h) - 1, Math.round(z.w / PX), 1); g.globalAlpha = 1; } return; } // a cilada só aparece à luz
+  if (z.isca && z.sinal) { const x = X(z.x), y = Y(z.y), r = Math.round(z.r / PX); g.fillStyle = luzPerto ? '#FFE9A8' : c; for (let a = 0; a < 40; a++) if ((a + Math.floor(Tm * 10)) % 2) g.fillRect(x + Math.round(Math.cos(a / 40 * TAU) * r), y + Math.round(Math.sin(a / 40 * TAU) * r), 1, 1); if (luzPerto) { g.globalAlpha = 0.35; for (let yy = -r; yy <= r; yy += 2) for (let xx = -r; xx <= r; xx += 2) if (xx * xx + yy * yy < r * r) g.fillRect(x + xx, y + yy, 1, 1); g.globalAlpha = 1; } return; } // o abrigo verdadeiro brilha sob a lâmpada
+  if (z.tipo === 'muro' && ativa && z.dur > 0.4) { const x = X(z.x), y = Y(z.y), w = Math.round(z.w / PX), h = Math.round(z.h / PX); g.fillStyle = c; g.globalAlpha = 0.85; g.fillRect(x, y, w, h); g.globalAlpha = 1; g.fillStyle = '#FFFFFF'; g.fillRect(x, y, w, 1); for (let i = 0; i < w; i += 4) g.fillRect(x + i, y + ((i + Math.floor(Tm * 12)) % Math.max(1, h)), 1, 1); return; } // paredes que andam: onda, escudo, âncora, ouro
   if (z.tipo === 'circ') {
     const x = X(z.x), y = Y(z.y), r = Math.round(z.r / PX), k = ativa ? 1 : clamp(1 - z.aviso / 0.9, 0, 1);
     g.fillStyle = ativa ? '#fff' : c;
@@ -422,7 +473,7 @@ function pintarZona(g, G, z, X, Y, vw, vh, Tm) {
     g.fillRect(x + 1, y, w - 2, h); g.fillStyle = c; g.fillRect(x, y, 1, h); g.fillRect(x + w - 1, y, 1, h); if (z.tipo === 'col') for (let i = 0; i < 8; i++) g.fillRect(x - 3 + ((i * 7) % (w + 6)), y + h - 1 - ((i * 5) % 9), 1, 2);
     return;
   }
-  if (z.tipo === 'ret') return;
+  if (z.tipo === 'ret' || (z.isca && ativa)) return;
   const k = clamp(1 - z.aviso / 0.9, 0, 1); g.fillStyle = c;
   for (let yy = 0; yy < h; yy += 1) for (let xx = (yy & 1); xx < w; xx += 2) if (pontilha(xx, yy + Math.floor(Tm * 16), 0.12 + k * 0.4)) g.fillRect(x + xx, y + yy, 1, 1);
   g.fillStyle = pisca ? '#fff' : c; g.fillRect(x, y, w, 1); g.fillRect(x, y + h - 1, w, 1); if (z.tipo === 'col') { g.fillRect(x, y, 1, h); g.fillRect(x + w - 1, y, 1, h); }
@@ -491,7 +542,7 @@ function pintarTextos(g, G, esc, cx, cy) {
   const d = G.dpr, e = esc * d, v = G.vista, p = G.p, cm = G.cm, def = G.def, u = Math.max(1, Math.round(e / 2.4));
   const txt = (s, x, y, tam, corT, alinha = 'left') => { g.font = `600 ${tam}px ${FONTE}`; g.textAlign = alinha; g.lineJoin = 'round'; g.lineWidth = Math.max(2, tam / 4.5); g.strokeStyle = '#17121f'; g.strokeText(s, x, y); g.fillStyle = corT; g.fillText(s, x, y); };
   const sx = wx => (wx / PX - cx) * e, sy = wy => (wy / PX - cy) * e;
-  for (const t of G.textos) { const x = t.fixo ? t.fixo.x : t.x, y = t.fixo ? t.fixo.y - t.fixo.h - 16 : t.y; g.globalAlpha = Math.min(1, t.t * 2); txt(t.txt, sx(x), sy(y), Math.round(t.tam * 0.62 * e / 1.3), t.cor, 'center'); }
+  for (const t of G.textos) { const x = t.fixo ? t.fixo.x : t.x, y = t.fixo ? t.fixo.y - t.fixo.h - 16 : t.y, tam = Math.round(t.tam * 0.62 * e / 1.3); g.font = `600 ${tam}px ${FONTE}`; const meia = g.measureText(t.txt).width / 2 + tam * 0.6, W = g.canvas.width; g.globalAlpha = Math.min(1, t.t * 2); txt(t.txt, meia * 2 < W ? clamp(sx(x), meia, W - meia) : W / 2, sy(y), tam, t.cor, 'center'); } // a fala nunca sai pela borda da tela
   g.globalAlpha = 1;
   for (const o of G.outros) { txt(o.nome, sx(o.corpo.x), sy(o.corpo.y - 68), 8 * u * 1.5, '#BFE3D8', 'center'); const n = Math.max(0, Math.ceil(o.corpo.vida || 0)), mx = o.corpo.vidaMax || 5; for (let i = 0; i < mx; i++) { const xx = sx(o.corpo.x) + (i - mx / 2) * 4 * u, yy = sy(o.corpo.y - 82); g.fillStyle = '#17121f'; g.fillRect(xx - u, yy - u, 4 * u, 4 * u); g.fillStyle = i < n ? '#FF9A3C' : '#4A4658'; g.fillRect(xx, yy, 2 * u, 2 * u); } }
   // ataque mira: a linha de pontaria enquanto carrega e os riscos de luz dos golpes soltos
@@ -501,6 +552,8 @@ function pintarTextos(g, G, esc, cx, cy) {
   for (const r of G.riscos || []) { const k = r.t / r.max, n = Math.max(6, Math.round(Math.hypot(r.x1 - r.x0, r.y1 - r.y0) / 6)), gr = Math.max(1, Math.round(r.g * u * (0.4 + k * 0.6))), nx = -(r.y1 - r.y0), ny = r.x1 - r.x0, nl = Math.hypot(nx, ny) || 1;
     for (let i = 0; i <= n; i++) { const q = i / n; if (q > 1 - (1 - k) * 0.5 && !r.chicote) continue; const on = r.chicote ? Math.sin(q * 9 + k * 12) * 14 * (1 - q) * k : 0, x = sx(r.x0 + (r.x1 - r.x0) * q + nx / nl * on), y = sy(r.y0 + (r.y1 - r.y0) * q + ny / nl * on);
       g.globalAlpha = Math.min(1, k * 1.6); g.fillStyle = r.cor; g.fillRect(Math.round(x - gr), Math.round(y - gr), gr * 2, gr * 2); if (gr > 1) { g.fillStyle = '#FFFFFF'; g.fillRect(Math.round(x - gr / 2), Math.round(y - gr / 2), gr, gr); } } g.globalAlpha = 1; }
+  for (const o of G.objs) if (o.chama && !G.cena) { const yy = sy(o.y - 78 - Math.abs(Math.sin(G.T * 3)) * 6); txt('!', sx(o.x), yy, 8 * u * 2.4, '#FFD23F', 'center'); } // quem tem algo da história a dizer
+  for (const o of G.objs) if (o.tipo === 'placa') { const k = clamp(1.6 - Math.hypot(o.x - p.x, o.y - p.y) / 90, 0, 1); if (k > 0.02) { g.globalAlpha = k; const pal = o.txt.split(' '), linhas = ['']; for (const w of pal) { if ((linhas[linhas.length - 1] + ' ' + w).length > 38) linhas.push(w); else linhas[linhas.length - 1] += (linhas[linhas.length - 1] ? ' ' : '') + w; } linhas.forEach((l, i) => txt(l, sx(o.x), sy(o.y - 40 - (linhas.length - 1 - i) * 11), 8 * u * 1.4, '#F4E6BC', 'center')); g.globalAlpha = 1; } }
   for (const o of G.objs) if (o.tipo === 'escrito') { const k = clamp(G.p.lampA * 1.4 - Math.max(0, Math.hypot(o.x - p.x, o.y - p.y) - 260) / 120, 0, 1); if (k > 0.02) { g.globalAlpha = k; txt(o.txt, sx(o.x), sy(o.y), 8 * u * 1.5, '#FFE9A8', 'center'); g.globalAlpha = 1; } }
   for (const c of G.N.celulas) if (c.deco && c.nome) { const meio = c.deco === 'biblioteca' || c.deco === 'cisterna' ? 104 : 240, x = sx(c.cx * 30 * 32 + meio * 2), y = sy((c.cy * 17) * 32 + 64); if (x > -300 && x < g.canvas.width + 300) txt(c.nome, x, y, 8 * u * 2.2, '#FFE9A8', 'center'); }
   { const ob = !G.cena && G.objetivo?.(); if (ob && !G.ui.blocking) { // a missão: seta dourada sobre o alvo, ou na borda da tela apontando para ele
@@ -545,4 +598,16 @@ function pintarTextos(g, G, esc, cx, cy) {
   const f = Math.max(G.fade, p.morto ? clamp(1.2 - G.mortoT, 0, 1) : 0);
   if (f > 0) { g.fillStyle = `rgba(6,7,15,${f})`; g.fillRect(0, 0, G.cv.width, G.cv.height); }
   if (G.clarao > 0) { g.fillStyle = `rgba(255,246,220,${Math.min(0.5, G.clarao * 2)})`; g.fillRect(0, 0, G.cv.width, G.cv.height); }
+}
+
+// A caixa de dano do chefe é o tamanho real do desenho: mede o que está pintado no quadro (a cada poucos quadros) e guarda
+// em e.hb, relativo aos pés. Tira um pouco das bordas (capa solta, ponta de arma). O maior tamanho visto decide o peso dele.
+function medirChefe(e, q, vira) {
+  if ((e.hbN = (e.hbN || 0) + 1) % 4 !== 1 && e.hb) return;
+  const s = q.s, W = s.w, H = s.h, B = s.b; let x0 = W, x1 = -1, y0 = H, y1 = -1;
+  for (let y = 0; y < H; y++) { const o = y * W; for (let x = 0; x < W; x++) if (B[o + x] >>> 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; y1 = y; } }
+  if (x1 < 0) return;
+  const k = (q.esc || 1) * PX, w = (x1 - x0 + 1) * k, h = (y1 - y0 + 1) * k; // pixel do desenho → unidade do mundo (cada pixel vale PX)
+  e.hb = { dx: ((x0 + x1 + 1) / 2 - q.ax) * k * vira, w: Math.max(30, w * 0.82), y0: (y0 - q.ay) * k + h * 0.06, h: Math.max(40, h * 0.9) };
+  const area = e.hb.w * e.hb.h; if (!(e.hbArea >= area * 0.98) && !e.morrendo) { e.hbArea = Math.max(e.hbArea || 0, area); tanque(e, e.hbArea); }
 }

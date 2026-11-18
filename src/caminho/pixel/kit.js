@@ -7,7 +7,7 @@ export const OX = 60, OY = 104;
 
 // o que o corpo está fazendo, em termos de animação
 export function est(b, Tm) {
-  const t6 = Math.floor(Tm * 6), mov = b.mov, tipo = mov?.def?.tipo, caido = b.quebrado > 0 || b.tonto > 0;
+  const t6 = Math.floor(Tm * 6), mov = b.mov, tipo = mov?.def?.fn || mov?.nome, caido = b.quebrado > 0 || b.tonto > 0;
   const prep = !caido && (b.tele > 0 || (!!mov && mov.t < 0.32)), ataca = !caido && !!mov && !prep;
   return { t6, resp: [0, 0, 1, 1][t6 % 4], tipo, caido, prep, ataca, noAr: !b.voa && b.chao === false, anda: Math.abs(b.vx) > 8, passo: Math.floor(Tm * 5) % 2, corre: Math.abs(b.vx) > 190,
     bat: Math.floor(Tm * 8) % 2, pisca: Math.floor(Tm * 14) % 2, f2: b.hp < b.max * 0.6, flu: Math.round(Math.sin(Tm * 2.2) * 2), pouso: b.pousou > 0 ? 3 : 0, onda: a => Math.sin(Tm * a) };

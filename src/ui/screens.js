@@ -51,15 +51,20 @@ export function showAuth(onDone) {
     go.disabled = false;
   } });
   if (ONLINE) form.append(tabs, h('label', {}, 'E-mail', email), h('label', {}, 'Senha', pass), go, msg,
-    h('button', { class: 'link', type: 'button', onclick: () => { net.user = null; dispatchEvent(new Event('peregrinos-sync')); initAudio(); onDone(); } }, 'Jogar sem conta (salva só neste aparelho, sem ranking mundial)'));
+    h('div', { class: 'ou-sep', 'aria-hidden': 'true' }, h('span', {}, 'ou')),
+    h('button', { class: 'porta-btn sem-conta', type: 'button', onclick: () => { net.user = null; dispatchEvent(new Event('peregrinos-sync')); initAudio(); onDone(); } }, 'Jogar sem conta'),
+    h('p', { class: 'sem-conta-nota' }, 'Salva só neste aparelho, sem ranking mundial.'));
   else form.append(h('p', { class: 'muted' }, 'Sua jornada fica salva neste navegador. Crie seu peregrino e descubra a Cidade de Refúgio.'),
     h('button', { class: 'btn gold wide', type: 'button', onclick: () => { initAudio(); onDone(); } }, 'Começar a jornada'));
   const emQuadro = new URLSearchParams(location.search).has('quadro');
   const nQuadro = +new URLSearchParams(location.search).get('quadro');
   const quem = emQuadro ? h('p', { class: 'title' }, 'Jogador ' + (nQuadro + 1) + (ONLINE ? ': entre com a sua conta' : '')) : '';
-  const juntos = emQuadro ? '' : h('div', { class: 'tela-div' }, h('span', {}, 'Jogar juntos neste aparelho'), ...[2, 3, 4].map(n => h('button', { class: 'btn sm', type: 'button', onclick: () => { location.href = location.pathname + '?telas=' + n; } }, n + ' jogadores')));
+  const juntos = ''; // o multiplayer (sala por código e tela dividida) fica no saguão, depois do login
   setTimeout(() => scr().querySelector('.screen')?.classList.add('abertura'), 0);
-  screen(logo(), quem, h('p', { class: 'week' }, 'Estudo da semana: ', h('b', {}, SEMANA_ATUAL.titulo), ' · ' + SEMANA_ATUAL.estudo), form, juntos, emQuadro ? '' : installButton(msg));
+  // aberto por dentro do Instagram, Facebook ou TikTok: lá não dá para instalar, e o salvamento some com facilidade
+  const embutido = /Instagram|FBAN|FBAV|FB_IAB|TikTok|musical_ly|Line\//i.test(navigator.userAgent);
+  const aviso = embutido && !emQuadro ? h('div', { class: 'porta-aviso', role: 'note' }, h('b', {}, 'Você abriu o jogo por dentro de outro aplicativo.'), h('span', {}, 'Para instalar e não perder o progresso, toque em ⋯ (em cima, à direita) e escolha "Abrir no navegador".')) : '';
+  screen(logo(), quem, h('p', { class: 'week' }, 'Estudo da semana: ', h('b', {}, SEMANA_ATUAL.titulo), ' · ' + SEMANA_ATUAL.estudo), aviso, form, juntos, emQuadro ? '' : baixarJogo());
 }
 
 // Botão "Instalar app" (aparece só quando dá para instalar)
@@ -68,6 +73,40 @@ function installButton(msg) {
   const sync = () => { b.hidden = pwa.installed; }; // sempre à vista: se o navegador não oferecer a instalação, o botão explica como fazer
   sync(); const off = pwa.onChange(() => b.isConnected ? sync() : off());
   return b;
+}
+
+// Primeira tela: "Baixar o jogo" com um botão para cada aparelho. Computador e Android usam a instalação do navegador
+// (quando ele oferece); senão, e sempre no iPhone, aparece o passo a passo logo abaixo.
+const PASSOS = {
+  pc: ['Abra o jogo no Chrome ou no Edge.', 'Clique no ícone de instalar (⊕) no fim da barra de endereço, ou no menu ⋮ → "Instalar Peregrinos".', 'Confirme em "Instalar". O jogo ganha um atalho na área de trabalho e abre em janela própria.'],
+  android: ['Abra o jogo no Chrome.', 'Toque no menu ⋮ (canto de cima).', 'Escolha "Instalar app" ou "Adicionar à tela inicial" e confirme.', 'Abra pelo ícone do Peregrinos na tela inicial.'],
+  iphone: ['Abra o jogo no Safari.', 'Toque em Compartilhar (□↑), na barra de baixo.', 'Role e toque em "Adicionar à Tela de Início".', 'Toque em "Adicionar" e abra pelo ícone do Peregrinos.']
+};
+function baixarJogo() {
+  const android = /android/i.test(navigator.userAgent), celular = pwa.ios || android;
+  const ajuda = h('div', { class: 'baixar-ajuda', role: 'status', hidden: true });
+  let aberto = '';
+  const mostrar = (qual, titulo) => {
+    if (aberto === qual && !ajuda.hidden) { ajuda.hidden = true; aberto = ''; return; }
+    aberto = qual; ajuda.hidden = false; ajuda.innerHTML = '';
+    ajuda.append(h('b', {}, titulo), h('ol', {}, ...PASSOS[qual].map(p => h('li', {}, p))));
+  };
+  const instalar = async (qual, titulo, aqui) => {
+    sfx('click');
+    if (aqui && pwa.canPrompt) { ajuda.hidden = true; await pwa.install(t => { ajuda.hidden = false; ajuda.innerHTML = ''; ajuda.append(h('b', {}, t)); }); return; }
+    mostrar(qual, titulo);
+  };
+  const b = (qual, rotulo, titulo, aqui) => h('button', { class: 'porta-btn', type: 'button', 'data-plat': qual, onclick: () => instalar(qual, titulo, aqui) }, rotulo);
+  const bloco = h('div', { class: 'tela-div baixar porta-painel' }, h('span', {}, 'Baixar o jogo'),
+    h('div', { class: 'baixar-btns' },
+      b('pc', 'Computador', 'Instalar no computador', !celular),
+      b('android', 'Android', 'Instalar no Android', android),
+      b('iphone', 'iPhone', 'Instalar no iPhone', false)),
+    ajuda);
+  if (pwa.ios) mostrar('iphone', 'Instalar no iPhone'); // no iPhone a instalação é sempre manual: o passo a passo já vem aberto
+  const sync = () => { bloco.hidden = pwa.installed; };
+  sync(); const off = pwa.onChange(() => bloco.isConnected ? sync() : off());
+  return bloco;
 }
 
 function miniPortrait(look, cls, size = 80) {
@@ -83,7 +122,10 @@ export async function showSelect(onPlay, onNew, onLogout) {
   screen(logo(), h('p', { class: 'muted' }, 'Carregando personagens…'));
   let chars = [];
   try { chars = await net.listChars(); } catch (e) { screen(logo(), h('p', { class: 'form-msg err' }, 'Erro: ' + e.message), h('button', { class: 'btn', onclick: onLogout }, 'Voltar')); return; }
-  if (!chars.length) return onNew();
+  // quem ainda não tem peregrino: cria um agora. O painel de sala fica à vista, para quem veio jogar com amigos entrar já com o personagem novo
+  if (!chars.length) return screen(logo(), h('h2', { class: 'title' }, 'Bem-vindo, peregrino'), h('p', { class: 'muted' }, 'Você ainda não tem um peregrino. Crie o seu para começar a jornada.'),
+    h('button', { class: 'btn gold wide criar-primeiro', type: 'button', onclick: () => { sfx('click'); onNew(); } }, 'Criar meu peregrino'), saguaoJuntos(true),
+    h('div', { class: 'btn-row' }, h('button', { class: 'btn link', onclick: onLogout }, ONLINE && net.user ? 'Sair da conta' : 'Voltar')));
   const list = h('div', { class: 'char-list' });
   for (const c of chars) {
     const conflict = net.conflict(c.id);
@@ -113,9 +155,37 @@ export async function showSelect(onPlay, onNew, onLogout) {
         } }, 'Apagar'))));
     if (conflict) list.append(conflictBox);
   }
-  screen(logo(), h('h2', { class: 'title' }, 'Escolha seu peregrino'), list,
+  screen(logo(), h('h2', { class: 'title' }, 'Escolha seu peregrino'), list, saguaoJuntos(),
     installButton(h('p', {})),
     h('div', { class: 'btn-row' }, chars.length < 3 ? h('button', { class: 'btn', onclick: onNew }, '+ Novo personagem') : '', h('button', { class: 'btn link', onclick: onLogout }, ONLINE && net.user ? 'Sair da conta' : 'Voltar')));
+}
+
+// O saguão do "Caminhar juntos": antes de entrar no jogo dá para escolher abrir uma sala (você é o anfitrião e passa o código)
+// ou entrar na sala de alguém. A escolha fica guardada até o jogo começar (jogo.js lê 'peregrinos.sala').
+// O multiplayer local (tela dividida) fica recolhido embaixo.
+function saguaoJuntos(novo) {
+  if (new URLSearchParams(location.search).has('quadro')) return '';
+  const CH = 'peregrinos.sala', le = () => { try { return sessionStorage.getItem(CH) || ''; } catch { return ''; } }, poe = v => { try { v ? sessionStorage.setItem(CH, v) : sessionStorage.removeItem(CH); } catch {} };
+  const limpa = v => (v || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
+  const daUrl = limpa(new URLSearchParams(location.search).get('sala')); if (daUrl.length === 5 && !le()) poe('entrar:' + daUrl);
+  const nota = h('p', { class: 'saguao-nota', role: 'status' });
+  const campo = h('input', { class: 'saguao-codigo', maxlength: 5, placeholder: 'CÓDIGO', autocapitalize: 'characters', autocomplete: 'off', spellcheck: 'false', 'aria-label': 'Código da sala' });
+  const bSo = h('button', { class: 'porta-btn', type: 'button', onclick: () => { sfx('click'); poe(''); pinta(); } }, 'Sozinho');
+  const bCriar = h('button', { class: 'porta-btn', type: 'button', onclick: () => { sfx('click'); poe('abrir'); pinta(); } }, 'Criar sala');
+  const bEntrar = h('button', { class: 'porta-btn', type: 'button', onclick: () => { const c = limpa(campo.value); if (c.length < 5) { nota.textContent = 'O código tem cinco letras ou números.'; campo.focus(); return; } sfx('click'); poe('entrar:' + c); pinta(); } }, 'Entrar na sala');
+  campo.addEventListener('input', () => { campo.value = limpa(campo.value); }); campo.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') bEntrar.click(); });
+  function pinta() {
+    const v = le(), cod = v.startsWith('entrar:') ? v.slice(7) : '';
+    bSo.classList.toggle('on', !v); bCriar.classList.toggle('on', v === 'abrir'); bEntrar.classList.toggle('on', !!cod); if (cod) campo.value = cod;
+    const como = novo ? 'Crie o seu peregrino' : 'Toque em Jogar num peregrino seu (ou crie um novo)';
+    nota.textContent = v === 'abrir' ? 'Você será o anfitrião. ' + como + ': a sala abre e o código aparece para você mandar aos amigos (até 4).'
+      : cod ? como + ': você entra direto na sala ' + cod + '.' : 'Cada um no seu aparelho, até 4 peregrinos. Um cria a sala e manda o código; os outros entram com ele.';
+  }
+  pinta();
+  const local = h('details', { class: 'saguao-local' }, h('summary', {}, 'Multiplayer local (mesmo aparelho, tela dividida)'),
+    h('div', { class: 'porta-linha' }, ...[2, 3, 4].map(n => h('button', { class: 'porta-btn', type: 'button', 'aria-label': n + ' jogadores', onclick: () => { location.href = location.pathname + '?telas=' + n; } }, h('b', {}, String(n)), ' jogadores'))),
+    h('p', { class: 'saguao-nota' }, 'Um controle por jogador. Melhor em computador ou TV.'));
+  return h('div', { class: 'tela-div porta-painel saguao' }, h('span', {}, 'Caminhar juntos'), h('div', { class: 'porta-linha' }, bSo, bCriar), h('div', { class: 'porta-linha' }, campo, bEntrar), nota, local);
 }
 
 export function showCreator(onCreated, onBack) {

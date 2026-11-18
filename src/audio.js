@@ -1,6 +1,7 @@
 // Efeitos sonoros e música sintetizados (WebAudio), sem arquivos.
 import { store } from './util.js';
 import { config } from './config.js';
+import { tocar, trilhaDe as composta } from './trilhas.js';
 
 let AC = null, master = null, musicGain = null, sfxGain = null, musicTimer = null;
 export const audio = { muted: store.get('peregrinos.mute', false), modo: null };
@@ -67,7 +68,7 @@ export function sfx(n) {
 const SCALES = { mundo: [0, 2, 3, 5, 7, 9, 10], chefe: [0, 1, 4, 5, 7, 8, 10], fase: [0, 2, 4, 5, 7, 9, 11], cinema: [0, 2, 3, 5, 7, 8, 10] };
 // ---- trilha: piano esparso, cordas longas e muito eco (a melancolia de um reino esquecido) ----
 // Tudo é sintetizado: um "piano" de senoides com decaimento, um colchão de cordas filtradas e, nos chefes, um ostinato grave.
-let eco = null, canal = null;
+let eco = null, canal = null, tocador = null;
 function sala() { // eco de sala grande: três atrasos realimentados e filtrados
   if (eco || !AC) return eco;
   eco = AC.createGain(); eco.gain.value = 1;
@@ -106,11 +107,15 @@ export function music(mode, chave) {
   if (AC && mode && mode === audio.modo && chave === audio.chave && musicTimer) return; audio.chave = chave; // a mesma trilha já está tocando
   audio.modo = mode || null;
   if (!AC) return;
-  clearInterval(musicTimer); musicTimer = null;
+  if (musicTimer !== 1) clearInterval(musicTimer); musicTimer = null;
   // corta o que ainda soava da trilha anterior (as notas longas não invadem a cutscene nem a luta)
   if (canal) { const velho = canal; try { velho.gain.setTargetAtTime(0, AC.currentTime, 0.12); } catch { /* */ } setTimeout(() => { try { velho.disconnect(); } catch { /* */ } }, 900); }
   canal = AC.createGain(); canal.gain.value = 1; canal.connect(musicGain); eco = null;
+  if (tocador) { tocador.parar(); tocador = null; }
   if (!mode) return;
+  // trilhas compostas (src/trilhas.js): cada lugar, cada chefe e as batalhas têm a sua. O nome vem da chave (sem o número da fase).
+  const nome = mode === 'batalha' || mode === 'raid' ? mode : mode === 'cinema' ? (chave === 'getsemani' ? 'encontro' : null) : mode === 'chefe' ? (composta(chave) ? chave : 'chefe') : (composta(chave) ? chave : String(chave || '').replace(/\d+$/, ''));
+  if (nome && composta(nome)) { tocador = tocar(AC, canal, sala(), nome); musicTimer = 1; return; }
   if (mode === 'cinema') return pad(); // fundo lento e baixo para não brigar com a narração
   const T = trilhaDe(mode, chave); let n = 0;
   const compasso = () => {

@@ -6,6 +6,8 @@ import { marco } from '../telemetria.js';
 
 export const JESUS_LOOK = { skin: '#B98A5E', hair: '#3A2314', tunic: '#E6DFCB', cape: '#8E2E3A', style: 'longo', beard: true };
 const NOME_J = 'Jesus';
+const JUDAS_LOOK = { skin: '#B07A4E', hair: '#2A1A10', tunic: '#7A6A3A', cape: '#4A3A2A', style: 'curto', beard: true };
+const MALCO_LOOK = { skin: '#C68B59', hair: '#3A2314', tunic: '#6E5A4A', cape: 'none', style: 'curto', beard: false };
 const ORANDO = ['Aba, Pai…', 'Tudo te é possível.', 'Passa de mim este cálice…', 'Contudo, não seja o que eu quero…', '…e sim o que tu queres.'];
 const esperar = ms => new Promise(r => setTimeout(r, ms));
 
@@ -16,16 +18,21 @@ export function passoGetsemani(G, dt) {
     if (!G.cena && Math.abs(J.x - p.x) < 520) { J.tOra = (J.tOra ?? 1.5) - dt; if (J.tOra <= 0) { J.tOra = 4.6; G.fala(J, ORANDO[(J.iOra = ((J.iOra ?? -1) + 1) % ORANDO.length)]); } }
     if (J.pose === 'ora' && Math.random() < dt * 0.9) G.parts.push({ x: J.x + 6, y: J.y - 34, vx: 0, vy: 40, t: 0.7, max: 0.7, r: 1.2, cor: '#9E2A2A', g: 120 }); // "o seu suor tornou-se como gotas de sangue" (Lc 22:44)
     if (Math.random() < dt * 3) G.parts.push({ x: J.x + (Math.random() - 0.5) * 60, y: J.y - 10 - Math.random() * 60, vx: (Math.random() - 0.5) * 10, vy: -12, t: 1.6, max: 1.6, r: 1, cor: '#FFF1BE', g: 0 });
-    if (J.indo != null) { const d = J.indo - J.x; if (Math.abs(d) < 3) { J.indo = null; J.pose = J.poseDepois || null; } else { J.x += Math.sign(d) * Math.min(Math.abs(d), (J.vel || 46) * dt); J.vira = Math.sign(d); J.pose = 'anda'; } }
-    if (J.some > 0) { J.some -= dt * 0.35; J.alfa = Math.max(0, J.some); }
   }
-  for (const o of G.objs) if (o.tipo === 'tocha') { o.x += (o.vel || 0) * dt; o.fase = (o.fase || 0) + dt; }
-  if (Math.random() < dt * 0.7) for (const o of G.objs) if (o.tipo === 'discipulo' && Math.random() < 0.3) G.parts.push({ x: o.x + 8, y: o.y - 34, vx: 6, vy: -14, t: 1.8, max: 1.8, r: 1, cor: '#9AA6C8', g: 0, z: true });
+  // todos andam até um ponto e PARAM (ninguém anda para sempre); quem sai de cena se apaga e é retirado
+  for (const o of G.objs) {
+    if (o.tipo === 'tocha') o.fase = (o.fase || 0) + dt;
+    if (o.indo != null) { const d = o.indo - o.x; if (Math.abs(d) < 3) { o.x = o.indo; o.indo = null; if (o.tipo !== 'tocha') o.pose = o.poseDepois ?? null; o.poseDepois = undefined; } else { o.x += Math.sign(d) * Math.min(Math.abs(d), (o.vel || 46) * dt); o.vira = Math.sign(d); if (o.tipo !== 'tocha') o.pose = 'anda'; } }
+    if (o.some > 0) { if (o.luz0 == null) o.luz0 = o.luz || 0; o.some = Math.max(0, o.some - dt * (o.someVel || 0.35)); o.alfa = o.some; o.luz = o.luz0 * o.alfa; if (o.some <= 0) o.fora = true; }
+    if (o.tipo === 'anjo') { o.t = (o.t || 0) + dt; o.alfa = o.fora ? 0 : Math.min(o.alfaMax ?? 1, (o.alfa ?? 0) + dt * 0.6 * (o.some > 0 ? 0 : 1)); o.espada += ((o.guarda ? 0 : 1) - o.espada) * Math.min(1, dt * (o.guarda ? 2.5 : 1.2)); }
+  }
+  if (G.objs.some(o => o.fora && o.tipo !== 'jesus')) G.objs = G.objs.filter(o => o.tipo === 'jesus' || !o.fora);
+  if (Math.random() < dt * 0.7) for (const o of G.objs) if (o.tipo === 'discipulo' && !o.acordado && Math.random() < 0.3) G.parts.push({ x: o.x + 8, y: o.y - 34, vx: 6, vy: -14, t: 1.8, max: 1.8, r: 1, cor: '#9AA6C8', g: 0, z: true });
   if (G.cenaAjoelha) p.orando = Math.max(p.orando, 0.2);
 }
 
 // fala de alguém, devagar (a de Jesus) ou não; o peregrino fala com o próprio nome e o próprio rosto
-const disse = (G, quem, texto, acoes, o = {}) => G.ui.dialog({ nome: quem === 'eu' ? G.char.name : quem === 'j' ? NOME_J : quem === 'n' ? 'Getsêmani' : quem, look: quem === 'eu' ? G.char.look : quem === 'j' ? JESUS_LOOK : undefined, texto, acoes: acoes ? acoes.map(l => ({ label: l })) : [{ label: o.botao || 'Continuar' }], cls: quem === 'j' ? 'fala-jesus' : o.cls || (quem === 'eu' ? '' : 'fala-narra'), voz: quem === 'n' ? false : undefined });
+const disse = (G, quem, texto, acoes, o = {}) => G.ui.dialog({ nome: quem === 'eu' ? G.char.name : quem === 'j' ? NOME_J : quem === 'n' ? 'Getsêmani' : quem, look: quem === 'eu' ? G.char.look : quem === 'j' ? JESUS_LOOK : o.look, texto, acoes: acoes ? acoes.map(l => ({ label: l })) : [{ label: o.botao || 'Continuar' }], cls: quem === 'j' ? 'fala-jesus' : o.cls || (quem === 'eu' ? '' : 'fala-narra'), voz: quem === 'n' ? false : undefined });
 const narra = (G, texto, botao) => disse(G, 'n', texto, null, { botao });
 
 // a oração: uma tela à parte, quase escura, onde os versículos aparecem um de cada vez
@@ -106,17 +113,85 @@ export async function encontro(G, J) {
     const pedro = G.objs.find(o => o.tipo === 'discipulo' && o.nome === 'Pedro');
     if (pedro) { J.indo = pedro.x + 34; J.poseDepois = null; await esperar(Math.abs(J.x - pedro.x) / 46 * 1000 + 300); J.vira = -1; G.fala(J, 'Simão, você está dormindo?'); await esperar(2200);
       await disse(G, 'j', '"Simão, dormes? Não pudeste vigiar nem uma hora?" (Mc 14:37)\n\n…O espírito está pronto, mas a carne é fraca (Mt 26:41).'); }
-    // as tochas sobem o monte
-    const x0 = Math.floor(J.x / (30 * 32)) * 30 * 32;
-    for (let i = 0; i < 5; i++) G.objs.push({ tipo: 'tocha', x: x0 - 40 - i * 46, y: J.y, vel: 30, fase: i * 0.7, luz: 70 });
-    sfx('boss'); await esperar(2600);
+    // as tochas sobem o monte e param a uma distância: soldados, guardas, e Judas à frente (Jo 18:3)
+    const chega = async (o, max = 9000) => { const t0 = performance.now(); while (o.indo != null && performance.now() - t0 < max && G.running) await esperar(80); };
+    const xJ = J.x, discs = G.objs.filter(o => o.tipo === 'discipulo');
+    const solds = Array.from({ length: 6 }, (_, i) => ({ tipo: 'tocha', x: xJ - 760 - i * 44, y: J.y, vel: 44, fase: i * 0.7, luz: 70, vira: 1, indo: xJ - 215 - i * 32 }));
+    const judas = { tipo: 'pessoa', nome: 'Judas', look: JUDAS_LOOK, x: xJ - 700, y: J.y, vel: 44, vira: 1, indo: xJ - 185 };
+    const malco = { tipo: 'pessoa', nome: 'Malco', look: MALCO_LOOK, x: xJ - 740, y: J.y, vel: 44, vira: 1, indo: xJ - 160 };
+    G.objs.push(...solds, judas, malco);
+    sfx('boss'); await esperar(2200);
     J.vira = p.x < J.x ? -1 : 1;
     await disse(G, 'j', '"Levantai-vos, vamos! Eis que é chegado aquele que me trai" (Mt 26:46).');
-    await disse(G, 'j', 'É hora de você voltar, ' + nome + '. O seu caminho continua lá, e ele vai ser difícil.\n\nQuando a noite ficar escura demais, lembre: eu estive aqui primeiro.');
+    discs.forEach((d, k) => { d.acordado = true; d.pose = null; d.vel = 70; d.indo = xJ + 70 + k * 30; }); // os três acordam e vêm para perto dele
+    await disse(G, 'j', 'É hora de você voltar, ' + nome + '. Mas antes, fique e veja. O seu caminho continua lá, e ele vai ser difícil.\n\nQuando a noite ficar escura demais, lembre: eu estive aqui primeiro.');
     await disse(G, 'j', '"E eis que eu estou convosco todos os dias, até a consumação dos séculos" (Mt 28:20).', ['Senhor… obrigado.']);
-    J.indo = x0 + 40; J.vel = 34; await esperar(2400); J.some = 1; for (const o of G.objs) if (o.tipo === 'tocha') o.vel = -18;
+    await chega(judas);
+    await narra(G, 'Sobe uma multidão com lanternas, tochas e armas (Jo 18:3). Param a alguns passos.\n\nÀ frente vem alguém que você conhece das páginas: Judas, um dos doze.', 'Olhar');
+    // Jesus desce da pedra e vai ao encontro deles; você vai junto, e a câmera fica no meio de tudo
+    J.indo = xJ - 70; J.poseDepois = null;
+    G.cenaFoco = { alfa: 1, get x() { return 2 * (J.x - 85) - p.x; } };
+    for (let i = 0; i < 120 && Math.abs(p.x - (xJ + 40)) > 12; i++) { G.cenaMx = Math.sign(xJ + 40 - p.x); await esperar(30); } G.cenaMx = 0; p.face = -1;
+    await chega(J);
+    // o beijo
+    judas.indo = J.x - 24; await chega(judas); judas.vira = 1; J.vira = -1;
+    await disse(G, 'Judas', '"Salve, Rabi!"\n\n(E o beijou — Mt 26:49.)', null, { look: JUDAS_LOOK, botao: 'Continuar' });
+    await disse(G, 'j', '"Judas, com um beijo trais o Filho do Homem?" (Lc 22:48)');
+    judas.indo = xJ - 290; judas.vel = 30; // volta para o meio dos soldados, de cabeça baixa
+    // "Sou eu" — e eles caem por terra
+    await disse(G, 'j', '"A quem buscais?"');
+    await disse(G, 'Soldados', '"A Jesus, o Nazareno."', null, { botao: 'Continuar' });
+    await disse(G, 'j', '"Sou eu." (Jo 18:5)');
+    G.clarao = 0.35; G.tremor(10); sfx('level'); G.fx.anel(J.x, J.y - 26, '#FFF1BE', 260);
+    for (const o of [...solds, malco, judas]) { o.caido = true; o.x -= 26; } malco.pose = 'dorme'; judas.pose = 'dorme';
+    await esperar(1400);
+    await narra(G, 'Quando ele disse "Sou eu", recuaram e caíram por terra (Jo 18:6).\n\nNinguém ali tirava a vida dele. Ele a estava entregando.', 'Continuar');
+    for (const o of [...solds, malco, judas]) o.caido = false; malco.pose = null; judas.pose = null;
+    await esperar(700);
+    await disse(G, 'j', '"Já vos disse que sou eu. Se, pois, me buscais a mim, deixai ir estes." (Jo 18:8)');
+    // Pedro e a espada
+    // (pedro é o mesmo discípulo que Jesus acordou)
+    if (pedro) {
+      await disse(G, 'Pedro', '"Senhor, feriremos à espada?" (Lc 22:49)', null, { look: pedro.look, botao: 'Continuar' });
+      pedro.vel = 230; pedro.indo = malco.x + 26; await chega(pedro); pedro.vira = -1; pedro.pose = 'mao';
+      G.efeito('corte', malco.x + 6, malco.y - 30, -1); sfx('swing'); G.tremor(6); G.hitstop = 0.12; malco.ferido = true; malco.pose = 'olha';
+      for (let i = 0; i < 6; i++) G.parts.push({ x: malco.x + 4, y: malco.y - 36, vx: (Math.random() - 0.5) * 80, vy: -60 - Math.random() * 60, t: 0.6, max: 0.6, r: 1.4, cor: '#B8312A', g: 400 });
+      for (const o of solds) o.x -= 8; // os soldados erguem as armas
+      await narra(G, 'Simão Pedro desembainha a espada e fere o servo do sumo sacerdote, cortando-lhe a orelha direita. O servo se chamava Malco (Jo 18:10).', 'Continuar');
+    }
+    // os anjos: mais de doze legiões esperando uma palavra (Mt 26:53) — quase invisíveis
+    const anjos = [];
+    for (let i = 0; i < 9; i++) { const lado = i % 2 ? 1 : -1, k = Math.floor(i / 2); anjos.push({ tipo: 'anjo', x: J.x + lado * (90 + k * 95) + (i === 8 ? 0 : 0), y: J.y - (i % 3) * 60 - (i === 8 ? 150 : 0), alfa: 0, alfaMax: 0.9, espada: 0, fase: i * 0.8 }); }
+    G.objs.push(...anjos); sfx('magic'); G.clarao = 0.08;
+    await esperar(2200);
+    await narra(G, 'Por um instante, você sente mais do que vê. O ar do jardim se enche de asas. Espadas de luz, meio desembainhadas, esperando uma só palavra.\n\n"Acaso pensas que eu não poderia rogar a meu Pai, e ele não me mandaria agora mesmo mais de doze legiões de anjos?" (Mt 26:53)', 'Continuar');
+    // e ele diz "não" — baixinho, só com o rosto e a mão
+    J.vira = 1; J.pose = 'mao'; await esperar(500);
+    G.textoEm(J.x + 8, J.y - 62, '…não.', '#E8E2D0', 10); await esperar(1300);
+    for (const a of anjos) { a.guarda = true; a.curva = true; } sfx('key');
+    await esperar(1500);
+    for (const a of anjos) { a.some = a.alfa; a.someVel = 0.5; }
+    J.pose = null; await esperar(800);
+    // "Basta!" — e cura a orelha do homem que vinha prendê-lo
+    await disse(G, 'j', '"Basta! Deixai-os." (Lc 22:51)');
+    J.indo = malco.x + 22; J.poseDepois = 'mao'; await chega(J); J.vira = -1;
+    G.efeito('cura', malco.x, malco.y, 1, { gruda: malco }); G.fx.sobe(malco.x, malco.y - 30, 14, '#FFF1BE'); sfx('level'); G.clarao = 0.12; malco.ferido = false;
+    await esperar(1200);
+    await narra(G, 'E, tocando-lhe a orelha, o curou (Lc 22:51).\n\nA última cura antes da cruz foi num homem que tinha vindo prendê-lo.', 'Continuar');
+    malco.pose = null; J.pose = null;
+    if (pedro) { J.vira = 1; await disse(G, 'j', 'Pedro, "mete a tua espada na bainha; não beberei eu o cálice que o Pai me deu?" (Jo 18:11)\n\n"Todos os que lançarem mão da espada, à espada morrerão" (Mt 26:52).'); pedro.pose = null; }
+    // os discípulos fogem
+    for (const d of discs) { d.vel = 150; d.indo = d.x + 900; d.some = 1; d.someVel = 0.45; }
+    await narra(G, 'Então, deixando-o, todos fugiram (Mc 14:50).', 'Continuar');
+    // amarram-no e o levam; antes de ir, ele olha para você
+    G.textoEm(J.x, J.y - 70, 'prenderam Jesus e o manietaram (Jo 18:12)', '#C9C4B2', 11);
+    await esperar(1600);
+    J.vira = p.x < J.x ? -1 : 1; await esperar(1400); J.vira = -1;
+    for (const o of [J, ...solds, judas, malco]) { o.vel = 34; o.indo = o.x - 520; }
     await esperar(3200);
-    await narra(G, 'Você não o vê mais. Só as tochas, descendo o monte em direção à cidade.\n\nE, muito longe, um galo que ainda não cantou.', 'Fechar os olhos');
+    J.some = 1; J.someVel = 0.35; for (const o of [...solds, judas, malco]) { o.some = 1; o.someVel = 0.35; }
+    await esperar(3200);
+    await narra(G, 'Você não o vê mais. Só o brilho das tochas, descendo o monte em direção à cidade.\n\nE, muito longe, um galo que ainda não cantou.', 'Fechar os olhos');
     cm.getsemani = true; G.salvar(); marco('getsemani');
     G.cena = false; G.entrar('getsemani', { quieto: true });
     const pedra = G.objs.find(o => o.tipo === 'rocha'), q = G.p; if (pedra) { q.x = pedra.x - 70; q.y = pedra.y - 1; q.face = 1; q.orando = 0; G.vista.cam.x = q.x - G.vista.W / G.vista.Z / 2; G.prenderCam(); }
@@ -139,11 +214,11 @@ export async function lerBiblia(G) {
   for (let i = 0; i < paginas.length; i++) await G.ui.dialog({ nome: 'O livro sobre a pedra', texto: paginas[i], acoes: [{ label: i === paginas.length - 1 ? 'Amém' : 'Virar a página' }], cls: 'fala-narra', voz: false });
 }
 
-// o encontro vira cinema: faixas pretas em cima e embaixo, vinheta nas bordas e um zoom lento nos dois
+// o encontro vira cinema: vinheta nas bordas e um zoom lento nos dois (sem faixa embaixo: ela cobria o chão e os pés)
 let enquadra = null;
 function cinema(on, G) {
   let v = document.getElementById('cenaCine');
-  if (!v) { v = document.createElement('div'); v.id = 'cenaCine'; v.innerHTML = '<i class="cc-cima"></i><i class="cc-baixo"></i><i class="cc-veu"></i>'; document.body.append(v); }
+  if (!v) { v = document.createElement('div'); v.id = 'cenaCine'; v.innerHTML = '<i class="cc-cima"></i><i class="cc-veu"></i>'; document.body.append(v); }
   requestAnimationFrame(() => v.classList.toggle('on', on));
   const cv = document.getElementById('cv'); clearInterval(enquadra); enquadra = null;
   if (!on || !cv || matchMedia('(prefers-reduced-motion: reduce)').matches) { if (cv) { cv.style.transform = ''; cv.style.transformOrigin = ''; } return; }

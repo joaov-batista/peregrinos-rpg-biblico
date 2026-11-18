@@ -4,10 +4,17 @@
 import { Sprite, rampa, cor, TINTA, BRANCO } from './raster.js';
 import { CHEFES_A } from './chefes-a.js';
 import { CHEFES_B } from './chefes-b.js';
+import { CHEFES_C } from './chefes-c.js';
+import { CHEFES_D } from './chefes-d.js';
+import { CHEFES_E } from './chefes-e.js';
+import { CHEFES_F } from './chefes-f.js';
 
-const PINTORES = { ...CHEFES_A, ...CHEFES_B };
+const PINTORES = { ...CHEFES_A, ...CHEFES_B, ...CHEFES_C, ...CHEFES_D, ...CHEFES_E, ...CHEFES_F };
+// estes foram desenhados olhando para a esquerda; os antigos olham para a direita. Quem desenha na tela desvira
+const CONTORNO_CLARO = new Set(['conselho', 'zeloteFoice', 'zelotePunhal']);
+const OLHA_ESQ = new Set(['escassez', 'desprezo', 'carcere', 'mentira', 'imoralidade', 'amargura']);
 // Beemote e Leviatã são colossos: desenhados no dobro do tamanho, ocupam boa parte da arena
-const COLOSSOS = { behemote: 2.5, leviata: 2.4, golias: 1.25 };
+const COLOSSOS = { behemote: 2.5, leviata: 2.4, golias: 1.25, carcere: 1.5, escassez: 1.25, desprezo: 1.2, amargura: 1.7, conselho: 1.3, zeloteFoice: 1.3, zelotePunhal: 1.3 };
 
 const OURO = rampa('#D9A63C'), OUROE = rampa('#8A6A2C'), OSSO = rampa('#E4DFCF'), MANTO = rampa('#3B2A4E'), ACO = rampa('#7F8C9C'), FERRO = rampa('#3A3F4C');
 const COROA = ['L.....L.....L', 'G.....G.....G', 'GG...GGG...GG', 'GGG.GGGGG.GGG', 'GgGGGGrGGGGgG', 'GGrGGGGGGGrGG', 'LLLLLLLLLLLLL', 'ggggggggggggg'];
@@ -19,7 +26,7 @@ const quadro = new Sprite(120, 112);
 export const CHEFES_PX = {
   mamom: { ax: 60, ay: 104, pinta(s, b, Tm, G) {
     const ox = 60, oy = 104, t = Math.floor(Tm * 6), resp = [0, 0, 1, 1][t % 4], tipo = b.mov?.def.tipo, prep = b.tele > 0, caido = b.quebrado > 0 || b.tonto > 0;
-    const noAr = !b.chao && !caido, corre = tipo === 'investida' && b.art.step === 2, anda = Math.abs(b.vx) > 8 && !corre ? Math.floor(Tm * 5) % 2 : 0;
+    const noAr = !b.chao && !caido, corre = (tipo === 'investida' || b.corre) && b.art.step === 2, anda = Math.abs(b.vx) > 8 && !corre ? Math.floor(Tm * 5) % 2 : 0;
     let incl = corre ? 6 : prep ? -3 : caido ? 2 : 0, baixo = caido ? 6 : noAr ? -2 : resp, ry = 20 + (noAr ? 2 : 0) - (caido ? 3 : 0) + (b.pousou > 0 ? -3 : 0), rx = 23 + (b.pousou > 0 ? 3 : 0) - (noAr ? 1 : 0);
     const cy = oy - 34 + baixo + (b.pousou > 0 ? 3 : 0), cx = ox + incl;
     // manto atrás, com a barra rasgada
@@ -69,6 +76,6 @@ export function quadroChefe(b, Tm, G) {
   if (b.flash > 0) s.tinge(BRANCO);
   if (b.morrendo > 0) s.dissolve(1 - b.morrendo / 1.7, 3);
   if ((b.alpha ?? 1) < 1) s.dissolve(1 - b.alpha, 2);
-  s.contorno(TINTA);
-  return { s, ax: def.ax, ay: def.ay, esc: COLOSSOS[b.id] || 1 };
+  s.contorno(CONTORNO_CLARO.has(b.id) ? cor('#4A4460') : TINTA); // vulto escuro em sala escura: o contorno é que desenha a silhueta
+  return { s, ax: def.ax, ay: def.ay, esc: COLOSSOS[b.id] || 1, inv: OLHA_ESQ.has(b.id) };
 }

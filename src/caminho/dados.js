@@ -98,6 +98,12 @@ export const TEMAS = {
   arvore: t(['#07141A', '#12383A', '#3F7A62'], '#12302E', '#0C211F', '#061312', '#9FD0A0', '#B8E6A0', 'arvores', 'folha', 0.55),
   terraco: t(['#151028', '#4A2E5E', '#E0A060'], '#2C2040', '#1D152C', '#100B19', '#F1C96A', '#FFD67A', 'muralha', 'estrela', 0.35, { perigo: 'vento' }),
   campo: t(['#0A1420', '#1E3440', '#587860'], '#172B30', '#0F1E22', '#081214', '#A9C7A0', '#A9D6E8', 'arvores', 'orvalho', 0.6),
+  sarepta: t(['#3A2A1A', '#9A6A3A', '#E8C078'], '#6A4A2C', '#4A3220', '#2A1C12', '#D9B878', '#FFE0A0', 'seca', 'areia', 0.22),
+  jerico: t(['#1E2A44', '#6A7A8A', '#E8B880'], '#5A5A4A', '#3E4034', '#22241C', '#C9C09A', '#FFE9A8', 'estrada', 'po', 0.2),
+  masmorra: t(['#07070C', '#15141F', '#2A2030'], '#1A1A24', '#12121A', '#08080C', '#6A6E7C', '#FF8A3C', 'masmorra', 'brasa', 0.7),
+  raiz: t(['#050806', '#0E1A12', '#243A1E'], '#12201A', '#0C1610', '#060C08', '#8AA878', '#B8E060', 'arvores', 'bolha', 0.6),
+  zelotes: t(['#0A0606', '#2A1210', '#5A2A1C'], '#2A1612', '#1C0E0C', '#0E0706', '#B8A088', '#FF7A3C', 'muralha', 'brasa', 0.5),
+  bosque: t(['#16283A', '#3F6A62', '#E0B878'], '#1E4038', '#16302A', '#0D1E1A', '#B8D8A0', '#FFE9A8', 'arvores', 'vagalume', 0.2),
   floresta: t(['#04090C', '#0B1E1C', '#1E3A32'], '#0C1D1A', '#081412', '#040A09', '#8FB89A', '#B8F0C8', 'arvores', 'vagalume', 0.86),
   getsemani: t(['#04061A', '#0E1638', '#27305C'], '#111733', '#0B1026', '#060913', '#9AA6C8', '#E8E2C8', 'arvores', 'vagalume', 0.8),
   getsemani2: t(['#1C2244', '#7A6A8A', '#F2C9A0'], '#3A3456', '#262240', '#151226', '#F1E2C0', '#FFE9A8', 'arvores', 'folha', 0.18),
@@ -130,12 +136,16 @@ const planta = (col, qual) => ({ tipo: 'planta', col, qual });
 const povo = (col, vai, look) => ({ tipo: 'morador', col, vai, look });
 const marca = (g, pts) => { const r = g.map(l => l.split('')), topo = 16 - g.length; for (const [lin, col, ch] of pts) if (r[lin - topo]) r[lin - topo][col - 1] = ch; return r.map(l => l.join('')); };
 
+// terreno escrito à mão: plataformas [linha, de, até, tipo], muros [de, até, altura] que sobem do chão
+const terreno = (pls, muros = []) => { const alt = Math.max(1, ...muros.map(m => m[2]), ...pls.map(p => 16 - p[0])), g = Array.from({ length: alt }, () => Array(28).fill('.')), poe = (lin, col, ch) => { g[lin - (16 - alt)][col - 1] = ch; };
+  for (const [lin, a, b, ch = '='] of pls) for (let x = a; x <= b; x++) poe(lin, x, ch); for (const [a, b, h] of muros) for (let x = a; x <= b; x++) for (let k = 0; k < h; k++) poe(15 - k, x, '#'); return g.map(r => r.join('')); };
+
 // O Refúgio: uma aldeia a céu aberto (praças, mercado, bairro, pátio, olival, o portão do Éden) e, por baixo dela,
 // os salões de pedra: o Salão dos Rolos (as páginas do Livro), a Casa do Tesouro, a Cripta dos Gigantes e a cisterna.
 const REFUGIO = [
   { cx: 0, nome: 'Praça do poço', papel: 'inicio', tiles: sala([13, 20, 23]), objs: [
-    planta(2, 'oliveira'), planta(12, 'palmeira'), casa(21, 'viuva', 'Casa da viúva de Sarepta'), planta(27, 'oliveira'),
-    { tipo: 'ebenezer', col: 6 }, { tipo: 'poco', col: 14 },
+    planta(12, 'palmeira'), casa(21, 'viuva', 'Casa da viúva de Sarepta'), planta(27, 'oliveira'),
+    { tipo: 'portal', col: 2, area: 'bosque', rotulo: 'Bosque do treino' }, { tipo: 'ebenezer', col: 6 }, { tipo: 'poco', col: 14 },
     { tipo: 'npc', col: 10, id: 'velho', nome: 'Velho Peregrino', look: velho },
     { tipo: 'npc', col: 17, id: 'pedro', nome: 'Simão, o pescador', look: { skin: '#A0673E', hair: '#3A2314', tunic: '#497A80', cape: 'none', style: 'cacheado', beard: true, body: 'forte' } },
     { tipo: 'npc', col: 26, id: 'jumenta', nome: 'Uma jumenta', bicho: 'jumenta' },
@@ -145,6 +155,7 @@ const REFUGIO = [
     planta(2, 'palmeira'), { tipo: 'cenario', col: 5, qual: 'banca' }, { tipo: 'cenario', col: 8, qual: 'forja' }, { tipo: 'cenario', col: 14, qual: 'descida', rotulo: 'Salão dos Rolos' },
     { tipo: 'npc', col: 5, id: 'lidia', nome: 'Lídia, vendedora de púrpura', look: lidia },
     { tipo: 'npc', col: 8, id: 'ferreiro', nome: 'Tubalcaim, o ferreiro', look: { skin: '#8A5A3A', hair: '#1E1612', tunic: '#5A4636', cape: 'none', style: 'curto', beard: true, body: 'forte' } },
+    { tipo: 'npc', col: 17, id: 'zelote1', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5A4636', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } },
     { tipo: 'arvore', col: 23 }, { tipo: 'fruto', col: 20, lin: 9 }, { tipo: 'fruto', col: 22, lin: 8 }, { tipo: 'fruto', col: 25, lin: 9 }, { tipo: 'fruto', col: 26, lin: 12 }, { tipo: 'npc', col: 24, lin: 10, id: 'zaqueu', nome: 'Zaqueu', look: zaqueu }] },
   // a praça das armas: armas, roupas e os bichos de Noé
   { cx: 2, nome: 'Praça das armas', papel: 'vila', tiles: sala([12, 4, 8], [12, 21, 25]), objs: [
@@ -157,7 +168,7 @@ const REFUGIO = [
   // o bairro: casas de teto plano (dá para andar por cima), a estalagem e o oleiro
   { cx: 3, nome: 'Bairro', papel: 'vila', tiles: sala([13, 3, 6], [13, 10, 13], [10, 15, 17], [13, 19, 22]), objs: [
     casa(4, 'estalagem', 'Estalagem do caminho'), planta(8, 'palmeira'), casa(11, 'marta', 'Casa de Marta e Maria'), planta(16, 'oliveira'), casa(20, 'oleiro', 'Casa do oleiro'), planta(27, 'cipreste'),
-    { tipo: 'vaso', col: 24 }, { tipo: 'vaso', col: 25 }, { tipo: 'vaso', col: 26 },
+    { tipo: 'vaso', col: 24 }, { tipo: 'vaso', col: 25 }, { tipo: 'vaso', col: 26 }, { tipo: 'npc', col: 18, id: 'zelote2', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#4A3A36', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } },
     { ...povo(8, 5, VILA.rute.look), id: 'rute', nome: VILA.rute.nome }, { ...povo(16, 3, VILA.eutico.look), id: 'eutico', nome: VILA.eutico.nome },
     { tipo: 'ave', col: 5, lin: 13 }, { tipo: 'ave', col: 16, lin: 10 }, { tipo: 'ave', col: 21, lin: 13 }] },
   // o pátio das provas; a escada do meio desce à cisterna
@@ -165,20 +176,21 @@ const REFUGIO = [
     planta(2, 'cipreste'), { tipo: 'cenario', col: 14, qual: 'descida', rotulo: 'Cisterna' },
     { tipo: 'npc', col: 4, id: 'mestre', nome: 'Benaia, mestre das provas', look: { skin: '#8A5A3A', hair: '#D9D2C5', tunic: '#343F51', cape: '#877451', style: 'curto', beard: true, body: 'forte' } },
     { tipo: 'boneco', col: 7 }, { tipo: 'boneco', col: 23 },
-    { tipo: 'portal', col: 10, area: 'treino', rotulo: 'Arena de treino' }, { tipo: 'portal', col: 20, area: 'desafio', rotulo: 'Desafio das ondas' },
+    planta(10, 'oliveira'), { tipo: 'portal', col: 20, area: 'clareira', rotulo: 'Trilha da mata' },
     { tipo: 'npc', col: 27, id: 'samuel', nome: 'Samuel, o que unge', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#D2CFBB', cape: '#55516D', style: 'longo', beard: true } }, { tipo: 'ave', col: 24, lin: 12 }] },
   // o olival: figos, sombra e a caravana que às vezes traz algo raro
   { cx: 5, nome: 'Olival', papel: 'vila', tiles: sala([12, 8, 11], [9, 13, 16], [12, 18, 21]), objs: [
     planta(4, 'oliveira'), planta(10, 'oliveira'), planta(15, 'palmeira'), planta(20, 'oliveira'), planta(25, 'cipreste'), { tipo: 'cenario', col: 23, qual: 'banca' }, { tipo: 'portal', col: 28, area: 'floresta', rotulo: 'Trilha escondida', oculto: true },
     { tipo: 'fruto', col: 4, lin: 14 }, { tipo: 'fruto', col: 10, lin: 11 }, { tipo: 'fruto', col: 15, lin: 8 }, { tipo: 'fruto', col: 20, lin: 11 },
     { tipo: 'npc', col: 23, id: 'mercador', nome: 'Mercador', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#7A5A2E', cape: '#3F2E4F', style: 'turbante', beard: true } },
-    { tipo: 'poco', col: 7 }, { ...povo(13, 4, VILA.ana.look), id: 'ana', nome: VILA.ana.nome }, { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
+    { tipo: 'poco', col: 7 }, { tipo: 'npc', col: 17, id: 'zelote3', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5E4A3A', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } }, { ...povo(13, 4, VILA.ana.look), id: 'ana', nome: VILA.ana.nome }, { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
   // o porto: o píer sobre o mar, o barqueiro que leva a Sardes, o pescador e, às vezes, um mercador de além-mar
   { cx: 6, nome: 'Porto do Refúgio', papel: 'vila', tiles: sala([12, 3, 6]), objs: [
     planta(2, 'palmeira'), { tipo: 'cenario', col: 5, qual: 'redes' }, { tipo: 'mar', col: 11 },
     { tipo: 'npc', col: 8, id: 'zebedeu', nome: 'Zebedeu, o pescador', look: { skin: '#A0673E', hair: '#D9D2C5', tunic: '#3F5A6A', cape: 'none', style: 'curto', beard: true, body: 'forte' } },
     { tipo: 'npc', col: 15, id: 'viajante', nome: 'Mercador de além-mar', look: { skin: '#6B4A2E', hair: '#1C120A', tunic: '#2E5E6A', cape: '#C9A63C', style: 'turbante', beard: true }, vezOutra: true },
     { tipo: 'npc', col: 22, id: 'barqueiro', nome: 'Jonatã, o barqueiro', look: { skin: '#8A5A3A', hair: '#2B1A10', tunic: '#5A4636', cape: '#3A3456', style: 'cacheado', beard: true } },
+    { tipo: 'npc', col: 19, id: 'zelote4', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#4A4036', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } },
     { tipo: 'barco', col: 26 }, { tipo: 'ave', col: 12, lin: 11 }, { tipo: 'ave', col: 19, lin: 12 }] },
   // ---- o subsolo ----
   { cx: 0, cy: 1, nome: 'Salão das Subfases', deco: 'subfases', papel: 'vila', tiles: sala(), objs: [
@@ -199,6 +211,7 @@ const REFUGIO = [
 ];
 
 import { SARDES_POVO, EPAFRAS } from '../content/sardes.js';
+import { CAPITULOS } from '../content/historia.js';
 const sombrio = (cor) => ({ skin: ['#C68B59', '#8A5A3A', '#D9A273', '#A0673E'][cor % 4], hair: ['#1C120A', '#3A2314', '#D9D2C5', '#2B1A10'][(cor + 1) % 4], tunic: ['#3A3F4C', '#4A4036', '#3F4A3A', '#4A3A4A'][cor % 4], cape: 'none', style: ['curto', 'veu', 'cacheado', 'turbante'][cor % 4], beard: cor % 2 === 0 });
 const vela = col => ({ tipo: 'vela', col, id: 'v' + col });
 const povoS = (id, col) => ({ tipo: 'npc', col, id: 'sar_' + id, nome: SARDES_POVO[id].nome, look: SARDES_POVO[id].look, palavra: id });
@@ -224,6 +237,32 @@ export function areaDef(id) {
   if (id === 'refugio') return { id, nome: 'Refúgio', sub: 'A última aldeia acesa', tema: 'refugio', planta: REFUGIO, seed: 'refugio', paz: true, aberto: true };
   if (id === 'treino') return { id, nome: 'Arena de treino', sub: 'Ferro com ferro se afia (Pv 27:17)', tema: 'ela', seed: id, extra: true, pvp: true,
     planta: [{ papel: 'inicio', tiles: ['....====............====....', '............................', '..........========..........', '............................', '............................'] }] };
+  // o Bosque do Treino: o caminho até o Refúgio. É aqui que o peregrino aprende a andar, golpear e erguer a lâmpada,
+  // uma coisa por vez, com tudo à mão (troncos para bater, dardos que não ferem, azeite de sobra).
+  if (id === 'bosque') return { id, nome: 'Bosque do Treino', sub: 'O caminho até o Refúgio', tema: 'bosque', seed: id, paz: true, aberto: true, treino: true, planta: [
+    { papel: 'inicio', nome: 'A trilha', tiles: terreno([], [[13, 14, 3], [22, 23, 5]]), objs: [
+      planta(3, 'cipreste'), planta(8, 'oliveira'), planta(18, 'cipreste'), planta(27, 'oliveira'), { tipo: 'ave', col: 6, lin: 14 }, { tipo: 'ave', col: 17, lin: 12 },
+      { tipo: 'escrito', col: 6, lin: 10, txt: '"Os teus ouvidos ouvirão: este é o caminho, andai por ele" (Is 30:21)' },
+      { tipo: 'placa', col: 11, txt: 'Um tronco caído: pule.' }, { tipo: 'placa', col: 20, txt: 'Alto demais para um pulo só: no ar, pule de novo.' }] },
+    { papel: 'vila', nome: 'A clareira dos troncos', tiles: terreno([[12, 19, 24]]), objs: [
+      planta(2, 'oliveira'), { tipo: 'boneco', col: 7 }, { tipo: 'boneco', col: 10 }, planta(14, 'cipreste'), { tipo: 'boneco', col: 22, lin: 12 }, planta(27, 'cipreste'),
+      { tipo: 'placa', col: 5, txt: 'Bonecos de palha: golpeie à vontade. Cada golpe certo enche o jarro de azeite.' }, { tipo: 'placa', col: 17, txt: 'Suba na tábua. Para descer dela, segure para baixo.' }] },
+    { papel: 'vila', nome: 'A sombra do bosque', tiles: terreno([[12, 7, 9, '~'], [9, 10, 12, '~']], [[14, 19, 9]]), objs: [
+      planta(3, 'cipreste'), { tipo: 'placa', col: 5, txt: 'O barranco é alto demais. Erga a lâmpada: a luz mostra o que a sombra cobre.' },
+      { tipo: 'escrito', col: 10, lin: 5, txt: '"Lâmpada para os meus pés é a tua palavra" (Sl 119:105)' }, planta(23, 'oliveira'), { tipo: 'placa', col: 22, txt: 'Dardos de treino: não ferem. Erga a lâmpada na hora em que o dardo chega.' }, planta(27, 'cipreste')] },
+    { papel: 'vila', nome: 'O fim da trilha', tiles: terreno([[9, 12, 15]]), objs: [
+      planta(2, 'oliveira'), { tipo: 'boneco', col: 14, lin: 9 }, { tipo: 'placa', col: 8, txt: 'O boneco lá no alto: segure o golpe, mire e solte.' }, planta(18, 'cipreste'), { tipo: 'ebenezer', col: 21 },
+      { tipo: 'portal', col: 26, area: 'refugio', rotulo: 'Caminho do Refúgio' }, { tipo: 'ave', col: 24, lin: 13 }] }
+  ] };
+  // a Clareira das provas: fora da aldeia, no meio da mata. Ali ficam a arena, o desafio das ondas e a porta do Conselho
+  if (id === 'clareira') return { id, nome: 'Clareira das Provas', sub: 'Na mata, atrás do pátio', tema: 'bosque', seed: id, paz: true, aberto: true, planta: [
+    { papel: 'inicio', nome: 'A trilha da mata', tiles: terreno([[12, 19, 23]], [[13, 14, 2]]), objs: [
+      { tipo: 'portal', col: 3, area: 'refugio', rotulo: 'Voltar ao Refúgio' }, planta(6, 'cipreste'), planta(10, 'oliveira'), { tipo: 'boneco', col: 17 }, { tipo: 'boneco', col: 21, lin: 12 }, planta(25, 'cipreste'),
+      { tipo: 'escrito', col: 9, lin: 9, txt: '"Exercita-te na piedade" (1Tm 4:7)' }, { tipo: 'placa', col: 8, txt: 'Clareira das provas: a arena, as ondas e, no fundo, a porta do Conselho.' }, { tipo: 'ave', col: 12, lin: 13 }, { tipo: 'ave', col: 24, lin: 11 }] },
+    { papel: 'vila', nome: 'A clareira', tiles: terreno([]), objs: [
+      planta(2, 'oliveira'), { tipo: 'portal', col: 6, area: 'treino', rotulo: 'Arena de treino' }, planta(10, 'cipreste'), { tipo: 'portal', col: 14, area: 'desafio', rotulo: 'Desafio das ondas' }, planta(18, 'oliveira'),
+      { tipo: 'placa', col: 20, txt: 'O Conselho Zelote. Derrote os três para desbloquear novas missões e itens especiais.' }, { tipo: 'portal', col: 23, area: 'conselho', rotulo: 'O Conselho Zelote' }, planta(27, 'cipreste'), { tipo: 'ave', col: 16, lin: 13 }] }
+  ] };
   if (id === 'getsemani') return { id, nome: 'Getsêmani', sub: 'A noite antes da cruz', tema: 'getsemani', seed: id, paz: true, aberto: true, floresta: true, planta: [
     { papel: 'inicio', nome: 'O lagar de azeite', tiles: ['............................'], objs: [
       { tipo: 'portal', col: 3, area: 'floresta', rotulo: 'De volta à floresta' }, planta(6, 'oliveira'), { tipo: 'lagar', col: 13 }, planta(18, 'oliveira'), planta(23, 'cipreste'), planta(27, 'oliveira'),
@@ -256,6 +295,19 @@ export function areaDef(id) {
       { tipo: 'escrito', col: 14, lin: 6, txt: '"Conhecereis a verdade, e a verdade vos libertará" (Jo 8:32)' }] },
     { papel: 'vila', nome: 'O covil do dragão', tiles: sala([12, 3, 7], [9, 11, 18], [12, 22, 26]), objs: [{ tipo: 'escrito', col: 14, lin: 5, txt: '"Quando vier o Espírito da verdade, ele vos guiará a toda a verdade" (Jo 16:13)' }, { tipo: 'covil', col: 21 }] }
   ] };
+  // as páginas vivas da história do peregrino: um caminho com vícios, uma pedra de descanso e a sombra que cobre a página
+  if (id.startsWith('hist:')) { const c = CAPITULOS.find(x => x.id === id.slice(5));
+    return { id, nome: c.titulo, sub: c.ref, tema: c.tema, chefe: c.chefe, historia: c.id, arena: arenaDe(c.chefe), seed: id, inimigos: c.inimigos, forca: c.forca, planta: [
+      { papel: 'inicio', nome: c.lugar, tiles: sala([13, 20, 24]), objs: [{ tipo: 'ebenezer', col: 12 }, { tipo: 'escrito', col: 14, lin: 8, txt: c.ref + ': o que está escrito aqui aconteceu. A sombra que o cobre, não.' }] },
+      { papel: 'vila', tiles: marca(sala([12, 5, 10], [12, 18, 23]), [[15, 6, 'e'], [15, 12, 'e'], [15, 17, 'e'], [15, 24, 'e'], [11, 7, 'e'], [11, 21, 'e'], [8, 15, 'f']]), objs: [{ tipo: 'vaso', col: 14 }] },
+      { papel: 'vila', tiles: marca(sala([13, 4, 8], [10, 11, 17], [13, 20, 25]), [[15, 4, 'e'], [15, 9, 'e'], [15, 14, 'e'], [15, 18, 'e'], [9, 13, 'e'], [9, 16, 'f'], [7, 8, 'f']]), objs: [{ tipo: 'ebenezer', col: 27 }] },
+      { papel: 'arena' }] }; }
+  // o Conselho Zelote: um desafio à parte, com a porta na Clareira das provas (a mata atrás do pátio)
+  if (id === 'conselho') return { id, nome: 'A Sala do Conselho', sub: 'Zelo sem entendimento (Rm 10:2)', tema: 'zelotes', chefe: 'conselho', conselho: true, arena: 'conselho', seed: id,
+    planta: [{ papel: 'inicio', tiles: ['............................'], objs: [{ tipo: 'ebenezer', col: 14 }, { tipo: 'escrito', col: 20, lin: 9, txt: '"Todos os que lançam mão da espada à espada perecerão" (Mt 26:52)' }, { tipo: 'placa', col: 22, txt: 'Derrote os três para desbloquear novas missões e itens especiais.' }] }, { papel: 'arena' }] };
+  // a toca da Raiz de Amargura, no fundo da cisterna (a investigação dos zelotes)
+  if (id === 'raiz') return { id, nome: 'A Fenda da Raiz', sub: 'Nenhuma raiz de amargura vos perturbe (Hb 12:15)', tema: 'raiz', chefe: 'amargura', raiz: true, arena: 'raizes', seed: id,
+    planta: [{ papel: 'inicio', tiles: ['............................'], objs: [{ tipo: 'ebenezer', col: 14 }, { tipo: 'escrito', col: 20, lin: 9, txt: '"Longe de vós toda amargura, cólera e ira" (Ef 4:31)' }] }, { papel: 'arena' }] };
   // Sardes: a cidade quase apagada, do outro lado do mar
   if (id === 'sardes') return { id, nome: 'Sardes', sub: 'Tens nome de que vives, e estás morto (Ap 3:1)', tema: 'sardes', seed: id, aberto: true, sardes: true, forca: 1.6, planta: SARDES };
   if (id === 'desafio') return { id, nome: 'Desafio das ondas', sub: 'Quantas você aguenta?', tema: 'tribunal', seed: id, extra: true, desafio: true,
@@ -273,16 +325,17 @@ export function areaDef(id) {
   if (f.n === 3 || f.n === 5) segredos.push('mana');
   const estacoes = f.estacoes || (primeira ? DECISOES_CORINTO[f.n] : undefined);
   return { id, sem, fase: f, nome: f.nome, sub: f.ref, tema: TEMA_FASE[f.tema] || f.tema, chefe: f.chefe, seed: id, cols: estacoes ? 8 : 7,
-    rolos: 3, estacoes, npcs: Object.values(f.npcs || {}).map(n => ({ ...n, falas: FALAS[sid]?.[f.n]?.[n.nome] || n.falas })), inimigos: f.inimigos, segredos, arena: arenaDe(f.chefe),
+    rolos: 3, marca: MARCAS[f.chefe], estacoes, npcs: Object.values(f.npcs || {}).map(n => ({ ...n, falas: FALAS[sid]?.[f.n]?.[n.nome] || n.falas })), inimigos: f.inimigos, segredos, arena: arenaDe(f.chefe),
     segTipos: f.n === 1 && primeira ? ['lampada'] : ['lampada', 'lampada', 'firmeza', 'asas'] };
 }
 import { CHEFES } from './chefes.js';
+import { MARCAS } from './perigos.js';
 const arenaDe = id => CHEFES[id]?.arena || 'plana';
 
 export const DIFICULDADES = {
-  peregrino: { nome: 'Peregrino', desc: 'Para conhecer a história: um fôlego a mais e avisos um pouco mais longos. Ainda exige atenção.', hp: 1.45, ritmo: 0.95, aviso: 1.05, vel: 1, vidas: 1, oleo: 1.2 },
-  provacao: { nome: 'Provação', desc: 'O jogo como foi pensado: chefes de fôlego longo, que não esperam você pensar.', hp: 2.1, ritmo: 0.72, aviso: 0.8, vel: 1.2, vidas: 0, oleo: 1 },
-  fornalha: { nome: 'Fornalha', desc: 'Sete vezes mais quente (Dn 3:19): chefes muito rápidos, avisos curtos e um fôlego a menos.', hp: 2.8, ritmo: 0.55, aviso: 0.64, vel: 1.35, vidas: -1, oleo: 0.9 }
+  peregrino: { nome: 'Peregrino', desc: 'Para conhecer a história: um fôlego a mais e avisos um pouco mais longos. Ainda exige atenção.', hp: 1.7, ritmo: 0.92, aviso: 1.05, vel: 1, vidas: 2, oleo: 1.2 },
+  provacao: { nome: 'Provação', desc: 'O padrão, e é difícil: chefes rápidos, que agarram quem fica na cabeça deles e ferem em dobro na última fase. Espere morrer algumas vezes.', hp: 3, ritmo: 0.64, aviso: 0.74, vel: 1.3, vidas: 0, oleo: 1 },
+  fornalha: { nome: 'Fornalha', desc: 'Sete vezes mais quente (Dn 3:19): chefes muito rápidos, avisos curtos e um fôlego a menos.', hp: 3.8, ritmo: 0.5, aviso: 0.6, vel: 1.45, vidas: -1, oleo: 0.9 }
 };
 
 export function novoCaminho() {

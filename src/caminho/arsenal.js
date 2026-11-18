@@ -78,6 +78,13 @@ const RAR_ANTIGAS = { curta: 'comum', montante: 'rara', cajadoPastor: 'comum', s
 const COR_ANTIGAS = { montante: '#C8CCD4', cinco: '#E8E2C8', brasa: '#FF9A3C', vara: '#C9E6A0', prata: '#E6ECF2', espinho: '#B8A070', alabarda: '#9AA8B4', cordas: '#C9A06A' };
 for (const [tipo, lista] of Object.entries(ARMAS_ALT)) for (const [id, a] of Object.entries(lista)) { a.rar = a.rar || RAR_ANTIGAS[id] || 'comum'; if (COR_ANTIGAS[id]) a.lamina = a.lamina || COR_ANTIGAS[id]; }
 for (const [tipo, lista] of Object.entries(NOVAS)) Object.assign(ARMAS_ALT[tipo] = ARMAS_ALT[tipo] || {}, lista);
+// Peregrino carrega UMA arma: trocar é entregar a que está na mão (o armeiro paga parte do valor) e levar a outra.
+// As de loja ficaram um pouco mais caras; as achadas (sem preço) podem ser resgatadas pelo valor da raridade.
+for (const lista of Object.values(ARMAS_ALT)) for (const a of Object.values(lista)) if (a.preco) a.preco = Math.round(a.preco * 1.25 / 10) * 10;
+const RESGATE = { comum: 480, rara: 950, epica: 1900, lendaria: 2800 };
+export const precoArma = a => a ? a.preco || a.zelote || RESGATE[a.rar || 'comum'] : 0;
+export const valorTroca = a => Math.round(precoArma(a) * 0.4 / 5) * 5;
+export const AVISO_UMA_ARMA = 'Atenção: você é peregrino. Quem está sempre em viagem não guarda muita coisa: você carrega UMA arma por vez. Ao trocar, a que está na sua mão fica com o armeiro (ele paga parte do valor dela). Se a quiser de volta, compra de novo.';
 
 // ---- relíquias novas (todas com efeito de verdade: G.tem('id') nos lugares certos) ----
 const RELIQ_NOVAS = {
@@ -111,7 +118,18 @@ Object.assign(RELIQUIAS, RELIQ_NOVAS);
 const PREMIOS = new Set(Object.values(MUNDO).map(m => m.premio));
 for (const [id, R] of Object.entries(RELIQUIAS)) if (!R.rar) R.rar = PREMIOS.has(id) ? 'lendaria' : R.raro ? 'epica' : R.preco ? 'comum' : 'rara';
 // relíquias que podem cair de chefes e vícios (as de prêmio fixo e as do Mercador ficam de fora)
-export const RELIQ_ACHAVEIS = Object.keys(RELIQ_NOVAS).filter(id => !RELIQ_NOVAS[id].porto && id !== 'veste_branca');
+// As coisas dos zelotes: só eles vendem, e só a quem venceu o conselho. Uma arma por tipo (a mesma têmpera) e três relíquias.
+const NOME_ZELOTE = { espada: 'Espada do Conselho', adaga: 'Sicas do Conselho', lanca: 'Lança de Fineias', chicote: 'Açoite de Masada', funda: 'Funda dos galileus', cajado: 'Cajado do zelo', trombeta: 'Trombeta do motim' };
+for (const [tipo, nome] of Object.entries(NOME_ZELOTE)) (ARMAS_ALT[tipo] = ARMAS_ALT[tipo] || {}).zelote = { nome, ref: 'Números 25:7', rar: 'lendaria', zelote: 2400, desc: 'Forjada pelos três. Fere fundo e não perdoa brecha.', especial: ['critico', 'eco'], lamina: '#E8D0A0', cor: 'bronze', d: 1.32, ...(ARMAS_ALT[tipo]?.[Object.keys(ARMAS_ALT[tipo])[0]]?.tiro ? { tiro: { ...ARMAS_ALT[tipo][Object.keys(ARMAS_ALT[tipo])[0]].tiro } } : {}) };
+Object.assign(RELIQ_NOVAS, {
+  faixa_fineias: { nome: 'Faixa de Fineias', icone: '🟥', ref: 'Números 25:11', rar: 'epica', zelote: 900, desc: 'O ZELO dura o dobro e vale para dois golpes seguidos.' },
+  cantil_masada: { nome: 'Cantil de Masada', icone: '🫙', ref: 'Salmo 63:1', rar: 'epica', zelote: 1100, desc: 'Um fôlego a mais. De quem aprendeu a resistir com pouca água.' },
+  sica_oculta: { nome: 'Sica oculta', icone: '🗡', ref: 'Juízes 3:16', rar: 'epica', zelote: 1300, desc: 'O Passo Pronto fere quem você atravessa.' },
+  lenho_mara: { nome: 'Lenho de Mara', icone: '🌿', ref: 'Êxodo 15:25', rar: 'lendaria', desc: 'O lenho que tornou doces as águas amargas: cada oração devolve dois fôlegos em vez de um.' }
+});
+Object.assign(RELIQUIAS, RELIQ_NOVAS);
+export const DOS_ZELOTES = ['faixa_fineias', 'cantil_masada', 'sica_oculta'];
+export const RELIQ_ACHAVEIS = Object.keys(RELIQ_NOVAS).filter(id => !RELIQ_NOVAS[id].porto && !RELIQ_NOVAS[id].zelote && id !== 'veste_branca' && id !== 'lenho_mara');
 
 // sorteia por raridade, com pesos; devolve null se não há nada que falte
 function sorteio(itens, pesos) {
@@ -120,7 +138,7 @@ function sorteio(itens, pesos) {
 }
 export function sortearArma(G, pesos) {
   const tipo = G.tipoArma, cls = G.char.cls, cm = G.cm; cm.armas = cm.armas || {};
-  return sorteio(Object.entries(ARMAS_ALT[tipo] || {}).filter(([id]) => !cm.armas[cls + ':' + id]), pesos);
+  return sorteio(Object.entries(ARMAS_ALT[tipo] || {}).filter(([id, a]) => !a.zelote && !cm.armas[cls + ':' + id]), pesos);
 }
 export function sortearReliquia(G, pesos) {
   const cm = G.cm; return sorteio(RELIQ_ACHAVEIS.filter(id => !cm.reliquias.includes(id)).map(id => [id, RELIQUIAS[id]]), pesos);

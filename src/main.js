@@ -93,6 +93,7 @@ function escolherControles() {
         cartao('controle', 'Controle', [h('div', { class: 'esq-controle' }, h('i', { class: 'ec-cruz' }), h('i', { class: 'ec-anal' }), h('i', { class: 'ec-bot ec-a' }, 'A'), h('i', { class: 'ec-bot ec-b' }, 'B'), h('i', { class: 'ec-bot ec-x' }, 'X'), h('i', { class: 'ec-bot ec-y' }, 'Y'))],
           ['Analógico anda · A pula · X golpeia', 'RB solta o especial · RT é o passo', 'B ora · LB ergue a lâmpada · Y fala', 'Analógico direito mira']).appendChild(estado).parentNode),
       h('p', { class: 'muted esq-pad' }, 'Qualquer controle (Xbox, PlayStation, genérico) é reconhecido. Dá para trocar os botões em ☰ › Ajustes.'));
+    setTimeout(() => { if (document.body.classList.contains('pad')) p.querySelector('[data-esquema="controle"]')?.focus(); }, 80); // quem chegou até aqui pelo controle já começa no cartão do controle
   }, { dismiss: false, wide: true });
 }
 

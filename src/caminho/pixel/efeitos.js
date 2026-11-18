@@ -10,6 +10,8 @@ import * as hitSpark from '../../vendor/pixelfx/fx/impacts/hit-spark.js';
 import * as critHit from '../../vendor/pixelfx/fx/impacts/crit-hit.js';
 import * as parry from '../../vendor/pixelfx/fx/impacts/parry.js';
 import * as groundSlam from '../../vendor/pixelfx/fx/impacts/ground-slam.js';
+import * as heavyLanding from '../../vendor/pixelfx/fx/impacts/heavy-landing.js';
+import * as brazier from '../../vendor/pixelfx/fx/fire/brazier.js';
 import * as heal from '../../vendor/pixelfx/fx/holy/heal.js';
 import * as holyPillar from '../../vendor/pixelfx/fx/holy/holy-pillar.js';
 import * as poof from '../../vendor/pixelfx/fx/spawn/poof.js';
@@ -50,7 +52,18 @@ const RECEITAS = {
   cura: [heal, { palette: ['#3a2a10', '#7a5a1c', '#c9962b', '#f0c24a', '#ffe08a', '#fff3c4', '#fffbe6', '#ffffff'] }, 24, 1.3],
   pilar: [holyPillar, {}, 24, 1.6],
   sumico: [poof, {}, 24, 0.6],
-  coleta: [collect, {}, 24, 0.6]
+  coleta: [collect, {}, 24, 0.6],
+  // efeitos próprios dos chefes: cada luta tem a sua cor de impacto, fumaça e fogo
+  slamOuro: [groundSlam, { palette: OURO, stone: '#8a4f1c' }, 24, 1.1],
+  slamPedra: [groundSlam, { palette: BRONZE, stone: '#4e2e14' }, 24, 1.1],
+  slamAreia: [groundSlam, { palette: COURO, stone: '#8a5a2c' }, 24, 1],
+  slamMar: [groundSlam, { palette: SOM, stone: '#1c5a6e' }, 24, 1.1],
+  slamMagia: [groundSlam, { palette: ROXO, stone: '#3a2060' }, 24, 1.1],
+  pouso: [heavyLanding, {}, 24, 1],
+  braseiro: [brazier, {}, 20, 1.5],
+  fumacaRoxa: [poof, { palette: ['#1c1030', '#3a2060', '#6a3fa8', '#a070e0', '#d0b0ff', '#f0e4ff'], stars: ['#d0b0ff', '#f0e4ff', '#ffffff'] }, 24, 0.9],
+  fumacaNegra: [poof, { palette: ['#06070f', '#14161f', '#262a38', '#3c4256', '#5a6278', '#8890a6'], stars: ['#F4E6AE', '#ffffff', '#ffffff'] }, 24, 0.9],
+  pilarCeu: [holyPillar, {}, 24, 1.8]
 };
 for (const [k, P] of Object.entries(PALETAS)) { RECEITAS['cima_' + k] = [uppercut, { palette: P }, 30, 0.42]; RECEITAS['baixo_' + k] = [spinSlash, { palette: P, radius: 24 }, 34, 0.34]; }
 const folhas = new Map();

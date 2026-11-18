@@ -341,6 +341,7 @@ export class Juntos {
       case 'g': if (this.souDono) G.golpeRemoto(ini(m.id), m); break;
       case 'pa': { const e = this.souDono && ini(m.id); if (!e) break; if (e.kind === 'chefe') G.postura(e, 34); else { e.stun = 1.5; e.aberto = 1.5; e.vx = m.vx || 0; } break; }
       case 'ti': if (this.souDono) G.tiros = G.tiros.filter(t => t.nid !== m.id); break;
+      case 'mc': { G.moedasFeitas?.add(m.id); for (const q of G.moedas) if (q.cid === m.id) q.pego = true; break; } // a moeda maldita sumiu em outro aparelho (apanhada ou recolhida pela Ganância)
       case 'zp': { const z = this.souDono && G.zonas.find(q => q.nid === m.id); if (z) G.zonaDefendida(z); break; }
       case 'lu': if (this.souDono && G.N.arena && G.def.chefe && !G.luta && !G.chefe) G.iniciarLuta(); break;
       case 'tb': if (this.souDono && G.chefe && !G.chefe.morrendo) G.chefeSeFortalece(G.chefe, par.nome); break;

@@ -31,6 +31,20 @@ export const ENEMIES = {
 //            sem desenho próprio, usa um genérico com cor, cor2 e "simbolo")
 // Uma semana pode trazer chefes novos no campo "chefes" do arquivo da semana (ver content/index.js).
 export const BOSSES = {
+  amargura: { nome: 'A Raiz de Amargura', titulo: 'O que consumia a aldeia', lv: 15, hp: 3400, atk: 42, def: 8, spd: 220, r: 40, xp: 1000, ouro: 500, cor: '#B8E060', cor2: '#0E1A12', ref: 'Hebreus 12:15',
+    intro: 'Eu não entrei aqui, peregrino. Me plantaram. E me regaram todos os dias.', derrota: '"Longe de vós toda amargura… perdoando-vos uns aos outros, como também Deus, em Cristo, vos perdoou" (Ef 4:31-32).' },
+  // O Conselho Zelote (ficção do Refúgio): três que tinham zelo sem entendimento (Rm 10:2) e resolviam tudo pelo ferro
+  conselho: { nome: 'O Conselho Zelote', titulo: 'Desafio', lv: 14, hp: 3000, atk: 40, def: 8, spd: 200, r: 26, xp: 900, ouro: 600, cor: '#C9D2E0', cor2: '#3A2A2A', ref: 'Romanos 10:2',
+    intro: 'Um de cada vez, estrangeiro. É a nossa lei.', derrota: '"Têm zelo de Deus, porém não com entendimento" (Rm 10:2). Os três baixam as armas.' },
+  zeloteFoice: { nome: 'Jair, o Vidente', titulo: 'Conselho Zelote', lv: 14, hp: 1000, atk: 40, def: 8, spd: 200, r: 26, xp: 0, ouro: 0, cor: '#D9B878', cor2: '#3A2A2A', ref: 'Romanos 10:2' },
+  zelotePunhal: { nome: 'Menaém, o Assassino', titulo: 'Conselho Zelote', lv: 14, hp: 1000, atk: 40, def: 8, spd: 200, r: 26, xp: 0, ouro: 0, cor: '#C9D2E0', cor2: '#3A2A2A', ref: 'Romanos 10:2' },
+  // as sombras das páginas vivas (a história do peregrino): não são personagens da Bíblia, são o que cobria aquelas páginas
+  escassez: { nome: 'A Escassez', titulo: 'Sombra da página', lv: 3, hp: 700, atk: 20, def: 2, spd: 60, r: 30, xp: 180, ouro: 110, cor: '#C9A86A', cor2: '#5A3E22', ref: '1 Reis 17:12',
+    intro: 'Um punhado de farinha. Um resto de azeite. Coma, e morra.', derrota: '"A farinha da panela não se acabará, e o azeite da botija não faltará" (1Rs 17:14).' },
+  desprezo: { nome: 'O Desprezo', titulo: 'Sombra da página', lv: 5, hp: 800, atk: 22, def: 3, spd: 70, r: 32, xp: 220, ouro: 130, cor: '#8A7A9A', cor2: '#3A3048', ref: 'Marcos 10:48',
+    intro: 'Cale-se, cego. O Mestre não tem tempo para gente como você.', derrota: '"Jesus parou e disse: Chamai-o" (Mc 10:49).' },
+  carcere: { nome: 'O Cárcere', titulo: 'Sombra da página', lv: 7, hp: 900, atk: 24, def: 4, spd: 120, r: 34, xp: 260, ouro: 150, cor: '#5A5E6A', cor2: '#23252E', ref: 'Atos 12:6',
+    intro: 'Duas cadeias. Quatro escoltas. Um portão de ferro. Amanhã ele morre.', derrota: '"As cadeias caíram-lhe das mãos" (At 12:7).' },
   mamom: {
     nome: 'Mamom, a Ganância', titulo: 'Subchefe', lv: 4, hp: 850, atk: 24, def: 3, spd: 110, r: 30, xp: 220, ouro: 140,
     cor: '#F2C14E', cor2: '#8A5A0A', ref: 'Mateus 6:24',

@@ -91,11 +91,9 @@ export function atualizarHeroi(G, dt) {
 
   // ---- ORAÇÃO + GOLPE: com a oração apertada, o golpe chama o Espírito, que desce e fere tudo em volta (no alto e no chão) ----
   if (p.espCd > 0) p.espCd -= dt;
-  if (c.orar && c.atk && !preso && !emDash && !p.lamp && !G.investidaMira && !G.quedaMira) {
+  if (G.cm.espirito && c.orar && c.atk && !preso && !emDash && !p.lamp && !G.investidaMira && !G.quedaMira) { // sem o dom, orar + golpe não avisa nada: cada botão faz o seu
     p.tentouEsp = true;
-    if (!G.cm.espirito) { // a habilidade existe, mas ainda não é sua: o tutorial ensina o jeito, o Vale da Mentira dá o dom
-      if (!(p.avisoEsp > 0)) { p.avisoEsp = 2.5; G.textoEm(p.x, p.y - 70, 'Calma lá!', '#FFE9A8', 14); G.ui.toast('Calma lá: a descida do Espírito existe, mas ainda não é sua. Você precisa descobrir como conquistá-la. Dizem que no fundo do Vale da Mentira, sob o Refúgio, quem vence a maior das mentiras recebe o Espírito da verdade (Jo 16:13).', 8000); G.fx.sobe(p.x, p.y - 20, 8, '#FFE9A8'); }
-    } else if (p.espCd > 0 || p.oleo < ESPIRITO_CUSTO) { if (!p.avisoEsp) { p.avisoEsp = 0.8; G.textoEm(p.x, p.y - 64, p.espCd > 0 ? 'o Espírito ainda não (' + Math.ceil(p.espCd) + 's)' : 'a descida do Espírito pede ' + ESPIRITO_CUSTO + ' de azeite', '#C9B88A', 12); } }
+    if (p.espCd > 0 || p.oleo < ESPIRITO_CUSTO) { if (!p.avisoEsp) { p.avisoEsp = 0.8; G.textoEm(p.x, p.y - 64, p.espCd > 0 ? 'o Espírito ainda não (' + Math.ceil(p.espCd) + 's)' : 'a descida do Espírito pede ' + ESPIRITO_CUSTO + ' de azeite', '#C9B88A', 12); } }
     else espiritoDesce(G);
     c.atk = false; p.atkBuf = 0;
   }
@@ -104,7 +102,7 @@ export function atualizarHeroi(G, dt) {
   const custoOra = G.custoOracao();
   if (c.orar && p.chao && !preso && !emDash && !p.lamp && p.oleo >= custoOra && p.vida < p.vidaMax) {
     p.orando += dt; if (p.orando < dt * 1.5) sfx('magic');
-    if (p.orando >= 0.95) { p.orando = 0; p.oleo -= custoOra; p.vida++; sfx('heal'); G.efeito('cura', p.x, p.y, 1, { gruda: p }); G.fx.anel(p.x, p.y - 20, '#FFE9A8', 60); G.fx.sobe(p.x, p.y - 10, 14, '#FFE9A8');
+    if (p.orando >= 0.95) { p.orando = 0; p.oleo -= custoOra; p.vida = Math.min(p.vidaMax, p.vida + (G.tem('lenho_mara') ? 2 : 1)); sfx('heal'); G.efeito('cura', p.x, p.y, 1, { gruda: p }); G.fx.anel(p.x, p.y - 20, '#FFE9A8', 60); G.fx.sobe(p.x, p.y - 10, 14, '#FFE9A8');
       if (G.tem('vaso_alabastro')) { p.inv = Math.max(p.inv, 1.5); G.fx.anel(p.x, p.y - 26, '#F0E6D8', 90); G.textoEm(p.x, p.y - 72, 'perfume de alabastro', '#F0E6D8', 11); } }
   } else p.orando = 0;
 
@@ -219,7 +217,8 @@ export function atualizarHeroi(G, dt) {
     p.carga = 0; p.segGolpe = 0; p.avisoMira = false;
   }
   // verso (especial da vocação)
-  if (c.verso && p.oleo >= G.custoVerso() && !preso && !p.lamp && p.orando <= 0) G.verso();
+  if (p.versoCd > 0) p.versoCd -= dt;
+  if (c.verso && p.oleo >= G.custoVerso() && !preso && !p.lamp && p.orando <= 0 && !(p.versoCd > 0)) { p.versoCd = 1.8; G.verso(); }
 
   // ---- física ----
   const noAr = !p.chao, vyAntes = p.vy;

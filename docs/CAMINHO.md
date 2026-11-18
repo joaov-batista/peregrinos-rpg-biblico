@@ -189,3 +189,101 @@ os outros digitam o código, ou abrem o link `?sala=CÓDIGO`. Não há servidor 
 - **Pesca** (`pesca()`, Simão no Refúgio): lançar, fisgar no puxão e recolher mantendo a marca na faixa.
 - **Vocação** (`trocarVocacao()`, Samuel no pátio das provas).
 - **Trailer:** `art/trailer-peregrinos.mp4`, gravado por `scripts/trailer-gravar.cjs` com a trilha de `scripts/trailer-trilha.cjs`.
+- **Trailer das batalhas:** `art/trailer-batalhas-16x9.mp4` (1920×1080) e `art/trailer-batalhas-9x16.mp4` (1080×1920, reels: o jogo inteiro na largura, sem cortar a câmera).
+  Gravado quadro a quadro com o jogo real por `scripts/trailer-batalhas.cjs` (um bot joga com os mesmos comandos de quem joga e reage aos avisos)
+  e montado por `scripts/trailer-montar.py`, que sintetiza a trilha batendo junto com os tremores, as defesas perfeitas e os quebrantos.
+  Para refazer: `npm run dev`, depois `node scripts/trailer-batalhas.cjs <quadros>` e `python3 scripts/trailer-montar.py <quadros> <saída>`
+  (não edite arquivos do projeto durante a gravação: o servidor recarrega a página e a gravação cai).
+- **Site de apresentação:** `/site` (`site.html`, `src/site/`). Trailer, clipes das batalhas, mecânicas, vocações e a página de download
+  (computador, Android, iPhone ou navegador). Registra o mesmo service worker do jogo, então "Instalar" baixa o jogo para jogar sem internet.
+  As mídias ficam em `public/site/` (geradas por `scripts/site-midia.py` a partir da mesma gravação) e não entram no cache offline do jogo.
+
+## Bosque do Treino, controle completo, trilhas compostas e ajustes de luta
+
+- **Bosque do Treino** (`bosque` em `dados.js`, `PASSOS`/`tutorial()`): quem chega pela primeira vez começa numa trilha antes do Refúgio,
+  com onze passos guiados e tudo à mão (troncos para pular, bonecos de palha, degraus que só a lâmpada mostra, dardos que não ferem,
+  jarro cheio para o ataque mira). A descida do Espírito saiu do tutorial: é conquistada no Vale da Mentira. O bosque continua aberto
+  pela Praça do poço.
+- **O estrangeiro de branco** (`mensageiro` em `mundonovo.js`): depois de cinco quedas (e antes do encontro no Getsêmani), aparece junto
+  ao poço e dá pistas leves, uma por vez, sobre a trilha do olival e a passagem entre as oliveiras.
+- **Controle** (`gamepad.js`): Start aperta o botão principal, B volta também nas telas de entrada, LB/RB trocam de aba, ◀ ▶ regulam
+  volumes, A num campo de texto abre um teclado na tela, botões de segurar (pesca) funcionam, e o direcional de controles genéricos
+  vale nos menus. `node tests/controle-browser.cjs` cria um peregrino e entra no jogo só com um controle de mentira.
+- **Golias** (`vale()` em `jogo.js`): uma pedra lisa aparece num canto qualquer do vale; quem apanha tem um arremesso, mirado. Na testa,
+  o gigante cambaleia. Errou, só na próxima pedra.
+- **Procrastinação / Preguiça:** a cura é constante e forte, mas só dentro da barra atual (`regenera` em `chefes.js`).
+- **Uma arma por vez** (`armeiro()` em `menu.js`, `precoArma`/`valorTroca` em `arsenal.js`): trocar entrega a arma da mão por 40% do
+  valor; as achadas ficam com Jael e a primeira retirada é de graça. Armas 25% mais caras.
+- **Câmaras:** um vício que saiu da câmara (voou para a sala de cima, entrou numa parede) é trazido de volta; depois de 14 s a onda
+  mostra onde estão os que faltam. **Sardes:** os atacantes perseguem, não se perdem no escuro e o ataque não dura para sempre.
+- **Trilhas compostas** (`src/trilhas.js`): 44 músicas escritas nota a nota e tocadas por um sequenciador (caixinha de música, flauta,
+  onda quadrada, harpa, baixo e bateria sintetizados): cada lugar, cada página, cada chefe, a batalha contra vícios e a raid.
+  `music(modo, chave)` escolhe pela chave; o que não tem trilha composta cai na trilha antiga.
+
+## A história do peregrino (campanha)
+
+- **Independente das páginas da semana:** nada da campanha é exigido para entrar numa dungeon semanal, e nenhuma dungeon é exigida
+  para avançar na campanha. O progresso fica em `cm.hist` (`{ cap, est, fim }`); saves antigos começam o arco do zero, sem perder nada.
+- **Formato de um capítulo** (`src/content/historia.js`, `src/caminho/historia.js`): um morador do Refúgio faz um pedido → abre-se uma
+  **página viva** (`hist:<id>` em `areaDef`: caminho com vícios, duas pedras de descanso e uma arena) → a **sombra da página** (chefe
+  próprio) é vencida → aparece a cena bíblica, separada, com o título "Está escrito · referência" e só o que o texto conta → o
+  peregrino volta, conta o que viu, recebe o prêmio e **a aldeia muda** (lamparinas acesas, moradores reunidos na praça).
+- **Ficção × Escritura:** o Refúgio, os pedidos, os vícios e os chefes são ficção (a sombra do esquecimento que cobre a página).
+  A cena que aparece depois é o texto bíblico. A porta de cada página diz isso com todas as letras.
+- **Primeiro arco, "A lâmpada que falta":** Sarepta (1Rs 17, chefe A Escassez), a estrada de Jericó (Mc 10, O Desprezo) e a prisão
+  de Herodes (At 12, O Cárcere); no fim, Ana aponta o olival sem contar o que há lá. O arco prepara o Getsêmani (o azeite, a voz
+  que para por um só, a vigília); o roteiro do encontro (`getsemani.js`) não foi tocado.
+- **Para escrever um capítulo novo:** uma entrada em `CAPITULOS`, um chefe em `CHEFES` + `ESTILOS` (quatro golpes só dele), o desenho
+  em `pixel/chefes-c.js`, a ficha em `BOSSES`, a cutscene `chefe-<id>` e a trilha em `src/trilhas.js`.
+
+## Chefes icônicos, igualdade nas páginas da semana e a vida no Refúgio
+
+- **Chefes da campanha refeitos** (`pixel/chefes-c.js`, `palcos.js`, `estilos.js`): cada um com silhueta própria, uma pose por golpe,
+  palco que muda e uma mecânica só dele. Escassez: a seca bebe o azeite e a botija "que não falta" aparece nos cantos. Desprezo:
+  "ele clamava ainda mais", cada golpe enche a luz no fim da estrada até a multidão se abrir. Cárcere: "a igreja fazia contínua
+  oração", ficar parado e orar acende as velas da casa de Maria até as cadeias caírem.
+- **Mentira e Imoralidade redesenhadas** (`pixel/chefes-d.js`): a máscara de duas caras com manto de cacos de espelho; o véu, o cálice
+  e a serpente enrolada. `scratch`: para ver todos os quadros de um chefe lado a lado, pinte `quadroChefe` com `b.mov` de cada golpe.
+- **Páginas da semana niveladas** (`nivelado()` em `jogo.js`): dentro de qualquer página de estudo, golpe e fôlegos são iguais para
+  todos (nível, forja, fôlegos extras e dom de força não contam). Fora delas (campanha, gigantes, Sardes) a progressão vale normalmente.
+- **Páginas vivas com cenário e trilha próprios:** temas `sarepta`, `jerico` e `masmorra` (`TEMAS`, `SKYLINE`, `trilhas.js`).
+- **O Livro do Refúgio** (`vida.js`, Praça do poço): rever as páginas vivas já abertas, o calendário e as amizades.
+- **Calendário e festas** (`content/vida.js`): sete tempos pelo mês de verdade (amendoeira, Páscoa, Semanas, vindima, Tabernáculos,
+  primeiras chuvas, Luzes). A aldeia ganha enfeites e uma mesa posta; sentar-se à mesa em três dias diferentes conta a história
+  da festa em sequência e dá um presente melhor no terceiro.
+- **Amizades:** o primeiro papo do dia com um morador vale um coração (até 10). Aos 3 e aos 7, sete moradores contam algo que não
+  contam a qualquer um; os demais dão um presente simples.
+
+## O Conselho Zelote, a loja dos zelotes e a Raiz de Amargura
+
+- **O Conselho Zelote** (`conselho` + os companheiros `zeloteFoice` e `zelotePunhal`, com `parte: true` em `CHEFES`): três lutadores
+  e uma vida só. Fase 1: um de cada vez, em rodízio (Menaém, Eleazar, Jair). Fase 2: duplas que se alternam (Menaém e Eleazar, Eleazar e Jair, Jair e Menaém). Fase 3: os três juntos (`palco` e `pode` do conselho; `folga` segura quem não está na vez). Entre os golpes ninguém fica na sala; cada golpe
+  é um de três jeitos (`zRasante`, `zMergulho`, `zParede` em `estilos.js`). O que os companheiros apanham sai da vida do conselho
+  (`palco` do conselho). Porta na Clareira das provas; quatro zelotes pela aldeia apontam o caminho.
+- **Clareira das Provas** (`clareira` em `dados.js`): a mata atrás do Pátio das provas (portal "Trilha da mata"). A Arena de treino,
+  o Desafio das ondas e a porta do Conselho saíram do meio da aldeia e ficam ali; ao sair deles volta-se à clareira.
+- **Prêmio:** o Zelo com entendimento (`cm.zelo`): depois de uma defesa perfeita, o próximo golpe sai com o triplo da força.
+- **Depois da vitória** (`missao.js`): os zelotes vendem a arma do conselho (uma por vocação), três relíquias (Faixa de Fineias,
+  Cantil de Masada, Sica oculta) e maná; e entregam a investigação: três sinais (Bairro, fim do Olival, Cisterna), uma dedução,
+  e a fenda no fundo da cisterna.
+- **A Raiz de Amargura** (`amargura`, Hb 12:15): voa e tem seis golpes: raízes pelo chão, rasgo em diagonal, chuva de fel do teto,
+  leque de espinhos, mar de fel (suba nas raízes) e o abraço das paredes. Prêmio: o Lenho de Mara (cada oração devolve dois fôlegos).
+- **Atenção ao escrever diálogos:** `ui.dialog` devolve o rótulo escolhido e só chama o `fn` da ação 30 ms depois de fechar;
+  para decidir pelo que o jogador escolheu, use o valor devolvido.
+
+## Chefes difíceis por padrão
+
+- **Instinto de todo chefe** (`instinto()` em `chefes.js`, menos o Conselho): quem fica em cima da cabeça, quica nela duas vezes
+  seguidas ou gruda no corpo é agarrado. Há um "!" curto para escapar (passo ou sair de perto); se pega, o chefe segura o peregrino
+  no alto e o arremessa longe, com um fôlego que não se defende. Entre os golpes, investidas curtas na direção do jogador.
+- **Ritmo:** menos pausa entre golpes e mais golpes emendados. Provação (o padrão) ficou difícil: mais vida, golpes mais
+  rápidos, avisos mais curtos, 5 fôlegos nas páginas da semana e dano em dobro na última fase do chefe.
+- **Sem atalhos:** quique e especial repetidos rendem cada vez menos no chefe; o especial tem espera de 1,8 s; golpes no chefe
+  dão menos azeite; a postura enche mais devagar e o quebranto é curto. O vento não atravessa parede nem grade.
+- **Caixa de dano do tamanho do desenho** (`medirChefe` em `pixel/render.js`): a cada poucos quadros mede o que está pintado no
+  quadro do chefe e guarda em `e.hb`; `caixa()` usa isso. A cabeça da Escassez, a testa do Golias e o corpo inteiro dos gigantes
+  agora contam. **Peso** (`tanque()` em `chefes.js`): corpo grande, armadura e passo lento fazem o chefe sentir menos cada golpe
+  (`resiste`, até metade) e os pesados (Golias, Beemote, Leviatã, Cárcere) tiram dois fôlegos por acerto a luta inteira.
+- **Resposta à plataforma** (`contraPlataforma()` em `chefes.js`): quem fica quase um segundo parado em cima de uma plataforma
+  recebe, com aviso, três colunas de espinhos que furam a plataforma (onde está e dos dois lados), três dardos mirados no alto e,
+  se o chefe anda no chão, um salto até a altura do peregrino que cai com onda de choque. Volta a cada 2,8 s (menos nas fases finais).

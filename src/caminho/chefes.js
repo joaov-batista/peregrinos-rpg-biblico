@@ -1,344 +1,259 @@
-// Chefes do Caminho: lutas de padrão, em fases, com golpes sempre avisados (dá para aprender e vencer sem levar dano).
-// Cada chefe é só dados (CHEFES): a ordem dos golpes em cada fase é fixa, como uma coreografia.
+// Chefes do Caminho: lutas em fases, com golpes sempre avisados (dá para aprender e vencer sem levar dano).
+// Cada chefe luta do seu jeito (estilos.js): golpes que só ele tem, um modo próprio de se mover e de escolher o
+// próximo golpe, e um palco que muda durante a luta. Nenhum golpe se repete entre chefes.
 // Três ideias próprias do jogo:
 //   • Postura: defesas perfeitas com a lâmpada enchem a barra; cheia, o chefe fica QUEBRANTADO.
 //   • Está Escrito: a cada virada de fase o chefe acusa, e a luta para numa pergunta do estudo.
 //   • Cada chefe tem uma regra que ensina o texto (fugir da Imoralidade, a luz que desfaz a Mentira, a testa de Golias…).
-import { rand, clamp, TAU, pick } from '../util.js';
+import { rand, clamp, TAU } from '../util.js';
 import { sfx } from '../audio.js';
 import { BOSSES } from '../data/bestiary.js';
 import { drawBoss } from '../game/boss-art.js';
 import { mover } from './corpo.js';
+import { ESTILOS, desfazer, choque } from './estilos.js';
 
 const F = (vida, golpes, extra = {}) => ({ vida, golpes, ...extra });
+// golpes: nome → parâmetros; "fn" aponta para o golpe do estilo quando o nome é uma variação (mais forte) do mesmo golpe
 export const CHEFES = {
+  /* ---------- A Raiz de Amargura: o chefe secreto da investigação dos zelotes ---------- */
+  amargura: { vida: 1700, pressa: 0.6, r: 40, arena: 'raizes', voa: 150, vel: 0, semVirar: false,
+    golpes: { raizesAmargas: {}, rasgoDeEspinho: { espera: 1.2 }, chuvaDeFel: {}, lequeDeEspinhos: {}, marDeFel: {}, abracoDaRaiz: {} },
+    fases: [F(1, ['raizesAmargas', 'chuvaDeFel', 'lequeDeEspinhos', 'rasgoDeEspinho']), F(0.62, ['rasgoDeEspinho', 'marDeFel', 'raizesAmargas', 'abracoDaRaiz', 'lequeDeEspinhos'], { grito: 'VOCÊ NUNCA VAI ESQUECER!', escuro: 0.25 }), F(0.3, ['rasgoDeEspinho', 'marDeFel', 'chuvaDeFel', 'abracoDaRaiz', 'raizesAmargas', 'lequeDeEspinhos'], { grito: 'EU SOU TUDO O QUE TE DEVEM!', escuro: 0.4 })],
+    dica: 'Ela voa: bata quando ela crava no chão (raízes) e logo depois de cada rasgo em diagonal. Na chuva de fel, ande entre as cortinas. Quando o fel sobe, vá para o outro lado ou suba nas raízes. No abraço, pule uma das paredes.' },
+  /* ---------- O Conselho Zelote: um, depois dois, depois os três. Uma vida só ---------- */
+  conselho: { vida: 1500, pressa: 0.62, r: 26, arena: 'conselho', voa: 1, vel: 0,
+    golpes: { punhalRasante: { espera: 0.9 }, punhalCadente: { espera: 0.9 }, vaiEVolta: { espera: 1 }, punhaisDaParede: { espera: 1 }, pelasCostas: { espera: 0.9 }, abaloDoForte: { espera: 1.8 }, lancaCadente: { espera: 1.5 }, estocadaZelote: { espera: 1.5 }, lancasDaParede: { espera: 1.6 }, giroDaLanca: { espera: 1.6 } },
+    fases: [F(1, ['punhalRasante', 'punhalCadente', 'vaiEVolta', 'punhaisDaParede', 'pelasCostas', 'lancaCadente', 'estocadaZelote', 'lancasDaParede', 'giroDaLanca', 'abaloDoForte']), F(0.66, ['lancaCadente', 'estocadaZelote', 'lancasDaParede', 'giroDaLanca', 'abaloDoForte'], { grito: 'DOIS DE CADA VEZ!' }), F(0.33, ['lancaCadente', 'estocadaZelote', 'giroDaLanca', 'abaloDoForte', 'lancasDaParede'], { grito: 'O CONSELHO INTEIRO!' })],
+    dica: 'Eles só podem ser feridos quando estão na sala. Rasante: pule. Mergulho: saia de baixo e bata quando ele cai. Na parede: desvie e alcance-o no alto. As foices voltam por outra altura. Com dois ou três, não persiga: escolha um e espere a brecha. MENAÉM, o assassino, some e aparece nas suas costas: ande para a frente. ELEAZAR, o forte, racha o teto quando cai: olhe os círculos. JAIR, o vidente, chama fogo onde você está e solta brasas que perseguem: não pare, e leve as brasas até elas apagarem.' },
+  zeloteFoice: { parte: true, vida: 1e7, pressa: 0.62, r: 26, arena: 'conselho', voa: 1, vel: 0,
+    golpes: { foiceRasteira: { espera: 2.2 }, foiceAlta: { espera: 2.2 }, ceifar: { espera: 2 }, foiceCadente: { espera: 2 }, fogoDoZelo: { espera: 2.2 }, brasasVivas: { espera: 2.4 } }, fases: [F(1, ['fogoDoZelo', 'foiceRasteira', 'brasasVivas', 'foiceAlta', 'ceifar', 'foiceCadente'])], dica: '' },
+  zelotePunhal: { parte: true, vida: 1e7, pressa: 0.62, r: 26, arena: 'conselho', voa: 1, vel: 0,
+    golpes: { rasgo: { espera: 2.6 }, boteZelote: { espera: 2.6 }, chuvaDePunhais: { espera: 2.8 }, finta: { espera: 2.8 }, sombraNasCostas: { espera: 2.6 } }, fases: [F(1, ['rasgo', 'sombraNasCostas', 'boteZelote', 'chuvaDePunhais', 'finta'])], dica: '' },
+  /* ---------- A história do peregrino: as sombras das páginas vivas ---------- */
+  escassez: { vida: 480, r: 40, arena: 'casebre', vel: 50,
+    golpes: { rachaduras: {}, poeira: {}, fome: {}, mirrar: {} },
+    fases: [F(1, ['rachaduras', 'poeira', 'mirrar']), F(0.6, ['fome', 'rachaduras', 'poeira', 'mirrar'], { grito: 'É O ÚLTIMO PÃO!' }), F(0.28, ['fome', 'poeira', 'rachaduras', 'mirrar'], { grito: 'NÃO HÁ MAIS NADA!' })],
+    dica: 'A seca bebe o seu azeite: apanhe a botija que aparece nos cantos (ela não falta). Saia de cima das rachaduras, pule o poeira (ele cresce a cada parede) e, se a mão puxar, use o passo para sair da boca.' },
+  desprezo: { vida: 560, r: 42, arena: 'estrada', vel: 60,
+    golpes: { calaTe: {}, empurrao: {}, dedos: {}, atropelo: {} },
+    fases: [F(1, ['calaTe', 'dedos', 'empurrao']), F(0.6, ['atropelo', 'calaTe', 'empurrao', 'dedos'], { grito: 'QUEM É VOCÊ PARA GRITAR?' }), F(0.28, ['atropelo', 'calaTe', 'dedos', 'empurrao'], { grito: 'CALEM ESSE HOMEM!' })],
+    dica: 'A voz rasteira se pula; a voz alta passa por cima de quem fica no chão. No atropelo, corra para o vão livre. "Ele clamava ainda mais" (Mc 10:48): cada golpe enche a luz no fim da estrada. Cheia, a multidão se abre e fica sem defesa.' },
+  carcere: { vida: 640, r: 44, arena: 'cela', vel: 120,
+    golpes: { correntes: {}, escoltas: {}, portao: {}, ronda: {} },
+    fases: [F(1, ['correntes', 'escoltas', 'ronda']), F(0.6, ['portao', 'correntes', 'escoltas', 'ronda'], { grito: 'DUAS CADEIAS E QUATRO ESCOLTAS!', escuro: 0.35 }), F(0.28, ['portao', 'ronda', 'correntes', 'escoltas'], { grito: 'NINGUÉM SAI DAQUI!', escuro: 0.5 })],
+    dica: 'Golpes sozinhos não abrem esta prisão: numa brecha, fique parado e ORE até as velas do fundo se acenderem (At 12:5). As cadeias caem e ele fica quebrantado. Pule as correntes, não pare quando as lanças sobem, corra para o vão iluminado do portão e atravesse a ronda com o passo.' },
   /* ---------- Corinto (Atos 18) ---------- */
-  mamom: { vida: 430, r: 40, arena: 'plana', mover: 'perseguir', vel: 70,
-    golpes: { fortuna: { tipo: 'rajada', vezes: 3, intervalo: 0.34, cor: '#FFD23F' }, investida: { tipo: 'investida', vel: 560 }, moedas: { tipo: 'chuva', n: 4, vezes: 2, cor: '#FFD23F', tentacao: true },
-      salto: { tipo: 'salto' }, chamar: { tipo: 'invocar', tipos: ['ganancia'], n: 2, fala: 'Mais! Mais!' }, dupla: { tipo: 'investida', vel: 620, repete: 1 }, cofre: { tipo: 'leque', n: 9, abertura: 0.22, cor: '#FFD23F', alto: true }, tesouro: { tipo: 'chuva', n: 6, vezes: 2, cor: '#FFD23F', tentacao: true } },
-    fases: [F(1, ['fortuna', 'investida', 'moedas', 'salto']), F(0.6, ['chamar', 'dupla', 'tesouro', 'salto', 'fortuna'], { grito: 'TUDO TEM PREÇO!' }), F(0.3, ['cofre', 'dupla', 'salto', 'tesouro'], { grito: 'SIRVA A MIM!' })],
-    dica: 'As moedas que ficam no chão pesam: cada uma que você apanha deixa o passo mais lento até o fim da luta.' },
-  procrastinacao: { vida: 760, pressa: 0.6, r: 38, arena: 'plat', mover: 'parado', regras: { aura: { raio: 240, lentidao: 0.5 }, regenera: { apos: 2.2, taxa: 0.03 } },
-    golpes: { sono: { tipo: 'sono', raio: 170 }, relogio: { tipo: 'relogio', n: 2, giro: 0.95, dur: 3.6 }, atraso: { tipo: 'marcados', vezes: 3 }, relogio3: { tipo: 'relogio', n: 3, giro: -1.2, dur: 4 }, areia: { tipo: 'chuva', n: 5, vezes: 2, cor: '#A5CDCE' },
-      atraso4: { tipo: 'marcados', vezes: 4, intervalo: 0.36 }, relogio4: { tipo: 'relogio', n: 4, giro: 1.35, dur: 4.4 }, pendulo: { tipo: 'varredura', vezes: 2, altura: 'alterna' } },
-    fases: [F(1, ['sono', 'relogio', 'atraso', 'areia', 'pendulo']), F(0.6, ['relogio3', 'areia', 'sono', 'atraso4', 'pendulo'], { grito: 'SÓ MAIS CINCO MINUTINHOS…' }), F(0.25, ['relogio4', 'pendulo', 'atraso4', 'areia'], { grito: 'AMANHÃ! AMANHÃ!' })],
-    dica: 'Ela se cura se você parar de bater. Perto dela tudo fica lento: ataque nas brechas do relógio e não espere.' },
-  mentira: { vida: 500, r: 34, arena: 'plat', voa: 120, mover: 'pairar', vel: 90,
-    golpes: { copias: { tipo: 'clones', n: 3 }, mentiras: { tipo: 'leque', n: 5, cor: '#C79BFF' }, trocar: { tipo: 'teleporte' }, copias5: { tipo: 'clones', n: 5 }, mentiras7: { tipo: 'leque', n: 7, cor: '#C79BFF' }, falsidade: { tipo: 'marcados', vezes: 3 },
-      copias6: { tipo: 'clones', n: 6 }, meias: { tipo: 'rajada', vezes: 5, intervalo: 0.24, cor: '#C79BFF' }, anel: { tipo: 'anel', n: 12, cor: '#C79BFF' } },
-    fases: [F(1, ['copias', 'mentiras', 'trocar']), F(0.6, ['copias5', 'mentiras7', 'trocar', 'falsidade'], { grito: 'QUAL DE NÓS É O VERDADEIRO?' }), F(0.3, ['copias6', 'trocar', 'meias', 'anel'], { grito: 'NINGUÉM VAI ACREDITAR EM VOCÊ!', escuro: 0.5 })],
-    dica: 'Erga a lâmpada: sob a luz as cópias tremem e ficam transparentes. Acertar a verdadeira desfaz todas.' },
-  imoralidade: { vida: 520, r: 38, arena: 'plana', mover: 'perseguir', vel: 55, regras: { fuga: true },
-    golpes: { cilada: { tipo: 'leque', n: 5, cor: '#FF8FB8' }, encanto: { tipo: 'encanto', dur: 2.4 }, pocas: { tipo: 'pocas', n: 3 }, cauda: { tipo: 'varredura', vezes: 1, altura: 'baixo' }, pocas4: { tipo: 'pocas', n: 4 }, cilada7: { tipo: 'leque', n: 7, cor: '#FF8FB8' },
-      caudas: { tipo: 'varredura', vezes: 3, altura: 'alterna' }, anel: { tipo: 'anel', n: 12, cor: '#FF8FB8', meio: true } },
-    fases: [F(1, ['cilada', 'encanto', 'pocas']), F(0.55, ['encanto', 'cauda', 'pocas4', 'cilada7'], { grito: 'NINGUÉM ESTÁ OLHANDO…' }), F(0.25, ['encanto', 'caudas', 'anel', 'pocas4'], { grito: 'CHEGUE MAIS PERTO!' })],
-    dica: 'Não se vence o encanto de perto: corra para longe (o passo pronto ajuda). Quem foge a deixa exposta. "Fugi da imoralidade" (1Co 6:18).' },
-  satanas: { vida: 760, r: 44, arena: 'plat', voa: 150, mover: 'pairar', vel: 110, acusacoes: true,
-    golpes: { condenacao: { tipo: 'leque', n: 7, cor: '#FF5A3C' }, fogo: { tipo: 'rajada', vezes: 4, intervalo: 0.3, cor: '#FF5A3C' }, abismo: { tipo: 'chuva', n: 5, vezes: 2, cor: '#FF5A3C' }, queda: { tipo: 'mergulho' }, anel: { tipo: 'anel', n: 12, cor: '#FF5A3C' },
-      foice: { tipo: 'varredura', vezes: 2, altura: 'alterna' }, abismo7: { tipo: 'chuva', n: 7, vezes: 2, cor: '#FF5A3C' }, sumir: { tipo: 'teleporte' }, condenacao9: { tipo: 'leque', n: 9, cor: '#FF5A3C' }, medos: { tipo: 'invocar', tipos: ['medo', 'duvida'], n: 2, fala: 'Você não merece estar aqui!' },
-      anel16: { tipo: 'anel', n: 16, cor: '#FF5A3C' }, foice3: { tipo: 'varredura', vezes: 3, altura: 'alterna' }, fogo6: { tipo: 'rajada', vezes: 6, intervalo: 0.24, cor: '#FF5A3C' } },
-    fases: [F(1, ['condenacao', 'fogo', 'abismo']), F(0.75, ['queda', 'anel', 'foice', 'fogo'], { grito: 'EU ACUSO VOCÊ DIA E NOITE!' }), F(0.5, ['abismo7', 'sumir', 'condenacao9', 'queda', 'medos'], { grito: 'CULPADO!' }), F(0.25, ['anel16', 'foice3', 'queda', 'abismo7', 'fogo6'], { grito: 'VOCÊ É MEU!', escuro: 0.35 })],
-    dica: 'A cada quarto da vida ele acusa. Responda com o que está escrito: a resposta certa o quebranta.' },
+  mamom: { vida: 430, r: 40, arena: 'cofre', vel: 70,
+    golpes: { cofre: {}, moedao: {}, preco: {}, ganancia: {}, avalanche: {} },
+    fases: [F(1, ['cofre', 'moedao', 'preco', 'ganancia']), F(0.6, ['cofre', 'moedao', 'preco', 'ganancia'], { grito: 'TUDO TEM PREÇO!' }), F(0.3, ['avalanche', 'moedao', 'preco', 'ganancia', 'cofre'], { grito: 'SIRVA A MIM!' })],
+    dica: 'Ele vai atrás das moedas malditas que caem e se recupera com elas: apanhe-as antes (pesam) ou bata nele enquanto se abaixa.' },
+  procrastinacao: { vida: 760, pressa: 0.6, r: 38, arena: 'relogio', vel: 28, regras: { aura: { raio: 240, lentidao: 0.5 }, regenera: { apos: 1.4, taxa: 0.075, sempre: 0.012 } },
+    golpes: { relogio: { n: 2, giro: 0.95, dur: 3.6 }, relogio3: { fn: 'relogio', n: 3, giro: -1.2, dur: 4 }, relogio4: { fn: 'relogio', n: 4, giro: 1.35, dur: 4.4 }, soneca: { raio: 170 }, ampulheta: {}, adiar: {}, tiquetaque: {} },
+    fases: [F(1, ['relogio', 'soneca', 'ampulheta', 'tiquetaque']), F(0.6, ['relogio3', 'adiar', 'soneca', 'ampulheta', 'tiquetaque'], { grito: 'SÓ MAIS CINCO MINUTINHOS…' }), F(0.25, ['relogio4', 'adiar', 'tiquetaque', 'ampulheta'], { grito: 'AMANHÃ! AMANHÃ!' })],
+    dica: 'Ela se cura o tempo todo, e depressa se você parar de bater (o relógio anda para trás). Mas a barra que você já derrubou não volta: atravesse cada marca de uma vez. Ataque nas brechas do relógio.' },
+  mentira: { vida: 500, r: 34, arena: 'espelhos', voa: 120, vel: 90,
+    golpes: { copias: { n: 3 }, copias5: { fn: 'copias', n: 5 }, meiaVerdade: {}, inverter: {}, troca: {}, boato: {} },
+    fases: [F(1, ['copias', 'meiaVerdade', 'boato', 'inverter']), F(0.6, ['copias5', 'troca', 'meiaVerdade', 'inverter', 'boato'], { grito: 'QUAL DE NÓS É O VERDADEIRO?' }), F(0.3, ['copias5', 'troca', 'inverter', 'boato', 'meiaVerdade'], { grito: 'NINGUÉM VAI ACREDITAR EM VOCÊ!', escuro: 0.5 })],
+    dica: 'Ela fica sempre no lado oposto, como num espelho. Erga a lâmpada: sob a luz as cópias tremem. Se tudo ficar ao contrário, foi a palavra torta: espere passar.' },
+  imoralidade: { vida: 520, r: 38, arena: 'fuga', vel: 55, regras: { fuga: true },
+    golpes: { encanto: { dur: 2.4 }, laco: {}, perfume: {}, beijos: {}, cilada: {} },
+    fases: [F(1, ['encanto', 'beijos', 'laco']), F(0.55, ['encanto', 'perfume', 'cilada', 'laco', 'beijos'], { grito: 'NINGUÉM ESTÁ OLHANDO…' }), F(0.25, ['encanto', 'cilada', 'perfume', 'laco', 'beijos'], { grito: 'CHEGUE MAIS PERTO!' })],
+    dica: 'Não se vence o encanto de perto: corra para longe (o passo pronto ajuda). Quem foge a deixa exposta. As ciladas no chão só aparecem com a lâmpada. "Fugi da imoralidade" (1Co 6:18).' },
+  satanas: { vida: 760, r: 44, arena: 'altar', voa: 150, vel: 110, acusacoes: true,
+    golpes: { dardos: {}, acusacao: {}, abismo: {}, cadeias: {}, leao: {} },
+    fases: [F(1, ['dardos', 'acusacao', 'leao']), F(0.75, ['abismo', 'dardos', 'cadeias', 'leao'], { grito: 'EU ACUSO VOCÊ DIA E NOITE!' }), F(0.5, ['acusacao', 'cadeias', 'abismo', 'leao', 'dardos'], { grito: 'CULPADO!' }), F(0.25, ['abismo', 'leao', 'dardos', 'cadeias', 'acusacao'], { grito: 'VOCÊ É MEU!', escuro: 0.35 })],
+    dica: 'Os dardos inflamados chegam na sua altura: erga a lâmpada como escudo (Ef 6:16). Quando o chão vira abismo, suba nas plataformas. Responda às acusações com o que está escrito.' },
   /* ---------- Jonas ---------- */
-  fuga: { vida: 380, r: 36, arena: 'plana', mover: 'rodear', vel: 110,
-    golpes: { deriva: { tipo: 'investida', vel: 520, repete: 1, fala: 'Sempre há outro navio…' }, cartas: { tipo: 'leque', n: 3, cor: '#79D9CD' }, sumir: { tipo: 'teleporte' }, rotas: { tipo: 'anel', n: 10, cor: '#79D9CD', meio: true }, cartas5: { tipo: 'leque', n: 5, cor: '#79D9CD' }, salto: { tipo: 'salto' } },
-    fases: [F(1, ['deriva', 'cartas', 'sumir']), F(0.5, ['rotas', 'deriva', 'cartas5', 'sumir', 'salto'], { grito: 'FUGIR NÃO MUDA O CHAMADO!' })],
-    dica: 'Ele sempre escapa para o lado oposto. Espere a investida passar e golpeie pelas costas.' },
-  pavor: { vida: 420, r: 36, arena: 'plat', voa: 130, mover: 'pairar', vel: 100,
-    golpes: { ondas: { tipo: 'varredura', vezes: 1, altura: 'baixo', cor: '120,210,245' }, relampagos: { tipo: 'chuva', n: 4, vezes: 2, cor: '#F4E6AE' }, vento: { tipo: 'leque', n: 5, cor: '#94D9F5' }, queda: { tipo: 'mergulho' }, raios6: { tipo: 'chuva', n: 6, vezes: 3, cor: '#F4E6AE' }, vagas: { tipo: 'varredura', vezes: 3, altura: 'alterna', cor: '120,210,245' } },
-    fases: [F(1, ['ondas', 'vento', 'relampagos']), F(0.5, ['queda', 'raios6', 'vagas', 'vento'], { grito: 'O MEDO QUER DECIDIR POR VOCÊ!' })],
-    dica: 'Observe os avisos: sempre há um lugar seguro no convés. O pânico erra o pulo.' },
-  desespero: { vida: 460, r: 36, arena: 'plat', voa: 120, mover: 'pairar', vel: 80, escuro: 0.55,
-    golpes: { ecos: { tipo: 'anel', n: 10, cor: '#B6A0E6' }, clamor: { tipo: 'rajada', vezes: 3, intervalo: 0.4, cor: '#C6B8FA' }, correntes: { tipo: 'pocas', n: 3, cor: '143,120,200' }, pesos: { tipo: 'marcados', vezes: 3 }, ecos14: { tipo: 'anel', n: 14, cor: '#B6A0E6' }, sumir: { tipo: 'teleporte' }, clamor5: { tipo: 'rajada', vezes: 5, intervalo: 0.3, cor: '#C6B8FA' } },
-    fases: [F(1, ['ecos', 'clamor', 'correntes']), F(0.5, ['pesos', 'ecos14', 'sumir', 'clamor5'], { grito: 'AQUI NINGUÉM PODE OUVIR VOCÊ…' })],
-    dica: 'No ventre quase não há luz: guarde azeite. Orar no abismo é exatamente o que Jonas fez (Jn 2:2).' },
-  violencia: { vida: 500, r: 40, arena: 'plana', mover: 'perseguir', vel: 60,
-    golpes: { correntes: { tipo: 'estocada', alcance: 200 }, estrondo: { tipo: 'ondas', vezes: 2 }, pedras: { tipo: 'chuva', n: 4, vezes: 2, cor: '#E9AD7F' }, arrasto: { tipo: 'investida', vel: 540 }, estrondo3: { tipo: 'ondas', vezes: 3 }, pedras6: { tipo: 'chuva', n: 6, vezes: 2, cor: '#E9AD7F' }, salto: { tipo: 'salto' } },
-    fases: [F(1, ['correntes', 'estrondo', 'pedras']), F(0.5, ['arrasto', 'correntes', 'estrondo3', 'pedras6', 'salto'], { grito: 'NADA MUDA NESTA CIDADE!' })],
-    dica: 'A corrente é lenta e reta: erga a lâmpada no instante do golpe para quebrar a postura dele.' },
-  ressentimento: { vida: 550, r: 40, arena: 'plat', mover: 'parado',
-    golpes: { espinhos: { tipo: 'leque', n: 5, cor: '#D6C77B' }, calor: { tipo: 'marcados', vezes: 3 }, amargura: { tipo: 'anel', n: 10, cor: '#C9A16C', meio: true }, vento: { tipo: 'varredura', vezes: 2, altura: 'alterna', cor: '233,187,122' }, folhas: { tipo: 'chuva', n: 5, vezes: 2, cor: '#B49C65' }, amargura14: { tipo: 'anel', n: 14, cor: '#C9A16C', meio: true }, calor4: { tipo: 'marcados', vezes: 4, intervalo: 0.38 } },
-    fases: [F(1, ['espinhos', 'calor', 'amargura']), F(0.5, ['vento', 'folhas', 'amargura14', 'calor4'], { grito: 'COMPAIXÃO PARA ELES? NUNCA!' })],
-    dica: 'Ele não sai do lugar: a raiz da amargura não anda. Chegue perto entre um anel e outro.' },
+  fuga: { vida: 380, r: 36, arena: 'conves', vel: 110,
+    golpes: { bilhetes: {}, outroNavio: {}, ancora: {}, corda: {} },
+    fases: [F(1, ['bilhetes', 'outroNavio', 'ancora']), F(0.5, ['corda', 'outroNavio', 'bilhetes', 'ancora'], { grito: 'FUGIR NÃO MUDA O CHAMADO!' })],
+    dica: 'Ele foge de você e o convés inclina. Encurralado, pula por cima: espere-o descer. As passagens voltam para a mão dele.' },
+  pavor: { vida: 420, r: 36, arena: 'tormenta', voa: 130, vel: 100,
+    golpes: { relampago: {}, vagalhao: {}, rajada: {}, granizo: {} },
+    fases: [F(1, ['relampago', 'granizo', 'rajada']), F(0.5, ['vagalhao', 'relampago', 'granizo', 'rajada'], { grito: 'O MEDO QUER DECIDIR POR VOCÊ!' })],
+    dica: 'Ele pisca de um lugar a outro do céu. Quando o vagalhão vier, suba nas plataformas. O raio cai no meio e depois dos lados.' },
+  desespero: { vida: 460, r: 36, arena: 'costelas', voa: 120, vel: 150, pressa: 0.75, escuro: 0.55,
+    golpes: { eco: {}, algas: {}, trevas: {}, peso: {} },
+    fases: [F(1, ['eco', 'algas', 'peso']), F(0.5, ['trevas', 'eco', 'peso', 'algas'], { grito: 'AQUI NINGUÉM PODE OUVIR VOCÊ…' })],
+    dica: 'As paredes do ventre se fecham devagar: a luta fica mais apertada. Guarde azeite para as trevas. Orar no abismo é exatamente o que Jonas fez (Jn 2:2).' },
+  violencia: { vida: 500, r: 40, arena: 'barricadas', vel: 60,
+    golpes: { correntePuxa: {}, pedregulho: {}, pisoteio: {}, furia: {} },
+    fases: [F(1, ['correntePuxa', 'pedregulho', 'pisoteio']), F(0.5, ['furia', 'correntePuxa', 'pisoteio', 'pedregulho'], { grito: 'NADA MUDA NESTA CIDADE!' })],
+    dica: 'A corrente puxa quem ela acerta: pule ou erga a lâmpada. Na fúria, afaste-se até as correntes pararem de girar.' },
+  ressentimento: { vida: 550, r: 40, arena: 'colina',
+    golpes: { espinheiro: {}, verme: {}, sol: {}, ventoOriental: {} },
+    fases: [F(1, ['espinheiro', 'verme', 'sol']), F(0.5, ['ventoOriental', 'sol', 'verme', 'espinheiro'], { grito: 'COMPAIXÃO PARA ELES? NUNCA!' })],
+    dica: 'Quando o sol bater, corra para a sombra da aboboreira (Jn 4:6). Ele não anda: afunda e brota do outro lado.' },
   /* ---------- Daniel 4 ---------- */
-  encantadores: { vida: 440, r: 36, arena: 'plat', voa: 125, mover: 'pairar', vel: 90,
-    golpes: { astros: { tipo: 'chuva', n: 5, vezes: 2, cor: '#B9C7F5' }, enigma: { tipo: 'clones', n: 3 }, fumaca: { tipo: 'pocas', n: 3, cor: '120,130,190' }, zodiaco: { tipo: 'anel', n: 12, cor: '#B9C7F5' }, enigma4: { tipo: 'clones', n: 4 }, astros7: { tipo: 'chuva', n: 7, vezes: 2, cor: '#B9C7F5' }, sumir: { tipo: 'teleporte' } },
-    fases: [F(1, ['astros', 'enigma', 'fumaca']), F(0.5, ['zodiaco', 'enigma4', 'astros7', 'sumir'], { grito: 'NÓS LEMOS AS ESTRELAS!' })],
-    dica: 'Magos, encantadores e caldeus não souberam explicar o sonho (Dn 4:7). A luz mostra qual deles é só fumaça.' },
-  jugo: { vida: 500, r: 42, arena: 'plana', mover: 'perseguir', vel: 58,
-    golpes: { correntes: { tipo: 'estocada', alcance: 210 }, passo: { tipo: 'ondas', vezes: 2 }, arrasto: { tipo: 'investida', vel: 520 }, cobrar: { tipo: 'invocar', tipos: ['ganancia', 'orgulho'], n: 2, fala: 'Trabalhem! Mais tijolos!' }, salto: { tipo: 'salto' }, tijolos: { tipo: 'chuva', n: 5, vezes: 2, cor: '#C98E62' }, correntes2: { tipo: 'estocada', alcance: 230, repete: 1 } },
-    fases: [F(1, ['correntes', 'passo', 'arrasto']), F(0.5, ['cobrar', 'salto', 'correntes2', 'tijolos'], { grito: 'OS FRACOS SUSTENTAM O TRONO!' })],
-    dica: '"Põe termo às tuas iniquidades, usando de misericórdia para com os pobres" (Dn 4:27). A corrente quebra na defesa perfeita.' },
-  babilonia: { vida: 620, r: 46, arena: 'plat', mover: 'parado',
-    golpes: { tijolos: { tipo: 'chuva', n: 6, vezes: 2, cor: '#E0B45A' }, brilho: { tipo: 'varredura', vezes: 1, altura: 'alto', cor: '255,214,120' }, decreto: { tipo: 'leque', n: 7, cor: '#FFD67A' }, gloria: { tipo: 'anel', n: 14, cor: '#FFD67A', meio: true }, brilhos: { tipo: 'varredura', vezes: 3, altura: 'alterna', cor: '255,214,120' }, tijolos8: { tipo: 'chuva', n: 8, vezes: 2, cor: '#E0B45A' }, selos: { tipo: 'marcados', vezes: 4, intervalo: 0.38 },
-      voz: { tipo: 'chuva', n: 10, vezes: 3, cor: '#FFFFFF' }, gloria18: { tipo: 'anel', n: 18, cor: '#FFD67A', meio: true }, brilhos4: { tipo: 'varredura', vezes: 4, altura: 'alterna', cor: '255,214,120' } },
-    fases: [F(1, ['tijolos', 'brilho', 'decreto']), F(0.6, ['gloria', 'brilhos', 'tijolos8', 'selos'], { grito: 'NÃO É ESTA A GRANDE BABILÔNIA QUE EU EDIFIQUEI?' }), F(0.25, ['voz', 'gloria18', 'brilhos4'], { grito: 'AINDA ESTAVA A PALAVRA NA BOCA DO REI…' })],
-    dica: 'Tudo aqui diz "eu". Na última fase quem fala é a voz do céu (Dn 4:31): não ataque, apenas atravesse a sentença.' },
-  fera: { vida: 540, r: 40, arena: 'plana', mover: 'rodear', vel: 130,
-    golpes: { arranco: { tipo: 'investida', vel: 600, repete: 1 }, bote: { tipo: 'salto' }, garras: { tipo: 'leque', n: 5, cor: '#B7C7A0' }, urro: { tipo: 'urro', raio: 190 }, arranco2: { tipo: 'investida', vel: 660, repete: 2 }, orvalho: { tipo: 'chuva', n: 5, vezes: 2, cor: '#A9D6E8' } },
-    fases: [F(1, ['arranco', 'bote', 'garras']), F(0.5, ['urro', 'arranco2', 'bote', 'orvalho', 'garras'], { grito: 'SETE TEMPOS… SETE TEMPOS…' })],
-    dica: 'É o rei, sem razão de homem (Dn 4:33). Não é um monstro a destruir: resista até que ele levante os olhos ao céu.' },
-  soberba: { vida: 780, r: 44, arena: 'plat', voa: 150, mover: 'pairar', vel: 110, acusacoes: true,
-    golpes: { cetro: { tipo: 'leque', n: 7, cor: '#F1C96A' }, queda: { tipo: 'mergulho' }, coroa: { tipo: 'anel', n: 12, cor: '#F1C96A' }, sumir: { tipo: 'teleporte' }, edito: { tipo: 'varredura', vezes: 2, altura: 'alterna', cor: '241,201,106' }, ouro: { tipo: 'chuva', n: 6, vezes: 2, cor: '#F1C96A' }, eu: { tipo: 'rajada', vezes: 5, intervalo: 0.26, cor: '#F1C96A' },
-      estatuas: { tipo: 'clones', n: 4 }, coroa16: { tipo: 'anel', n: 16, cor: '#F1C96A' }, selos: { tipo: 'marcados', vezes: 4, intervalo: 0.36 }, ouro9: { tipo: 'chuva', n: 9, vezes: 3, cor: '#F1C96A' }, edito4: { tipo: 'varredura', vezes: 4, altura: 'alterna', cor: '241,201,106' }, coroa18: { tipo: 'anel', n: 18, cor: '#F1C96A' } },
-    fases: [F(1, ['cetro', 'queda', 'coroa']), F(0.75, ['sumir', 'edito', 'ouro', 'eu'], { grito: 'PELA FORÇA DO MEU PODER!' }), F(0.5, ['estatuas', 'coroa16', 'queda', 'selos'], { grito: 'PARA GLÓRIA DA MINHA MAJESTADE!' }), F(0.25, ['ouro9', 'edito4', 'coroa18', 'queda'], { grito: 'QUEM ME DIRÁ: QUE FAZES?', escuro: 0.35 })],
-    dica: '"Aos que andam na soberba ele pode humilhar" (Dn 4:37). Responda às bravatas com o texto.' },
+  encantadores: { vida: 440, r: 36, arena: 'pedestais', voa: 125, vel: 90,
+    golpes: { constelacao: {}, adivinhacao: {}, cometa: {}, caldeirao: {} },
+    fases: [F(1, ['constelacao', 'caldeirao', 'adivinhacao']), F(0.5, ['cometa', 'adivinhacao', 'constelacao', 'caldeirao'], { grito: 'NÓS LEMOS AS ESTRELAS!' })],
+    dica: 'Magos, encantadores e caldeus não souberam explicar o sonho (Dn 4:7). Dos três sinais no chão, só um é abrigo: a lâmpada mostra qual.' },
+  jugo: { vida: 500, r: 42, arena: 'andaimes', vel: 58,
+    golpes: { chicote: {}, amarras: {}, tijolos: {}, cangalha: {} },
+    fases: [F(1, ['chicote', 'tijolos', 'cangalha']), F(0.5, ['amarras', 'chicote', 'tijolos', 'cangalha'], { grito: 'OS FRACOS SUSTENTAM O TRONO!' })],
+    dica: '"Põe termo às tuas iniquidades, usando de misericórdia para com os pobres" (Dn 4:27). Ele luta à distância do chicote: chegue perto. Acorrentado, ataque — a corrente cede.' },
+  babilonia: { vida: 620, r: 46, arena: 'zigurate', voa: 1,
+    golpes: { decreto: {}, zigurate: {}, jardins: {}, vozDoCeu: {} },
+    fases: [F(1, ['decreto', 'zigurate', 'jardins']), F(0.6, ['zigurate', 'jardins', 'decreto'], { grito: 'NÃO É ESTA A GRANDE BABILÔNIA QUE EU EDIFIQUEI?' }), F(0.25, ['vozDoCeu', 'decreto', 'vozDoCeu', 'zigurate'], { grito: 'AINDA ESTAVA A PALAVRA NA BOCA DO REI…' })],
+    dica: 'A cada fase a torre sobe. Na última, quem fala é a voz do céu (Dn 4:31): só atravesse a sentença.' },
+  fera: { vida: 540, r: 40, arena: 'troncos', vel: 130,
+    golpes: { bote: {}, garras: {}, rugido: { raio: 190 }, orvalho: {} },
+    fases: [F(1, ['bote', 'garras', 'rugido']), F(0.5, ['orvalho', 'bote', 'garras', 'rugido'], { grito: 'SETE TEMPOS… SETE TEMPOS…' })],
+    dica: 'É o rei, sem razão de homem (Dn 4:33). Não lhe dê as costas: ele dá o bote na hora. Resista até que ele levante os olhos ao céu.' },
+  soberba: { vida: 780, r: 44, arena: 'terracos', voa: 150, vel: 110, acusacoes: true,
+    golpes: { coroa: {}, estatua: {}, edito: {}, queda: {} },
+    fases: [F(1, ['coroa', 'estatua', 'queda']), F(0.75, ['edito', 'coroa', 'queda'], { grito: 'PELA FORÇA DO MEU PODER!' }), F(0.5, ['estatua', 'edito', 'coroa', 'queda'], { grito: 'PARA GLÓRIA DA MINHA MAJESTADE!' }), F(0.25, ['queda', 'edito', 'estatua', 'coroa'], { grito: 'QUEM ME DIRÁ: QUE FAZES?', escuro: 0.35 })],
+    dica: '"Aos que andam na soberba ele pode humilhar" (Dn 4:37). Quando ele despenca do trono, fica ao alcance. Na faixa do edito, ache a brecha.' },
   /* ---------- chefes do mundo ---------- */
-  golias: { vida: 1250, pressa: 0.7, r: 52, arena: 'plana', mover: 'perseguir', vel: 66, regras: { armadura: 0.1 },
-    golpes: { lanca: { tipo: 'estocada', alcance: 230, expoe: true }, pisao: { tipo: 'ondas', vezes: 2 }, dardos: { tipo: 'rajada', vezes: 3, intervalo: 0.3, cor: '#C9B48A' }, medo: { tipo: 'invocar', tipos: ['medo'], n: 2, fala: 'Tremam, servos de Saul!' }, salto: { tipo: 'salto' }, lanca2: { tipo: 'estocada', alcance: 240, expoe: true, repete: 1 }, arranco: { tipo: 'investida', vel: 500 }, pisao3: { tipo: 'ondas', vezes: 3 } },
-    fases: [F(1, ['lanca', 'pisao', 'dardos']), F(0.6, ['medo', 'lanca', 'salto', 'dardos'], { grito: 'SOU EU ALGUM CÃO?' }), F(0.3, ['lanca2', 'arranco', 'pisao3'], { grito: 'GOLIAS AVANÇA!' })],
-    dica: 'A armadura absorve quase tudo. Só a defesa perfeita contra a lança expõe a testa do gigante (1Sm 17:49).' },
-  behemote: { vida: 3600, dano: 2, pressa: 0.5, r: 104, arena: 'plana', mover: 'perseguir', vel: 46, regras: { casco: 0.3 },
-    golpes: { investida: { tipo: 'investida', vel: 640, repete: 1, tonto: 2.6 }, terremoto: { tipo: 'ondas', vezes: 3 }, pedras: { tipo: 'chuva', n: 6, vezes: 2, cor: '#A8946E' }, investida2: { tipo: 'investida', vel: 700, repete: 2, tonto: 2.6 }, salto: { tipo: 'salto' }, pedras8: { tipo: 'chuva', n: 8, vezes: 3, cor: '#A8946E' }, urro: { tipo: 'urro', raio: 210 } },
-    fases: [F(1, ['investida', 'terremoto', 'pedras']), F(0.5, ['investida2', 'salto', 'pedras8', 'urro'], { grito: 'O CHÃO TREME!' })],
-    dica: 'Os ossos dele são como tubos de bronze (Jó 40:18). Faça-o bater na parede: tonto, o casco se abre.' },
-  leviata: { vida: 3300, dano: 2, pressa: 0.45, r: 82, regras: { armadura: 0.45 }, arena: 'alta', voa: 60, mover: 'pairar', vel: 150,
-    golpes: { jatos: { tipo: 'rajada', vezes: 5, intervalo: 0.26, cor: '#5ED1E8' }, cauda: { tipo: 'varredura', vezes: 1, altura: 'baixo', cor: '94,209,232' }, mergulho: { tipo: 'mergulho' }, anel: { tipo: 'anel', n: 14, cor: '#5ED1E8' }, caudas: { tipo: 'varredura', vezes: 3, altura: 'alterna', cor: '94,209,232' }, chuva: { tipo: 'chuva', n: 6, vezes: 2, cor: '#5ED1E8' }, jatos7: { tipo: 'rajada', vezes: 7, intervalo: 0.22, cor: '#5ED1E8' }, anel18: { tipo: 'anel', n: 18, cor: '#5ED1E8' } },
-    fases: [F(1, ['jatos', 'cauda', 'mergulho']), F(0.6, ['mergulho', 'anel', 'caudas', 'chuva'], { grito: 'A MARÉ SE ERGUE!' }), F(0.3, ['mergulho', 'jatos7', 'anel18', 'caudas', 'mergulho'], { grito: 'O MAR FERVE!' })],
-    dica: '"Poderás tirar com anzol o Leviatã?" (Jó 41:1). Ele só fica ao alcance logo depois de emergir.' }
+  golias: { vida: 1250, pressa: 0.7, r: 52, arena: 'vale', vel: 66, regras: { armadura: 0.1 },
+    golpes: { lanca: { alcance: 230 }, lanca2: { fn: 'lanca', alcance: 240, repete: 1 }, escudeiro: {}, dardo: {}, desafio: {} },
+    fases: [F(1, ['lanca', 'dardo', 'escudeiro']), F(0.6, ['desafio', 'lanca', 'escudeiro', 'dardo'], { grito: 'SOU EU ALGUM CÃO?' }), F(0.3, ['lanca2', 'dardo', 'escudeiro', 'lanca'], { grito: 'GOLIAS AVANÇA!' })],
+    dica: 'A armadura absorve quase tudo. De tempos em tempos uma pedra lisa aparece num canto do vale: apanhe, MIRE e golpeie para arremessar. É uma chance só; na testa, o gigante cambaleia (1Sm 17:49). A defesa perfeita contra a lança também expõe a testa.' },
+  behemote: { vida: 3600, dano: 2, pressa: 0.5, r: 104, arena: 'savana', vel: 46, regras: { casco: 0.3 },
+    golpes: { investida: { vel: 640, repete: 1, tonto: 2.6 }, investida2: { fn: 'investida', vel: 700, repete: 2, tonto: 2.6 }, terremoto: {}, cauda: {}, rio: {} },
+    fases: [F(1, ['investida', 'terremoto', 'cauda']), F(0.5, ['investida2', 'rio', 'terremoto', 'cauda'], { grito: 'O CHÃO TREME!' })],
+    dica: 'Os ossos dele são como tubos de bronze (Jó 40:18). Faça-o bater na parede: tonto, o casco se abre. Quando ele beber o rio, saia da frente.' },
+  leviata: { vida: 3300, dano: 2, pressa: 0.45, r: 82, regras: { armadura: 0.45 }, arena: 'alta', voa: 60, vel: 150,
+    golpes: { emergir: {}, tochas: {}, fumaca: {}, redemoinho: {} },
+    fases: [F(1, ['emergir', 'tochas', 'fumaca']), F(0.6, ['redemoinho', 'emergir', 'tochas', 'fumaca'], { grito: 'A MARÉ SE ERGUE!' }), F(0.3, ['emergir', 'redemoinho', 'tochas', 'emergir', 'fumaca'], { grito: 'O MAR FERVE!' })],
+    dica: '"Poderás tirar com anzol o Leviatã?" (Jó 41:1). Ele só fica ao alcance logo depois de emergir: a couraça abre.' }
 };
 
-const bala = (G, x, y, a, vel, o = {}) => G.tiros.push({ x, y, vx: Math.cos(a) * vel, vy: Math.sin(a) * vel, r: 8, vida: 4.5, cor: '#FFD23F', tipo: 'bola', ...o });
-const centro = b => ({ x: b.x, y: b.y - b.h * 0.55 });
-const mira = (G, b) => { const c = centro(b); return Math.atan2(G.p.y - 20 - c.y, G.p.x - c.x); };
+const golpeDe = (b, nome) => { const def = b.c.golpes[nome]; return ESTILOS[b.id]?.golpes[def?.fn || nome]; };
 
-// Todo chefe luta com pelo menos seis tipos de golpe: os que faltam vêm deste repertório comum (os parados e os que voam
-// não recebem investida nem salto). Os extras entram aos poucos: um na primeira fase, dois na segunda, todos na última.
-const EXTRAS = [['xAnel', { tipo: 'anel', n: 12, cor: '#D8C8F0' }], ['xMarc', { tipo: 'marcados', vezes: 4, intervalo: 0.34, cor: '#D8C8F0' }], ['xChuva', { tipo: 'chuva', n: 6, vezes: 2, cor: '#D8C8F0' }], ['xRaj', { tipo: 'rajada', vezes: 5, intervalo: 0.24, cor: '#D8C8F0' }], ['xVarre', { tipo: 'varredura', vezes: 2, altura: 'alterna', cor: '216,200,240' }], ['xInv', { tipo: 'investida' }], ['xSalto', { tipo: 'salto' }], ['xOndas', { tipo: 'ondas', vezes: 2 }]];
-function completar(c) {
-  const tem = new Set(Object.values(c.golpes).map(g => g.tipo)), fixo = c.voa || c.mover === 'parado', novos = [];
-  for (const [nome, def] of EXTRAS) { if (tem.size + novos.length >= 6) break; if (tem.has(def.tipo) || (fixo && ['investida', 'salto', 'ondas'].includes(def.tipo))) continue; novos.push([nome, def]); }
-  if (!novos.length) return c;
-  return { ...c, golpes: { ...c.golpes, ...Object.fromEntries(novos) }, fases: c.fases.map((f, i) => ({ ...f, golpes: [...f.golpes, ...novos.slice(0, i === 0 ? 1 : i === 1 ? 2 : novos.length).map(n => n[0])] })) };
-}
 export function novoChefe(id, A, dif) {
-  const c = completar(CHEFES[id]), d = BOSSES[id] || { nome: id };
-  const hp = Math.round(c.vida * dif.hp);
+  const c = CHEFES[id], d = BOSSES[id] || { nome: id };
+  const hp = Math.round(c.vida * (c.parte ? 1 : dif.hp));
   return { kind: 'chefe', id, c, d, x: clamp(A.cx + 250, A.x0 + 80, A.x1 - 80), y: A.chao - (c.voa || 0), vx: 0, vy: 0, w: c.r * 1.5, h: c.r * 2.1, r: c.r, hp, max: hp, fase: 0, post: 0, postT: 0, quebrado: 0,
-    mov: null, idx: 0, espera: 1.8, flash: 0, face: -1, voa: !!c.voa, exposto: 0, clones: [], furia: 0, semDano: 0, alpha: 1, raios: null, tonto: 0, ultimoGolpe: 0, t: 0,
+    mov: null, idx: 0, espera: 1.8, flash: 0, face: -1, voa: !!c.voa, exposto: 0, clones: [], furia: 0, semDano: 0, alpha: 1, raios: null, tonto: 0, ultimoGolpe: 0, t: 0, recentes: [], cen: {},
     art: { id, d, r: c.r, x: 0, y: 0, flash: 0, stun: 0, hp, max: hp, spd: c.vel || 60 } };
 }
 
-/* ---------------- golpes ---------------- */
-// cada golpe devolve true quando termina. m = { t, e, def }
-const GOLPES = {
-  investida(G, b, m, dt) {
-    const A = G.N.arena, d = m.def;
-    if (m.e === 0) { if (m.t === 0) { b.face = Math.sign(G.p.x - b.x) || 1; if (d.fala) G.fala(b, d.fala); } b.vx = 0; b.art.step = 1; b.tele = 1; if (Math.random() < dt * 30) G.fx.po(b.x - b.face * 20, b.y, 1, '#C9D2C4'); if (m.t > 0.72 * G.dif.aviso) { m.e = 1; m.t = 0; sfx('dodge'); } }
-    else if (m.e === 1) {
-      b.art.step = 2; b.vx = b.face * d.vel * G.dif.vel; b.perigo = true;
-      if (b.parede === b.face || b.x < A.x0 + b.w / 2 + 6 || b.x > A.x1 - b.w / 2 - 6 || m.t > 1.7) {
-        b.vx = 0; G.tremor(7); sfx('block'); G.fx.po(b.x + b.face * b.w / 2, b.y - 20, 12, '#C9D2C4'); m.e = 2; m.t = 0;
-        if (d.tonto && !(m.rep < (d.repete || 0))) { b.tonto = d.tonto; G.textoEm(b.x, b.y - b.h - 10, 'TONTO!', '#FFE9A8'); }
-      }
-    }
-    else { b.perigo = false; if (m.t > 0.5) { if ((m.rep = (m.rep || 0) + 1) <= (d.repete || 0)) { m.e = 0; m.t = 0; return false; } return true; } }
-    return false;
-  },
-  salto(G, b, m, dt) {
-    const A = G.N.arena;
-    if (m.e === 0) { b.vx = 0; b.art.step = 1; b.tele = 1; if (m.t > 0.5 * G.dif.aviso) { m.e = 1; m.t = 0; const tx = clamp(G.p.x, A.x0 + b.w, A.x1 - b.w); b.vy = -960; b.vx = (tx - b.x) / 0.94; b.chao = false; sfx('dodge'); } }
-    else if (m.e === 1) { b.art.step = 2; b.perigo = true; if (b.chao && m.t > 0.2) { b.vx = 0; m.e = 2; m.t = 0; choque(G, b); } }
-    else { b.perigo = false; if (m.t > 0.65) return true; }
-    return false;
-  },
-  ondas(G, b, m, dt) {
-    b.vx = 0;
-    if (m.e === 0) { b.art.step = 1; b.tele = 1; if (m.t > 0.5 * G.dif.aviso) { m.e = 1; m.t = 0; choque(G, b); m.n = (m.n || 0) + 1; } }
-    else { b.art.step = 2; if (m.t > 0.55) { if (m.n < (m.def.vezes || 2)) { m.e = 0; m.t = 0; } else return true; } }
-    return false;
-  },
-  leque(G, b, m) {
-    b.vx *= 0.9; b.art.step = 1; b.tele = 1;
-    if (m.t > 0.62 * G.dif.aviso) {
-      const d = m.def, c = centro(b), a0 = d.alto ? -Math.PI / 2 : mira(G, b), n = d.n || 5, ab = d.abertura || 0.2;
-      for (let i = 0; i < n; i++) bala(G, c.x, c.y, a0 + (i - (n - 1) / 2) * ab, (d.vel || 300) * G.dif.vel, { cor: d.cor, g: d.alto ? 620 : 0 });
-      sfx('shoot'); b.art.artAttack = (b.art.artAttack || 0) + 1; return true;
-    }
-    return false;
-  },
-  rajada(G, b, m) {
-    const d = m.def; b.vx *= 0.9;
-    if (m.e === 0) { b.art.step = 1; b.tele = 1; if (m.t > 0.5 * G.dif.aviso) { m.e = 1; m.t = 0; m.n = 0; m.prox = 0; } }
-    else { b.art.step = 2; if (m.t >= m.prox) { const c = centro(b); bala(G, c.x, c.y, mira(G, b) + rand(-0.04, 0.04), (d.vel || 330) * G.dif.vel, { cor: d.cor, r: 7 }); sfx('shoot'); m.n++; m.prox = m.t + (d.intervalo || 0.3); if (m.n >= (d.vezes || 3)) return true; } }
-    return false;
-  },
-  anel(G, b, m) {
-    b.vx *= 0.9; b.art.step = 1; b.tele = 1;
-    if (m.t > 0.75 * G.dif.aviso) {
-      const d = m.def, c = centro(b), n = d.n || 12, off = (b.ultimoGolpe++ % 2) * Math.PI / n;
-      for (let i = 0; i < n; i++) { const a = off + i * TAU / n; if (d.meio && Math.sin(a) > 0.25) continue; bala(G, c.x, c.y, a, (d.vel || 230) * G.dif.vel, { cor: d.cor }); }
-      sfx('magic'); G.tremor(3); return true;
-    }
-    return false;
-  },
-  chuva(G, b, m) {
-    const d = m.def, A = G.N.arena; b.vx *= 0.9; b.art.step = m.t < 0.4 ? 1 : 2;
-    if (m.t === 0) { m.n = 0; m.prox = 0.35; }
-    if (m.t >= m.prox && m.n < (d.vezes || 2)) {
-      m.n++; m.prox = m.t + 0.78;
-      const cols = new Set([Math.round((G.p.x - A.x0) / 60)]), max = Math.floor((A.x1 - A.x0) / 60);
-      while (cols.size < Math.min(d.n || 4, max - 2)) cols.add(Math.floor(rand(0, max)));
-      for (const k of cols) G.zonas.push({ tipo: 'col', x: A.x0 + k * 60 + 30, w: 44, aviso: 0.85 * G.dif.aviso, dur: 0.22, cor: d.cor || '#FFD23F', tentacao: d.tentacao });
-      sfx('shoot');
-    }
-    return m.n >= (d.vezes || 2) && m.t > m.prox + 0.35;
-  },
-  marcados(G, b, m) {
-    const d = m.def; b.vx *= 0.9; b.art.step = 1;
-    if (m.t === 0) { m.n = 0; m.prox = 0.25; }
-    if (m.t >= m.prox && m.n < (d.vezes || 3)) { m.n++; m.prox = m.t + (d.intervalo || 0.45); G.zonas.push({ tipo: 'circ', x: G.p.x + G.p.vx * 0.2, y: G.p.y - 18, r: 56, aviso: 0.8 * G.dif.aviso, dur: 0.2, cor: b.d.cor || '#C79BFF' }); sfx('click'); }
-    return m.n >= (d.vezes || 3) && m.t > m.prox + 0.6;
-  },
-  pocas(G, b, m) {
-    b.vx *= 0.9; b.art.step = 1; b.tele = 1;
-    if (m.t > 0.55) {
-      const A = G.N.arena, n = m.def.n || 3;
-      for (let i = 0; i < n; i++) { const x = clamp(G.p.x + (i - (n - 1) / 2) * 130 + rand(-20, 20), A.x0 + 50, A.x1 - 50); G.zonas.push({ tipo: 'poca', x: x - 46, y: A.chao - 14, w: 92, h: 14, aviso: 0.8, dur: 3.4, cor: m.def.cor || '210,65,110' }); }
-      sfx('magic'); return true;
-    }
-    return false;
-  },
-  varredura(G, b, m) {
-    const d = m.def, A = G.N.arena; b.vx *= 0.9; b.art.step = 1;
-    if (m.t === 0) { m.n = 0; m.prox = 0.2; }
-    if (m.t >= m.prox && m.n < (d.vezes || 1)) {
-      const baixo = d.altura === 'baixo' || (d.altura === 'alterna' && (m.n + b.ultimoGolpe) % 2 === 0); m.n++; m.prox = m.t + 1.05;
-      G.zonas.push({ tipo: 'faixa', y: baixo ? A.chao - 30 : A.chao - 190, h: baixo ? 30 : 136, x: A.x0, w: A.x1 - A.x0, aviso: 0.9 * G.dif.aviso, dur: 0.3, cor: d.cor || '255,90,60', baixo });
-      sfx('swing');
-    }
-    if (m.n >= (d.vezes || 1) && m.t > m.prox + 0.2) { b.ultimoGolpe++; return true; }
-    return false;
-  },
-  invocar(G, b, m) {
-    b.vx = 0; b.art.step = 1; b.tele = 1;
-    if (m.t === 0 && m.def.fala) G.fala(b, m.def.fala);
-    if (m.t > 0.7) {
-      const A = G.N.arena, vivos = G.inimigos.filter(e => e.kind === 'vicio').length;
-      for (let i = 0; i < Math.max(0, Math.min(m.def.n || 2, 3 - vivos)); i++) { const x = i % 2 ? A.x0 + 70 : A.x1 - 70; G.nascer(pick(m.def.tipos), x, A.chao - 4, true); G.fx.po(x, A.chao - 20, 12, b.d.cor || '#fff'); }
-      sfx('boss'); return true;
-    }
-    return false;
-  },
-  teleporte(G, b, m) {
-    const A = G.N.arena; b.vx = 0;
-    if (m.e === 0) { b.alpha = Math.max(0, 1 - m.t / 0.3); b.semDano = 0.2; if (m.t > 0.3) { m.e = 1; m.t = 0; const lado = G.p.x > A.cx ? -1 : 1; b.x = A.cx + lado * rand(170, 320); if (b.voa) b.y = A.chao - b.c.voa - rand(0, 60); G.fx.po(b.x, b.y - 40, 14, b.d.cor || '#C79BFF'); sfx('magic'); } }
-    else { b.alpha = Math.min(1, m.t / 0.3); if (m.t > 0.45) { b.alpha = 1; return true; } }
-    return false;
-  },
-  clones(G, b, m) {
-    const A = G.N.arena, n = m.def.n || 3; b.vx = 0;
-    if (m.e === 0) { b.alpha = Math.max(0, 1 - m.t / 0.35); b.semDano = 0.2; if (m.t > 0.35) {
-      m.e = 1; m.t = 0; b.clones = [];
-      const vagas = Array.from({ length: n + 1 }, (_, i) => ({ x: A.x0 + 70 + i * (A.x1 - A.x0 - 140) / n, y: A.chao - (b.voa ? b.c.voa + (i % 2) * 70 : 0) })), real = Math.floor(rand(0, n + 1));
-      vagas.forEach((v, i) => { if (i === real) { b.x = v.x; b.y = v.y; } else b.clones.push({ x: v.x, y: v.y, t: 6.5, alpha: 0, art: { ...b.art } }); });
-      G.grito('Qual é o verdadeiro?'); sfx('magic'); // a pergunta vem de todos os lados: a fala não entrega mais a verdadeira
-    } }
-    else if (m.e === 1) { b.alpha = Math.min(1, m.t / 0.4); for (const c of b.clones) c.alpha = b.alpha; b.tele = 1; if (m.t > 1.25 * G.dif.aviso) { m.e = 2; m.t = 0; for (const o of [b, ...b.clones]) { const cx = o.x, cy = o.y - b.h * 0.55, a = Math.atan2(G.p.y - 20 - cy, G.p.x - cx); for (let i = -1; i <= 1; i++) bala(G, cx, cy, a + i * 0.2, 270 * G.dif.vel, { cor: b.d.cor || '#C79BFF' }); } sfx('shoot'); } }
-    else if (m.t > 1.4) return true;
-    return false;
-  },
-  encanto(G, b, m, dt) {
-    const d = m.def; b.vx = 0; b.art.step = 1; b.art.talk = true;
-    if (m.t === 0) { G.fala(b, 'Chegue mais perto…'); m.fugiu = false; sfx('magic'); }
-    G.puxao = { x: b.x, f: 210 }; b.encanta = true;
-    if (G.p.dashT > 0 && Math.sign(G.p.dashDir) === Math.sign(G.p.x - b.x)) m.fugiu = true;
-    if (m.t > (d.dur || 2.4)) {
-      b.encanta = false; b.art.talk = false; G.puxao = null;
-      const longe = Math.abs(G.p.x - b.x) > 300;
-      if (m.fugiu || longe) { G.postura(b, 55); b.exposto = 2.6; G.textoEm(b.x, b.y - b.h - 12, 'Você fugiu! Ela está exposta', '#FFE9A8'); sfx('parry'); }
-      return true;
-    }
-    return false;
-  },
-  estocada(G, b, m) {
-    const d = m.def; b.vx = 0;
-    if (m.e === 0) { if (m.t === 0) b.face = Math.sign(G.p.x - b.x) || 1; b.art.step = 1; b.art.lanca = 'prep'; b.tele = 1; if (m.t > 0.72 * G.dif.aviso) { m.e = 1; m.t = 0; b.art.lanca = 'golpe'; sfx('swing');
-      const w = d.alcance || 200; G.zonas.push({ tipo: 'ret', x: b.face > 0 ? b.x : b.x - w, y: b.y - 54, w, h: 40, aviso: 0, dur: 0.16, cor: '#E5C58A', lanca: true, dono: b, expoe: d.expoe }); } }
-    else if (m.e === 1) { b.art.step = 2; if (m.t > 0.3) { m.e = 2; m.t = 0; b.art.lanca = null; } }
-    else if (m.t > 0.55) { if ((m.rep = (m.rep || 0) + 1) <= (d.repete || 0)) { m.e = 0; m.t = 0; return false; } return true; }
-    return false;
-  },
-  mergulho(G, b, m, dt) {
-    const A = G.N.arena, alto = A.chao - (b.c.voa || 120);
-    if (m.e === 0) { b.vx *= 0.9; b.art.step = 1; b.y -= 150 * dt; b.alpha = Math.max(0, 1 - m.t / 0.45); b.semDano = 0.2; if (m.t > 0.45) { m.e = 1; m.t = 0; m.x = clamp(G.p.x, A.x0 + 60, A.x1 - 60); G.zonas.push({ tipo: 'col', x: m.x, w: b.w * 1.1, aviso: 0.8 * G.dif.aviso, dur: 0.25, cor: b.d.cor || '#FF5A3C' }); } }
-    else if (m.e === 1) { b.semDano = 0.2; if (m.t > 0.8 * G.dif.aviso) { m.e = 2; m.t = 0; b.x = m.x; b.y = A.y0 + 40; b.alpha = 1; b.perigo = true; sfx('dodge'); } }
-    else if (m.e === 2) { b.art.step = 2; b.y += 1350 * dt; if (b.y >= A.chao) { b.y = A.chao; m.e = 3; m.t = 0; b.perigo = false; G.tremor(8); choque(G, b); } }
-    else { // fica no chão um instante: é a brecha
-      if (m.t > 1.15) { b.y -= 260 * dt; if (b.y <= alto) { b.y = alto; return true; } }
-    }
-    return false;
-  },
-  sono(G, b, m) {
-    b.vx = 0; b.art.step = 1; b.tele = 1;
-    if (m.t === 0) { G.fala(b, 'Descanse só um pouquinho…'); G.zonas.push({ tipo: 'circ', x: b.x, y: b.y - 40, r: m.def.raio || 170, aviso: 1.25 * G.dif.aviso, dur: 0.2, cor: '#A5CDCE', efeito: 'sono' }); }
-    return m.t > 1.6;
-  },
-  urro(G, b, m) {
-    b.vx = 0; b.art.step = 1; b.tele = 1;
-    if (m.t === 0) G.zonas.push({ tipo: 'circ', x: b.x, y: b.y - 40, r: m.def.raio || 200, aviso: 0.85 * G.dif.aviso, dur: 0.2, cor: b.d.cor || '#D5BA88', efeito: 'empurra' });
-    if (m.t > 0.85 * G.dif.aviso && !m.fez) { m.fez = true; G.tremor(9); sfx('boss'); }
-    return m.t > 1.5;
-  },
-  relogio(G, b, m, dt) {
-    const d = m.def; b.vx = 0; b.art.step = 1;
-    if (m.t === 0) { b.raios = { a: rand(0, TAU), n: d.n || 2, giro: (d.giro || 1) * G.dif.vel, aviso: 0.95 * G.dif.aviso, len: 560 }; sfx('magic'); }
-    const r = b.raios; if (!r) return true;
-    r.aviso -= dt; if (r.aviso <= 0) r.a += r.giro * dt;
-    if (m.t > (d.dur || 3.6) + 0.95) { b.raios = null; return true; }
-    return false;
-  }
-};
-
-function choque(G, b) {
-  const y = G.N.arena.chao;
-  for (const s of [-1, 1]) G.tiros.push({ x: b.x + s * b.w / 2, y: y - 13, vx: s * 330 * G.dif.vel, vy: 0, r: 13, vida: 2.4, cor: b.d.cor || '#C9D2C4', tipo: 'choque', fixo: true });
-  G.tremor(7); sfx('block'); G.fx.po(b.x, y, 14, '#C9D2C4'); b.pousou = 0.2; G.efeito('baque', b.x, y);
+// A inteligência: o próximo golpe é escolhido pela situação (distância, você no ar, de costas…), nunca o mesmo duas vezes
+// seguidas e evitando os dois últimos quando há opção. Assim não há padrão para decorar: há leitura de avisos.
+function escolher(G, b, f) {
+  const E = ESTILOS[b.id], lista = [...new Set(f.golpes)], fora = new Set(b.recentes.slice(-(lista.length > 3 ? 2 : 1)));
+  let cand = lista.filter(n => !fora.has(n)); if (E.pode) { const ok = lista.filter(n => E.pode(G, b, n)), sem = ok.filter(n => !fora.has(n)); cand = sem.length ? sem : ok.length ? ok : cand; }
+  const pesos = cand.map(n => Math.max(0, (E.pref?.[b.c.golpes[n]?.fn || n]?.(G, b) ?? 1)) + 0.05);
+  let r = rand(0, pesos.reduce((a, c) => a + c, 0)), nome = cand[0];
+  for (let i = 0; i < cand.length; i++) { r -= pesos[i]; if (r <= 0) { nome = cand[i]; break; } }
+  b.recentes.push(nome); if (b.recentes.length > 4) b.recentes.shift();
+  return nome;
 }
 
+// O instinto de todo chefe (vale para todos, menos o Conselho, que some entre os golpes):
+//  • quem fica em cima da cabeça, quica nela ou gruda no corpo é AGARRADO: um "!" curto (dá para escapar com o passo ou
+//    saindo de perto), depois o chefe segura o peregrino no alto e o ARREMESSA longe, tirando um fôlego que não se defende;
+//  • entre um golpe e outro, de vez em quando, uma INVESTIDA curta na sua direção (o corpo do chefe fere).
+function instinto(G, b, dt, soAgarra) { // soAgarra: os zelotes do Conselho só agarram (o resto da luta deles é o rodízio)
+  const p = G.p, A = G.N.arena, ag = b.agarra;
+  if (b.agarraCd > 0) b.agarraCd -= dt; if (b.investeCd > 0) b.investeCd -= dt;
+  if (ag) {
+    ag.t += dt; b.vx = 0; b.art.step = 1;
+    if (ag.e === 0) { b.tele = 1;
+      if (ag.t > 0.26 * G.dif.aviso / 0.8) {
+        const perto = !p.morto && !(p.dashT > 0) && Math.abs(p.x - b.x - (b.hb?.dx || 0)) < (b.hb?.w ?? b.w) * 0.6 + 50 && p.y < b.y + 20 && p.y > (b.hb ? b.y + b.hb.y0 : b.y - b.h) - 150;
+        if (!perto) { b.agarra = null; b.espera = Math.min(b.espera, 0.12); G.textoEm?.(b.x, b.y - b.h - 18, 'escapou', '#C9D2E8', 11); return false; } // escapou: o chefe emenda logo
+        ag.e = 1; ag.t = 0; ag.dir = Math.sign(p.x - b.x) || (Math.random() < 0.5 ? -1 : 1); sfx('block'); G.tremor(7); G.hitstop = 0.08; G.textoEm?.(b.x, b.y - b.h - 34, 'AGARROU!', '#FF6A5A', 17);
+      }
+      return true;
+    }
+    p.x = clamp(b.x + ag.dir * 6, A.x0 + 20, A.x1 - 20); p.y = (b.hb ? b.y + b.hb.y0 : b.y - b.h) - 4; p.vx = p.vy = 0; p.chao = false; p.stunT = Math.max(p.stunT || 0, 0.12); ataca(b);
+    if (ag.t > 0.42) { b.agarra = null; b.espera = 0.3; p.inv = 0; G.ferirHeroi?.(1, b, { semDefesa: true }); p.stunT = 0.45; p.travaX = 0.7; p.vx = ag.dir * 1000; p.vy = -560; p.chao = false; p.pogo = false; sfx('swing'); G.tremor(11); G.fx.po(b.x, b.y - b.h, 14, '#FF8A7A'); }
+    return true;
+  }
+  if (soAgarra) { /* sem salto nem investida */ } else if (b.salto) { const s = b.salto; s.t += dt; ataca(b); // o salto contra quem se esconde na plataforma: sobe até a altura dele e cai pesado
+    if (s.t < 0.3 * G.dif.aviso / 0.8) { b.tele = 1; b.vx = 0; b.face = Math.sign(s.x - b.x) || b.face; return true; }
+    if (!s.subiu) { s.subiu = true; b.vy = -Math.sqrt(2 * 2050 * Math.max(60, s.h + 50)); b.vx = (s.x - b.x) / 0.62; b.chao = false; sfx('dodge'); }
+    else if (b.chao || s.t > 2.2) { b.salto = null; b.vx = 0; G.tremor?.(8); choque(G, b, b.d.cor || '#E6E0CF', 360); sfx('block'); b.espera = Math.max(b.espera, 0.4); return false; }
+    return 'fisica'; }
+  if (!soAgarra && b.investe) { const v = b.investe; v.t += dt; b.vx = 0;
+    if (v.t < 0.24 * G.dif.aviso / 0.8) { b.tele = 1; b.face = v.d; return true; }
+    b.x = clamp(b.x + v.d * 600 * G.dif.vel * dt, A.x0 + b.w / 2, A.x1 - b.w / 2); ataca(b); if (Math.random() < dt * 30) G.fx.po(b.x - v.d * b.w * 0.4, b.y - 6, 2, b.d.cor || '#fff');
+    if (v.t > 0.24 * G.dif.aviso / 0.8 + 0.34) b.investe = null; return true; }
+  if (G.p !== G.eu || p.morto) return false;
+  const bw = b.hb?.w ?? b.w, bh = b.hb?.h ?? b.h, topo = b.hb ? b.y + b.hb.y0 : b.y - b.h, bx = b.x + (b.hb?.dx || 0); // o tamanho real do desenho
+  const emCima = !p.chao && Math.abs(p.x - bx) < bw * 0.6 + 34 && p.y < topo + bh * 0.45 && p.y > topo - 280;
+  b.cimaT = emCima ? (b.cimaT || 0) + dt : Math.max(0, (b.cimaT || 0) - dt * 2);
+  const colado = p.chao && Math.abs(p.x - bx) < bw * 0.5 + 56 && Math.abs(p.y - b.y) < 90;
+  b.coladoT = colado ? (b.coladoT || 0) + dt : Math.max(0, (b.coladoT || 0) - dt);
+  if ((b.cimaT > 0.5 || (b.pogoN || 0) >= 2 || b.coladoT > 1.5) && !(b.agarraCd > 0)) {
+    if (b.mov) { b.mov = null; desfazer(G, b); }
+    b.agarra = { t: 0, e: 0 }; b.agarraCd = 3; b.cimaT = b.coladoT = b.pogoN = 0; G.textoEm?.(b.x, b.y - b.h - 20, '!', '#FF6A5A', 24); sfx('wrong'); return true;
+  }
+  // quem fica em cima de uma plataforma batendo de longe não fica em paz: todo chefe tem resposta para o alto
+  const naPlat = p.chao && p.y < A.chao - 40; b.platT = naPlat ? (b.platT || 0) + dt : Math.max(0, (b.platT || 0) - dt * 1.5); if (b.platCd > 0) b.platCd -= dt;
+  if (!soAgarra && b.platT > 0.9 && !(b.platCd > 0) && !b.mov) { b.platCd = 2.8 - b.fase * 0.5; b.platT = 0.3; contraPlataforma(G, b, p, A); return true; }
+  if (!soAgarra && !b.mov && b.espera > 0.4 && !(b.investeCd > 0) && Math.abs(p.x - b.x) > 150 && Math.random() < dt * (0.7 + b.fase * 0.4)) { b.investe = { t: 0, d: Math.sign(p.x - b.x) || 1 }; b.investeCd = 2.6; sfx('dodge'); return true; }
+  return false;
+}
+// O peso de cada chefe, medido pelo tamanho real do desenho, pela armadura e pela lentidão:
+//   resiste = quanto de cada golpe ele sente (corpo grande, armadura e passo lento sentem menos);
+//   pesado  = bate forte: cada acerto tira dois fôlegos.
+export function tanque(b, area) {
+  const def = Math.min(10, (b.d?.def ?? 4) === 99 ? 10 : b.d?.def ?? 4), vel = b.c.vel ?? (b.d?.spd ? b.d.spd / 2 : 80), regra = b.c.regras || {};
+  const tam = clamp(Math.sqrt(area) / 170, 0.8, 3.2), arma = 1 + def * 0.035 + (regra.armadura != null || regra.casco != null ? 0.12 : 0), lento = vel < 60 ? 1.18 : vel < 90 ? 1.08 : 1;
+  b.resiste = clamp(1 / (Math.pow(tam, 0.4) * arma * lento), 0.5, 1);
+  b.pesado = !b.c.parte && b.id !== 'conselho' && (tam >= 1.3 || regra.armadura != null || regra.casco != null || (tam >= 1.1 && (def >= 6 || vel < 60)));
+}
+// A resposta à plataforma: espinhos que furam a plataforma por baixo onde você está (e onde vai estar), dardos mirados no alto
+// e, para quem anda no chão, um salto até a sua altura que cai pesado. Sempre com aviso: dá para sair, mas não para ficar.
+function contraPlataforma(G, b, p, A) {
+  const cor = b.d.cor || '#E6E0CF', y1 = p.y + 14, y0 = p.y - 130;
+  G.textoEm?.(b.x, (b.hb ? b.y + b.hb.y0 : b.y - b.h) - 16, '↑', '#FF6A5A', 20); sfx('wrong');
+  for (const [dx, av] of [[0, 0.6], [p.face * 90, 0.85], [-p.face * 90, 1.1]]) G.zonas.push({ tipo: 'col', x: clamp(p.x + dx, A.x0 + 30, A.x1 - 30), w: 64, y0, y1, aviso: av * G.dif.aviso / 0.8, dur: 0.25, cor });
+  const cx = b.x + (b.hb?.dx || 0), cy = b.hb ? b.y + b.hb.y0 + b.hb.h * 0.3 : b.y - b.h * 0.7, a = Math.atan2(p.y - 24 - cy, p.x - cx);
+  for (let i = -1; i <= 1; i++) G.tiros.push({ x: cx, y: cy, vx: Math.cos(a + i * 0.16) * 330 * G.dif.vel, vy: Math.sin(a + i * 0.16) * 330 * G.dif.vel, r: 7, vida: 3, cor, tipo: 'bola' });
+  if (!b.voa && !b.c.parte && Math.abs(p.x - b.x) < 520) b.salto = { t: 0, x: clamp(p.x, A.x0 + b.w / 2, A.x1 - b.w / 2), h: b.y - p.y };
+}
+const ataca = b => { b.art.step = 2; b.art.artAttack = (b.art.artAttack || 0) + 1; };
+
 export function atualizarChefe(G, b, dt) {
-  const c = b.c, A = G.N.arena, p = G.p;
+  const c = b.c, A = G.N.arena, E = ESTILOS[b.id];
+  b.cen = b.cen || {}; b.recentes = b.recentes || [];
   b.t += dt; b.flash = Math.max(0, b.flash - dt); b.semDano = Math.max(0, b.semDano - dt); b.exposto = Math.max(0, b.exposto - dt); b.furia = Math.max(0, b.furia - dt);
   b.tele = 0; b.art.step = 0; b.perigo = false; if (b.pousou > 0) b.pousou -= dt; if (b.postImune > 0) b.postImune -= dt; if (b.guardaCd > 0) b.guardaCd -= dt;
   for (const cl of b.clones) cl.t -= dt;
   b.clones = b.clones.filter(cl => cl.t > 0);
-  if (b.morrendo) { b.morrendo -= dt; b.vx = 0; if (Math.random() < dt * 22) G.fx.po(b.x + rand(-b.w, b.w) / 2, b.y - rand(0, b.h), 3, b.d.cor || '#fff'); if (b.morrendo <= 0) G.chefeCaiu(b); return; }
+  if (b.morrendo) { b.morrendo -= dt; b.vx = 0; desfazer(G, b); if (Math.random() < dt * 22) G.fx.po(b.x + rand(-b.w, b.w) / 2, b.y - rand(0, b.h), 3, b.d.cor || '#fff'); if (b.morrendo <= 0) G.chefeCaiu(b); return; }
+  E?.palco?.(G, b, dt); // o cenário muda durante a luta
   // postura
   b.postT -= dt; if (b.postT <= 0 && b.post > 0 && b.quebrado <= 0) b.post = Math.max(0, b.post - 9 * dt);
   const parado = b.quebrado > 0 || b.tonto > 0;
   if (parado) {
-    b.quebrado -= dt; b.tonto -= dt; b.vx = 0; b.raios = null; b.encanta = false; G.puxao = null; b.mov = null; b.alpha = 1;
+    if (b.mov) { b.mov = null; desfazer(G, b); }
+    b.quebrado -= dt; b.tonto -= dt; b.vx = 0; b.alpha = 1;
     if (b.voa) b.y = Math.min(A.chao, b.y + 520 * dt);
     if (b.quebrado <= 0 && b.tonto <= 0) { b.post = 0; b.espera = 0.2; b.postImune = 8; b.furia = Math.max(b.furia, 4); } // levanta logo, irado, e por um tempo a postura não quebra de novo
   } else {
     // virada de fase: grito, escuridão e a acusação
     let nf = 0; c.fases.forEach((f, i) => { if (b.hp / b.max <= f.vida) nf = i; });
     if (nf > b.fase) {
-      b.fase = nf; const f = c.fases[nf]; b.mov = null; b.raios = null; b.encanta = false; G.puxao = null; b.alpha = 1; b.idx = 0; b.espera = 1.4;
-      G.limparPerigos(); if (f.grito) G.grito(f.grito); G.tremor(10); sfx('boss');
+      b.fase = nf; const f = c.fases[nf]; b.mov = null; desfazer(G, b); b.idx = 0; b.espera = 1.4; b.recentes = [];
+      G.limparPerigos(); if (f.grito) G.grito(f.grito); G.tremor(10); sfx('boss'); G.clarao = 0.15;
       G.estaEscrito(b);
       return;
     }
     const f = c.fases[b.fase];
-    G.escuroAlvo = f.escuro ?? c.escuro ?? 0;
-    if (!b.mov) {
+    const zel = c.parte || b.id === 'conselho', ins = !(b.alpha < 0.5) && (!zel || (b.naSala && !b.volta)) && instinto(G, b, dt, zel); // os zelotes agarram quando estão na sala
+    if (ins === true) return;
+    if (!b.mov || b.mov.nome !== 'trevas') G.escuroAlvo = f.escuro ?? c.escuro ?? 0;
+    if (ins === 'fisica') { /* no meio do salto: só a física do corpo, lá embaixo */ }
+    else if (!b.mov) {
       b.espera -= dt;
-      // entre os golpes
-      const dx = p.x - b.x; b.face = Math.sign(dx) || b.face;
-      if (c.mover === 'perseguir') b.vx = Math.abs(dx) > b.w * 0.7 ? b.face * (c.vel || 60) * (b.fase ? 1.2 : 1) : 0;
-      else if (c.mover === 'rodear') { const alvo = Math.abs(dx) < 220 ? -b.face : Math.abs(dx) > 330 ? b.face : 0; b.vx = alvo * (c.vel || 100); }
-      else if (c.mover === 'pairar') { const tx = clamp(p.x + Math.sin(b.t * 0.8) * 190, A.x0 + 80, A.x1 - 80), ty = A.chao - c.voa + Math.sin(b.t * 1.7) * 18; b.vx = clamp((tx - b.x) * 1.4, -(c.vel || 100), c.vel || 100); b.y += clamp(ty - b.y, -1, 1) * 140 * dt; }
-      else b.vx = 0;
-      if (b.espera <= 0) { const nome = f.golpes[b.idx++ % f.golpes.length]; b.mov = { nome, def: c.golpes[nome], t: 0, e: 0 }; }
+      E.mover(G, b, dt); // entre os golpes, cada um se move do seu jeito
+      if (b.espera <= 0 && !b.folga) { const nome = escolher(G, b, f); b.mov = { nome, def: c.golpes[nome], t: 0, e: 0 }; b.idx++; }
     } else {
-      const m = b.mov, fim = GOLPES[m.def.tipo](G, b, m, dt); m.t += dt;
-      if (fim) { b.mov = null; b.art.lanca = null; b.espera = (m.def.espera ?? 1.05) * G.dif.ritmo * (c.pressa || 1) * (b.fase ? 0.85 : 1) * (b.furia > 0 ? 0.7 : 1); if (Math.random() < 0.28 + b.fase * 0.14) b.espera = 0.16; } // às vezes emenda um golpe no outro
+      const m = b.mov, fn = golpeDe(b, m.nome), fim = !fn || fn(G, b, m, dt) || m.t > 12; m.t += dt;
+      if (fim) { b.mov = null; desfazer(G, b); b.espera = (m.def.espera ?? 1.05) * G.dif.ritmo * (c.pressa || 1) * (b.fase ? 0.85 : 1) * (b.furia > 0 ? 0.7 : 1) * 0.78; if (!c.voa1 && b.id !== 'conselho' && !c.parte && Math.random() < 0.34 + b.fase * 0.15) b.espera = 0.15; } // às vezes emenda um golpe no outro
     }
     // regras passivas
-    if (c.regras?.regenera) { b.semGolpe = (b.semGolpe || 0) + dt; if (b.semGolpe > c.regras.regenera.apos && b.hp < b.max) { b.hp = Math.min(b.max, b.hp + b.max * c.regras.regenera.taxa * dt); if (Math.random() < dt * 5) G.fx.sobe(b.x + rand(-20, 20), b.y - 30, 1, '#A5CDCE'); } }
+    // quem não é vencido de vez se refaz: a cura é o tempo todo e forte, mas só dentro da barra atual (a que já caiu não volta)
+    if (c.regras?.regenera) { const r = c.regras.regenera, teto = b.max * c.fases[b.fase].vida; b.semGolpe = (b.semGolpe || 0) + dt; const folga = b.semGolpe > r.apos; if (b.hp < teto) { b.hp = Math.min(teto, b.hp + b.max * (folga ? r.taxa : r.sempre || 0) * dt); if (Math.random() < dt * (folga ? 9 : 3)) G.fx.sobe(b.x + rand(-20, 20), b.y - 30, 1, '#A5CDCE'); if (folga && !G.viuCura) { G.viuCura = true; G.fala(b, 'Cada “depois eu faço” me alimenta… eu me refaço!'); } } }
   }
   // física
-  if (b.voa || b.mov?.def.tipo === 'mergulho') { b.x = clamp(b.x + b.vx * dt, A.x0 + b.w / 2, A.x1 - b.w / 2); }
+  if (b.voa) { b.x = clamp(b.x + b.vx * dt, A.x0 + b.w / 2, A.x1 - b.w / 2); }
   else { b.vy = Math.min(1100, b.vy + 2050 * dt); mover(G.N, b, dt); b.x = clamp(b.x, A.x0 + b.w / 2, A.x1 - b.w / 2); if (b.x <= A.x0 + b.w / 2 + 1) b.parede = -1; else if (b.x >= A.x1 - b.w / 2 - 1) b.parede = 1; }
 }
 

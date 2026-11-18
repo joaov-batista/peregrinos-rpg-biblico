@@ -1,3 +1,6 @@
+
+
+
 # Peregrinos: O Caminho
 
 ![Peregrinos: O Caminho](public/og.png)
@@ -156,6 +159,11 @@ Precisa de `node` e `ffmpeg` no PATH. As vozes do narrador e do vilão ficam em 
    VITE_SUPABASE_URL=https://xxxx.supabase.co
    VITE_SUPABASE_ANON_KEY=eyJ...
    ```
+
+### Site de apresentação
+
+O jogo fica em `/` e o site que o apresenta fica em **`/site`**: trailer das batalhas, clipes gravados no jogo, mecânicas,
+vocações e a página de download (computador, Android, iPhone ou jogar no navegador). Os trailers em alta ficam em `art/`.
 
 ### 2. Vercel (hospedagem)
 1. Suba esta pasta num repositório do GitHub.

@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0B0F18">
+  <title>Peregrinos: O Caminho — RPG bíblico em pixel art</title>
+  <meta name="description" content="Peregrinos: O Caminho é um RPG bíblico em pixel art. Enfrente Golias, o Beemote, o Leviatã e as sombras de Corinto. Grátis no navegador, no computador e no celular.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Peregrinos: O Caminho">
+  <meta property="og:description" content="Um RPG bíblico em pixel art com batalhas de verdade. Jogue grátis no navegador, no computador ou no celular.">
+  <meta property="og:image" content="%SITE%/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Alegreya+Sans:wght@500;700;800&family=Pixelify+Sans:wght@500;600&display=swap">
+</head>
+<body>
+  <header class="topo">
+    <a class="marca" href="#inicio" aria-label="Peregrinos, início"><span class="cruz">✝</span> PEREGRINOS</a>
+    <nav aria-label="Seções">
+      <a href="#batalhas">Batalhas</a>
+      <a href="#mecanicas">Como se joga</a>
+      <a href="#vocacoes">Vocações</a>
+      <a href="#baixar" class="nav-baixar">Baixar</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="inicio" class="heroi">
+      <video class="heroi-video" src="/site/heroi.mp4" poster="/site/trailer-poster.webp" autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>
+      <div class="heroi-veu"></div>
+      <div class="heroi-texto">
+        <p class="sobre-titulo">Um RPG bíblico em pixel art</p>
+        <h1>PEREGRINOS<span>O Caminho</span></h1>
+        <p class="lead">Atravesse Corinto, o mar de Jonas e a Babilônia de Daniel. Enfrente Golias, o Beemote e o Leviatã. Cada batalha nasce de um texto da Bíblia, e cada chefe luta do seu jeito.</p>
+        <div class="acoes">
+          <a class="btn ouro" href="/">▶ Jogar no navegador</a>
+          <a class="btn" href="#baixar">⬇ Baixar grátis</a>
+          <a class="btn" href="#trailer">🎬 Ver o trailer</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="faixa-fatos" aria-label="Em números">
+      <div><b>18</b><span>chefes, cada um com golpes só seus</span></div>
+      <div><b>77</b><span>golpes de chefe, nenhum repetido</span></div>
+      <div><b>15</b><span>vícios, cada um com um jeito de lutar</span></div>
+      <div><b>7</b><span>vocações para jogar</span></div>
+    </section>
+
+    <section id="trailer" class="secao trailer">
+      <h2>O trailer</h2>
+      <p class="intro">Batalhas gravadas no próprio jogo, sem montagem de cena: é a luta rodando.</p>
+      <video class="trailer-video" controls preload="none" playsinline poster="/site/trailer-poster.webp" data-horizontal="/site/trailer-16x9.mp4" data-vertical="/site/trailer-9x16.mp4" src="/site/trailer-16x9.mp4"></video>
+    </section>
+
+    <section id="batalhas" class="secao">
+      <h2>As batalhas</h2>
+      <p class="intro">Tudo aqui foi gravado no próprio jogo. Os chefes leem você: se você vira as costas, a Fera dá o bote; se você foge, o Fugitivo foge mais.</p>
+      <div class="grade-chefes">
+        <figure class="clipe" data-chefe="leviata"><video src="/site/chefe-leviata.mp4" poster="/site/chefe-leviata.webp" muted loop playsinline preload="none"></video><figcaption><b>Leviatã</b> Ele some no fundo e irrompe debaixo de você. Só logo depois de emergir a couraça abre. <cite>Jó 41</cite></figcaption></figure>
+        <figure class="clipe" data-chefe="behemote"><video src="/site/chefe-behemote.mp4" poster="/site/chefe-behemote.webp" muted loop playsinline preload="none"></video><figcaption><b>Beemote</b> Uma investida de parede a parede. Faça o colosso bater na parede: tonto, o casco se abre. <cite>Jó 40</cite></figcaption></figure>
+        <figure class="clipe" data-chefe="satanas"><video src="/site/chefe-satanas.mp4" poster="/site/chefe-satanas.webp" muted loop playsinline preload="none"></video><figcaption><b>O Acusador</b> Os dardos inflamados chegam pelas bordas e o chão vira abismo. Erga a lâmpada como escudo. <cite>Ef 6:16</cite></figcaption></figure>
+        <figure class="clipe" data-chefe="golias"><video src="/site/chefe-golias.mp4" poster="/site/chefe-golias.webp" muted loop playsinline preload="none"></video><figcaption><b>Golias</b> A armadura absorve quase tudo. Defenda a lança no instante certo e a testa do gigante fica exposta. <cite>1Sm 17</cite></figcaption></figure>
+        <figure class="clipe" data-chefe="babilonia"><video src="/site/chefe-babilonia.mp4" poster="/site/chefe-babilonia.webp" muted loop playsinline preload="none"></video><figcaption><b>Babilônia</b> A torre sobe a cada fase. No fim, quem fala é a voz do céu, em colunas de luz. <cite>Dn 4:31</cite></figcaption></figure>
+        <figure class="clipe" data-chefe="mentira"><video src="/site/chefe-mentira.mp4" poster="/site/chefe-mentira.webp" muted loop playsinline preload="none"></video><figcaption><b>A Mentira</b> Cópias por toda a arena, e ela troca de lugar com você. Só a luz mostra a verdadeira. <cite>Jo 8:32</cite></figcaption></figure>
+        <figure class="clipe" data-chefe="procrastinacao"><video src="/site/chefe-procrastinacao.mp4" poster="/site/chefe-procrastinacao.webp" muted loop playsinline preload="none"></video><figcaption><b>Procrastinação</b> Os ponteiros de um relógio varrem a sala, e ela se cura se você para de bater. <cite>Pv 6:9</cite></figcaption></figure>
+        <figure class="clipe" data-chefe="fera"><video src="/site/chefe-fera.mp4" poster="/site/chefe-fera.webp" muted loop playsinline preload="none"></video><figcaption><b>A Fera do campo</b> O rei sem razão de homem. Não lhe dê as costas: ele dá o bote na hora. <cite>Dn 4:33</cite></figcaption></figure>
+        <figure class="clipe" data-chefe="mamom"><video src="/site/chefe-mamom.mp4" poster="/site/chefe-mamom.webp" muted loop playsinline preload="none"></video><figcaption><b>Mamom</b> A moeda gigante rola e quica nas paredes. As moedas malditas que você apanha pesam. <cite>Mt 6:24</cite></figcaption></figure>
+      </div>
+    </section>
+
+    <section id="mecanicas" class="secao escura">
+      <h2>Como se joga</h2>
+      <div class="cartoes">
+        <article><span class="icone">🪔</span><h3>A lâmpada</h3><p>Erga a lâmpada no instante do golpe: a defesa perfeita devolve o dardo, enche a postura do chefe e grita <em>VIGIAI!</em>. Ela também revela o que está escondido.</p></article>
+        <article><span class="icone">💥</span><h3>Quebrante</h3><p>Defesas perfeitas enchem a barra de postura. Cheia, o chefe fica <em>QUEBRANTADO</em> e se abre para o golpe.</p></article>
+        <article><span class="icone">📜</span><h3>Está escrito</h3><p>A cada virada de fase o chefe acusa, e a luta para numa pergunta do estudo. A resposta certa o quebranta.</p></article>
+        <article><span class="icone">🔥</span><h3>Dons</h3><p>Redemoinho de fogo, a Voz do Sinai, as águas do dilúvio, o vento impetuoso e o Fogo do Espírito. Raros e decisivos.</p></article>
+        <article><span class="icone">🗺️</span><h3>Fases que contam o texto</h3><p>Cada fase tem uma sala marcante e um perigo próprio: ofertas que pesam em Corinto, o navio que aderna, as águas que cercam Jonas.</p></article>
+        <article><span class="icone">👥</span><h3>Juntos</h3><p>Jogue com amigos pela internet ou na mesma tela, com até quatro peregrinos dividindo a tela.</p></article>
+      </div>
+    </section>
+
+    <section id="vocacoes" class="secao">
+      <h2>Sete vocações</h2>
+      <p class="intro">Cada uma com uma arma, um golpe especial e um jeito de lutar. Troque quando quiser com Samuel, no Refúgio.</p>
+      <ul class="vocacoes">
+        <li><b>Guerreiro da Fé</b><span>Espada · Giro de Gideão</span><small>Jz 7</small></li>
+        <li><b>Pastor</b><span>Funda · Cinco Pedras Lisas</span><small>1Sm 17</small></li>
+        <li><b>Profeta</b><span>Cajado · Fogo do Céu</span><small>1Rs 18</small></li>
+        <li><b>Levita</b><span>Trombeta · Cântico de Louvor</span><small>Js 6</small></li>
+        <li><b>Zelote</b><span>Adaga · Investida do Zelote</span><small>Lc 6:15</small></li>
+        <li><b>Valente de Davi</b><span>Lança · Lança de Abisai</span><small>2Sm 23:18</small></li>
+        <li><b>Juiz</b><span>Chicote · Aguilhada de Sangar</span><small>Jz 3:31</small></li>
+      </ul>
+      <div class="galeria" aria-label="Imagens do jogo">
+        <img src="/site/print-1.webp" alt="O Pastor atira pedras em Golias enquanto o escudeiro avança" loading="lazy" width="1280" height="720">
+        <img src="/site/print-2.webp" alt="O Guerreiro gira a espada contra Satanás entre braseiros" loading="lazy" width="1280" height="720">
+        <img src="/site/print-3.webp" alt="O Leviatã emerge debaixo do convés" loading="lazy" width="1280" height="720">
+        <img src="/site/print-4.webp" alt="O Beemote investe pela savana" loading="lazy" width="1280" height="720">
+      </div>
+    </section>
+
+    <section id="baixar" class="secao baixar">
+      <h2>Baixe e jogue</h2>
+      <p class="intro">É grátis. Instalado, o jogo abre em tela cheia e funciona sem internet; o progresso da conta sincroniza quando a conexão volta.</p>
+      <div class="plataformas">
+        <article class="plat" data-plat="pc">
+          <span class="icone">💻</span><h3>Computador</h3><p>Windows, Mac ou Linux, pelo Chrome ou pelo Edge.</p>
+          <button class="btn ouro instalar" type="button">Instalar no computador</button>
+          <ol class="passos" hidden><li>Abra este site no Chrome ou no Edge.</li><li>Clique no ícone de instalar (⊕) no fim da barra de endereço, ou no menu ⋮ → "Instalar Peregrinos".</li><li>Pronto: o atalho aparece na área de trabalho.</li></ol>
+        </article>
+        <article class="plat" data-plat="android">
+          <span class="icone">🤖</span><h3>Android</h3><p>Pelo Chrome. Fica na tela inicial como um app.</p>
+          <button class="btn ouro instalar" type="button">Instalar no Android</button>
+          <ol class="passos" hidden><li>Abra este site no Chrome.</li><li>Toque no menu ⋮ (canto de cima).</li><li>Escolha "Instalar app" ou "Adicionar à tela inicial".</li></ol>
+        </article>
+        <article class="plat" data-plat="iphone">
+          <span class="icone">🍎</span><h3>iPhone e iPad</h3><p>Pelo Safari, em quatro toques.</p>
+          <button class="btn mostrar" type="button">Ver como instalar</button>
+          <ol class="passos" hidden><li>Abra este site no Safari.</li><li>Toque em Compartilhar (□↑), na barra de baixo.</li><li>Role e toque em "Adicionar à Tela de Início".</li><li>Toque em "Adicionar" e abra pelo ícone do Peregrinos.</li></ol>
+        </article>
+        <article class="plat" data-plat="web">
+          <span class="icone">🌐</span><h3>No navegador</h3><p>Sem instalar nada. Também roda no celular, deitado.</p>
+          <a class="btn ouro" href="/">▶ Jogar agora</a>
+        </article>
+      </div>
+      <p class="estado" role="status"></p>
+      <p class="reels">Vai compartilhar? <a href="/site/trailer-9x16.mp4" download>Baixe o trailer vertical (reels)</a> · <a href="/site/trailer-16x9.mp4" download>trailer horizontal</a></p>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    <p><span class="cruz">✝</span> Peregrinos: O Caminho</p>
+    <p>"Lâmpada para os meus pés é a tua palavra, e luz para o meu caminho" (Sl 119:105)</p>
+  </footer>
+  <script type="module" src="/src/site/site.js"></script>
+</body>
+</html>

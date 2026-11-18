@@ -144,6 +144,23 @@ export const CINEMAS = {
   },
 
   /* ================= Chefes (quando aparecem pela primeira vez) ================= */
+  'chefe-amargura': { titulo: 'A Raiz de Amargura', cenas: [
+    { cena: 'tribunal', titulo: 'A RAIZ DE AMARGURA', sub: 'o que consumia a aldeia · Hebreus 12:15', texto: 'No fundo da fenda, uma câmara inteira forrada de raízes pretas. Cada uma sobe até uma casa do Refúgio. No meio delas, alguma coisa abre os olhos.' },
+    { cena: 'tribunal', voz: 'vilao', fig: [{ p: 'chefe:amargura', x: 0.5, y: 0.78, s: 2 }], texto: 'Eu não entrei aqui, peregrino. Me plantaram. Cada ofensa guardada, cada conta que ninguém pagou… me regaram todos os dias. Você também. Quer que eu diga os nomes?' }] },
+  'chefe-conselho': { titulo: 'O Conselho Zelote', cenas: [
+    { cena: 'tribunal', fx: 'brasas', titulo: 'O CONSELHO ZELOTE', sub: 'Menaém · Eleazar · Jair', texto: 'Três tronos de pedra numa sala sem janelas. Três vultos de capuz, cada um com a sua arma atravessada no colo. Nenhum se levanta.' },
+    { cena: 'tribunal', voz: 'vilao', fig: [{ p: 'chefe:conselho', x: 0.5, y: 0.8, s: 2 }], texto: 'Roma não saiu daqui com sermão, estrangeiro. Saiu pelo ferro, e pelo ferro a gente decide as coisas. Um de cada vez. É a nossa lei.' }] },
+  'chefe-zeloteFoice': { titulo: 'Jair, o Vidente', cenas: [{ cena: 'tribunal', texto: 'Jair desce do trono.' }] },
+  'chefe-zelotePunhal': { titulo: 'Menaém, o Assassino', cenas: [{ cena: 'tribunal', texto: 'Menaém se levanta de novo.' }] },
+  'chefe-escassez': { titulo: 'A Escassez', cenas: [
+    { cena: 'casa', fx: 'brasas', fig: [{ p: 'chefe:escassez', x: 0.5, y: 0.78, s: 1.8, entra: 'cima' }], titulo: 'A ESCASSEZ', sub: 'a sombra desta página · 1 Reis 17:12', texto: 'Três anos sem chuva. Do pó da casa vazia levanta-se uma coisa magra, feita de terra rachada, com uma tigela vazia nas mãos.' },
+    { cena: 'casa', voz: 'vilao', fig: [{ p: 'chefe:escassez', x: 0.5, y: 0.78, s: 2 }], texto: 'Um punhado de farinha. Um resto de azeite. Coma com o seu filho… e morra.' }] },
+  'chefe-desprezo': { titulo: 'O Desprezo', cenas: [
+    { cena: 'agora', fig: [{ p: 'chefe:desprezo', x: 0.5, y: 0.78, s: 1.8, entra: 'cima' }], titulo: 'O DESPREZO', sub: 'a sombra desta página · Marcos 10:48', texto: 'A estrada de Jericó está cheia de gente. Todos de costas. Quando um cego grita à beira do caminho, a multidão inteira se vira, como um corpo só.' },
+    { cena: 'agora', voz: 'vilao', fig: [{ p: 'chefe:desprezo', x: 0.5, y: 0.78, s: 2 }], texto: 'Cale-se! O Mestre não tem tempo para gente como você.' }] },
+  'chefe-carcere': { titulo: 'O Cárcere', cenas: [
+    { cena: 'tribunal', fx: 'brasas', fig: [{ p: 'chefe:carcere', x: 0.5, y: 0.78, s: 1.8, entra: 'cima' }], titulo: 'O CÁRCERE', sub: 'a sombra desta página · Atos 12:6', texto: 'A prisão de Herodes. As grades se dobram, as chaves se juntam, e o próprio cárcere se põe de pé.' },
+    { cena: 'tribunal', voz: 'vilao', fig: [{ p: 'chefe:carcere', x: 0.5, y: 0.78, s: 2 }], texto: 'Duas cadeias. Quatro escoltas. Um portão de ferro. Amanhã ele morre, e nenhuma oração atravessa estas paredes.' }] },
   'chefe-mamom': {
     titulo: 'Mamom, a Ganância',
     cenas: [
