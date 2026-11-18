@@ -10,6 +10,7 @@ import { CULTOS, VIGILIA, ORACOES, LITURGIA, JAIRO, GUARDAS, NOITE, FEIRA } from
 import { ITENS } from '../content/gente.js';
 import { hora, periodo, ganhar, bolsa } from './moradores.js';
 import { somarCoracoes } from './vida.js';
+import { falarHabacuque } from './corca.js';
 import { T, CW } from './nivel.js';
 
 const rand = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
@@ -83,6 +84,7 @@ function badalar(G, s, b) {
 /* ---------------- conversar ---------------- */
 export async function falarSinagoga(G, ob) {
   if (ob.id === 'jairo') return jairo(G, ob);
+  if (ob.id === 'habacuque') { await falarHabacuque(G, ob); return true; }
   if (ob.id === 'feirante') return feira(G, ob);
   if (ob.patrulha) {
     const cor = ob.id === 'guarda1', primeira = cor && !G.cm.cornelio;

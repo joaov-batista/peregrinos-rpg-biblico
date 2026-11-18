@@ -41,6 +41,7 @@ import { vencerCapitulo, alvoDaHistoria } from './historia.js';
 import { venceuRaiz } from './missao.js';
 import { passoVida, periodo, ganhar as ganharItem, dia as diaDe } from './moradores.js';
 import { aoOrar, sombraDaNoite, venceuNoturno } from './sinagoga.js';
+import { corcaVenceu } from './corca.js';
 
 // Primeiros passos: [toque, controle, teclado]
 const PASSOS = [ // t: [toque, controle, teclado]; alvo: o botão de toque que pisca. No Bosque do Treino cada passo tem o seu lugar na trilha.
@@ -620,7 +621,7 @@ export class Caminho {
 
   cair() {
     const p = this.p, c = this.char, cm = this.cm;
-    p.morto = true; p.vida = 0; this.mortoT = 1.9; c.data.stats.deaths++; cm.mortes++; this.mortosAqui++;
+    this.semCair = false; p.morto = true; p.vida = 0; this.mortoT = 1.9; c.data.stats.deaths++; cm.mortes++; this.mortosAqui++;
     sfx('boss'); this.fx.po(p.x, p.y - 20, 30, '#E6E0CF'); this.tremor(14);
     if (this.mp && this.luta && this.chefe) { if (this.souDono()) { if (this.mp.acompanhado()) this.chefeSeFortalece(this.chefe, this.char.name); } else this.mp.ev('tb'); }
     // a sacola de talentos fica onde você caiu; cair de novo antes de buscá-la a perde
@@ -1022,7 +1023,7 @@ export class Caminho {
 
   async iniciarLuta() {
     const d = this.def, A = this.N.arena;
-    this.luta = true; this.luta0 = true; this.vazioT = 0; sfx('gate'); this.tremor(8);
+    this.luta = true; this.luta0 = true; this.vazioT = 0; this.semCair = true; sfx('gate'); this.tremor(8);
     const juntos = this.mp?.acompanhado();
     if (!juntos) { this.N.portaAberta = false; await this.cinema(CINEMA_CHEFE[d.chefe] || 'chefe-' + d.chefe); }
     else { this.congela = true; await this.cinema(CINEMA_CHEFE[d.chefe] || 'chefe-' + d.chefe); this.congela = false; } // todos assistem à entrada do chefe; ele espera
@@ -1082,7 +1083,7 @@ export class Caminho {
     if (this.mp && !this.temSelos()) { this.ui.toast(b.d.nome + ' caiu. A recompensa pede os três rolos desta página: leia-os e volte.', 8000); this.semLutaAte = this.T + 8; return; }
     this.venceu = true; this.N.portaAberta = true;
     this.fx.anel(b.x, b.y - b.h / 2, '#FFE9A8', 260); this.soltarMoedas(b.x, b.y - b.h / 2, 18);
-    cm.chefes[b.id] = (cm.chefes[b.id] || 0) + 1; marco('chefe:' + b.id); c.data.stats.bosses = c.data.stats.bosses || {}; c.data.stats.bosses[b.id] = (c.data.stats.bosses[b.id] || 0) + 1;
+    cm.chefes[b.id] = (cm.chefes[b.id] || 0) + 1; marco('chefe:' + b.id); corcaVenceu(this, b); c.data.stats.bosses = c.data.stats.bosses || {}; c.data.stats.bosses[b.id] = (c.data.stats.bosses[b.id] || 0) + 1;
     this.p.vida = this.p.vidaMax;
     await this.ui.dialog({ nome: b.d.nome + ' caiu', texto: b.d.derrota || 'A sombra se desfaz.', acoes: [{ label: 'Amém' }] });
     if (d.fase) { await this.faseCompleta(); conviteOpiniao(this); }

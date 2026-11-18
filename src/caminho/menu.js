@@ -23,6 +23,7 @@ import { RARIDADES, rarDe, especiaisDe, ESPECIAIS, precoArma, valorTroca, AVISO_
 import { quadroChefe } from './pixel/chefespx.js';
 import { CHEFES } from './chefes.js';
 import { CAPITULOS, ARCO } from '../content/historia.js';
+import { ESPECIAIS as ESPECIAL_ITEM, temEspecial, alternarEspecial } from './corca.js';
 
 const ABAS = [['inventario', 'Inventário'], ['jornada', 'Diário'], ['bestiario', 'Bestiário'], ['mapa', 'Mapa'], ['biblia', 'Bíblia'], ['juntos', 'Juntos'], ['ajustes', 'Ajustes']];
 
@@ -51,6 +52,7 @@ export function abrirMenu(G, aba = 'inventario') {
       out.push(h('div', { class: 'dia-trilha' }, ...CAPITULOS.map((c2, i) => i < hs.cap ? linha('✓', c2.n + '. ' + c2.titulo, c2.mudanca, 'feito')
         : i === hs.cap ? linha('▶', c2.n + '. ' + c2.titulo, [cm.mapa ? 'Fale com ' + c2.quemNome + ', no Refúgio.' : 'Primeiro, fale com o Velho Peregrino.', 'A página está aberta: entre nela (' + c2.ref + ').', 'A sombra caiu. Volte e conte a ' + c2.quemNome + '.'][hs.est || 0], 'atual')
         : linha('·', c2.n + '. ???', '', 'falta'))));
+      if (cm.corca >= 1 && cm.corca < 4) out.push(h('h4', {}, 'Missão de Habacuque · Pés de Corça'), h('div', { class: 'dia-trilha' }, linha('▶', ['', 'Vencer o Beemote', 'Vencer o Beemote sem cair nenhuma vez', 'Voltar a Habacuque'][cm.corca], ['', 'Ermo de Beemote, pela Cripta dos Gigantes (pede o Cinto da Verdade).', 'Uma luta inteira, do começo ao fim, sem cair.', 'Ele espera na torre da sinagoga.'][cm.corca], 'atual')));
       out.push(h('h4', {}, 'Páginas da semana · Armadura ' + Object.keys(cm.hab).length + ' de 6'));
       out.push(h('div', { class: 'dia-trilha' }, ...TODAS.map(s2 => { const n = s2.fases.filter(f => cm.feitas[s2.id + ':' + f.n]).length; return linha(n >= s2.fases.length ? '✓' : n ? '▶' : '·', s2.titulo, s2.estudo + ' · ' + n + ' de ' + s2.fases.length + ' páginas', n >= s2.fases.length ? 'feito' : n ? 'atual' : 'falta'); })));
       out.push(t(c.name + ' · nível ' + c.level + ' · fôlegos ' + G.p.vida + '/' + G.p.vidaMax + ' · maná ' + cm.mana + ' · pedras ' + cm.pedras + '/5 · segredos ' + cm.ovos.length, 'muted'));
@@ -101,13 +103,15 @@ export function abrirMenu(G, aba = 'inventario') {
         const cv = h('canvas', { width: 168, height: 196, class: 'inv-cv' }), g = cv.getContext('2d'), heroi = novoHeroi(0, 0, 5); heroi.chao = true; let t0 = performance.now();
         const anima = () => { if (!cv.isConnected && performance.now() - t0 > 500) return; g.clearRect(0, 0, 168, 196); g.imageSmoothingEnabled = false; const q = quadroHeroi(heroi, c.look || {}, c.cls, G.tipoArma, (performance.now() - t0) / 1000, G.hab); g.save(); g.translate(84, 190); g.scale(4, 4); g.drawImage(q.tela(), -AX, -AY); g.restore(); requestAnimationFrame(anima); }; requestAnimationFrame(anima);
         const vagas = Array.from({ length: G.espacos() }, (_, i) => { const id = cm.eq[i], R = id && RELIQUIAS[id]; return R ? (b => (b.style.boxShadow = 'inset 0 0 0 2px ' + rarDe(R).cor, b))(slot(iconeItem(id), true, true, () => mostra(R.nome, rarDe(R).nome + ' · ' + R.ref + ' · vestida', R.desc, h('button', { class: 'btn', onclick: () => usar(id) }, 'Guardar')), 'mini')) : slot('', false, false, () => mostra('Espaço de relíquia', 'vazio', 'Escolha uma relíquia na lista abaixo e toque em Vestir.'), 'mini vaga'); });
+        const especial = () => { const E = ESPECIAL_ITEM.pes_corca, tem = !!cm.especiais?.pes_corca, on = tem && temEspecial(G, 'pes_corca'); /* o slot especial: não é vaga de relíquia */
+          const b = slot(iconeItem('pes_corca'), tem, on, () => mostra(tem ? E.nome : 'Slot especial', tem ? E.ref + (on ? ' · em uso' : ' · guardado') : 'vazio', tem ? E.desc : 'Um item que não se compra nem se acha no chão. Habacuque, o vigia, na torre da sinagoga, sabe onde encontrá-lo.', tem ? h('button', { class: 'btn', onclick: () => { alternarEspecial(G, 'pes_corca'); desenha(); } }, on ? 'Guardar' : 'Usar') : ''), 'mini esp'); return b; };
         const armaB = (b => (G.arma.rar && (b.style.boxShadow = 'inset 0 0 0 2px ' + rarDe(G.arma).cor), b))(quadro(iconeArma(G.tipoArma, G.arma.lamina), true, true, () => mostra((G.arma.nome || (cls.nome || 'Peregrino') + ' · ' + (cls.arma || 'espada')), (G.arma.rar ? rarDe(G.arma).nome + ' · ' : '') + (fio ? FORJA[fio - 1].nome : 'Fio comum'), (G.arma.desc ? G.arma.desc + '\n\n' : '') + especiaisDe(G.arma).map(k => ESPECIAIS[k].nome + ': ' + ESPECIAIS[k].desc + '\n').join('') + (fio ? FORJA[fio - 1].desc : 'Tubalcaim, no Refúgio, pode melhorar o fio da sua arma.') + '\n\nEspecial da vocação: ' + (cls.skill?.nome || 'Verso') + '. Orar + golpe: a descida do Espírito. Jael, no Refúgio, tem outras armas.')));
         armaB.classList.add('inv-slot');
         const boneco = h('div', { class: 'inv-boneco' },
           h('div', { class: 'inv-col' }, arm('capacete_salvacao'), arm('couraca_justica'), arm('cinto_verdade'), arm('calcados_paz')),
           h('div', { class: 'inv-meio' }, h('b', { class: 'inv-nome' }, c.name), h('small', { class: 'muted' }, (cls.nome || 'Peregrino') + ' · nível ' + c.level), cv,
             h('div', { class: 'inv-stat' }, h('span', {}, '♥ ' + G.p.vida + '/' + G.p.vidaMax), h('span', {}, '◉ ' + Math.round(G.p.oleo) + '/' + G.oleoMax()), h('span', {}, '● ' + Math.floor(c.data.gold))),
-            h('div', { class: 'inv-vagas' }, ...vagas)),
+            h('div', { class: 'inv-vagas' }, especial(), ...vagas)),
           h('div', { class: 'inv-col' }, armaB, arm('espada_espirito'), arm('escudo_fe')));
         grade.append(boneco); }
       sec('Bolsa', [

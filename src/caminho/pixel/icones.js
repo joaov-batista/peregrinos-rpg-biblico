@@ -69,7 +69,7 @@ const ITENS = {
 // item → [desenho, cor]
 const DE = {
   arma: ['espada', '#B8D0E0'], denarios: ['moeda', '#D9A63C'], mana: ['pao', '#F0DDA8'], pedras: ['gema', '#B9B4A2'],
-  firmeza: ['cinto', '#D9A63C'], calcados: ['sandalia', '#D9A63C'], couraca: ['couraca', '#D9A63C'], escudo: ['escudo', '#D9A63C'], asas: ['capacete', '#D9A63C'], espada: ['espada', '#FFE08A'],
+  pes_corca: ['sandalia', '#9FE0B0'], firmeza: ['cinto', '#D9A63C'],  calcados: ['sandalia', '#D9A63C'], couraca: ['couraca', '#D9A63C'], escudo: ['escudo', '#D9A63C'], asas: ['capacete', '#D9A63C'], espada: ['espada', '#FFE08A'],
   perola_preco: ['perola', '#E9E6DC'], talento_multiplicado: ['moeda', '#E8C24A'], tunica_sem_costura: ['tunica', '#C8C9BC'], bussola_chamado: ['bussola', '#79D9CD'], manto_marinheiro: ['manto', '#4A6A86'],
   lamparina_abismo: ['candeia', '#D99A3C'], sandalias_mensageiro: ['sandalia', '#C9A45C'], cinto_compaixao: ['cinto', '#B03A5A'], selo_misericordia: ['pomba', '#E9E6DC'], anel_beltessazar: ['anel', '#D9A63C'],
   cepa_raizes: ['cepa', '#8A6A44'], tijolo_humilde: ['tijolo', '#B8744C'], orvalho_ceu: ['gota', '#8FE8FF'], olhos_ceu: ['olho', '#8FB6D6'], coroa_restituida: ['coroa', '#E8C24A'], pedra_lisa: ['gema', '#C9C4B2'],

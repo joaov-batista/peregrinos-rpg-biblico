@@ -183,9 +183,10 @@ const REFUGIO = [
     { tipo: 'npc', col: 27, id: 'samuel', nome: 'Samuel, o que unge', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#D2CFBB', cape: '#55516D', style: 'longo', beard: true } }, { tipo: 'ave', col: 24, lin: 12 }] },
   // a sinagoga: a casa de oração da aldeia. Tem sino (à meia-noite a aldeia inteira ouve), cultos de manhã, à tarde e à noite,
   // e quem ora de madrugada. Os moradores vão até lá de verdade; de perto dá para ouvir o que cada um pede e agradece.
-  { cx: 5, nome: 'Sinagoga', papel: 'vila', tiles: sala(), objs: [
+  { cx: 5, nome: 'Sinagoga', papel: 'vila', tiles: sala([13, 27, 28], [11, 25, 26], [9, 21, 23]), objs: [
     planta(2, 'cipreste'), { tipo: 'cenario', col: 14, qual: 'sinagoga' }, planta(27, 'cipreste'), { tipo: 'vaso', col: 25 },
     { tipo: 'npc', col: 14, id: 'jairo', nome: 'Jairo, chefe da sinagoga', look: { skin: '#C68B59', hair: '#3A2314', tunic: '#E3DED2', cape: '#2F4A7A', style: 'turbante', beard: true } },
+    { tipo: 'npc', col: 22, lin: 9, id: 'habacuque', nome: 'Habacuque, o vigia', look: { skin: '#B07A4E', hair: '#D9D2C5', tunic: '#5A5A7A', cape: '#8A6A44', style: 'longo', beard: true } },
     { tipo: 'ave', col: 6, lin: 12 }] },
   // o olival: figos, sombra e a caravana que às vezes traz algo raro
   { cx: 6, nome: 'Olival', papel: 'vila', tiles: sala([12, 8, 11], [9, 13, 16], [12, 18, 21]), objs: [

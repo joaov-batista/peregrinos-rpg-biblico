@@ -1,5 +1,6 @@
 // O peregrino em vista lateral: movimento, a Lâmpada (vigília), a oração, os golpes e o desenho articulado.
 import { MIRA_CARGA, soltarMira } from './mira.js';
+import { passoCorca } from './corca.js';
 import { espiritoDesce, ESPIRITO_CUSTO } from './arsenal.js';
 import { clamp, lerp, TAU, rand } from '../util.js';
 import { sfx } from '../audio.js';
@@ -113,7 +114,7 @@ export function atualizarHeroi(G, dt) {
   const alvo = p.orando > 0 ? 0 : c.mx * VEL * lento;
   if (!preso && !emDash && p.travaX <= 0) p.vx = aprox(p.vx, alvo, (p.chao ? 2700 : 1750) * dt);
   if (preso && p.chao) p.vx = aprox(p.vx, 0, 900 * dt);
-  if (c.mx && !preso && !emDash && p.travaX <= 0 && (!p.atk || arma.duplo)) { // a adaga é leve: dá para virar no meio do golpe, e o segundo corte já sai para o novo lado
+  if (c.mx && !preso && !emDash && p.travaX <= 0 && !p.agarra && (!p.atk || arma.duplo)) { // a adaga é leve: dá para virar no meio do golpe, e o segundo corte já sai para o novo lado
     p.face = Math.sign(c.mx); if (p.atk && !p.atk.segundo) p.atk.face = p.face; }
 
   // ---- pular / deslizar na parede ----
@@ -124,13 +125,14 @@ export function atualizarHeroi(G, dt) {
     const lado = c.mx > 0.3 ? 1 : c.mx < -0.3 ? -1 : 0;
     if (lado && paredeAoLado(N, p, lado)) { p.desliza = lado; p.vy = Math.min(p.vy, 115); p.pulos = G.pulosMax(); p.dashAr = true; p.face = -lado; if (Math.random() < dt * 14) G.fx.po(p.x + lado * 9, p.y - 20, 1, '#C9D2C4'); }
   }
+  passoCorca(G, p, c, dt, paredeAoLado, N, emDash, preso); // Pés de Corça: agarrado na parede, firme
   // descer de uma plataforma: segurar para baixo um instante (ou para baixo + pular)
   if (c.my > 0.5 && p.chao && p.naPonte && !preso) { p.baixoT = (p.baixoT || 0) + dt; if (p.baixoT > 0.14 || p.buf > 0) { p.desce = 0.2; p.buf = 0; p.chao = false; p.baixoT = 0; } } else p.baixoT = 0;
   if (p.buf > 0 && !preso && p.orando <= 0) {
     if (p.coyote > 0) { p.vy = -PULO; p.coyote = 0; p.buf = 0; p.sq = 1.22; sfx('step'); G.fx.po(p.x, p.y, 5, '#C9D2C4'); p.dashT = 0; }
     else if ((p.desliza || paredeAoLado(N, p, 1) || paredeAoLado(N, p, -1))) {
       const lado = p.desliza || (paredeAoLado(N, p, 1) ? 1 : -1);
-      p.vy = -PULO * 0.95; p.vx = -lado * 300; p.travaX = 0.14; p.face = -lado; p.buf = 0; p.sq = 1.2; sfx('step'); G.fx.po(p.x + lado * 9, p.y - 16, 5, '#C9D2C4');
+      p.agarra = 0; p.soltouT = 0.25; p.vy = -PULO * 0.95; p.vx = -lado * 300; p.travaX = 0.14; p.face = -lado; p.buf = 0; p.sq = 1.2; sfx('step'); G.fx.po(p.x + lado * 9, p.y - 16, 5, '#C9D2C4');
     }
     else if (p.pulos > 0) { p.pulos--; p.vy = -PULO * 0.9; p.buf = 0; p.sq = 1.25; sfx('dodge'); G.fx.asas(p.x, p.y - 22); }
   }
@@ -154,6 +156,7 @@ export function atualizarHeroi(G, dt) {
     p.rastro.push({ x: p.x, y: p.y, t: 0.22, face: p.face, baixo: p.dashModo === 'chao' });
     if (p.dashModo === 'chao' && Math.random() < dt * 40) G.fx.po(p.x - p.dashDir * 8, p.y - 2, 1, '#C9D2C4');
     if (p.dashT <= 0) p.dashFim = 0.12; // um respiro depois do passo: o golpe ainda sai como golpe do passo
+  } else if (p.agarra) { p.vy = c.my < -0.5 ? -130 : 0; p.vx = 0; // firme na parede; para cima, sobe devagar
   } else if (!p.chao && p.carga > 0.12 && !G.investidaMira && !G.quedaMira) {
     // mirando no ar: o peregrino quase para e cai devagar, para dar tempo de apontar (só ele; o mundo segue no ritmo)
     if (p.vy < 10) p.vy = damp(p.vy, 30, 9, dt); else p.vy = Math.min(p.vy + GRAV * 0.12 * dt, 95);
@@ -172,11 +175,11 @@ export function atualizarHeroi(G, dt) {
   if (c.atk) p.atkBuf = 0.13;
   if (p.atkBuf > 0 && p.atkCd <= 0 && !preso && !emDash && p.orando <= 0) {
     // virar na hora do golpe: o direcional manda; sem ele, o lado do cursor do mouse. Golpes seguidos não prendem mais o peregrino num lado só.
-    if (!emDash && p.travaX <= 0) { if (c.mx) p.face = Math.sign(c.mx); else if (c.ladoMouse) p.face = c.ladoMouse; }
+    if (!emDash && p.travaX <= 0 && !p.agarra) { if (c.mx) p.face = Math.sign(c.mx); else if (c.ladoMouse) p.face = c.ladoMouse; } /* agarrado, golpeia para fora da parede */
     // oito direções: para os lados, para cima, para baixo (no ar quica; no chão é rasteira) e as diagonais
     let dir = c.my < -0.5 ? (c.mx ? 'diagC' : 'cima') : c.my > 0.5 ? (p.chao ? 'rasteira' : c.mx ? 'diagB' : 'baixo') : 'lado';
     const livre = c.miraLivre && Math.abs(c.my) <= 0.5 && c.mira != null; /* com mouse ou analógico, o golpe sai para onde se aponta */
-    if (livre) { const mx = Math.cos(c.mira), my = Math.sin(c.mira); if (Math.abs(mx) > 0.12 && p.travaX <= 0) p.face = Math.sign(mx);
+    if (livre) { const mx = Math.cos(c.mira), my = Math.sin(c.mira); if (Math.abs(mx) > 0.12 && p.travaX <= 0 && !(p.agarra && Math.sign(mx) === p.agarra)) p.face = Math.sign(mx);
       dir = my < -0.88 ? 'cima' : my < -0.36 ? 'diagC' : my > 0.88 ? (p.chao ? 'rasteira' : 'baixo') : my > 0.36 ? (p.chao ? 'lado' : 'diagB') : 'lado'; }
     const [ux, uy] = DIRS[dir], tiro = arma.tiro && (dir !== 'baixo' || livre) ? arma.tiro : null, cor = hab.espada ? 'luz' : arma.cor;
     const angTiro = livre ? c.mira : Math.atan2(uy, p.face * ux);
