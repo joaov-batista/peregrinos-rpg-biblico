@@ -536,6 +536,11 @@ export function renderPixel(G) {
       if (tonto) for (let i = 0; i < 3; i++) { const a = Tm * 5 + i * 2.09; g.fillStyle = '#FFE9A8'; g.fillRect(X(e.x) + Math.round(Math.cos(a) * 7), yy - Math.round(e.h / PX) - 5 + Math.round(Math.sin(a) * 2), 1, 1); }
     }
   }
+  for (const a of G.almas || []) { // a luz azul do peregrino caído, a caminho do chefe: um rastro que afina, o brilho, o núcleo
+    a.rastro.forEach((q, i) => { const k = (i + 1) / a.rastro.length; g.globalAlpha = k * 0.55; g.fillStyle = k > 0.7 ? '#BFE6FF' : '#5AA8F0'; const r = Math.max(1, Math.round(k * 3)); g.fillRect(X(q.x) - r, Y(q.y) - r, r * 2, r * 2); });
+    const x = X(a.x), y = Y(a.y), pul = 1 + Math.sin(Tm * 14) * 0.5; g.globalAlpha = 0.25; g.fillStyle = '#7FC8FF'; g.beginPath(); g.arc(x, y, 9 + pul * 2, 0, 6.29); g.fill();
+    g.globalAlpha = 0.6; g.beginPath(); g.arc(x, y, 5 + pul, 0, 6.29); g.fill(); g.globalAlpha = 1; g.fillStyle = '#F2FAFF'; g.fillRect(x - 2, y - 2, 4, 4);
+    if (a.t < 0.7) { g.globalAlpha = (1 - a.t / 0.7) * 0.5; g.fillStyle = '#9AD8FF'; for (let i = 0; i < 5; i++) g.fillRect(X(a.x0) - 8 + i * 4, Y(a.y0 + 20) - Math.round(((Tm * 40 + i * 9) % 24)), 1, 4); g.globalAlpha = 1; } } // fios subindo do corpo
   if (G.pecado) { // o vulto à porta: sombra pontilhada de olhos acesos
     const sp = G.pecado, x = X(sp.x), y = Y(sp.y); g.fillStyle = '#0B0812';
     for (let yy = -37; yy <= 22; yy++) { const k = (yy + 37) / 59, l = Math.round(2 + k * 13 + Math.sin(Tm * 3 + yy * 0.3) * 1.5); for (let xx = -l; xx <= l; xx++) if (yy < 16 || pontilha(x + xx, y + yy + Math.floor(Tm * 8), 1 - (yy - 16) / 7)) g.fillRect(x + xx, y + yy, 1, 1); }

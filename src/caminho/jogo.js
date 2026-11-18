@@ -325,7 +325,7 @@ export class Caminho {
     for (let i = 0; i < N.revel.length; i++) if (N.revel[i] > 0) N.revel[i] -= dt;
     this.simular(dt);
     passoMira(this, dt); if (this.riscos) { for (const r of this.riscos) r.t -= dt; this.riscos = this.riscos.filter(r => r.t > 0); }
-    this.atualizarTiros(dt); this.atualizarZonas(dt); this.efeitoNoJogador(dt); this.atualizarMoedas(dt); this.atualizarFx(dt); passoEspeciais(this, dt); passoNovo(this, dt); passoVida(this, dt);
+    this.atualizarTiros(dt); this.atualizarZonas(dt); this.efeitoNoJogador(dt); this.atualizarMoedas(dt); this.atualizarFx(dt); this.passoAlmas(dt); passoEspeciais(this, dt); passoNovo(this, dt); passoVida(this, dt);
     if (this.pomba && (this.pomba.t += dt) > 1.4) this.pomba = null;
     if (this.pecado) this.atualizarPecado(dt);
     this.clima(dt); this.gatilhos(); this.emboscadas(dt); this.interacoes(); this.tutorial(dt);
@@ -374,7 +374,7 @@ export class Caminho {
   }
   // com uma janela aberta numa sala com outros peregrinos, o mundo não para (e quem está lendo não é ferido)
   updateAusente(dt) {
-    atualizarEfeitos(this.fxPx, dt); this.atualizarFx(dt);
+    atualizarEfeitos(this.fxPx, dt); this.atualizarFx(dt); this.passoAlmas(dt);
     if (!this.souDono()) return;
     this.T += dt; this.ausente = true; this.simular(dt); this.atualizarTiros(dt); this.atualizarZonas(dt); this.ausente = false;
   }
@@ -426,6 +426,19 @@ export class Caminho {
     else { e.stun = Math.max(e.stun, 0.2); e.estado = 'idle'; e.tele = 0; if (m.vx != null) { e.vx = m.vx; e.vy = m.vy; e.chao = false; } }
   }
   chefeMorre(e) { e.hp = 0; e.morrendo = 1.7; e.mov = null; e.raios = null; e.clones = []; this.limparPerigos(); this.puxao = null; this.hitstop = 0.3; this.tremor(16); sfx('boss'); for (const v of this.inimigos) if (v.kind === 'vicio') v.hp = 0, v.sumiu = false; }
+  // juntos, quando alguém cai na luta: uma luz azul sai do corpo, sobe, e o chefe a puxa para si; quando ela chega, ele se refaz um pouco
+  soltarAlma(x, y, nome) { const b = this.chefe; if (!b || b.morrendo) return; (this.almas = this.almas || []).push({ x0: x, y0: y - 26, t: 0, nome, b, rastro: [] }); sfx('magic'); this.fx.anel(x, y - 26, '#7FC8FF', 50); }
+  passoAlmas(dt) { if (!this.almas?.length) return;
+    for (const a of this.almas) { a.t += dt; const b = a.b; if (!b || b.morrendo || !this.inimigos.includes(b)) { a.fim = true; continue; }
+      const sobe = 0.7, voo = 1.25, bx = b.x, by = b.y - b.h * 0.55;
+      if (a.t < sobe) { const k = a.t / sobe; a.x = a.x0 + Math.sin(a.t * 9) * 4 * (1 - k); a.y = a.y0 - k * k * 40; }
+      else { const k = Math.min(1, (a.t - sobe) / voo), e = k * k * (3 - 2 * k), cx = (a.x0 + bx) / 2, cy = Math.min(a.y0, by) - 120; // a curva: sobe alto e desce no chefe
+        a.x = (1 - e) * (1 - e) * a.x0 + 2 * (1 - e) * e * cx + e * e * bx; a.y = (1 - e) * (1 - e) * (a.y0 - 40) + 2 * (1 - e) * e * cy + e * e * by;
+        if (k >= 1) { a.fim = true; this.fx.anel(bx, by, '#7FC8FF', 90); this.fx.sobe(bx, by, 14, '#9AD8FF'); b.flash = 0.25; sfx('heal'); this.tremor(5);
+          if (this.souDono()) this.chefeSeFortalece(b, a.nome); else this.textoEm(b.x, b.y - b.h - 20, (a.nome || 'Um peregrino') + ' caiu: a sombra se fortalece', '#FF8A7A', 13); } }
+      a.rastro.push({ x: a.x, y: a.y }); if (a.rastro.length > 18) a.rastro.shift();
+      if (Math.random() < dt * 40) this.parts.push({ x: a.x + rand(-5, 5), y: a.y + rand(-5, 5), vx: rand(-30, 30), vy: rand(-40, 10), t: 0.45, max: 0.45, r: 1.5, cor: Math.random() < 0.5 ? '#9AD8FF' : '#E6F4FF', g: -30 }); }
+    this.almas = this.almas.filter(a => !a.fim); }
   chefeSeFortalece(b, nome) { if (this.mp && this.mp.naArea().every(o => o.h.morto) && this.p.morto) return; /* a dupla inteira caiu: a luta recomeça, sem cura extra */ b.hp = Math.min(b.max, b.hp + b.max * 0.03); this.textoEm(b.x, b.y - b.h - 20, (nome || 'Um peregrino') + ' caiu: a sombra se fortalece', '#FF8A7A', 13); }
   zonaDefendida(z) { if (z.expoe && z.dono) { z.dono.exposto = 2.3; this.textoEm(z.dono.x, z.dono.y - z.dono.h - 22, 'A TESTA ESTÁ EXPOSTA!', '#FFE9A8', 17); } z.dur = 0; }
   // a luta começou ou se desfez no aparelho do dono da área
@@ -639,7 +652,7 @@ export class Caminho {
     const p = this.p, c = this.char, cm = this.cm;
     this.semCair = false; p.morto = true; p.vida = 0; this.mortoT = 1.9; c.data.stats.deaths++; cm.mortes++; this.mortosAqui++;
     sfx('boss'); this.fx.po(p.x, p.y - 20, 30, '#E6E0CF'); this.tremor(14);
-    if (this.mp && this.luta && this.chefe) { if (this.souDono()) { if (this.mp.acompanhado()) this.chefeSeFortalece(this.chefe, this.char.name); } else this.mp.ev('tb'); }
+    if (this.mp && this.luta && this.chefe && this.mp.acompanhado()) { this.soltarAlma(p.x, p.y, this.char.name); this.mp.ev('alma', { x: Math.round(p.x), y: Math.round(p.y) }); } // a luz do peregrino caído vai para o chefe (todos veem; o dono da luta cura o chefe quando ela chega)
     // a sacola de talentos fica onde você caiu; cair de novo antes de buscá-la a perde
     if (this.def.extra) { /* nas provas ninguém perde a sacola */ } else if (c.data.gold > 0) { cm.sacola = { area: this.area, x: p.seguro.x, y: p.seguro.y, gold: c.data.gold }; c.data.gold = 0; } else if (cm.sacola) cm.sacola = null;
     this.ui.bossBar(null);

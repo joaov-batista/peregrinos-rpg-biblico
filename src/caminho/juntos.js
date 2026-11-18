@@ -345,7 +345,8 @@ export class Juntos {
       case 'mc': { G.moedasFeitas?.add(m.id); for (const q of G.moedas) if (q.cid === m.id) q.pego = true; break; } // a moeda maldita sumiu em outro aparelho (apanhada ou recolhida pela Ganância)
       case 'zp': { const z = this.souDono && G.zonas.find(q => q.nid === m.id); if (z) G.zonaDefendida(z); break; }
       case 'lu': if (this.souDono && G.N.arena && G.def.chefe && !G.luta && !G.chefe) G.iniciarLuta(); break;
-      case 'tb': if (this.souDono && G.chefe && !G.chefe.morrendo) G.chefeSeFortalece(G.chefe, par.nome); break;
+      case 'tb': if (this.souDono && G.chefe && !G.chefe.morrendo) G.chefeSeFortalece(G.chefe, par.nome); break; // (versões antigas)
+      case 'alma': G.soltarAlma(m.x, m.y, par.nome); break; // um par caiu: a luz dele vai para o chefe
       case 'mo': { if (this.mortos.has(m.id)) break; const e = ini(m.id); this.mortos.add(m.id); if (e && !e.sumiu) { e.hp = 0; G.matar(e); G.inimigos = G.inimigos.filter(x => x !== e); } break; }
       case 'cc': { const b = ini(m.id) || G.chefe; if (b && !b.fora) { b.remoto = true; G.chefeCaiu(b); } break; }
       case 'qz': { const b = ini(m.b) || G.chefe; if (!b || G.ui.blocking || this.irmao(m.de)) { this.ev('qr', { ok: null }); break; } G.perguntaDoChefe(b, m.p).then(ok => this.ev('qr', { ok })); break; }
