@@ -383,3 +383,15 @@ html.remake #cmTut u { width: 14px; }
 .mm-legenda span::before { content: ''; display: inline-block; width: 9px; height: 9px; margin-right: 5px; box-shadow: 0 0 0 1px #05060B; }
 .l-loja::before { background: #E8C873; } .l-gente::before { background: #9BE0B4; } .l-portal::before { background: #7FE0E8; } .l-missao::before { background: #FFD23F; transform: rotate(45deg); } .l-voce::before { background: #fff; }
 @media (max-width: 600px) { .mm-info ul { columns: 1; } .mm-titulo b { font-size: 20px; } }
+/* inventário: o peregrino no centro, a Armadura em volta */
+.inv-boneco { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; margin: 2px 0 12px; padding: 10px; background: #0E1322; box-shadow: 0 0 0 2px var(--px-tinta, #17121f), inset 0 0 0 2px #2B3653; }
+.inv-col { display: flex; flex-direction: column; gap: 8px; }
+.inv-meio { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.inv-nome { font-size: 18px; color: #FFE9A8; } .inv-meio small { font-size: 13px; }
+.inv-cv { width: 168px; height: 196px; image-rendering: pixelated; background: radial-gradient(ellipse at 50% 92%, rgba(255, 233, 168, .18), transparent 60%); }
+.inv-stat { display: flex; gap: 12px; font-size: 14px; color: #C9D2E8; margin: 2px 0 6px; }
+.inv-vagas { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.inv-q.falta.inv-slot span { filter: brightness(0) invert(.28); opacity: .8; }
+html.remake .inv-q.mini { width: 40px; height: 40px; }
+.inv-q.vaga { outline: 1px dashed rgba(201, 210, 232, .35); outline-offset: -8px; }
+@media (max-width: 640px) { .inv-cv { width: 126px; height: 147px; } html.remake .inv-boneco .inv-q:not(.mini) { width: 46px; height: 46px; } }
