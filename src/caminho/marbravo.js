@@ -12,7 +12,7 @@ const MAX_ARPOES = 3;
 /* ---------------- começar ---------------- */
 // chamado pela pesca quando algo morde: devolve true se é o Leviatã
 export function leviataMorde(G, fundo) {
-  if (G.levi || !G.p.noBote || fundo < 0.5 || !ehTempestade(G)) return false;
+  if (G.levi || G.area !== 'refugio' || !G.p.noBote || fundo < 0.5 || !ehTempestade(G)) return false;
   const q = quarto(G); if (G.cm.leviQ === q) return false; // uma vez por tempestade
   if (!(G.cm.leviForcado || Math.random() < 0.35)) return false;
   G.cm.leviQ = q; G.cm.leviForcado = 0; comecar(G); return true;

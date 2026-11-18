@@ -21,7 +21,7 @@ export function sitioId(G) {
   return 'sitio:' + [...new Set([eu, ...outros.map(o => limpo(o.nome))])].sort().join('+');
 }
 // qual é a sua fazenda no mapa (o índice da sala do pasto): a praia é a sala 0; as fazendas vêm depois, da última para a primeira
-const minhaBase = G => { const d = G.def.donos || [''], k = d.indexOf(limpo(G.char.name)); return k < 0 ? -1 : 2 + (d.length - 1 - k) * 3; }; /* salas 0 e 1: o mar e a praia */
+const minhaBase = G => { const d = G.def.donos || [''], k = d.indexOf(limpo(G.char.name)); return k < 0 ? -1 : 4 + (d.length - 1 - k) * 3; }; /* salas 0 a 3: o mar (três salas) e a praia */
 // a vela de casa: "O fogo arderá continuamente sobre o altar; não se apagará" (Lv 6:13). Precisa de azeite para não apagar.
 export const VELA_MAX = 7;
 export const velaAcesa = G => (G.cm.velaAte ?? 0) > (G.cm.relogio || 0);

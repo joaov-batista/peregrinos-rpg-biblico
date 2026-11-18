@@ -234,9 +234,11 @@ const REFUGIO = [
     { tipo: 'cenario', col: 27, qual: 'redes' }, { tipo: 'ave', col: 12, lin: 11 }, { tipo: 'ave', col: 19, lin: 12 }] },
   // a margem e o mar aberto: da pedra da margem ou de bote se pesca de verdade (Zebedeu empresta a vara)
   { cx: 8, nome: 'A margem do mar', papel: 'vila', semPostes: true, tiles: sala(), objs: [
-    planta(3, 'palmeira'), { tipo: 'placa', col: 6, txt: 'Da pedra se pesca o raso. De bote, mar adentro, os grandes.' }, { tipo: 'bote', col: 10 }, { tipo: 'aguaAberta', col: 12, ate: 58, pierCols: 6 }, { tipo: 'barco', col: 20 }, { tipo: 'ave', col: 20, lin: 11 }] },
+    planta(3, 'palmeira'), { tipo: 'placa', col: 6, txt: 'Da pedra se pesca o raso. De bote, mar adentro, os grandes.' }, { tipo: 'bote', col: 10 }, { tipo: 'aguaAberta', col: 12, ate: 118, pierCols: 6 }, { tipo: 'barco', col: 20 }, { tipo: 'ave', col: 20, lin: 11 }] },
   // mar adentro: só de bote. Longe da margem andam os grandes, e na tempestade, o Leviatã (Jó 41)
-  { cx: 9, nome: 'O mar aberto', papel: 'vila', semPostes: true, marAberto: 'dir', tiles: sala(), objs: [{ tipo: 'ave', col: 8, lin: 10 }, { tipo: 'ave', col: 22, lin: 9 }] },
+  { cx: 9, nome: 'O mar aberto', papel: 'vila', semPostes: true, tiles: sala(), objs: [] },
+  { cx: 10, nome: 'O alto-mar', papel: 'vila', semPostes: true, tiles: sala(), objs: [] },
+  { cx: 11, nome: 'Mar adentro', papel: 'vila', semPostes: true, marAberto: 'dir', tiles: sala(), objs: [] },
   // ---- o subsolo ----
   { cx: 0, cy: 1, nome: 'Salão das Subfases', deco: 'subfases', papel: 'vila', tiles: sala(), objs: [
     { tipo: 'portal', col: 6, area: 'vale', rotulo: 'Vale da Mentira' }, { tipo: 'selado', col: 15, rotulo: 'Selado' }, { tipo: 'selado', col: 24, rotulo: 'Selado' },
@@ -306,12 +308,13 @@ export function areaDef(id) {
         casa(23, 'peregrino', donos.length > 1 ? 'Casa de ' + nomeDe(d) : 'Sua casa'), { tipo: 'placa', col: 27, txt: k === 0 ? 'Estrada do Refúgio →' : 'Sítio de ' + nomeDe(d) + ' · o de ' + nomeDe(donos[k - 1]) + ' →' }, { tipo: 'ave', col: 20, lin: 13 }] }];
     // a estrada até o Refúgio: o caminho de terra, oliveiras e, no fim, a muralha da cidade com o portão aberto
     const estrada = { papel: 'vila', nome: 'A estrada do Refúgio', tiles: sala(), objs: [planta(5, 'oliveira'), { tipo: 'placa', col: 12, txt: 'Refúgio →' }, planta(17, 'cipreste'), { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'portaoCidade', col: 27.6, lado: -1 }] };
-    const mar = { papel: 'vila', nome: 'O mar', semPostes: true, marAberto: 'esq', tiles: sala(), objs: [{ tipo: 'aguaAberta', col: 0, ate: 41, esq: true, praia: true }] };
+    const mar = { papel: 'vila', nome: 'Mar adentro', semPostes: true, marAberto: 'esq', tiles: sala(), objs: [{ tipo: 'aguaAberta', col: 0, ate: 101, esq: true, praia: true }] };
+    const mar2 = { papel: 'vila', nome: 'O alto-mar', semPostes: true, tiles: sala(), objs: [] }, mar3 = { papel: 'vila', nome: 'O mar', semPostes: true, tiles: sala(), objs: [] };
     const praia = { papel: 'vila', nome: 'A praia', praia: true, semPostes: true, tiles: sala(), objs: [
       { tipo: 'areia', col: 12, ate: 29 }, planta(14.5, 'palmeira'), planta(26, 'palmeira'),
-      { tipo: 'bancoPraia', col: 19 }, { tipo: 'concha', col: 15.5 }, { tipo: 'concha', col: 22.5 }, { tipo: 'barquinho', col: 13 }, { tipo: 'placa', col: 28, txt: '← A praia' }] };
+      { tipo: 'bancoPraia', col: 19 }, { tipo: 'concha', col: 15.5 }, { tipo: 'concha', col: 22.5 }, { tipo: 'bote', col: 13 }, { tipo: 'placa', col: 28, txt: '← A praia' }] };
     return { id, nome: donos.length > 1 ? 'Os sítios' : 'Seu sítio', sub: donos.length > 1 ? donos.map(nomeDe).join(', ') : 'A casa no campo', tema: 'bosque', seed: 'sitio', paz: true, aberto: true, sitio: true, donos,
-      planta: [mar, praia, ...donos.map((d, k) => ({ d, k })).reverse().flatMap(({ d, k }) => fazenda(d, k)), estrada] }; }
+      planta: [mar, mar2, mar3, praia, ...donos.map((d, k) => ({ d, k })).reverse().flatMap(({ d, k }) => fazenda(d, k)), estrada] }; }
   // a casa do peregrino por dentro: entra-se pela porta da casa do sítio (o id leva o mesmo nome do sítio, para voltar ao certo)
   if (id.startsWith('casa:')) { const suf = id.slice(5); return { id, nome: 'Sua casa', sub: 'O lar no sítio', tema: 'refugio', seed: id, paz: true, interior: true, casaDe: suf, planta: [
     { papel: 'inicio', nome: 'Sua casa', deco: 'casa', tiles: sala(), objs: [

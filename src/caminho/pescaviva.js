@@ -118,7 +118,7 @@ export function rotuloPescaViva(G, ob) { if (ob.tipo === 'bote') return G.p.noBo
 export async function usarPescaViva(G, ob) {
   if (ob.tipo !== 'bote') return false; const A = agua(G); if (!A) return true;
   if (!G.cm.vara) { await G.ui.dialog({ nome: 'O bote', texto: 'Um bote pequeno, de um remo só. Sem vara não adianta: Zebedeu, no Porto, empresta uma.', acoes: [{ label: 'Ok' }] }); return true; }
-  G.p.noBote = true; G.p.x = (A.x0 ?? A.x - 16) + 60; G.p.face = 1; sfx('dodge'); G.textoEm(G.p.x, G.p.y - 70, 'no bote: ande para remar · golpe para pescar · interagir na margem para descer', '#C9D2E0', 11); return true;
+  const x0 = A.x0 ?? A.x - 16, x1 = A.x1 ?? x0 + (A.ate - A.col + 1) * T; G.p.noBote = true; G.p.x = A.esq ? x1 - 60 : x0 + 60; G.p.face = A.esq ? -1 : 1; // na praia o mar fica à esquerda sfx('dodge'); G.textoEm(G.p.x, G.p.y - 70, 'no bote: ande para remar · golpe para pescar · interagir na margem para descer', '#C9D2E0', 11); return true;
 }
 // Zebedeu empresta a vara (uma vez) e explica onde se pesca
 export async function falarZebedeu(G, ob) {
