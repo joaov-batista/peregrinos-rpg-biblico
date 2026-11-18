@@ -49,6 +49,16 @@ function noiseBurst(dur, vol = 0.15, freq = 1200) {
   n.buffer = b; n.connect(f); f.connect(g); g.connect(sfxGain || master); n.start();
 }
 
+// a chuva: um chiado manso e contínuo (ruído rosado, filtrado), que sobe e desce com a força da chuva
+let chuvaNo = null, chuvaAlvo = 0;
+export function somDaChuva(k) {
+  if (!AC || (!chuvaNo && k <= 0)) return;
+  if (!chuvaNo) { const b = AC.createBuffer(1, AC.sampleRate * 3, AC.sampleRate), d = b.getChannelData(0); let l = 0; for (let i = 0; i < d.length; i++) { const w = Math.random() * 2 - 1; l = (l + 0.04 * w) / 1.04; d[i] = w * 0.35 + l * 2.4; }
+    const s = AC.createBufferSource(); s.buffer = b; s.loop = true; const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600; const hp = AC.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 260; const gn = AC.createGain(); gn.gain.value = 0;
+    s.connect(lp); lp.connect(hp); hp.connect(gn); gn.connect(sfxGain || master); s.start(); chuvaNo = { gn }; }
+  const alvo = audio.muted ? 0 : k * 0.11; if (Math.abs(alvo - chuvaAlvo) < 0.004) return; chuvaAlvo = alvo; chuvaNo.gn.gain.setTargetAtTime(alvo, AC.currentTime, 0.9);
+}
+
 export function sfx(n) {
   if (!AC || audio.muted) return;
   switch (n) {

@@ -132,6 +132,7 @@ export function gerarNivel(def) {
     const ox = c.cx * CW, oy = c.cy * CH;
     for (let y = 1; y < CH - 1; y++) for (let x = 1; x < CW - 1; x++) set(ox + x, oy + y, VAZIO);
     if (c.ceu) for (let y = 0; y < CH - 1; y++) for (let x = c.mask & L ? 0 : 1; x <= (c.mask & R ? CW - 1 : CW - 2); x++) set(ox + x, oy + y, VAZIO); // céu aberto: sem teto e sem parede entre as praças
+    if (c.ceu && c.marAberto) for (let y = 0; y < CH - 1; y++) set(ox + (c.marAberto === 'esq' ? 0 : CW - 1), oy + y, VAZIO); // o mar segue além da beira do mapa: sem parede
     if (c.mask & L) for (let y = 13; y <= 15; y++) set(ox, oy + y, VAZIO);
     if (c.mask & R) for (let y = 13; y <= 15; y++) set(ox + CW - 1, oy + y, VAZIO);
     if (c.mask & U) for (let x = 13; x <= 16; x++) set(ox + x, oy, VAZIO);

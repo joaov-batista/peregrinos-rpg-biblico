@@ -7,6 +7,8 @@ import { Sprite, rampa, cor, TINTA, PX } from './raster.js';
 import { fundoSala } from './salas.js';
 import { luzDoDia } from '../moradores.js';
 import { TEMAS, RX } from '../dados.js';
+import { pintarCosta } from './costa.js';
+import { pintarCeuDoTempo, ehNatal, aoArLivre } from '../tempo.js';
 
 const TL = T / PX; // 16
 const mistura = (a, b, t) => { const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16), f = (s) => Math.round((pa >> s & 255) * (1 - t) + (pb >> s & 255) * t); return '#' + (f(16) << 16 | f(8) << 8 | f(0)).toString(16).padStart(6, '0'); };
@@ -156,8 +158,21 @@ function nuvens(tm) { if (nuvemCv) return nuvemCv; const s = new Sprite(520, 70)
 
 export function pintarFundoPixel(g, G, C, vw, vh, cx, cy) {
   const dy = Math.round((vh - C.H) / 2);
+  const L = pintarCeuVivo(g, G, C, vw, dy, cx, cy);
+  // a oeste do Refúgio, a trilha do treino: o fundo vira mata aos poucos (as muralhas ficam para trás)
+  const mata = G.area === 'refugio' ? Math.max(0, Math.min(1, (RX * 480 + 120 - (cx + vw / 2)) / 260)) : 0;
+  for (const [cena, k] of [[C, 1 - mata], [mata > 0 ? cenaPixel(TEMAS.bosque, 'bosque') : null, mata]]) { if (!cena || k <= 0) continue; g.globalAlpha = k;
+    faixa(g, cena.longe, cx * 0.1, dy + Math.round(-cy * 0.02), vw); faixa(g, cena.meio, cx * 0.24, dy + Math.round(-cy * 0.05) + 4, vw); faixa(g, cena.perto, cx * 0.45, dy + Math.round(-cy * 0.1) + 10, vw); }
+  g.globalAlpha = 1;
+  if (L && L.d > 0) { g.globalAlpha = L.d * 0.16; g.fillStyle = L.poente > 0.3 ? '#F2A65A' : '#DCEBFF'; g.fillRect(0, dy, vw, C.H); g.globalAlpha = 1; } /* de dia, as silhuetas ao longe clareiam um pouco */
+  if (G.cm && ehNatal(G) && aoArLivre(G)) { g.globalAlpha = 0.2 + (G.neveK || 0) * 0.12; g.fillStyle = '#EAF2FF'; g.fillRect(0, dy, vw, C.H); g.globalAlpha = 1; } /* no Natal, tudo lá longe está branco de geada */
+  // a costa: onde há mar, a terra do fundo acaba e se vê o mar aberto até o horizonte, de lado (ver costa.js)
+  pintarCosta(g, G, C, vw, vh, cx, cy, dy, L, pintarCeuVivo);
+}
+// o céu (com o relógio no Refúgio e no sítio: manhã azul, poente laranja, noite estrelada), o sol e as nuvens
+export function pintarCeuVivo(g, G, C, vw, dy, cx, cy) {
   faixa(g, C.ceu, cx * 0.02, dy, vw);
-  const L = (G.area === 'refugio' || G.def?.sitio) && G.cm ? luzDoDia(G) : null; /* o Refúgio tem relógio: manhã azul, poente laranja, noite estrelada */
+  const L = (G.area === 'refugio' || G.def?.sitio) && G.cm ? luzDoDia(G) : null;
   if (L && L.d > 0) {
     const gr = g.createLinearGradient(0, dy, 0, dy + C.H * 0.75), mix = (a, b, k) => '#' + [0, 2, 4].map(i => Math.round(parseInt(a.substr(1 + i, 2), 16) * (1 - k) + parseInt(b.substr(1 + i, 2), 16) * k).toString(16).padStart(2, '0')).join('');
     gr.addColorStop(0, mix('#5E9AD6', '#3E4A8A', L.poente)); gr.addColorStop(0.6, mix('#A9CDEB', '#E07A4A', L.poente)); gr.addColorStop(1, mix('#F2E2C0', '#F2B25A', L.poente));
@@ -166,17 +181,9 @@ export function pintarFundoPixel(g, G, C, vw, vh, cx, cy) {
     const k = (L.h - 6) / 13, sx = Math.round(vw * (0.12 + 0.76 * k)), sy = Math.round(dy + 18 + Math.pow(Math.abs(k - 0.5) * 2, 2) * 70), r = 9; /* o sol cruza o céu */
     g.globalAlpha = L.d * 0.35; g.fillStyle = L.poente > 0.3 ? '#FFB86A' : '#FFF4C8'; g.beginPath(); g.arc(sx, sy, r + 7, 0, 6.29); g.fill(); g.globalAlpha = L.d; g.beginPath(); g.arc(sx, sy, r, 0, 6.29); g.fill(); g.globalAlpha = 1; }
   }
+  if (G.N.def.aberto) pintarCeuDoTempo(g, G, vw, dy, cx, L ? 1 - L.d : G.area === 'sardes' ? 0.85 : 0.2); // arco-íris, meteoros, a estrela do Natal
   if (G.N.def.aberto) { g.globalAlpha = 0.8; faixa(g, nuvens(G.tm), cx * 0.05 + G.T * 3, dy + 8 + Math.round(-cy * 0.02), vw); g.globalAlpha = 1; }
-  // a oeste do Refúgio, a trilha do treino: o fundo vira mata aos poucos (as muralhas ficam para trás)
-  const mata = G.area === 'refugio' ? Math.max(0, Math.min(1, (RX * 480 + 120 - (cx + vw / 2)) / 260)) : 0;
-  for (const [cena, k] of [[C, 1 - mata], [mata > 0 ? cenaPixel(TEMAS.bosque, 'bosque') : null, mata]]) { if (!cena || k <= 0) continue; g.globalAlpha = k;
-    faixa(g, cena.longe, cx * 0.1, dy + Math.round(-cy * 0.02), vw); faixa(g, cena.meio, cx * 0.24, dy + Math.round(-cy * 0.05) + 4, vw); faixa(g, cena.perto, cx * 0.45, dy + Math.round(-cy * 0.1) + 10, vw); }
-  g.globalAlpha = 1;
-  // a leste do Porto, a margem: o fundo vira mar até o horizonte (a cidade fica para trás)
-  const marA = G.area === 'refugio' ? Math.max(0, Math.min(1, ((cx + vw / 2) - ((7 + RX) * 480 + 380)) / 220)) : G.def?.sitio ? Math.max(0, Math.min(1, (640 - (cx + vw / 2)) / 260)) : 0; /* no sítio, a praia fica no fim do campo (a oeste) */
-  if (marA > 0) { const hz = dy + Math.round(C.H * 0.58), gr = g.createLinearGradient(0, hz, 0, dy + C.H); gr.addColorStop(0, '#5A8AB0'); gr.addColorStop(0.15, '#2E6A8A'); gr.addColorStop(1, '#123A52');
-    g.globalAlpha = marA; g.fillStyle = gr; g.fillRect(0, hz, vw, dy + C.H - hz); g.fillStyle = '#DFF6FA'; for (let i = 0; i < 40; i++) { const xx = ((i * 97 + Math.floor(G.T * 8) * (i % 3)) % vw), yy = hz + 2 + (i * 13) % Math.max(1, (dy + C.H - hz - 4)); g.fillRect(xx, yy, 2 + (i % 3), 1); } g.fillStyle = '#DCEBF2'; g.fillRect(0, hz, vw, 1); g.globalAlpha = 1; }
-  if (L && L.d > 0) { g.globalAlpha = L.d * 0.16; g.fillStyle = L.poente > 0.3 ? '#F2A65A' : '#DCEBFF'; g.fillRect(0, dy, vw, C.H); g.globalAlpha = 1; } /* de dia, as silhuetas ao longe clareiam um pouco */
+  return L;
 }
 
 // fundo das salas (véu pontilhado + pilares + estandartes) e os blocos

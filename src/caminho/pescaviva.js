@@ -64,6 +64,18 @@ export function passoPescaViva(G, dt) {
   while (S.sombras.length < 5) { const x = rand(A.x0 + 20, A.x1 - 20), d = fundura(A, x); S.sombras.push({ x, y: p.y + 8 + d * 14, vx: rand(-20, 20), t: rand(0, 4), tam: 4 + d * 8 + rand(0, 3) }); }
   for (const s of S.sombras) { s.t -= dt; if (s.t <= 0) { s.vx = rand(-24, 24); s.t = rand(1.5, 4); } if (!s.alvo) s.x = Math.max(A.x0 + 10, Math.min(A.x1 - 10, s.x + s.vx * dt)); }
   if (!G.naAgua) { if (S.est !== 'livre') { S.est = 'livre'; } G.pescaTrava = false; return; }
+  // a rede de lançar (verso/especial): abre no ar, cai na água, afunda um pouco e volta cheia de peixe miúdo
+  const R = S.rede; if (R) { R.t += dt; G.pescaTrava = true; p.atk = null;
+    if (R.est === 'voa') { const k = Math.min(1, R.t / 0.7); R.x = p.x + p.face * (20 + k * R.long); R.y = p.y - 40 - Math.sin(k * Math.PI) * 60 + k * 40; R.abre = k; if (k >= 1) { R.est = 'afunda'; R.t = 0; sfx('splash'); for (let i = 0; i < 14; i++) G.parts.push({ x: R.x + rand(-30, 30), y: p.y - 4, vx: rand(-60, 60), vy: rand(-200, -60), t: 0.5, max: 0.5, r: 1.5, cor: '#DFF6FA', g: 700 }); } }
+    else if (R.est === 'afunda') { R.y = p.y + Math.min(1, R.t / 2.4) * 10; if (R.t > 2.4) { R.est = 'puxa'; R.t = 0; sfx('dodge'); } }
+    else if (R.est === 'puxa') { const k = Math.min(1, R.t / 1.1); R.x += (p.x + p.face * 18 - R.x) * Math.min(1, dt * 4); R.y = p.y - 4 - k * 20; R.abre = 1 - k * 0.7;
+      if (k >= 1) { const d = fundura(A, R.x0), n = 2 + Math.floor(Math.random() * 3) + (p.noBote ? 1 : 0) + (d > 0.6 ? 1 : 0), pegos = {}; let ouro = 0;
+        for (let i = 0; i < n; i++) { let id = sortear(G, d), P = PEIXES[id]; if (P.monstro || RAROS.includes(id) || P.forca >= 1.8) id = Math.random() < 0.5 ? 'sardinha' : 'tilapia'; if (!PEIXES[id]) id = 'sardinha'; const [, ] = premiar(G, id, 1); pegos[id] = (pegos[id] || 0) + 1; }
+        void ouro; G.textoEm(p.x, p.y - 96, 'a rede voltou: ' + Object.entries(pegos).map(([k, q]) => q + ' ' + (PEIXES[k]?.nome || k).toLowerCase()).join(', '), '#FFE9A8', 12); sfx('coin'); S.rede = null; S.redeCd = 8; G.salvar(); } }
+    return; }
+  if (S.redeCd > 0) S.redeCd -= dt;
+  if (c.verso && G.cm.rede && S.est === 'livre' && !(S.redeCd > 0)) { S.rede = { est: 'voa', t: 0, x: p.x, y: p.y - 40, abre: 0, long: p.noBote ? 150 : 110 }; S.rede.x0 = p.x + p.face * (20 + S.rede.long); sfx('swing'); G.textoEm(p.x, p.y - 70, '"Lançai a rede"', '#C9D2E0', 11); return; }
+  else if (c.verso && G.cm.rede && S.redeCd > 0 && S.est === 'livre') G.textoEm(p.x, p.y - 70, 'a rede ainda está molhada', '#C9D2E0', 10);
   G.pescaTrava = S.est !== 'livre'; p.atk = null;
   const solto = !c.atkSeg, aperto = c.atk;
   switch (S.est) {
@@ -113,6 +125,7 @@ export async function falarZebedeu(G, ob) {
   const est = cm.iscas = cm.iscas || {}, sel = cm.isca || 'minhoca', reabre = () => setTimeout(() => falarZebedeu(G, ob), 60);
   const acoes = [
     ...Object.entries(VARAS).filter(([k, V]) => V.preco && !(cm.varas || {})[k]).map(([k, V]) => ({ label: V.nome + ' — ' + V.preco, fn: () => { if (c.data.gold < V.preco) return G.ui.toast('Faltam denários.', 2500); c.data.gold -= V.preco; (cm.varas = cm.varas || {})[k] = 1; cm.vara = k; sfx('level'); G.salvar(); G.ui.toast(V.nome + ': ' + V.desc, 5000); reabre(); } })),
+    ...(cm.rede ? [] : [{ label: 'Rede de lançar — 350', fn: () => { if (c.data.gold < 350) return G.ui.toast('Faltam denários.', 2500); c.data.gold -= 350; cm.rede = 1; sfx('level'); G.salvar(); G.ui.toast('Rede de lançar: na beira ou no bote, use o ESPECIAL (verso) para lançar. Pega vários peixes miúdos de uma vez.', 7000); reabre(); } }]),
     ...Object.entries(ISCAS).filter(([, I]) => I.pacote).map(([k, I]) => ({ label: I.nome + ' ×' + I.pacote + ' — ' + I.preco + ' (tem ' + (est[k] || 0) + ')', fn: () => { if (c.data.gold < I.preco) return G.ui.toast('Faltam denários.', 2500); c.data.gold -= I.preco; est[k] = (est[k] || 0) + I.pacote; cm.isca = k; sfx('coin'); G.salvar(); reabre(); } })),
     { label: 'Trocar de isca (agora: ' + ISCAS[sel].nome + ')', fn: () => { const ks = Object.keys(ISCAS).filter(k => k === 'minhoca' || est[k] > 0), i = ks.indexOf(sel); cm.isca = ks[(i + 1) % ks.length]; G.salvar(); reabre(); } },
     ...(Object.keys(cm.varas || {}).length ? [{ label: 'Trocar de vara (agora: ' + vara(G).nome + ')', fn: () => { const ks = ['cedro', ...Object.keys(cm.varas)], i = ks.indexOf(cm.vara); cm.vara = ks[(i + 1) % ks.length]; G.salvar(); reabre(); } }] : []),
@@ -137,6 +150,11 @@ export function pintarPescaViva(g, G, X, Y, Tm, desenhaBote) {
   if (S.est === 'briga' && S.cego > 0) { const bx = X(p.x) - 13, by = Y(p.y - 74); g.fillStyle = '#2A1A30'; g.fillRect(bx - 1, by - 1, 28, 6); g.fillStyle = '#5A3A6A'; g.fillRect(bx + 3, by + 1, 20, 2); }
   else if (S.est === 'briga') { const bx = X(p.x) - 13, by = Y(p.y - 74); g.fillStyle = '#17121f'; g.fillRect(bx - 1, by - 1, 28, 6); g.fillStyle = '#2A3448'; g.fillRect(bx, by, 26, 4); g.fillStyle = S.tens > 0.75 ? '#E2463C' : S.tens > 0.45 ? '#F2C14E' : '#7FD08A'; g.fillRect(bx, by, Math.round(26 * Math.min(1, S.tens)), 4);
     g.fillStyle = '#BFF0F8'; g.fillRect(bx, by + 6, Math.round(26 * (1 - Math.max(0, S.dist))), 1); }
+  if (S.rede) { const R = S.rede, x = X(R.x), y = Y(R.y), r = Math.round(4 + R.abre * 22), hx = X(p.x + p.face * 10), hy = Y(p.y - 30);
+    g.fillStyle = 'rgba(220,210,170,0.7)'; for (let k = 0; k <= 12; k++) g.fillRect(Math.round(hx + (x - hx) * k / 12), Math.round(hy + (y - r * 0.3 - hy) * k / 12), 1, 1); // a corda
+    g.fillStyle = '#C9B88A'; for (let i = -r; i <= r; i += 3) { const a = Math.round(Math.sqrt(Math.max(0, r * r - i * i)) * 0.55); for (let j = -a; j <= a; j += 3) g.fillRect(x + i, y + j * (R.est === 'voa' ? 1 : 0.4), 1, 1); }
+    g.fillStyle = '#8A8490'; for (let i = -r; i <= r; i += 5) g.fillRect(x + i, y + Math.round(Math.sqrt(Math.max(0, r * r - i * i)) * (R.est === 'voa' ? 0.55 : 0.22)), 2, 2); // os chumbinhos na borda
+    if (R.est === 'puxa') for (let i = 0; i < 4; i++) { g.fillStyle = '#A9C4D0'; g.fillRect(x - 6 + i * 4, y + 1 + (Math.floor(Tm * 12 + i) % 2), 3, 1); } }
   if (S.mostra) desenhaPeixe(g, S.mostra.id, X(p.x), Y(p.y - 60) - Math.round((2 - S.mostra.t) * 6), p.face, Tm);
   if (S.est === 'livre' && !(S.dicaT > G.T)) { S.dicaT = G.T + 0.01; }
 }

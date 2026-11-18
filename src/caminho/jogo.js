@@ -218,7 +218,7 @@ export class Caminho {
   // a poeira que o peregrino levanta ao pular e ao cair (f = força: uma queda alta levanta mais)
   poeira(x, y, f = 1) { (this.poeiras = this.poeiras || []).push({ x, y, f, t: 0.42, max: 0.42 }); if (this.poeiras.length > 12) this.poeiras.shift(); }
   nomeChefe(id) { return BOSSES[id]?.nome || id; }
-  musicaDaArea() { const d = this.def; if (d.desafio) return music('raid'); music(d.paz ? 'mundo' : 'fase', d.treino || d.pvp ? 'bosque' : d.id === 'sardes' && this.cm.sar?.feita ? 'sardes2' : d.tema + (d.fase ? d.fase.n : '')); }
+  musicaDaArea() { this.musicaChuva = false; const d = this.def; if (d.desafio) return music('raid'); music(d.paz ? 'mundo' : 'fase', d.treino || d.pvp ? 'bosque' : d.id === 'sardes' && this.cm.sar?.feita ? 'sardes2' : d.tema + (d.fase ? d.fase.n : '')); }
   async chegada(def) {
     if (def.fase) { await this.cinema(def.sem.id); await this.cinema(def.sem.id + '-fase-' + def.fase.n); }
     else if ((def.id === 'refugio' || def.id === 'bosque') && !this.cm.visto.intro) {
@@ -584,7 +584,7 @@ export class Caminho {
     return true;
   }
 
-  ganharOleo(n) { const p = this.p; p.oleo = Math.min(this.oleoMax(), p.oleo + n * this.dif.oleo * (this.tem('purpura_lidia') ? 1.35 : 1)); }
+  ganharOleo(n) { const p = this.p; p.oleo = Math.min(this.oleoMax(), p.oleo + n * this.dif.oleo * (this.tem('purpura_lidia') ? 1.35 : 1) * ((this.cm.velaAte ?? 0) > (this.cm.relogio || 0) ? 1.15 : 1)); } /* a vela de casa acesa: a lâmpada rende mais */
 
   matar(e) {
     const c = this.char, d = e.d;

@@ -20,7 +20,11 @@ export function sitioId(G) {
   return 'sitio:' + [...new Set([eu, ...outros.map(o => limpo(o.nome))])].sort().join('+');
 }
 // qual é a sua fazenda no mapa (o índice da sala do pasto): a praia é a sala 0; as fazendas vêm depois, da última para a primeira
-const minhaBase = G => { const d = G.def.donos || [''], k = d.indexOf(limpo(G.char.name)); return k < 0 ? -1 : 1 + (d.length - 1 - k) * 3; };
+const minhaBase = G => { const d = G.def.donos || [''], k = d.indexOf(limpo(G.char.name)); return k < 0 ? -1 : 2 + (d.length - 1 - k) * 3; }; /* salas 0 e 1: o mar e a praia */
+// a vela de casa: "O fogo arderá continuamente sobre o altar; não se apagará" (Lv 6:13). Precisa de azeite para não apagar.
+export const VELA_MAX = 7;
+export const velaAcesa = G => (G.cm.velaAte ?? 0) > (G.cm.relogio || 0);
+export const diasDeVela = G => Math.max(0, ((G.cm.velaAte ?? 0) - (G.cm.relogio || 0)) / 600);
 export const alheio = (G, ob) => ob.dono != null && G.def?.donos && ob.dono !== limpo(G.char.name);
 export const st = G => (G.cm.sitio = G.cm.sitio || { canteiros: [], animais: [], pomar: [], maq: {}, cesto: {}, sementes: {}, ultimoDia: dia(G), cocho: -1, milho: -1 });
 const can = (G, i) => (st(G).canteiros[i] = st(G).canteiros[i] || { estado: 'mato' });
@@ -39,6 +43,7 @@ export function viradaDoDia(G) {
       if (comeu) { a.dias = (a.dias || 0) + 1 + (a.pastou === ontem ? 1 : 0); a.feliz = Math.min(10, (a.feliz || 3) + (a.pastou === ontem ? 2 : 1)); if (a.dias >= A.cada) { a.pronto = (a.pronto || 0) + 1 + (a.feliz >= 9 && Math.random() < 0.35 ? 1 : 0); a.dias = 0; } }
       else a.feliz = Math.max(0, (a.feliz || 3) - 1); }
     for (const p of S.pomar) if (p) p.pronto = true; // as oliveiras dão de novo a cada dia
+    { const acesa = (G.cm.velaAte ?? 0) > d * 600; for (const a of S.animais) a.feliz = Math.max(0, Math.min(10, (a.feliz || 3) + (acesa ? 1 : -1))); if (!acesa && !S.avisouVela) { S.avisouVela = 1; msgs.push('A vela de casa apagou. A casa ficou escura e os bichos, tristes. Reacenda com azeite.'); } if (acesa) S.avisouVela = 0; }
     // o comprador passa de madrugada
     const vend = Object.entries(S.cesto).filter(([, n]) => n > 0); if (vend.length) { let v = 0; for (const [k, n] of vend) v += (PRECO[k] || 3) * n; G.char.data.gold += v; msgs.push(SITIO.pago(v, vend.map(([k, n]) => n + ' ' + nomeItem(k, n)).join(', '))); S.cesto = {}; }
   }
@@ -53,6 +58,7 @@ export function sitioAoEntrar(G) {
   const S = st(G); G.objs = G.objs.filter(o => !o.doSitio);
   const base = minhaBase(G); if (base < 0) { setTimeout(() => G.entrar(sitioId(G), { borda: 'direita' }), 0); return; } // o seu sítio não está neste mapa: vai para o certo
   G.sitioBase = base; const sala = n => (n + base) * CW * T;
+  if (G.cm.velaAte == null) G.cm.velaAte = (G.cm.relogio || 0) + 2 * 600; // a primeira vela já vem acesa, para dois dias
   for (const o of G.objs) if (alheio(G, o)) { o.alheio = true; if (o.tipo === 'casa') o.id = 'casa_' + o.dono; }
   S.animais.forEach((a, i) => { const quintal = ANIMAIS[a.tipo].lugar === 'quintal', x = quintal ? sala(2) + (4 + (i % 5)) * T : sala(0) + (14 + (i * 3) % 12) * T;
     G.objs.push({ tipo: 'animal', doSitio: true, i, especie: a.tipo, nome: a.nome, x, y: 16 * T, vv: { x, alvo: x, t: rand(0, 3), face: 1, estado: 'parado' }, min: quintal ? sala(2) + 2 * T : sala(0) + 13 * T, max: quintal ? sala(2) + 10 * T : sala(0) + 28 * T }); });
@@ -68,7 +74,7 @@ export function passoSitio(G, dt) {
   { const mar = G.objs.find(o => o.tipo === 'aguaAberta' && o.praia); if (mar) { const fim = mar.x - 16 + (mar.ate - mar.col + 1) * T; if (p.x < fim + 14) { p.x = fim + 14; p.vx = Math.max(0, p.vx); } } } // a praia: a água não se anda
   // no multijogador, conta para os outros como está a sua fazenda (eles a veem do lado da deles)
   if (G.mp && (G.siT = (G.siT || 0) - dt) <= 0) { G.siT = 2.5; const hoje = dia(G);
-    G.mp.ev('si', { d: limpo(G.char.name), c: S.canteiros.map(c => c ? [c.estado, c.planta || '', c.pronto ? 1 : 0, c.regado === hoje ? 1 : 0, c.cresceu || 0] : 0), po: S.pomar.map(q => q?.pronto === false ? 0 : 1), m: Object.fromEntries(Object.entries(S.maq).filter(([, v]) => v).map(([k, v]) => [k, v.feito ? 2 : 1])), co: S.cocho === hoje ? 1 : 0 }); }
+    G.mp.ev('si', { d: limpo(G.char.name), c: S.canteiros.map(c => c ? [c.estado, c.planta || '', c.pronto ? 1 : 0, c.regado === hoje ? 1 : 0, c.cresceu || 0] : 0), po: S.pomar.map(q => q?.pronto === false ? 0 : 1), m: Object.fromEntries(Object.entries(S.maq).filter(([, v]) => v).map(([k, v]) => [k, v.feito ? 2 : 1])), co: S.cocho === hoje ? 1 : 0, v: velaAcesa(G) ? 1 : 0 }); }
   if (chovendo(G)) { const hoje = dia(G); let reg = 0; for (const c of S.canteiros) if (c && c.estado === 'plantado' && c.regado !== hoje) { c.regado = hoje; reg++; } if (reg) G.textoEm(p.x, p.y - 80, 'a chuva regou a lavoura', '#8FD4F0', 11); }
   for (const o of G.objs) if (o.tipo === 'animal') { const v = o.vv; v.t -= dt;
     if (S.rebanho > 0 && o.especie !== 'galinha') { const alvo = p.x - p.face * (30 + (o.i % 4) * 22), d = alvo - v.x; v.estado = Math.abs(d) > 8 ? 'indo' : 'parado'; v.face = Math.sign(d) || v.face; v.x += Math.sign(d) * Math.min(Math.abs(d), 120 * dt); continue; }
@@ -84,7 +90,7 @@ export function passoSitio(G, dt) {
 export function rotuloSitio(G, ob) {
   const hoje = dia(G);
   if (ob.tipo === 'bancoPraia') return G.cenaPraia ? null : 'Sentar no banco e olhar o mar';
-  if (ob.alheio) return ['canteiro', 'pomar', 'maquina', 'cocho', 'galinheiro', 'cesto', 'essencias'].includes(ob.tipo) ? null : undefined; // a fazenda dos outros: só se olha
+  if (ob.alheio) return ['canteiro', 'pomar', 'maquina', 'cocho', 'galinheiro', 'cesto', 'essencias', 'velaCasa'].includes(ob.tipo) ? null : undefined; // a fazenda dos outros: só se olha
   switch (ob.tipo) {
     case 'canteiro': { const c = can(G, ob.idx); return c.estado === 'mato' ? 'Limpar e arar' : c.estado === 'arado' ? 'Plantar' : c.pronto ? 'Colher' : c.regado === hoje ? 'Ver a ' + PLANTAS[c.planta].nome.toLowerCase() : 'Regar'; }
     case 'animal': return 'Cuidar de ' + ob.nome;
@@ -94,6 +100,7 @@ export function rotuloSitio(G, ob) {
     case 'cocho': return 'Encher o cocho';
     case 'galinheiro': return 'Jogar grãos às galinhas';
     case 'essencias': return 'Mesa de essências (óleos e perfumes)';
+    case 'velaCasa': return velaAcesa(G) ? 'A vela de casa (acesa · ' + Math.ceil(diasDeVela(G)) + ' dia' + (Math.ceil(diasDeVela(G)) > 1 ? 's' : '') + ')' : 'Reacender a vela de casa';
   }
   return undefined;
 }
@@ -103,6 +110,11 @@ export async function usarSitio(G, ob) {
   const S = st(G), hoje = dia(G), b = bolsa(G), p = G.p, d = (nome, texto, acoes = [{ label: 'Ok' }]) => G.ui.dialog({ nome, texto, acoes, voz: false });
   if (ob.tipo === 'bancoPraia') { const { sentarNaPraia } = await import('./praia.js'); sentarNaPraia(G, ob); return true; }
   if (ob.alheio) return true;
+  if (ob.tipo === 'velaCasa') { const cm = G.cm, agora = cm.relogio || 0, base = Math.max(agora, cm.velaAte ?? 0), b = bolsa(G), dias = diasDeVela(G), cheia = dias >= VELA_MAX - 0.05;
+    const poe = n => { cm.velaAte = Math.min(agora + VELA_MAX * 600, base + n * 600); sfx('heal'); G.fx.anel(ob.x, ob.y - 30, '#FFE08A', 40); G.textoEm(ob.x, ob.y - 60, velaAcesa(G) ? 'a vela arde' : '', '#FFE08A', 11); G.salvar(); };
+    await G.ui.dialog({ nome: 'A vela de casa', texto: (velaAcesa(G) ? 'A chama está firme. Ainda arde por uns ' + Math.ceil(dias) + ' dia(s).' : 'A vela apagou. A casa está escura.') + '\n\n"O fogo arderá continuamente sobre o altar; não se apagará" (Lv 6:13).\n\nAcesa, os bichos ficam contentes a cada manhã e a sua lâmpada rende mais azeite. Apagada, eles entristecem.', voz: false,
+      acoes: [...(cheia ? [] : [...((b.azeite || 0) > 0 ? [{ label: 'Pôr uma botija de azeite (+3 dias)', fn: () => { b.azeite--; poe(3); } }] : []), ...(p.oleo >= 30 ? [{ label: 'Do azeite da lâmpada (30, +1 dia)', fn: () => { p.oleo -= 30; poe(1); } }] : [])]), { label: cheia ? 'Está cheia. Deixar arder' : 'Depois' }] });
+    return true; }
   if (ob.tipo === 'essencias') { const { mesaDeEssencias } = await import('./azeites.js'); await mesaDeEssencias(G); return true; }
   switch (ob.tipo) {
     case 'canteiro': { const c = can(G, ob.idx);

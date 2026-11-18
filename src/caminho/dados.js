@@ -236,7 +236,7 @@ const REFUGIO = [
   { cx: 8, nome: 'A margem do mar', papel: 'vila', semPostes: true, tiles: sala(), objs: [
     planta(3, 'palmeira'), { tipo: 'placa', col: 6, txt: 'Da pedra se pesca o raso. De bote, mar adentro, os grandes.' }, { tipo: 'bote', col: 10 }, { tipo: 'aguaAberta', col: 12, ate: 58 }, { tipo: 'ave', col: 20, lin: 11 }] },
   // mar adentro: só de bote. Longe da margem andam os grandes, e na tempestade, o Leviatã (Jó 41)
-  { cx: 9, nome: 'O mar aberto', papel: 'vila', semPostes: true, tiles: sala(), objs: [{ tipo: 'ave', col: 8, lin: 10 }, { tipo: 'ave', col: 22, lin: 9 }] },
+  { cx: 9, nome: 'O mar aberto', papel: 'vila', semPostes: true, marAberto: 'dir', tiles: sala(), objs: [{ tipo: 'ave', col: 8, lin: 10 }, { tipo: 'ave', col: 22, lin: 9 }] },
   // ---- o subsolo ----
   { cx: 0, cy: 1, nome: 'Salão das Subfases', deco: 'subfases', papel: 'vila', tiles: sala(), objs: [
     { tipo: 'portal', col: 6, area: 'vale', rotulo: 'Vale da Mentira' }, { tipo: 'selado', col: 15, rotulo: 'Selado' }, { tipo: 'selado', col: 24, rotulo: 'Selado' },
@@ -302,13 +302,14 @@ export function areaDef(id) {
       { papel: 'vila', nome: donos.length > 1 ? 'A lavoura de ' + nomeDe(d) : 'A lavoura', dono: d, tiles: sala(), objs: [
         { tipo: 'maquina', qual: 'lagar', col: 3, dono: d }, { tipo: 'espantalho', col: 6 }, ...[9, 11, 13, 15, 17, 19, 21, 23, 25, 27].map((col, idx) => ({ tipo: 'canteiro', col, idx, dono: d })), { tipo: 'ave', col: 14, lin: 12 }] },
       { papel: k === 0 ? 'inicio' : 'vila', nome: donos.length > 1 ? 'A casa de ' + nomeDe(d) : 'A casa', dono: d, tiles: sala(), objs: [
-        planta(3, 'oliveira'), { tipo: 'galinheiro', col: 6.5, dono: d }, { tipo: 'essencias', col: 10, dono: d }, { tipo: 'flor', col: 12.5 }, { tipo: 'cesto', col: 14.5, dono: d }, { tipo: 'maquina', qual: 'forno', col: 17, dono: d }, { tipo: 'poco', col: 19.5 },
+        planta(3, 'oliveira'), { tipo: 'galinheiro', col: 6.5, dono: d }, { tipo: 'essencias', col: 10, dono: d }, { tipo: 'flor', col: 12.5 }, { tipo: 'cesto', col: 14.5, dono: d }, { tipo: 'maquina', qual: 'forno', col: 17, dono: d }, { tipo: 'poco', col: 19.5 }, { tipo: 'velaCasa', col: 21.2, dono: d },
         casa(23, 'peregrino', donos.length > 1 ? 'Casa de ' + nomeDe(d) : 'Sua casa'), { tipo: 'placa', col: 27, txt: k === 0 ? 'Estrada do Refúgio →' : 'Sítio de ' + nomeDe(d) + ' · o de ' + nomeDe(donos[k - 1]) + ' →' }, { tipo: 'ave', col: 20, lin: 13 }] }];
+    const mar = { papel: 'vila', nome: 'O mar', semPostes: true, marAberto: 'esq', tiles: sala(), objs: [{ tipo: 'aguaAberta', col: 0, ate: 41, esq: true, praia: true }] };
     const praia = { papel: 'vila', nome: 'A praia', praia: true, semPostes: true, tiles: sala(), objs: [
-      { tipo: 'areia', col: 0, ate: 29 }, { tipo: 'aguaAberta', col: 0, ate: 6, esq: true, praia: true }, planta(9, 'palmeira'), planta(24, 'palmeira'),
-      { tipo: 'bancoPraia', col: 14 }, { tipo: 'concha', col: 11 }, { tipo: 'concha', col: 18.5 }, { tipo: 'placa', col: 27, txt: '← A praia' }, { tipo: 'ave', col: 12, lin: 9 }, { tipo: 'ave', col: 20, lin: 10 }] };
+      { tipo: 'areia', col: 12, ate: 29 }, planta(14.5, 'palmeira'), planta(26, 'palmeira'),
+      { tipo: 'bancoPraia', col: 19 }, { tipo: 'concha', col: 15.5 }, { tipo: 'concha', col: 22.5 }, { tipo: 'barquinho', col: 13 }, { tipo: 'placa', col: 28, txt: '← A praia' }] };
     return { id, nome: donos.length > 1 ? 'Os sítios' : 'Seu sítio', sub: donos.length > 1 ? donos.map(nomeDe).join(', ') : 'A casa no campo', tema: 'bosque', seed: 'sitio', paz: true, aberto: true, sitio: true, donos,
-      planta: [praia, ...donos.map((d, k) => ({ d, k })).reverse().flatMap(({ d, k }) => fazenda(d, k))] }; }
+      planta: [mar, praia, ...donos.map((d, k) => ({ d, k })).reverse().flatMap(({ d, k }) => fazenda(d, k))] }; }
   // a sinagoga por dentro: a nave, a arca, a bimá; Jairo conduz as orações e quem veio orar fica de joelhos
   if (id === 'sinagoga:sardes') return { id, nome: 'Sinagoga de Sardes', sub: 'A casa de oração que esperava', tema: 'sardes', seed: id, paz: true, interior: true, planta: [
     { papel: 'inicio', nome: 'A nave', deco: 'sinagoga', tiles: sala(), objs: [{ tipo: 'portal', col: 3, area: 'sardes', porta: true, rotulo: 'Sair da sinagoga' }, { tipo: 'menora', col: 15 }, { tipo: 'npc', col: 19, id: 'natanael', nome: 'Natanael, o último', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#3A3F4C', cape: '#4A4A6A', style: 'turbante', beard: true } }] }] };
