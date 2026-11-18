@@ -4,7 +4,7 @@
 import { clamp, TAU, hash } from '../../util.js';
 import { input, wasd } from '../../input.js';
 import { TODAS } from '../../content/index.js';
-import { T, CH } from '../nivel.js';
+import { T, CH, tileEm } from '../nivel.js';
 import { desenharVicio } from '../bichos.js';
 import { quadroVicio } from './viciospx.js';
 import { desenharChefe } from '../chefes.js';
@@ -217,16 +217,30 @@ function pintarObjeto(g, o, G, x, y, Tm) {
       if (o.escondido > G.T) return true; // em Sardes, às vezes o vizinho não era gente
       const vai = (o.vai || 3) * 32, f = Math.sin(Tm * 0.35 + o.x), dx = Math.round(f * vai / PX), parado = Math.abs(Math.cos(Tm * 0.35 + o.x)) < 0.25;
       carimbar(g, quadroPessoa({ ...o.look, cls: null }, parado ? 0 : Tm * 2.2, 'm' + o.x), x + dx, y - (parado ? 0 : Math.floor(Tm * 6) % 2), 24, 40, Math.cos(Tm * 0.35 + o.x) >= 0 ? 1 : -1); return true; }
-    case 'ave': { // pombas que levantam voo quando o peregrino chega perto
-      const perto = Math.abs(G.p.x - o.x) < 110 && Math.abs(G.p.y - o.y) < 120; if (perto && !o.voo) o.voo = Tm; if (o.voo && Tm - o.voo > 9) o.voo = 0;
-      const t = o.voo ? Tm - o.voo : 0, bx = x + Math.round(t * 46 * (o.x % 2 ? 1 : -1)), by = y - 2 - Math.round(t * 34 + Math.sin(t * 9) * 2), asa = o.voo ? Math.floor(Tm * 14) % 2 : 0; if (t > 4) return true;
-      g.fillStyle = '#17121f'; g.fillRect(bx - 3, by - 3, 7, 4); g.fillStyle = '#D9D2C5'; g.fillRect(bx - 2, by - 2, 5, 2); g.fillStyle = '#9FB0C0'; g.fillRect(bx - 2, by - (asa ? 5 : 2), 3, asa ? 3 : 1); g.fillStyle = '#F2C14E'; g.fillRect(bx + 3, by - 2, 1, 1);
-      if (!o.voo && Math.floor(Tm * 1.5 + o.x) % 4 === 0) g.fillRect(bx + 3, by - 1, 1, 1); return true; }
+    case 'ave': { // pombas: pousadas onde há onde pousar (e levantam voo quando o peregrino chega); sem poleiro, voam em roda devagar
+      const tx = Math.floor(o.x / 32), ty = Math.floor(o.y / 32), poleiro = G.N && [1, 2].includes(tileEm(G.N, tx, ty)) || o.y >= 16 * 32;
+      const perto = Math.abs(G.p.x - o.x) < 110 && Math.abs(G.p.y - o.y) < 120; if (poleiro && perto && !o.voo) o.voo = Tm; if (o.voo && Tm - o.voo > 9) o.voo = 0;
+      let bx, by, voando; if (!poleiro) { const a = Tm * 0.7 + o.x * 0.01; bx = x + Math.round(Math.cos(a) * 26); by = y - 20 + Math.round(Math.sin(a * 2) * 5); voando = true; }
+      else { const t = o.voo ? Tm - o.voo : 0; if (t > 4) return true; bx = x + Math.round(t * 46 * (o.x % 2 ? 1 : -1)); by = y - 2 - Math.round(t * 34 + Math.sin(t * 9) * 2); voando = !!o.voo; }
+      const asa = voando ? Math.floor(Tm * (poleiro ? 14 : 6) + o.x) % 2 : 0, f = poleiro ? (o.x % 2 ? 1 : -1) : (Math.sin(Tm * 0.7 + o.x * 0.01) > 0 ? -1 : 1), P = (a, b, w, h, c) => { g.fillStyle = c; g.fillRect(bx + (f > 0 ? a : -a - w + 1), by + b, w, h); };
+      P(-4, -4, 9, 5, '#17121f'); P(3, -6, 4, 4, '#17121f'); P(-6, -3, 3, 2, '#17121f'); // contorno: corpo, cabeça, cauda
+      P(-3, -3, 7, 3, '#E8E4DA'); P(-3, -1, 6, 1, '#C9C3B8'); P(4, -5, 2, 2, '#E8E4DA'); P(-5, -3, 2, 1, '#B8B2A8'); P(6, -4, 1, 1, '#E0A070'); P(5, -5, 1, 1, '#17121f'); P(1, -2, 2, 1, '#9AB0A8'); // o pescoço furta-cor
+      if (voando) { if (asa) { P(-2, -9, 5, 6, '#17121f'); P(-1, -8, 3, 5, '#D8D2C6'); } else { P(-3, -2, 7, 4, '#17121f'); P(-2, -1, 5, 2, '#D8D2C6'); } } else { P(-2, -3, 4, 2, '#CFC9BE'); P(0, 1, 1, 1, '#E0A070'); P(2, 1, 1, 1, '#E0A070'); if (Math.floor(Tm * 1.5 + o.x) % 4 === 0) P(6, -3, 1, 1, '#E0A070'); }
+      return true; }
     case 'flor': { if (G.cm.flores?.[o.x] === Math.floor((G.cm.relogio || 0) / 600)) { g.fillStyle = '#3F6A3A'; g.fillRect(x, y - 4, 1, 4); return true; } // colhida hoje: fica o talo
       const b = Math.round(Math.sin(Tm * 1.6 + o.x) * 0.6), cores = ['#E86A8A', '#F2D06A', '#B88AE8', '#F2F0E8'], c = cores[Math.floor(o.x / 32) % 4];
       g.fillStyle = '#2E5A2E'; g.fillRect(x, y - 8, 1, 8); g.fillRect(x - 2, y - 4, 2, 1); g.fillStyle = '#17121f'; g.fillRect(x - 3 + b, y - 13, 7, 6); g.fillStyle = c; g.fillRect(x - 2 + b, y - 12, 5, 4); g.fillRect(x - 1 + b, y - 13, 3, 6); g.fillStyle = '#FFE08A'; g.fillRect(x + b, y - 11, 1, 2); return true; }
     case 'fruto': { if (o.volta > Tm) return true; const b = Math.round(Math.sin(Tm * 2 + o.x) * 1); g.fillStyle = '#17121f'; g.fillRect(x - 3, y - 9 + b, 6, 7); g.fillStyle = '#8E3B5E'; g.fillRect(x - 2, y - 8 + b, 4, 5); g.fillStyle = '#C56A8A'; g.fillRect(x - 2, y - 8 + b, 1, 2); g.fillStyle = '#3F7A4A'; g.fillRect(x, y - 11 + b, 1, 2); return true; }
-    case 'poco': { g.fillStyle = '#17121f'; g.fillRect(x - 12, y - 14, 24, 14); g.fillRect(x - 13, y - 40, 3, 28); g.fillRect(x + 10, y - 40, 3, 28); g.fillRect(x - 15, y - 44, 30, 5); g.fillStyle = '#6E6A78'; g.fillRect(x - 11, y - 13, 22, 12); g.fillStyle = '#8E8A98'; for (let i = 0; i < 4; i++) g.fillRect(x - 10 + i * 6, y - 12 + (i % 2) * 5, 4, 3); g.fillStyle = '#6B4A2E'; g.fillRect(x - 12, y - 39, 1, 26); g.fillRect(x + 11, y - 39, 1, 26); g.fillRect(x - 14, y - 43, 28, 3); g.fillStyle = '#C9C3AE'; g.fillRect(x, y - 40, 1, 20); g.fillStyle = '#8A5A3A'; g.fillRect(x - 2, y - 22, 5, 5); g.fillStyle = Math.floor(Tm * 3) % 2 ? '#BFF0F8' : '#7FD4E4'; g.fillRect(x - 9, y - 15, 18, 2); return true; }
+    case 'poco': { // o poço antigo: boca redonda de pedra calcária, a trave de madeira em dois esteios, a corda e o cântaro de barro
+      const PE = ['#5A4A3C', '#8A7458', '#A8906E', '#C8B08A'];
+      g.fillStyle = '#17121f'; g.fillRect(x - 14, y - 15, 28, 15); g.fillRect(x - 15, y - 17, 30, 4);
+      for (let r = 0; r < 3; r++) for (let i = 0; i < 4; i++) { const bx = x - 13 + i * 7 + (r % 2 ? 3 : 0); if (bx > x + 11) continue; g.fillStyle = PE[(i + r) % 2 ? 1 : 2]; g.fillRect(bx, y - 13 + r * 4, Math.min(6, x + 13 - bx), 3); g.fillStyle = PE[3]; g.fillRect(bx, y - 13 + r * 4, Math.min(6, x + 13 - bx), 1); }
+      g.fillStyle = PE[3]; g.fillRect(x - 14, y - 16, 28, 2); g.fillStyle = PE[0]; g.fillRect(x - 11, y - 15, 22, 1); g.fillStyle = Math.floor(Tm * 3) % 2 ? '#3A6A7A' : '#2E5A6A'; g.fillRect(x - 10, y - 15, 20, 1); // a borda e a água lá no fundo
+      g.fillStyle = '#17121f'; g.fillRect(x - 13, y - 42, 4, 27); g.fillRect(x + 9, y - 42, 4, 27); g.fillRect(x - 15, y - 45, 30, 4);
+      g.fillStyle = '#7A5636'; g.fillRect(x - 12, y - 41, 2, 26); g.fillRect(x + 10, y - 41, 2, 26); g.fillRect(x - 14, y - 44, 28, 2); g.fillStyle = '#9A7448'; g.fillRect(x - 14, y - 44, 28, 1); g.fillRect(x - 13, y - 45, 2, 1); g.fillRect(x + 11, y - 45, 2, 1); // esteios em forquilha
+      g.fillStyle = '#5A4030'; g.fillRect(x - 2, y - 44, 5, 3); g.fillStyle = '#C9B88A'; g.fillRect(x, y - 41, 1, 16); // a roldana e a corda
+      g.fillStyle = '#17121f'; g.fillRect(x - 4, y - 27, 9, 9); g.fillStyle = '#B8683A'; g.fillRect(x - 3, y - 26, 7, 7); g.fillStyle = '#D88A50'; g.fillRect(x - 2, y - 26, 2, 5); g.fillStyle = '#8A4A2A'; g.fillRect(x - 1, y - 28, 3, 2); // o cântaro
+      return true; }
     case 'boneco': { const bal = o.bal > 0 ? Math.round(Math.sin(Tm * 40) * 3 * (o.dir || 1)) : 0; if (o.bal > 0) o.bal -= 0.016; g.fillStyle = '#17121f'; g.fillRect(x - 2, y - 30, 4, 30); g.fillRect(x - 9 + bal, y - 30, 18, 18); g.fillRect(x - 5 + bal, y - 40, 10, 11); g.fillRect(x - 13 + bal, y - 26, 26, 3); g.fillStyle = '#6B4A2E'; g.fillRect(x - 1, y - 12, 2, 12); g.fillRect(x - 12 + bal, y - 25, 24, 1); g.fillStyle = '#C9A86A'; g.fillRect(x - 8 + bal, y - 29, 16, 16); g.fillRect(x - 4 + bal, y - 39, 8, 9); g.fillStyle = '#8A7A3A'; for (let i = 0; i < 4; i++) g.fillRect(x - 7 + bal + i * 4, y - 27 + (i % 2) * 6, 2, 4); g.fillStyle = '#B03A2E'; g.fillRect(x - 2 + bal, y - 23, 4, 4); return true; }
     case 'casa': { // casa de adobe de teto plano (anda-se por cima): porta, janela acesa, parapeito e um sinal de quem mora ali
       const tom = { estalagem: '#8A6A4E', marta: '#9A8468', oleiro: '#7E5E4A', viuva: '#8C7A66' }[o.id] || '#8A7460';

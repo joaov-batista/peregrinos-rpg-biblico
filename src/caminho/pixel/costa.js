@@ -67,21 +67,26 @@ export function pintarCosta(g, G, C, vw, vh, cx, cy, dy, L, pintarCeu) {
     if (top > 0) g.drawImage(oc, x, 0, 1, top, x, 0, 1, top); // o céu volta acima do promontório
     g.drawImage(oc, x, hz, 1, chao + 4 - hz, x, hz, 1, chao + 4 - hz); // e o mar embaixo dele
     if (u < 0.06) continue;
-    for (let y = top; y < hz + 2; y++) { const n = h(Math.floor(x / 4) * 3.1 + Math.floor((y + Math.floor(x / 9) * 2) / 3) * 7.7), face = y > top + 4; g.fillStyle = !face ? (cidade ? muro[(x + y) % 3 ? 1 : 0] : verde[n > 0.5 ? 1 : 0]) : ((y + Math.floor(x / 9) * 2) % 7 === 0 ? rocha[0] : n < 0.1 ? rocha[3] : rocha[n > 0.62 ? 2 : 1]); g.fillRect(x, y, 1, 1); }
-    g.fillStyle = rocha[3]; g.fillRect(x, top - 1, 1, 1); if (cidade && i % 6 === 0 && u < 0.7) g.fillRect(x, top - 3, 2, 2); // as ameias do muro, até onde ele vai
-    if (!cidade && h(x) > 0.82) { g.fillStyle = verde[0]; g.fillRect(x, top - 3, 1, 3); } }
+    for (let y = top; y < hz + 2; y++) { const n = h(Math.floor(x / 4) * 3.1 + Math.floor((y + Math.floor(x / 9) * 2) / 3) * 7.7), face = y > top + 4; g.fillStyle = !face ? (cidade && u < 0.42 ? muro[(x + y) % 3 ? 1 : 0] : verde[n > 0.5 ? 1 : 0]) : ((y + Math.floor(x / 9) * 2) % 7 === 0 ? rocha[0] : n < 0.1 ? rocha[3] : rocha[n > 0.62 ? 2 : 1]); g.fillRect(x, y, 1, 1); }
+    g.fillStyle = rocha[3]; g.fillRect(x, top - 1, 1, 1); if (cidade && i % 6 === 0 && u < 0.4) g.fillRect(x, top - 3, 2, 2); // as ameias do muro, que desce só até o meio da ponta
+    if ((!cidade || u >= 0.42) && h(x) > 0.8) { g.fillStyle = verde[0]; g.fillRect(x, top - 2 - (h(x * 7) > 0.5 ? 1 : 0), 1, 3); } }
+  // oliveiras baixas e ciprestes no alto do promontório
+  for (const [uu, tipo] of [[0.5, 'o'], [0.62, 'c'], [0.74, 'o'], [0.86, 'c']]) { const x = colDe(Math.round(F * uu)), yb = perfil(uu); if (x < 2 || x > vw - 2) continue;
+    if (tipo === 'c') { for (let k = 0; k < 16; k++) { const w = Math.max(1, Math.round(Math.sin((k / 16) * Math.PI) * 3)); g.fillStyle = rocha[3]; g.fillRect(x - w - 1, yb - 2 - k, w * 2 + 2, 1); g.fillStyle = verde[k % 3 ? 0 : 1]; g.fillRect(x - w, yb - 2 - k, w * 2, 1); } }
+    else { g.fillStyle = rocha[3]; g.fillRect(x, yb - 5, 2, 5); for (const [dx, dy, r] of [[-3, -7, 3], [2, -8, 4], [6, -6, 3]]) for (let yy = -r; yy <= r; yy++) { const w = Math.round(Math.sqrt(r * r - yy * yy)); g.fillStyle = yy < 0 ? verde[1] : verde[0]; g.fillRect(x + dx - w, yb + dy + yy, w * 2 + 1, 1); } } }
   // a espuma batendo na base da rocha
   for (let i = Math.round(F * 0.3); i < F + 6; i += 2) { const x = colDe(i); if (x < 0 || x >= vw) continue; const k = Math.sin(Tm * 2 + i * 0.3); if (k > 0.2) { g.globalAlpha = 0.5 + k * 0.4; g.fillStyle = '#F4FCFF'; g.fillRect(x, hz + 1 - (k > 0.8 ? 1 : 0), 2, 1); } }
   g.globalAlpha = 1;
   // a peça do alto, que fecha o corte da terra do fundo
   const px = colDe(Math.round(F * 0.1)), base = perfil(0.13) + 2;
-  if (cidade) { // o farol: torre de pedra, a galeria, a lanterna (acesa de noite, com o facho girando)
-    const W = 12, H = 74, tx = px - (lado > 0 ? 4 : W - 4), ty = base - H, faixaV = mix(mix('#3A1A1A', '#B8423A', d), corH, 0.15), faixaB = mix(mix('#3A3A44', '#E8E2D0', d), corH, 0.15);
-    for (let y = ty; y < base; y++) { const k = (y - ty) / H, ww = Math.round(W + k * 6), xx = tx + Math.round((W - ww) / 2); g.fillStyle = rocha[3]; g.fillRect(xx - 1, y, ww + 2, 1); g.fillStyle = Math.floor((y - ty) / 12) % 2 ? faixaV : faixaB; g.fillRect(xx, y, ww, 1); g.fillStyle = rocha[1]; g.fillRect(xx + ww - 3, y, 2, 1); }
-    g.fillStyle = rocha[3]; g.fillRect(tx - 8, base - 4, W + 16, 4); g.fillStyle = muro[1]; g.fillRect(tx - 7, base - 3, W + 14, 2);
-    g.fillStyle = rocha[3]; g.fillRect(tx - 4, ty - 2, W + 8, 3); g.fillRect(tx + 2, ty - 14, W - 4, 12); g.fillStyle = d < 0.4 ? '#FFE08A' : mix('#8A8A94', '#C9D2E0', d); g.fillRect(tx + 4, ty - 12, W - 8, 8); g.fillStyle = rocha[3]; g.beginPath(); g.moveTo(tx, ty - 14); g.lineTo(tx + W / 2, ty - 22); g.lineTo(tx + W, ty - 14); g.fill();
-    if (d < 0.4) { const a = (Tm * 0.8) % (Math.PI * 2), cx0 = tx + W / 2, cy0 = ty - 8, alc = 160, dirx = Math.cos(a) * alc; g.globalAlpha = (0.4 - d) * 0.6 * Math.max(0, Math.cos(a * 0.5) * 0.5 + 0.5); g.fillStyle = '#FFF2C0'; g.beginPath(); g.moveTo(cx0, cy0 - 2); g.lineTo(cx0 + dirx, cy0 - 14); g.lineTo(cx0 + dirx, cy0 + 10); g.lineTo(cx0, cy0 + 2); g.fill(); g.globalAlpha = 1; }
-    for (let k = 0; k < 2; k++) { g.fillStyle = rocha[3]; g.fillRect(tx + 5, ty + 20 + k * 26, 2, 4); } }
+  if (cidade) { // a torre de vigia de pedra, onde o muro da cidade termina, de frente para o mar ("Sobre os teus muros pus guardas", Is 62:6)
+    const W = 20, H = 52, tx = px - (lado > 0 ? 6 : W - 6), ty = base - H;
+    g.fillStyle = rocha[3]; g.fillRect(tx - 1, ty - 1, W + 2, H + 1);
+    for (let y = ty; y < base; y++) { const fila = Math.floor((y - ty) / 4); for (let xx = 0; xx < W; xx++) { const junta = (y - ty) % 4 === 0 || (xx + (fila % 2) * 3) % 7 === 0; g.fillStyle = junta ? rocha[0] : xx > W - 5 ? muro[0] : muro[1]; g.fillRect(tx + xx, y, 1, 1); } }
+    for (let k = 0; k < W; k += 5) { g.fillStyle = rocha[3]; g.fillRect(tx + k - 1, ty - 6, 5, 6); g.fillStyle = muro[1]; g.fillRect(tx + k, ty - 5, 3, 5); } // as ameias
+    g.fillStyle = rocha[3]; g.fillRect(tx + 7, ty + 12, 5, 8); g.fillStyle = d < 0.4 ? '#E8A850' : '#1E1418'; g.fillRect(tx + 8, ty + 13, 3, 6); // a janela (com um lume de noite)
+    if (d < 0.4) { g.globalAlpha = (0.4 - d) * 0.5; g.fillStyle = '#FFC860'; g.fillRect(tx + 5, ty + 10, 9, 12); g.globalAlpha = 1; }
+    g.fillStyle = '#5A3A2A'; g.fillRect(tx + W / 2, ty - 18, 1, 12); g.fillStyle = '#8E2E3A'; g.fillRect(tx + W / 2 + 1, ty - 18 + Math.round(Math.sin(Tm * 3)), 6, 4); } // o estandarte no alto
   else { // o bosque que termina na ponta: copas redondas, mais escuras na frente
     for (let k = 0; k < 7; k++) { const cx0 = px + lado * (k * 9 - 18) + Math.round(h(k) * 6), r = 12 + Math.round(h(k * 3) * 10), cy0 = base - 20 - Math.round(h(k * 5) * 40) + k * 3;
       g.fillStyle = verde[0]; g.fillRect(cx0, cy0, 3, base - cy0); for (let yy = -r; yy <= r; yy++) { const w = Math.round(Math.sqrt(r * r - yy * yy)); for (let xx = -w; xx <= w; xx++) { if ((xx * xx + yy * yy) > (r - 1) * (r - 1) && (xx + yy) % 2) continue; g.fillStyle = yy < -r * 0.3 ? verde[1] : verde[0]; g.fillRect(cx0 + xx, cy0 + yy, 1, 1); } } } }
