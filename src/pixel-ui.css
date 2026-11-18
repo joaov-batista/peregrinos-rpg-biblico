@@ -401,3 +401,4 @@ html.remake .inv-q.mini { width: 40px; height: 40px; }
 .dia-trilha { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
 .dia-l { display: flex; gap: 10px; align-items: flex-start; padding: 4px 6px; } .dia-l small { display: block; color: #9AA6C4; font-size: 14px; }
 .dia-m { width: 18px; text-align: center; color: #9AA6C4; } .dia-l.feito .dia-m { color: #7FD08A; } .dia-l.atual { background: rgba(201, 166, 60, .12); } .dia-l.atual .dia-m, .dia-l.atual b { color: #FFE9A8; } .dia-l.falta b { color: #5E6A88; }
+.dia-agora .dia-tambem { font-size: 15px; color: #E8D9A8; margin-top: 6px; }

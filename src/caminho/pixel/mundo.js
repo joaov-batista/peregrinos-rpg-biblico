@@ -5,6 +5,7 @@ import { hash, clamp } from '../../util.js';
 import { T, CW, CH, SOLIDO, PONTE, ESPINHO, OCULTO, FALSA, PORTAO, TRANCA, tileEm, semente } from '../nivel.js';
 import { Sprite, rampa, cor, TINTA, PX } from './raster.js';
 import { fundoSala } from './salas.js';
+import { luzDoDia } from '../moradores.js';
 
 const TL = T / PX; // 16
 const mistura = (a, b, t) => { const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16), f = (s) => Math.round((pa >> s & 255) * (1 - t) + (pb >> s & 255) * t); return '#' + (f(16) << 16 | f(8) << 8 | f(0)).toString(16).padStart(6, '0'); };
@@ -152,10 +153,19 @@ function nuvens(tm) { if (nuvemCv) return nuvemCv; const s = new Sprite(520, 70)
 export function pintarFundoPixel(g, G, C, vw, vh, cx, cy) {
   const dy = Math.round((vh - C.H) / 2);
   faixa(g, C.ceu, cx * 0.02, dy, vw);
+  const L = G.area === 'refugio' && G.cm ? luzDoDia(G) : null; /* o Refúgio tem relógio: manhã azul, poente laranja, noite estrelada */
+  if (L && L.d > 0) {
+    const gr = g.createLinearGradient(0, dy, 0, dy + C.H * 0.75), mix = (a, b, k) => '#' + [0, 2, 4].map(i => Math.round(parseInt(a.substr(1 + i, 2), 16) * (1 - k) + parseInt(b.substr(1 + i, 2), 16) * k).toString(16).padStart(2, '0')).join('');
+    gr.addColorStop(0, mix('#5E9AD6', '#3E4A8A', L.poente)); gr.addColorStop(0.6, mix('#A9CDEB', '#E07A4A', L.poente)); gr.addColorStop(1, mix('#F2E2C0', '#F2B25A', L.poente));
+    g.globalAlpha = L.d * 0.94; g.fillStyle = gr; g.fillRect(0, dy, vw, C.H); g.globalAlpha = 1;
+    const k = (L.h - 6) / 13, sx = Math.round(vw * (0.12 + 0.76 * k)), sy = Math.round(dy + 18 + Math.pow(Math.abs(k - 0.5) * 2, 2) * 70), r = 9; /* o sol cruza o céu */
+    g.globalAlpha = L.d * 0.35; g.fillStyle = L.poente > 0.3 ? '#FFB86A' : '#FFF4C8'; g.beginPath(); g.arc(sx, sy, r + 7, 0, 6.29); g.fill(); g.globalAlpha = L.d; g.beginPath(); g.arc(sx, sy, r, 0, 6.29); g.fill(); g.globalAlpha = 1;
+  }
   if (G.N.def.aberto) { g.globalAlpha = 0.8; faixa(g, nuvens(G.tm), cx * 0.05 + G.T * 3, dy + 8 + Math.round(-cy * 0.02), vw); g.globalAlpha = 1; }
   faixa(g, C.longe, cx * 0.1, dy + Math.round(-cy * 0.02), vw);
   faixa(g, C.meio, cx * 0.24, dy + Math.round(-cy * 0.05) + 4, vw);
   faixa(g, C.perto, cx * 0.45, dy + Math.round(-cy * 0.1) + 10, vw);
+  if (L && L.d > 0) { g.globalAlpha = L.d * 0.16; g.fillStyle = L.poente > 0.3 ? '#F2A65A' : '#DCEBFF'; g.fillRect(0, dy, vw, C.H); g.globalAlpha = 1; } /* de dia, as silhuetas ao longe clareiam um pouco */
 }
 
 // fundo das salas (véu pontilhado + pilares + estandartes) e os blocos

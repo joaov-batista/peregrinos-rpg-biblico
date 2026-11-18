@@ -43,7 +43,8 @@ export function abrirMenu(G, aba = 'inventario') {
       const d = G.def, out = [], hs = cm.hist || { cap: 0, est: 0 }, cap = CAPITULOS[hs.cap];
       const semP = TODAS.find(s2 => s2.fases.some(f => !cm.feitas[s2.id + ':' + f.n])), passo = cap ? [cm.mapa ? 'Fale com ' + cap.quemNome + ' (tem um ! sobre a cabeça).' : 'Fale com o Velho Peregrino.', 'Entre na página ' + cap.ref + ' e vença a sombra.', 'Volte ao Refúgio e conte a ' + cap.quemNome + '.'][hs.est || 0] : 'Converse com quem tem um ! sobre a cabeça.';
       const agora = d.fase ? d.fase.objetivo : !cm.mapa ? 'Fale com o Velho Peregrino, no Refúgio.' : semP ? 'Próxima página: ' + semP.titulo + ' (' + semP.estudo + '). A seta dourada leva ao portal.' : passo;
-      out.push(h('div', { class: 'dia-agora' }, h('small', {}, 'AGORA · ' + d.nome), h('p', {}, agora)));
+      const tambem = !d.fase && cm.mapa && semP && cap ? 'E na história: ' + passo.charAt(0).toLowerCase() + passo.slice(1) : ''; /* as duas trilhas andam juntas: o Diário mostra o passo de cada uma */
+      out.push(h('div', { class: 'dia-agora' }, h('small', {}, 'AGORA · ' + d.nome), h('p', {}, agora), tambem ? h('p', { class: 'dia-tambem' }, tambem) : ''));
       if (d.fase) { out.push(t('Rolos lidos: ' + cm.selos[G.area].length + ' de 3' + (d.estacoes ? ' · Decisões: ' + cm.est[G.area].length + ' de ' + d.estacoes.length : '') + '.', 'muted')); if (CHEFES[d.chefe]?.dica && (G.mortosAqui || cm.chefes[d.chefe])) out.push(h('div', { class: 'porque' }, h('b', {}, 'Sobre o chefe'), t(CHEFES[d.chefe].dica))); }
       const linha = (marca, titulo, sub, cls) => h('div', { class: 'dia-l ' + cls }, h('span', { class: 'dia-m' }, marca), h('div', {}, h('b', {}, titulo), sub ? h('small', {}, sub) : ''));
       out.push(h('h4', {}, ARCO.titulo + ' · ' + Math.min(hs.cap, CAPITULOS.length) + ' de ' + CAPITULOS.length));

@@ -11,7 +11,9 @@ const DIA = 600, rand = (a, b) => a + Math.random() * (b - a);
 // ---- o relógio ----
 export const hora = G => ((G.cm.relogio || 0) / DIA * 24 + 7) % 24; // começa às 7 da manhã
 export const dia = G => Math.floor((G.cm.relogio || 0) / DIA);
-export const periodo = G => { const h = hora(G); return h < 12 ? 'manha' : h < 19 ? 'tarde' : 'noite'; };
+export const periodo = G => { const h = hora(G); return h >= 5.5 && h < 12 ? 'manha' : h >= 12 && h < 19 ? 'tarde' : 'noite'; }; /* de madrugada é noite, não manhã */
+// quanto de dia há agora (0 = noite, 1 = dia cheio) e quanto de poente: o céu do Refúgio segue o relógio
+export const luzDoDia = G => { const h = hora(G); return { d: Math.max(0, Math.min(1, (h - 5) / 2, (19.5 - h) / 2.5)), poente: Math.max(0, 1 - Math.abs(h - 18) / 1.6), h }; };
 // ---- a bolsa ----
 export const bolsa = G => (G.cm.bolsa = G.cm.bolsa || {});
 export function ganhar(G, item, n = 1, x, y) {
