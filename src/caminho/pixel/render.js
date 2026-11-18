@@ -19,6 +19,7 @@ import { pintarPalco } from './palcos.js';
 import { cenaPixel, pintarFundoPixel, pintarSalasPixel, pintarBlocosPixel, pintarLuzPixel, TL, mistura, pontilha } from './mundo.js';
 import { pintarEfeitos } from './efeitos.js';
 import { JESUS_LOOK } from '../getsemani.js';
+import { ELEMENTO_DO_CHEFE, zonaElemento, tiroElemento, corDoElemento } from './elementos.js';
 
 export const FONTE = '"Pixelify Sans", "Alegreya Sans", monospace';
 const baixa = document.createElement('canvas'), bg = baixa.getContext('2d');
@@ -347,7 +348,7 @@ export function renderPixel(G) {
   if (G.pomba) pintarPomba(g, G.pomba, X, Y, Tm);
   else if (G.mortoT > 1.2) { const s = quadroHeroi({ ...p, morto: true, atk: null }, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab); s.dissolve(clamp((1.9 - G.mortoT) / 0.7, 0, 1), 5); carimbar(g, s, X(p.x), Y(p.y), AX, AY, p.face); }
   pintarEfeitos(g, G.fxPx, cx, cy, false);
-  for (const t of G.tiros) pintarTiro(g, t, X(t.x), Y(t.y), Tm);
+  elAtual = G.chefe && ELEMENTO_DO_CHEFE[G.chefe.id]; for (const t of G.tiros) pintarTiro(g, t, X(t.x), Y(t.y), Tm);
   for (const o of G.outros) if (o.corpo.ts) for (const t of o.corpo.ts) pintarTiro(g, { x: t[0], y: t[1], vx: t[2], vy: t[3], r: t[4], tipo: t[5], cor: t[6], amigo: true }, X(t[0]), Y(t[1]), Tm);
   // poeira do pulo e da queda: duas nuvenzinhas que se abrem para os lados, crescem e se desfazem
   for (const d of G.poeiras || []) { const k = 1 - d.t / d.max, cx0 = X(d.x), cy0 = Y(d.y);
@@ -413,11 +414,13 @@ function pintarPomba(g, P, X, Y, Tm) {
   g.globalAlpha = 0.35; g.fillStyle = '#FFF4CF'; g.fillRect(x - 8, y - 3, 17, 14); g.globalAlpha = 1;
 }
 
+let elAtual = null; /* o elemento do chefe em luta: os dardos dele saem na matéria dele */
 function pintarTiro(g, t, x, y, Tm) {
   if (!t.cor) t.cor = '#D8C8F0';
   const r = Math.max(2, Math.round(t.r / PX));
+  if (elAtual && !t.amigo && !t.tipo && tiroElemento(g, elAtual, t, x, y, r, Tm)) return;
   if (t.tipo === 'choque') { const d = Math.sign(t.vx), f = Math.floor(Tm * 12) % 2; for (let i = 0; i < 9; i++) { const h = [3, 6, 10, 13, 11, 8, 5, 3, 1][i] + (i % 2 ? f : 0); g.fillStyle = i < 4 ? '#fff' : t.cor; g.fillRect(x + d * (4 - i) , y + 6 - h, 1, h); } g.fillStyle = '#17121f'; g.fillRect(x - 5, y + 6, 10, 1); return; }
-  if (t.tipo === 'fogo') { // bola de fogo: halo, cauda de línguas que ondulam, núcleo branco em losango e fagulhas que ficam para trás
+  if (t.tipo === 'fogo' || (elAtual === 'fogo' && !t.tipo && !t.amigo)) { // bola de fogo: halo, cauda de línguas que ondulam, núcleo branco em losango e fagulhas que ficam para trás
     const vel = Math.hypot(t.vx, t.vy) || 1, ux = t.vx / vel, uy = t.vy / vel, f = Math.floor(Tm * 20), R = r + 1;
     g.globalAlpha = 0.22; g.fillStyle = '#FF8A2A'; g.fillRect(x - R - 3, y - R - 2, R * 2 + 6, R * 2 + 4); g.fillRect(x - R - 1, y - R - 4, R * 2 + 2, R * 2 + 8); g.globalAlpha = 1;
     for (let k = 9; k >= 1; k--) { // cauda: mais fina e mais vermelha para trás, serpenteando
@@ -457,7 +460,7 @@ function pintarTiro(g, t, x, y, Tm) {
 }
 
 function pintarZona(g, G, z, X, Y, vw, vh, Tm) {
-  const A = G.N.arena, p = G.p, ativa = z.aviso <= 0, c = !z.cor ? '#D8C8F0' : z.cor.startsWith('#') ? z.cor : `rgb(${z.cor})`, pisca = Math.floor(Tm * 12) % 2;
+  const A = G.N.arena, p = G.p, ativa = z.aviso <= 0; let c = !z.cor ? '#D8C8F0' : z.cor.startsWith('#') ? z.cor : `rgb(${z.cor})`, pisca = Math.floor(Tm * 12) % 2;
   const luzPerto = p.lamp && Math.hypot(z.x + (z.tipo === 'muro' ? z.w / 2 : 0) - p.x, (z.y ?? p.y) - p.y) < G.raioLuz();
   if (z.oculta && !ativa && !luzPerto) { if (pisca && Math.floor(Tm * 3) % 3 === 0) { g.fillStyle = c; g.globalAlpha = 0.25; g.fillRect(X(z.x), Y(z.y + z.h) - 1, Math.round(z.w / PX), 1); g.globalAlpha = 1; } return; } // a cilada só aparece à luz
   if (z.isca && z.sinal) { const x = X(z.x), y = Y(z.y), r = Math.round(z.r / PX); g.fillStyle = luzPerto ? '#FFE9A8' : c; for (let a = 0; a < 40; a++) if ((a + Math.floor(Tm * 10)) % 2) g.fillRect(x + Math.round(Math.cos(a / 40 * TAU) * r), y + Math.round(Math.sin(a / 40 * TAU) * r), 1, 1); if (luzPerto) { g.globalAlpha = 0.35; for (let yy = -r; yy <= r; yy += 2) for (let xx = -r; xx <= r; xx += 2) if (xx * xx + yy * yy < r * r) g.fillRect(x + xx, y + yy, 1, 1); g.globalAlpha = 1; } return; } // o abrigo verdadeiro brilha sob a lâmpada
@@ -476,6 +479,12 @@ function pintarZona(g, G, z, X, Y, vw, vh, Tm) {
     g.globalAlpha = 0.55 * k; g.fillStyle = '#FFF8E6'; if (z.tipo === 'col') g.fillRect(x + (w >> 1) - 1, y, 3, h); else g.fillRect(x, y + (h >> 1) - 1, w, 2);
     g.globalAlpha = 0.9 * k; for (let i = 0; i < (z.tipo === 'col' ? 10 : 26); i++) { const px = z.tipo === 'col' ? x + ((i * 7 + Math.floor(Tm * 30)) % w) : x + ((i * 37 + Math.floor(Tm * 40)) % w), py = z.tipo === 'col' ? y + ((i * 53 + Math.floor(Tm * 120)) % h) : y + ((i * 11 + Math.floor(Tm * 20)) % h); g.fillRect(px, py, 1, 2); }
     g.restore(); return;
+  }
+  const el = !z.amigo && !z.isca && G.chefe && ELEMENTO_DO_CHEFE[G.chefe.id];
+  if (el && (z.tipo === 'col' || z.tipo === 'faixa')) { /* a matéria do chefe: fogo sobe, raio risca, pedra cai */
+    const k = ativa ? 1 : clamp(1 - z.aviso / 0.9, 0, 1);
+    if (ativa) { if (zonaElemento(g, el, z, x, y, w, h, true, 1, Tm)) return; }
+    else { zonaElemento(g, el, z, x, y, w, h, false, k, Tm); c = corDoElemento(el) || c; } /* o aviso: pontilhado legível na cor do elemento, com os sinais dele no chão */
   }
   if (ativa) {
     g.fillStyle = z.tipo === 'poca' ? c : '#fff'; if (z.tipo === 'poca') { for (let i = 0; i < w; i++) g.fillRect(x + i, y + h - 3 - ((i + Math.floor(Tm * 6)) % 3 === 0 ? 1 : 0), 1, 4); g.fillStyle = '#fff'; for (let i = 2; i < w; i += 5) g.fillRect(x + i, y + h - 5 - ((i + Math.floor(Tm * 8)) % 4), 1, 1); return; }
