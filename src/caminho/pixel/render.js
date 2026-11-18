@@ -22,6 +22,7 @@ import { JESUS_LOOK } from '../getsemani.js';
 import { cultoAgora } from '../sinagoga.js';
 import { hora, periodo, luzDoDia } from '../moradores.js';
 import { pintarLuzSinagoga } from './salas.js';
+import { visualPortal, pintarConstrucao } from './construcoes.js';
 import { ELEMENTO_DO_CHEFE, zonaElemento, tiroElemento, corDoElemento, elementoAmigo } from './elementos.js';
 
 export const FONTE = '"Pixelify Sans", "Alegreya Sans", monospace';
@@ -119,6 +120,7 @@ function pintarObjeto(g, o, G, x, y, Tm) {
       if (o.porta) return true; // porta desenhada no próprio prédio
       const sem = o.semana ? TODAS.find(s => s.id === o.semana) : null, m = o.mundo ? MUNDO[o.mundo] : null;
       const c = o.tipo === 'saida' ? '#FFE9A8' : o.tipo === 'retorno' ? '#9DB9C7' : o.area ? '#B8E6A0' : m ? '#E58A6A' : ['#FFD23F', '#79D9CD', '#F1C96A', '#C79BFF'][TODAS.indexOf(sem) % 4];
+      pintarConstrucao(g, visualPortal(o), o, x, y, Tm, c); return true; // as passagens são construções do mundo
       const s = sprObj('portal', 38, 48, s => { for (let yy = 0; yy < 48; yy++) for (let xx = 0; xx < 38; xx++) { const d = yy < 19 ? Math.hypot(xx - 18.5, yy - 19) : Math.abs(xx - 18.5); if (d <= 18.5 && d > 12.5) s.px(xx, yy, xx < 8 ? PEDRA[3] : xx > 30 ? PEDRA[1] : (yy % 8 === 0 || (yy < 19 && (xx + yy) % 9 === 0)) ? PEDRA[0] : PEDRA[2]); } s.ret(0, 44, 7, 4, PEDRA[1]); s.ret(31, 44, 7, 4, PEDRA[1]); });
       // véu de luz dentro do arco, pontilhado e subindo
       const R = rampa(c); for (let yy = 0; yy < 46; yy++) for (let xx = -12; xx <= 12; xx++) { const dn = yy < 17 ? Math.hypot(xx, 17 - yy) : Math.abs(xx); if (dn > 12) continue; const k = yy / 46; if (pontilha(xx + 40, yy + Math.floor(Tm * 14), 0.9 - k * 0.65)) { g.fillStyle = k < 0.3 ? '#FFFFFF' : k < 0.6 ? c : mistura(c, '#101828', 0.5); g.fillRect(x + xx, y - 46 + yy, 1, 1); } }

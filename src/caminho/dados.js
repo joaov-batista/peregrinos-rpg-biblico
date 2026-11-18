@@ -318,7 +318,9 @@ export function areaDef(id) {
       { tipo: 'escrito', col: 9, lin: 9, txt: '"Exercita-te na piedade" (1Tm 4:7)' }, { tipo: 'placa', col: 8, txt: 'Clareira das provas: a arena, as ondas e, no fundo, a porta do Conselho.' }, { tipo: 'ave', col: 12, lin: 13 }, { tipo: 'ave', col: 24, lin: 11 }] },
     { papel: 'vila', nome: 'A clareira', tiles: terreno([]), objs: [
       planta(2, 'oliveira'), { tipo: 'portal', col: 6, area: 'treino', rotulo: 'Arena de treino' }, planta(10, 'cipreste'), { tipo: 'portal', col: 14, area: 'desafio', rotulo: 'Desafio das ondas' }, { tipo: 'fogueira', col: 17, luz: 150 }, planta(19, 'oliveira'),
-      { tipo: 'placa', col: 20, txt: 'O Conselho Zelote. Derrote os três para desbloquear novas missões e itens especiais.' }, { tipo: 'portal', col: 23, area: 'conselho', rotulo: 'O Conselho Zelote' }, planta(27, 'cipreste'), { tipo: 'ave', col: 16, lin: 13 }] }
+      { tipo: 'placa', col: 24, txt: 'Mata fechada adiante. Dizem que lá dentro, numa fortaleza velha, três homens esperam.' }, planta(27, 'cipreste'), { tipo: 'ave', col: 16, lin: 13 }] },
+    { papel: 'vila', nome: 'A mata funda', tiles: terreno([[12, 4, 7]]), objs: [
+      planta(2, 'cipreste'), planta(5, 'oliveira'), planta(9, 'cipreste'), planta(12, 'oliveira'), { tipo: 'portal', col: 18, area: 'conselho', rotulo: 'O Conselho Zelote' }, planta(24, 'cipreste'), planta(27, 'oliveira'), { tipo: 'ave', col: 7, lin: 11 }] }
   ] };
   if (id === 'getsemani') return { id, nome: 'Getsêmani', sub: 'A noite antes da cruz', tema: 'getsemani', seed: id, paz: true, aberto: true, floresta: true, planta: [
     { papel: 'inicio', nome: 'O lagar de azeite', tiles: ['............................'], objs: [

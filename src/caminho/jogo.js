@@ -1226,7 +1226,7 @@ export class Caminho {
       case 'lagar': return 'Olhar';
       case 'casa': return 'Bater à porta';
       case 'ebenezer': return 'Descansar';
-      case 'portal': return ob.oculto && !this.achou(ob) ? null : ob.porta ? ob.rotulo : 'Entrar';
+      case 'portal': return ob.oculto && !this.achou(ob) ? null : ob.porta ? ob.rotulo : ob.rotulo ? 'Entrar · ' + ob.rotulo : ob.mundo ? 'Abrir o túmulo' : ob.slot != null || ob.semana ? 'Ler a página' : 'Entrar';
       case 'saida': return 'Seguir caminho';
       case 'retorno': return ['treino', 'desafio', 'conselho'].includes(this.def.id) ? 'Voltar à clareira' : 'Voltar ao Refúgio';
       case 'querubim': case 'porta-pecado': return 'Olhar';
