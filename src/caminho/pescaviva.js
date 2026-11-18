@@ -82,6 +82,8 @@ export function passoPescaViva(G, dt) {
   if (S.redeCd > 0) S.redeCd -= dt;
   if (c.verso && G.cm.rede && S.est === 'livre' && !(S.redeCd > 0)) { S.rede = { est: 'voa', t: 0, x: p.x, y: p.y - 40, abre: 0, long: p.noBote ? 150 : 110 }; S.rede.x0 = p.x + p.face * (20 + S.rede.long); sfx('swing'); G.textoEm(p.x, p.y - 70, '"Lançai a rede"', '#C9D2E0', 11); return; }
   else if (c.verso && G.cm.rede && S.redeCd > 0 && S.est === 'livre') G.textoEm(p.x, p.y - 70, 'a rede ainda está molhada', '#C9D2E0', 10);
+  if (S.est !== 'livre' && S.est !== 'briga' && (c.pulo || c.interagir || Math.abs(c.mx || 0) > 0.6)) { S.est = 'livre'; S.sombras.forEach(s => s.alvo = false); sfx('dodge'); G.textoEm(p.x, p.y - 70, 'recolheu a linha', '#C9D2E0', 11); }
+  if (S.est === 'briga' && (c.pulo || c.interagir)) { S.est = 'livre'; S.seq = 0; if (S.som) S.som.alvo = false; G.textoEm(p.x, p.y - 80, 'soltou o peixe', '#C9D2E0', 11); }
   G.pescaTrava = S.est !== 'livre'; p.atk = null;
   const solto = !c.atkSeg, aperto = c.atk;
   switch (S.est) {
@@ -146,7 +148,7 @@ export function pintarPescaViva(g, G, X, Y, Tm, desenhaBote) {
   if (S) for (const s of S.sombras) { g.globalAlpha = 0.35; g.fillStyle = '#05141E'; const x = X(s.x), y = Y(s.y), w = Math.round(s.tam); g.fillRect(x - w, y, w * 2, Math.max(2, Math.round(w / 3))); g.fillRect(x + (s.vx > 0 ? -w - 2 : w), y, 2, 2); g.globalAlpha = 1; }
   if (p.noBote) desenhaBote(g, X(p.x), Y(p.y));
   if (!S || !G.naAgua) return;
-  const mx = X(p.x + p.face * 6), my = Y(p.y - 24), tx = X(p.x + p.face * 22), ty = Y(p.y - 44);
+  const sent = p.noBote ? 12 : 0, mx = X(p.x + p.face * 6), my = Y(p.y - 24 + sent), tx = X(p.x + p.face * 22), ty = Y(p.y - 44 + sent);
   g.fillStyle = '#6B4A2E'; for (let k = 0; k <= 10; k++) g.fillRect(Math.round(mx + (tx - mx) * k / 10), Math.round(my + (ty - my) * k / 10), 1, 1); // a vara
   if (S.est === 'forca') { const bx = X(p.x) - 10, by = Y(p.y - 70); g.fillStyle = '#17121f'; g.fillRect(bx - 1, by - 1, 22, 5); g.fillStyle = '#3A3448'; g.fillRect(bx, by, 20, 3); g.fillStyle = '#FFD86A'; g.fillRect(bx, by, Math.round(20 * S.f), 3); }
   if (['voo', 'espera', 'mordida', 'briga'].includes(S.est)) { const bx = X(S.bx), by = Y(S.by) + (S.est === 'mordida' ? 3 : Math.round(Math.sin(Tm * 3) * 0.8));

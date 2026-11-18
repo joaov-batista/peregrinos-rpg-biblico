@@ -481,6 +481,7 @@ export class Caminho {
   prenderCam() {
     const v = this.vista, vw = v.W / v.Z, vh = v.H / v.Z, N = this.N;
     let x0 = 0, x1 = N.w * T - vw;
+    if (this.area === 'refugio' && !(this.cm.visto?.tut != null && this.cm.visto.tut < PASSOS.length)) x0 = RX * CW * T; // depois do treino, a trilha fica para trás: a câmara não mostra o que fica além do portão
     if (this.luta && N.arena) { x0 = N.arena.x0 - T; x1 = N.arena.x1 + T - vw; if (x1 < x0) x0 = x1 = (x0 + x1) / 2; }
     if (x1 < x0) { x0 = x1 = (N.w * T - vw) / 2; }
     v.cam.x = clamp(v.cam.x, x0, x1); v.cam.y = clamp(v.cam.y, 0, Math.max(0, N.h * T - vh));

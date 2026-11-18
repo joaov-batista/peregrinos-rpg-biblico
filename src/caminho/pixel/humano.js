@@ -218,11 +218,15 @@ const POSES = {
   olha: r => ({ bob: 0, incl: 0, agacha: 4, joelho: true, pf: { x: 4, y: 0 }, pt: { x: -4, y: 0 }, mao: { x: 5, y: -14 }, ang: 1.4, lamp: null, cabX: 0, cabY: 0, respira: r }),
   dorme: r => ({ bob: 0, incl: 3, agacha: 7, joelho: true, pf: { x: 6, y: 0 }, pt: { x: -2, y: 0 }, mao: { x: 5, y: -9 }, ang: 1.6, lamp: null, cabX: 2, cabY: 3, respira: r }),
   anda: (r, f) => ({ bob: f % 2, incl: 1, agacha: 0, pf: { x: [4, 1, -2, 1][f], y: f === 1 ? -1 : 0 }, pt: { x: [-2, 1, 4, 1][f], y: f === 3 ? -1 : 0 }, mao: null, ang: 1.3, lamp: null, cabX: 0, cabY: 0, respira: 0 }),
+  // sentado no bote, remando: o tronco vai para a frente e para trás, os braços puxam o remo (4 quadros)
+  rema: (r, f) => ({ bob: 0, incl: [2, 1, -1, 1][f], agacha: 8, joelho: true, pf: { x: 7, y: 0 }, pt: { x: 0, y: 0 }, mao: { x: [10, 7, 3, 7][f], y: [-13, -12, -11, -12][f] }, ang: 1.5, lamp: null, cabX: [1, 0, -1, 0][f], cabY: 0, respira: 0 }),
+  // sentado no bote, pescando: a mão para a frente segurando a vara
+  pesca: r => ({ bob: 0, incl: 1, agacha: 8, joelho: true, pf: { x: 7, y: 0 }, pt: { x: 0, y: 0 }, mao: { x: 8, y: -16 }, ang: -0.4, lamp: null, cabX: 1, cabY: 0, respira: r }),
   mao: r => ({ bob: r, incl: 0, agacha: 0, pf: { x: 2, y: 0 }, pt: { x: -2, y: 0 }, mao: { x: 11, y: -18 }, ang: -0.2, lamp: null, cabX: 1, cabY: 0, respira: r })
 };
 export function quadroPessoa(look, Tm, chave, pose) {
   let e = npcs.get(chave); if (!e) npcs.set(chave, e = { s: new Sprite(48, 44), f: -1 });
-  const f = Math.floor(Tm * (pose === 'anda' ? 7 : pose === 'ora' || pose === 'dorme' ? 1.1 : 2.2) + (chave.length % 4)) % 4;
+  const f = Math.floor(Tm * (pose === 'anda' ? 7 : pose === 'rema' ? 4.5 : pose === 'ora' || pose === 'dorme' ? 1.1 : 2.2) + (chave.length % 4)) % 4;
   if (e.f !== f || e.pose !== pose) {
     e.f = f; e.pose = pose; const r = f >= 2 ? 1 : 0, C = CORPOS[look?.body] || CORPOS.medio;
     pintarHumano(e.s.limpa(), 24, 40, { look, cls: look?.cls, P: POSES[pose] ? POSES[pose](r, f) : { bob: r, incl: 0, agacha: 0, pf: { x: 2, y: 0 }, pt: { x: -2, y: 0 }, mao: null, ang: 1.2, lamp: null, cabX: 0, cabY: 0, respira: r }, semArma: true, semLampiao: true, t: Tm, capa: look?.cape && look.cape !== 'none' ? [0, 1, 2, 3, 4, 5].map(i => ({ x: -2 - i * 0.5 - (r && i > 2 ? 0.5 : 0), y: -C.q - C.t + 2 + i * 2.6 })) : null });

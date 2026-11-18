@@ -120,6 +120,7 @@ export function rotuloNovo(G, ob) {
   switch (ob.tipo) {
     case 'vela': return sar(G).velas[ob.id] ? null : 'Reacender (10 de azeite)';
     case 'presepio': return 'Ver o presépio: o nascimento de Jesus';
+    case 'portaoCidade': return G.def?.sitio ? 'Entrar no Refúgio' : 'Sair pelo portão: o sítio';
     case 'barco': return ob.volta ? 'Voltar ao Refúgio' : 'Embarcar para Sardes';
     case 'selado': return 'Olhar';
     case 'cenario': return ob.qual === 'quadro' ? 'Ler o quadro' : ob.qual === 'andares' ? 'Escada dos andares' : undefined;
@@ -130,6 +131,7 @@ export function rotuloNovo(G, ob) {
 export async function usarNovo(G, ob) {
   const p = G.p, cm = G.cm, c = G.char;
   if (ob.tipo === 'presepio') { await G.cinema('natal', true); return true; }
+  if (ob.tipo === 'portaoCidade') { if (!G.def?.sitio && G.cm.visto?.tut != null && G.cm.visto.tut < 11) { G.ui.toast('Primeiro o treino, na trilha a oeste.', 3000); return true; } sfx('gate'); if (G.def?.sitio) G.entrar('refugio', { borda: 'esquerda' }); else { const { sitioId } = await import('./sitio.js'); G.entrar(sitioId(G), { borda: 'direita' }); } return true; } // o portão leva de um lado ao outro
   if (await usarVida(G, ob)) return true;
   if (await usarLugar(G, ob)) return true;
   if (await usarSardesNovo(G, ob)) return true;

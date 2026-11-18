@@ -60,7 +60,7 @@ export const luzDaCena = G => G.cenaPraia && G.cenaPraia.modo === 'descansa' ? {
 // o peregrino sentado no banco: olhando o mar e, descansando, de olhos fechados (a cabeça pende devagar)
 export function pintarSentado(g, G, X, Y, Tm) {
   const C = G.cenaPraia, p = G.p, pose = C.modo === 'descansa' && C.mt > 13 ? 'dorme' : 'olha';
-  carimbar(g, quadroPessoa(G.char.look || {}, Tm, 'praia-eu', pose), X(p.x), Y(p.y) - 5, 24, 40, -1);
+  carimbar(g, quadroPessoa(G.char.look || {}, Tm, 'praia-eu', pose), X(p.x), Y(p.y) - 5, 24, 40, -1); /* olhando para o mar, à esquerda */
 }
 // por cima de tudo
 export function pintarPraia(g, G, X, Y, vw, vh, Tm) {

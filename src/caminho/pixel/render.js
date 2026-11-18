@@ -602,7 +602,7 @@ export function renderPixel(G) {
   // outros peregrinos (multijogador) e o herói
   for (const o of G.outros) pintarJogador(g, o.corpo, o.look, o.cls, o.arma, Tm, o.hab, X, Y, false, o.armaCor, o.armaRar);
   const aguaN = (p.nada || G.nado) && G.objs.find(o => o.tipo === 'aguaAberta');
-  if (G.cenaPraia) pintarSentado(g, G, X, Y, Tm); else if (!p.morto && aguaN) pintarNadando(g, G, p, aguaN, X, Y, Tm, vw); else if (!p.morto) pintarJogador(g, p, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab, X, Y, true, G.arma?.lamina, G.arma?.rar);
+  if (G.cenaPraia) pintarSentado(g, G, X, Y, Tm); else if (!p.morto && p.noBote) pintarNoBote(g, G, p, X, Y, Tm); else if (!p.morto && aguaN) pintarNadando(g, G, p, aguaN, X, Y, Tm, vw); else if (!p.morto) pintarJogador(g, p, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab, X, Y, true, G.arma?.lamina, G.arma?.rar);
   if (G.pomba) pintarPomba(g, G.pomba, X, Y, Tm);
   else if (G.mortoT > 1.2) { const s = quadroHeroi({ ...p, morto: true, atk: null }, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab); s.dissolve(clamp((1.9 - G.mortoT) / 0.7, 0, 1), 5); carimbar(g, s, X(p.x), Y(p.y), AX, AY, p.face); }
   pintarEfeitos(g, G.fxPx, cx, cy, false);
@@ -651,6 +651,20 @@ function pintarChicote(g, p, X, Y, dir, face, k, alc, cor) {
 // nadando: o corpo afunda até os ombros (o resto fica debaixo d'água), a cabeça sobe e desce com a onda, os braços
 // fazem braçadas alternadas por cima da água, a espuma se abre em volta e um rastro em V fica para trás quando ele avança.
 // Mergulhado (Leviatã), some de vez e só sobem bolhas.
+// no bote: o peregrino sentado (a cintura para baixo fica dentro do casco), remando quando anda e com a vara quando pesca;
+// o remo entra na água, puxa para trás e sai pingando; o bote balança e a água faz uma marola na proa
+function pintarNoBote(g, G, p, X, Y, Tm) {
+  const S = G.pesca, pescando = S && S.est !== 'livre', anda = Math.abs(p.vx) > 15 && !pescando, x = X(p.x), y = Y(p.y), bal = Math.round(Math.sin(Tm * 1.6) * 1), f = p.face;
+  const look = { ...(G.char.look || {}), cape: 'none' }, pose = pescando ? 'pesca' : anda ? 'rema' : 'olha', tempo = anda ? Tm * Math.min(2, Math.abs(p.vx) / 90) : Tm;
+  g.save(); g.beginPath(); g.rect(x - 40, y - 80, 80, 73 + bal); g.clip(); carimbar(g, quadroPessoa(look, tempo, 'bote-eu', pose), x - f * 4, y + 3 + bal, 24, 40, f); g.restore();
+  if (!pescando) { // o remo: o cabo na mão, a pá na água, girando com a remada
+    const fr = anda ? (tempo * 4.5) % 4 : 1, a = anda ? Math.sin(fr / 4 * Math.PI * 2) : 0.3, hx = x + f * Math.round(4 + a * 3), hy = y - 14 + bal, bx = hx - f * Math.round(10 + a * 8), by = y + 4 + bal - Math.round(Math.max(0, -a) * 4);
+    for (let i = 0; i <= 12; i++) { const u = i / 12; g.fillStyle = '#17121f'; g.fillRect(Math.round(hx + (bx - hx) * u) - 1, Math.round(hy + (by - hy) * u), 3, 2); }
+    for (let i = 0; i <= 12; i++) { const u = i / 12; g.fillStyle = '#8A5A36'; g.fillRect(Math.round(hx + (bx - hx) * u), Math.round(hy + (by - hy) * u), 1, 1); }
+    g.fillStyle = '#17121f'; g.fillRect(bx - 3, by - 1, 6, 5); g.fillStyle = '#9A6A3E'; g.fillRect(bx - 2, by, 4, 3);
+    if (anda && a < -0.2) { g.fillStyle = '#DFF6FA'; g.fillRect(bx - 4, y + 3, 2, 1); g.fillRect(bx + 3, y + 2, 2, 1); } } // o respingo da remada
+  if (anda) { g.fillStyle = '#DFF6FA'; g.globalAlpha = 0.7; for (let k = 1; k <= 4; k++) g.fillRect(x + f * (22 + k * 3), y + 1 + (k % 2), 2, 1); for (let k = 1; k <= 5; k++) g.fillRect(x - f * (22 + k * 5), y + 2, 3, 1); g.globalAlpha = 1; } // a marola e o rastro
+}
 function pintarNadando(g, G, p, A, X, Y, Tm, vw) {
   const look = G.char.look || {}, sup = Y(A.y) - 3, fora = Math.max(0, A.y - p.y), mergulho = p.mergulho > 0, bob = Math.round(Math.sin(Tm * 3.2) * 1.2), anda = Math.abs(p.vx) > 20;
   const afunda = mergulho ? 80 : Math.max(0, 30 - fora * 0.9) + bob * 2; // quanto mais alto o pulo, mais o corpo sai da água
