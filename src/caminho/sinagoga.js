@@ -12,12 +12,13 @@ import { hora, periodo, ganhar, bolsa } from './moradores.js';
 import { somarCoracoes } from './vida.js';
 import { falarHabacuque } from './corca.js';
 import { T, CW } from './nivel.js';
+import { MORADORES } from './dados.js';
 
 const rand = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
 // conta as noites: muda à meia-noite (o relógio começa às 7h)
 export const noiteN = G => Math.floor(((G.cm.relogio || 0) / 600 * 24 + 7) / 24);
 export const madrugada = G => hora(G) < 5;
-export const sinagoga = G => G.objs.find(o => o.tipo === 'cenario' && o.qual === 'sinagoga');
+export const sinagoga = G => G.area === 'sinagoga' ? (G.sinCentro = G.sinCentro || { x: 15 * T + 16, y: 16 * T, dentro: true }) : G.objs.find(o => o.tipo === 'cenario' && o.qual === 'sinagoga');
 export function cultoAgora(G) { const h = hora(G); for (const c of CULTOS) if (h >= c.vai && h < c.fim) return { c, fase: h < c.ini ? 'vai' : 'culto' }; return null; }
 
 // para onde a agenda manda cada morador agora: 'culto', 'vigilia', 'casa' (noite) ou nada (rotina do dia)
@@ -32,8 +33,9 @@ export function agendaDe(G, o) {
 // o lugar de cada um dentro da sinagoga (em fila, de frente para Jairo)
 export function lugarNaSinagoga(G, o) {
   const s = sinagoga(G); if (!s) return null;
-  const fila = G.objs.filter(q => q.tipo === 'morador' && !q.patrulha), i = Math.max(0, fila.indexOf(o)), n = fila.length;
-  return s.x + (i - (n - 1) / 2) * 34 + (i >= n / 2 ? 46 : -46); // deixa o meio livre para Jairo
+  if (!s.dentro) return s.x; // de fora: vai até a porta e entra
+  const fila = MORADORES, i = Math.max(0, fila.findIndex(q => q.id === o.id)), n = fila.length;
+  return s.x + (i - (n - 1) / 2) * 34 + (i >= n / 2 ? 70 : -70); // dentro: em fila, dos dois lados da bimá
 }
 // a ronda: de uma ponta à outra do trecho
 export function passoRonda(G, o, v, dt) {
@@ -63,11 +65,16 @@ export function passoSinagoga(G, dt) {
     else if (h > k.c.fim - 0.25 && S.fechou !== chave) { S.fechou = chave; G.fala(jairo, pick(LITURGIA.fecha)); }
   }
   // as vozes: quem está de joelhos fala baixo com Deus; de perto, dá para ouvir
-  const orando = G.objs.filter(o => o.vv?.estado === 'orando');
-  if (orando.length && Math.abs(G.p.x - s.x) < 620 && (S.vozT -= dt) <= 0) {
+  const orando = G.objs.filter(o => o.vv?.estado === 'orando'), dentroFora = !s.dentro && G.objs.filter(o => o.vv?.estado === 'dentro');
+  if (s.dentro && orando.length && (S.vozT -= dt) <= 0) {
     S.vozT = rand(2.6, 4.2); const o = pick(orando), lista = ORACOES[o.id] || ORACOES.qualquer, i = S.vez[o.id] = ((S.vez[o.id] ?? Math.floor(rand(0, lista.length))) + 1) % lista.length;
     G.textos.push({ x: o.vv.x, y: o.y - 62, txt: lista[i], cor: '#E8DEC4', tam: 11, t: 3.2, oracao: true });
   }
+  if (dentroFora && dentroFora.length && Math.abs(G.p.x - s.x) < 240 && (S.vozT -= dt) <= 0) { // de fora, junto à porta: ouve-se abafado
+    S.vozT = rand(4.5, 6.5); const o = pick(dentroFora), lista = ORACOES[o.id] || ORACOES.qualquer;
+    G.textos.push({ x: s.x, y: s.y - 150, txt: '(lá dentro) ' + pick(lista), cor: '#B8AE96', tam: 10, t: 3, oracao: true });
+  }
+  if (s.dentro) { passoInterior(G, dt); return; }
   // a feira da tarde
   const tarde = h >= 12 && h < 18.4, feirante = G.objs.find(o => o.id === 'feirante');
   if (tarde && !feirante) G.objs.push({ tipo: 'npc', id: 'feirante', nome: FEIRA.nome, look: FEIRA.look, daFeira: true, x: (1 * CW + 11) * T + 16, y: 16 * T });
@@ -75,8 +82,8 @@ export function passoSinagoga(G, dt) {
 }
 function tocar(G, n, aviso) { const S = G.sin; S.sinos = []; for (let i = 0; i < n; i++) S.sinos.push({ t: 0.4 + i * 1.5, i, n, aviso: i === 0 ? aviso : null }); }
 function badalar(G, s, b) {
-  const longe = Math.abs(G.p.x - s.x) > 900 || Math.abs(G.p.y - s.y) > 300; sfx(longe ? 'sinoLonge' : 'sino'); s.balanco = 1;
-  if (!longe) G.textos.push({ x: s.x + 150, y: s.y - 300, txt: b.n > 3 ? String(b.i + 1) : '♪', cor: '#FFE9A8', tam: 14, t: 1.4 });
+  const longe = !s.dentro && (Math.abs(G.p.x - s.x) > 900 || Math.abs(G.p.y - s.y) > 300); sfx(longe ? 'sinoLonge' : 'sino'); s.balanco = 1;
+  if (!longe && !s.dentro) G.textos.push({ x: s.x + 220, y: s.y - 330, txt: b.n > 3 ? String(b.i + 1) : '♪', cor: '#FFE9A8', tam: 14, t: 1.4 });
   if (b.aviso) G.textoEm(G.p.x, G.p.y - 110, '♪ ' + b.aviso, '#FFE9A8', 12); // a aldeia inteira ouve
   if (b.i === 0) for (const o of G.objs) if (o.vv && o.tipo === 'morador') { o.vv.emote = b.n > 3 ? '!' : '♪'; o.vv.emoteT = 1.8; }
 }
@@ -84,6 +91,7 @@ function badalar(G, s, b) {
 /* ---------------- conversar ---------------- */
 export async function falarSinagoga(G, ob) {
   if (ob.id === 'jairo') return jairo(G, ob);
+  if (ob.daSin) { const l = ORACOES[ob.id] || ORACOES.qualquer; await G.ui.dialog({ nome: ob.nome, look: ob.look, texto: (ob.vv?.estado === 'orando' ? '(De joelhos, sem abrir os olhos, ele faz sinal para você ficar.)\n\n' : '') + ' + pick(l) + ', acoes: [{ label: 'Ficar em silêncio' }] }); return true; }
   if (ob.id === 'habacuque') { await falarHabacuque(G, ob); return true; }
   if (ob.id === 'feirante') return feira(G, ob);
   if (ob.patrulha) {
@@ -136,4 +144,24 @@ export function venceuNoturno(G, e) {
   if (!e.noturno) return;
   G.textoEm(e.x, e.y - e.h - 30, e.noturno > 1 ? 'Sombra da madrugada vencida!' : 'Sombra da noite vencida!', '#C9A6FF', 13);
   if (Math.random() < (e.noturno > 1 ? 0.6 : 0.3)) G.achado({ comum: 40, rara: 45, epica: 15 }, false, true);
+}
+
+/* ---------------- por dentro: quem chega, ora e vai embora ---------------- */
+// quem deve estar lá dentro agora (pela agenda), entra pela porta e vai ao seu lugar; quem não deve mais, sai pela porta
+function passoInterior(G, dt) {
+  const porta = G.objs.find(o => o.tipo === 'portal' && o.porta), px = porta ? porta.x : 3 * T, S = G.sin;
+  const querem = MORADORES.filter(m => { const a = agendaDe(G, m); return a === 'culto' || a === 'vigilia'; }), ja = G.objs.filter(o => o.tipo === 'morador' && o.daSin);
+  for (const m of querem) if (!ja.some(o => o.id === m.id)) {
+    const lugar = lugarNaSinagoga(G, m), sentado = !S.montou; /* quem já estava lá quando você entrou: já de joelhos */
+    G.objs.push({ tipo: 'morador', daSin: true, id: m.id, nome: m.nome, look: m.look, x: lugar, y: 16 * T, vv: { x: sentado ? lugar : px, alvo: lugar, t: 0, estado: sentado ? 'orando' : 'indo', face: 1, emote: null, emoteT: 0 } });
+  }
+  S.montou = true;
+  for (const o of G.objs.filter(q => q.daSin)) {
+    const v = o.vv, fica = querem.some(m => m.id === o.id), alvo = fica ? lugarNaSinagoga(G, o) : px, d = alvo - v.x;
+    if (v.emoteT > 0) v.emoteT -= dt;
+    if (Math.abs(d) > 4) { v.estado = 'indo'; v.face = Math.sign(d); v.x += v.face * Math.min(Math.abs(d), 60 * dt); }
+    else if (fica) { if (v.estado !== 'orando') { v.estado = 'orando'; v.face = Math.sign(15 * T + 16 - v.x) || 1; } }
+    else o.foi = true;
+  }
+  if (G.objs.some(o => o.foi)) G.objs = G.objs.filter(o => !o.foi);
 }

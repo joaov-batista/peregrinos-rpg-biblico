@@ -185,7 +185,7 @@ const REFUGIO = [
   // e quem ora de madrugada. Os moradores vão até lá de verdade; de perto dá para ouvir o que cada um pede e agradece.
   { cx: 5, nome: 'Sinagoga', papel: 'vila', tiles: sala([13, 27, 28], [11, 25, 26], [9, 21, 23]), objs: [
     planta(2, 'cipreste'), { tipo: 'cenario', col: 14, qual: 'sinagoga' }, planta(27, 'cipreste'), { tipo: 'vaso', col: 25 },
-    { tipo: 'npc', col: 14, id: 'jairo', nome: 'Jairo, chefe da sinagoga', look: { skin: '#C68B59', hair: '#3A2314', tunic: '#E3DED2', cape: '#2F4A7A', style: 'turbante', beard: true } },
+    { tipo: 'portal', col: 14, area: 'sinagoga', porta: true, rotulo: 'Entrar na sinagoga' },
     { tipo: 'npc', col: 22, lin: 9, id: 'habacuque', nome: 'Habacuque, o vigia', look: { skin: '#B07A4E', hair: '#D9D2C5', tunic: '#5A5A7A', cape: '#8A6A44', style: 'longo', beard: true } },
     { tipo: 'ave', col: 6, lin: 12 }] },
   // o olival: figos, sombra e a caravana que às vezes traz algo raro
@@ -241,10 +241,17 @@ const SARDES = [
 ];
 SARDES.forEach((c, i) => c.objs.forEach(o => { if (o.tipo === 'vela') o.id = 'v' + i + '_' + o.col; }));
 
+// os moradores do Refúgio (para a sinagoga por dentro saber quem é quem)
+export const MORADORES = REFUGIO.flatMap(c => c.objs.filter(o => o.tipo === 'morador' && !o.patrulha));
 export function semanaDe(id) { return TODAS.find(s => s.id === id); }
 
 // Descrição de uma área para o gerador de níveis. ids: "refugio", "semana-01:3", "mundo:golias"
 export function areaDef(id) {
+  // a sinagoga por dentro: a nave, a arca, a bimá; Jairo conduz as orações e quem veio orar fica de joelhos
+  if (id === 'sinagoga') return { id, nome: 'Sinagoga do Refúgio', sub: 'Casa de oração', tema: 'refugio', seed: id, paz: true, interior: true, planta: [
+    { papel: 'inicio', nome: 'A nave', deco: 'sinagoga', tiles: sala(), objs: [
+      { tipo: 'portal', col: 3, area: 'refugio', porta: true, rotulo: 'Sair da sinagoga' },
+      { tipo: 'npc', col: 15, id: 'jairo', nome: 'Jairo, chefe da sinagoga', look: { skin: '#C68B59', hair: '#3A2314', tunic: '#E3DED2', cape: '#2F4A7A', style: 'turbante', beard: true } }] }] };
   if (id === 'refugio') return { id, nome: 'Refúgio', sub: 'A última aldeia acesa', tema: 'refugio', planta: REFUGIO, seed: 'refugio', paz: true, aberto: true };
   if (id === 'treino') return { id, nome: 'Arena de treino', sub: 'Ferro com ferro se afia (Pv 27:17)', tema: 'ela', seed: id, extra: true, pvp: true,
     planta: [{ papel: 'inicio', tiles: ['....====............====....', '............................', '..........========..........', '............................', '............................'] }] };

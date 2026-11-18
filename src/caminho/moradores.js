@@ -30,6 +30,7 @@ const marcaCoracoes = n => '♥'.repeat(Math.min(10, n)) + '♡'.repeat(Math.max
 /* ---------------- a cada quadro ---------------- */
 export function passoVida(G, dt) {
   G.cm.relogio = (G.cm.relogio || 0) + dt;
+  if (G.area === 'sinagoga') { passoSinagoga(G, dt); return; }
   if (G.area !== 'refugio') return;
   passoSinagoga(G, dt);
   const p = G.p, gente = G.objs.filter(o => o.tipo === 'morador');
@@ -43,9 +44,9 @@ export function passoVida(G, dt) {
     if (ag === 'culto' || ag === 'vigilia') { const lugar = lugarNaSinagoga(G, o); if (lugar != null) {
       v.papo = null; const d = lugar - v.x;
       if (Math.abs(d) > 5) { v.estado = 'indo'; v.face = Math.sign(d); v.x += v.face * Math.min(Math.abs(d), (longe ? 600 : 70) * dt); }
-      else if (v.estado !== 'orando') { v.estado = 'orando'; v.face = Math.sign((G.objs.find(q => q.qual === 'sinagoga')?.x ?? v.x) - v.x) || 1; }
+      else if (v.estado !== 'dentro') { v.estado = 'dentro'; } /* entrou na sinagoga: de fora não se vê mais; lá dentro, está de joelhos */
       continue; } }
-    if (v.estado === 'orando') { v.estado = 'parado'; v.t = rand(0.5, 2); v.emote = '☀'; v.emoteT = 1.5; }
+    if (v.estado === 'orando' || v.estado === 'dentro') { v.estado = 'parado'; v.t = rand(0.5, 2); v.emote = '☀'; v.emoteT = 1.5; }
     // longe de casa (voltando do culto): volta direto
     if (v.estado !== 'indo' && Math.abs(v.x - o.x) > raio * 2 + 40 && ag !== 'casa') { v.alvo = o.x + rand(-raio, raio) * 0.5; v.estado = 'indo'; }
     // à noite, quem tem casa vai para a porta e cochila ali; de manhã, sai
@@ -75,7 +76,7 @@ export function passoVida(G, dt) {
 
 /* ---------------- conversar, dar presente, pedido ---------------- */
 export async function falarMorador(G, ob) {
-  if (G.area === 'refugio' && await falarSinagoga(G, ob)) return true;
+  if ((G.area === 'refugio' || G.area === 'sinagoga') && await falarSinagoga(G, ob)) return true;
   const id = ob.id, g = GENTE[id], V = VILA[id]; if (!g || G.area !== 'refugio') return false;
   const a = laco(G, id), d = dia(G), n = G.cm.falas[id] = (G.cm.falas[id] || 0) + 1, nome = (V?.nome || ob.nome) + '  ' + marcaCoracoes(coracoes(G, id));
   if (ob.vv) { ob.vv.estado = 'acena'; ob.vv.t = 3; ob.vv.face = Math.sign(G.p.x - ob.vv.x) || 1; }

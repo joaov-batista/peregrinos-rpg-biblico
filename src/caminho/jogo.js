@@ -1209,14 +1209,14 @@ export class Caminho {
       case 'rolo': return ob.feito ? 'Reler o rolo' : ob.trava > this.T || !this.roloLivre(ob) ? null : 'Ler o rolo';
       case 'estacao': return ob.feito ? null : ob.dados.nome;
       case 'npc': return 'Falar';
-      case 'morador': return ob.nome ? 'Falar' : null;
+      case 'morador': return ob.nome && ob.vv?.estado !== 'dentro' ? 'Falar' : null;
       case 'jesus': return this.cena || this.cm.getsemani ? null : 'Aproximar-se';
       case 'discipulo': return this.cena ? null : 'Olhar';
       case 'biblia': return 'Ler';
       case 'lagar': return 'Olhar';
       case 'casa': return 'Bater à porta';
       case 'ebenezer': return 'Descansar';
-      case 'portal': return ob.oculto && !this.achou(ob) ? null : 'Entrar';
+      case 'portal': return ob.oculto && !this.achou(ob) ? null : ob.porta ? ob.rotulo : 'Entrar';
       case 'saida': return 'Seguir caminho';
       case 'retorno': return ['treino', 'desafio', 'conselho'].includes(this.def.id) ? 'Voltar à clareira' : 'Voltar ao Refúgio';
       case 'querubim': case 'porta-pecado': return 'Olhar';
@@ -1271,6 +1271,7 @@ export class Caminho {
         if (ob.area === 'getsemani') await this.ui.dialog({ nome: ob.rotulo, texto: this.cm.getsemani ? 'O caminho entre as oliveiras, de volta ao jardim onde ele orou.' : 'A lâmpada mostrou um vão entre duas oliveiras velhas, tão velhas que parecem de outro tempo.\n\nDo outro lado, um cheiro de azeite e de terra molhada. E uma voz, muito baixa, orando.', acoes: [{ label: 'Atravessar', fn: () => this.entrar('getsemani') }, { label: 'Agora não' }], voz: false });
         else if (ob.area === 'floresta' && this.area === 'getsemani') await this.ui.dialog({ nome: ob.rotulo, texto: 'O caminho de volta à floresta escura, e ao seu tempo.', acoes: [{ label: 'Voltar', fn: () => this.entrar('floresta', { portal: 'getsemani' }) }, { label: 'Ficar mais um pouco' }], voz: false });
         else if (ob.area === 'floresta') await this.ui.dialog({ nome: ob.rotulo, texto: 'Entre as últimas oliveiras, a luz mostrou uma trilha que ninguém mais vê. Do outro lado, uma floresta escura, e lá no fundo, dizem, um jardim guardado por um querubim e uma porta que respira.\n\nSem a lâmpada erguida, ali não se enxerga o chão.', acoes: [{ label: 'Seguir a trilha', fn: () => this.entrar('floresta') }, { label: 'Agora não' }] });
+        else if (ob.porta) { sfx('gate'); this.entrar(ob.area, { portal: this.area }); } /* portas de casa (a sinagoga): entra e sai sem perguntar */
         else if (ob.area === 'refugio' && this.area === 'clareira') this.entrar('refugio', { portal: 'clareira' });
         else if (ob.area === 'clareira') await this.ui.dialog({ nome: ob.rotulo, texto: 'Atrás do pátio a aldeia acaba e começa a mata. Uma trilha de terra batida entra entre as oliveiras.\n\nLá dentro há uma clareira: a arena de treino, o desafio das ondas e, no fundo, uma porta de ferro guardada pelos zelotes.', acoes: [{ label: 'Seguir a trilha', fn: () => this.entrar('clareira') }, { label: 'Agora não' }], voz: false });
         else if (ob.area === 'refugio') { const falta = cm.visto.tut != null && cm.visto.tut < PASSOS.length;
