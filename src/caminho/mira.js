@@ -33,7 +33,8 @@ export function contextoMira(G) {
 // para onde o peregrino aponta: dedo arrastado no botão, analógico direito, mouse, direcional — ou para a frente
 export function anguloMira(G, input) {
   const p = G.p, a = input.arrasto;
-  if (a && Math.hypot(a.x, a.y) > 16) return Math.atan2(a.y, a.x); // o botão fica perto da borda: pouco arrasto já basta
+  if (a && Math.hypot(a.x, a.y) > 12) return Math.atan2(a.y, a.x); // o botão fica perto da borda: pouco arrasto já basta
+  if (a && a.fx != null) return Math.atan2(a.fy, a.fx); // o dedo voltou um pouco antes de soltar: vale a última direção firme
   if (input.padAim != null) return input.padAim;
   if (input.mouseAim && !input.touch && !document.body.classList.contains('pad')) {
     const r = G.cv.getBoundingClientRect(), v = G.vista, wx = v.cam.x + (input.mx - r.left) / r.width * (v.W / v.Z), wy = v.cam.y + (input.my - r.top) / r.height * (v.H / v.Z);

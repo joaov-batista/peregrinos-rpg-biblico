@@ -34,6 +34,7 @@ export function passoTempo(G, dt) {
   const alvo = !fora ? 0 : { sol: 0, nublado: 0.12, garoa: 0.32, chuva: 0.7, tempestade: 1, neve: 0 }[t] + (G.levi ? 0.3 : 0);
   G.chuvaK = (G.chuvaK || 0) + (alvo - (G.chuvaK || 0)) * Math.min(1, dt * 0.5);
   G.neveK = (G.neveK || 0) + ((fora && t === 'neve' ? 1 : 0) - (G.neveK || 0)) * Math.min(1, dt * 0.5);
+  if (!fora) { G.chuvaK = 0; G.neveK = 0; G.raioT = 0; } // debaixo de um teto não chove (nem neva)
   somDaChuva(G.chuvaK > 0.05 ? G.chuvaK : 0);
   // a música fica mais mansa enquanto chove (no Refúgio, no sítio e em Sardes)
   const mansa = G.chuvaK > 0.45 && !G.levi && !G.luta && !G.cenaPraia && G.def?.paz;
@@ -133,6 +134,7 @@ export function pintarChaoDoTempo(g, G, vw, vh, cx, cy, Tm) {
 
 /* ---------------- por cima de tudo: gotas, neve caindo, névoa, raio ---------------- */
 export function pintarTempo(g, G, vw, vh, cx, Tm, cy = 0) {
+  if (!aoArLivre(G)) return;
   const k = G.chuvaK || 0, nk = G.neveK || 0;
   if (k > 0.02) {
     g.fillStyle = '#1A2230'; g.globalAlpha = Math.min(0.32, k * 0.28); g.fillRect(0, 0, vw, vh); // o dia fica cinza-azulado, de lembrança
