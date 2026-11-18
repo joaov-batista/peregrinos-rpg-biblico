@@ -20,7 +20,8 @@ import { cenaPixel, pintarFundoPixel, pintarSalasPixel, pintarBlocosPixel, pinta
 import { pintarEfeitos } from './efeitos.js';
 import { JESUS_LOOK } from '../getsemani.js';
 import { cultoAgora } from '../sinagoga.js';
-import { hora, periodo } from '../moradores.js';
+import { hora, periodo, luzDoDia } from '../moradores.js';
+import { pintarLuzSinagoga } from './salas.js';
 import { ELEMENTO_DO_CHEFE, zonaElemento, tiroElemento, corDoElemento, elementoAmigo } from './elementos.js';
 
 export const FONTE = '"Pixelify Sans", "Alegreya Sans", monospace';
@@ -55,6 +56,23 @@ function pintarAgua(g, o, G, x, y, Tm) {
 function pintarObjeto(g, o, G, x, y, Tm) {
   const tm = G.tm;
   switch (o.tipo) {
+    case 'amendoeira': { // a árvore grande de copa florida (rosa e branca; no porto, verde com flores amarelas), com pétalas caindo
+      const v = !!o.verde, s = sprObj('amendoeira' + (v ? 'v' : ''), 130, 112, s => {
+        const T2 = rampa(v ? '#6B4A2E' : '#5A3A2A'), F = v ? ['#2E6A3A', '#3F8A3A', '#6FB84A', '#A8D86A', '#F2E27A'].map(cor) : ['#9A3A6A', '#C85A8A', '#E88AAE', '#F4B8CE', '#FFF0F4'].map(cor);
+        s.ret(60, 60, 10, 52, T2[1]); s.ret(62, 60, 3, 52, T2[3]); s.linha(64, 70, 34, 44, 5, T2[1]); s.linha(66, 66, 96, 40, 4, T2[1]); s.linha(64, 84, 46, 70, 3, T2[2]); s.ret(52, 106, 26, 6, T2[1]);
+        for (let i = 0; i < 46; i++) { const a = (i * 137.5) * Math.PI / 180, r = 8 + (i % 9) * 5.4, cx = 65 + Math.cos(a) * r * 1.35, cy = 40 + Math.sin(a) * r * 0.75, R = 9 + (i % 4) * 2; s.bola(cx, cy, R, R * 0.8, F, 0.4, -0.7); }
+        for (let i = 0; i < 70; i++) s.px(10 + (i * 53) % 110, 6 + (i * 29) % 64, F[4]); });
+      carimbar(g, s, x, y, 65, 111);
+      g.fillStyle = o.verde ? '#F2E27A' : '#F4B8CE'; for (let i = 0; i < 10; i++) { const t = (Tm * 0.18 + i / 10) % 1, px = x - 50 + ((i * 37) % 100) + Math.sin(Tm * 2 + i) * 6 + t * 20, py = y - 70 + t * 70; g.fillRect(Math.round(px), Math.round(py), 2, 1); }
+      return true; }
+    case 'banco': { const s = sprObj('banco', 30, 14, s => { const M = rampa('#7A4E2E'); s.ret(1, 4, 28, 3, M[3]); s.ret(1, 4, 28, 1, M[4]); s.ret(2, 0, 26, 3, M[2]); s.ret(3, 7, 3, 7, M[1]); s.ret(24, 7, 3, 7, M[1]); s.ret(1, 7, 28, 1, M[0]); }); carimbar(g, s, x, y, 15, 13); return true; }
+    case 'lampiao': { g.fillStyle = '#17121f'; g.fillRect(x - 2, y - 44, 4, 44); g.fillStyle = '#3A3A4A'; g.fillRect(x - 1, y - 44, 2, 44); g.fillRect(x - 5, y - 2, 10, 2); g.fillStyle = '#17121f'; g.fillRect(x - 5, y - 56, 10, 12); g.fillStyle = '#FFD98A'; g.fillRect(x - 4, y - 54, 8, 9); g.fillStyle = '#FFF4C8'; g.fillRect(x - 1, y - 52, 2, 5); g.fillStyle = '#2A2A3A'; g.fillRect(x - 6, y - 58, 12, 3); g.globalAlpha = 0.12; g.fillStyle = '#FFD98A'; g.fillRect(x - 18, y - 66, 36, 30); g.globalAlpha = 1; return true; }
+    case 'fogueira': { // pedras em roda, lenha cruzada, chamas que dançam, faíscas que sobem e dois troncos para sentar
+      const s = sprObj('fogueira', 64, 16, s => { const P2 = rampa('#8E8A98'), M = rampa('#6B4A2E'); for (let i = 0; i < 9; i++) s.bola(18 + i * 3.5, 12 + Math.abs(i - 4) * -0.4, 2.5, 2, P2); s.linha(22, 13, 42, 7, 3, M[1]); s.linha(22, 7, 42, 13, 3, M[2]); s.ret(0, 9, 12, 6, M[2]); s.ret(0, 9, 12, 1, M[4]); s.bola(11, 12, 2, 3, rampa('#C9A06A')); s.ret(52, 9, 12, 6, M[2]); s.ret(52, 9, 12, 1, M[4]); s.bola(52, 12, 2, 3, rampa('#C9A06A')); });
+      carimbar(g, s, x, y, 32, 15);
+      const f = Math.floor(Tm * 10); for (let i = -2; i <= 2; i++) { const h = 10 + ((f + i * 3) % 4) * 2 - Math.abs(i) * 3; g.fillStyle = '#E2463C'; g.fillRect(x + i * 2 - 1, y - 6 - h, 3, h); g.fillStyle = '#FF9A3C'; g.fillRect(x + i * 2, y - 6 - h * 0.8, 2, h * 0.8); g.fillStyle = '#FFE08A'; if (Math.abs(i) < 2) g.fillRect(x + i * 2, y - 6 - h * 0.5, 1, h * 0.5); }
+      g.fillStyle = '#FFD86A'; for (let i = 0; i < 5; i++) { const t = (Tm * 0.8 + i / 5) % 1; g.fillRect(Math.round(x - 4 + ((i * 7) % 9) + Math.sin(Tm * 4 + i) * 3), Math.round(y - 16 - t * 30), 1, 1); }
+      g.globalAlpha = 0.14; g.fillStyle = '#FF9A3C'; g.fillRect(x - 30, y - 28, 60, 28); g.globalAlpha = 1; return true; }
     case 'vaso': { const s = sprObj('vaso' + (o.quebrado ? 'q' : ''), 14, 16, s => { if (o.quebrado) { s.ret(2, 13, 4, 2, BARRO[1]); s.ret(8, 14, 3, 1, BARRO[2]); s.px(6, 14, BARRO[0]); return; } s.bola(7, 9, 5, 5.5, BARRO); s.ret(4, 2, 6, 2, BARRO[3]); s.ret(5, 4, 4, 1, BARRO[1]); s.ret(3, 8, 8, 1, BARRO[0]); for (let i = 3; i < 11; i += 2) s.px(i, 9, BARRO[4]); }); carimbar(g, s, x, y, 7, 15); return true; }
     case 'rolo': { const s = sprObj('rolo' + (o.feito ? 'f' : ''), 26, 30, s => { s.ret(11, 14, 4, 13, MADEIRA[1]); s.ret(12, 14, 1, 13, MADEIRA[3]); s.ret(7, 26, 12, 2, MADEIRA[2]); s.ret(7, 26, 12, 1, MADEIRA[3]); s.poli([[3, 12], [22, 8], [23, 11], [4, 15]], MADEIRA[2]);
       const P = o.feito ? rampa('#FFF1C4') : PAPEL; s.poli([[5, 6], [20, 2], [21, 8], [6, 12]], P[2]); s.linha(5, 6, 20, 2, 1, P[4]); for (let k = 0; k < 3; k++) s.linha(8, 8 + k * 2 - 1, 17 - k * 2, 5 + k * 2 - 1, 1, MADEIRA[0]); s.bola(4, 9, 2.2, 3.2, MADEIRA); s.bola(21, 5, 2.2, 3.2, MADEIRA); }); carimbar(g, s, x, y, 13, 28);
@@ -191,26 +209,42 @@ function pintarObjeto(g, o, G, x, y, Tm) {
         g.fillStyle = '#E2463C'; g.fillRect(x - 8, y - 22, 4, 4); g.fillStyle = '#D9A63C'; g.fillRect(x + 6, y - 18, 4, 4); }
       else if (q === 'quadro') { g.fillStyle = '#17121f'; g.fillRect(x - 20, y - 46, 40, 30); g.fillRect(x - 17, y - 16, 3, 16); g.fillRect(x + 14, y - 16, 3, 16); g.fillStyle = '#6B4A2E'; g.fillRect(x - 19, y - 45, 38, 28);
         g.fillStyle = '#E8D9B0'; g.fillRect(x - 15, y - 41, 12, 9); g.fillRect(x + 1, y - 42, 13, 10); g.fillRect(x - 9, y - 29, 14, 9); g.fillStyle = '#8A6A44'; for (const [px, py] of [[-13, -38], [3, -39], [-7, -26]]) g.fillRect(x + px, y + py, 8, 1); g.fillStyle = '#B8423A'; g.fillRect(x - 10, y - 42, 2, 2); g.fillRect(x + 7, y - 43, 2, 2); }
-      else if (q === 'sinagoga') { // a casa de oração vista de fora: fachada de pedra, escadaria, porta em arco (aberta e acesa no culto), janelas altas, frontão e a torre do sino
-        const k = cultoAgora(G), noite = periodo(G) === 'noite', acesa = !!k || noite, Wd = 150, H = 118, R = (a, b, w, h, c) => { g.fillStyle = c; g.fillRect(a, b, w, h); };
-        const PD = ['#4A3E30', '#6E604C', '#8A7A62', '#A8956E', '#C9B88A'];
-        R(x - Wd - 2, y - H - 2, Wd * 2 + 4, H + 2, '#17121f'); R(x - Wd, y - H, Wd * 2, H, PD[2]);
-        g.fillStyle = PD[1]; for (let r = 6; r < H; r += 7) { g.fillRect(x - Wd, y - H + r, Wd * 2, 1); for (let c = ((r / 7) % 2) * 9; c < Wd * 2; c += 18) g.fillRect(x - Wd + c, y - H + r - 6, 1, 6); }
-        for (const px of [-Wd, -96, 84, Wd - 12]) { R(px + x - 1, y - H, 14, H, '#17121f'); R(px + x, y - H, 12, H, PD[3]); R(px + x, y - H, 3, H, PD[4]); R(px + x + 9, y - H, 3, H, PD[1]); R(px + x - 2, y - H, 16, 5, PD[4]); R(px + x - 2, y - 10, 16, 4, PD[1]); }
-        for (const wx of [-74, -46, 34, 62]) { R(x + wx - 1, y - 96, 14, 50, '#17121f'); R(x + wx, y - 88, 12, 41, acesa ? '#F2C46A' : '#26304A'); for (let a = 0; a < 6; a++) R(x + wx + 6 - Math.round(Math.sqrt(36 - (6 - a) ** 2)), y - 94 + a, Math.round(Math.sqrt(36 - (6 - a) ** 2)) * 2, 1, acesa ? '#F2C46A' : '#26304A'); R(x + wx + 5, y - 94, 2, 47, '#17121f'); R(x + wx, y - 70, 12, 1, '#17121f'); if (acesa) R(x + wx + 2, y - 86, 2, 30, '#FFE9A8'); }
-        const dw = 22, dh = 66; R(x - dw - 3, y - dh - 3, dw * 2 + 6, dh + 3, '#17121f'); for (let a = 0; a <= dw; a++) { const lg = Math.round(Math.sqrt(dw * dw - (dw - a) ** 2)); R(x - lg - 3, y - dh - dw + a - 3, lg * 2 + 6, 1, '#17121f'); R(x - lg - 1, y - dh - dw + a - 1, lg * 2 + 2, 1, PD[4]); }
-        if (k) { R(x - dw, y - dh, dw * 2, dh, '#F2C46A'); for (let a = 0; a <= dw - 2; a++) { const lg = Math.round(Math.sqrt((dw - 2) ** 2 - (dw - 2 - a) ** 2)); R(x - lg, y - dh - dw + 2 + a, lg * 2, 1, '#F2C46A'); } R(x - dw, y - dh, 5, dh, '#6B4A2E'); R(x + dw - 5, y - dh, 5, dh, '#6B4A2E'); R(x - 4, y - dh + 8, 8, dh - 8, '#FFE9A8'); g.globalAlpha = 0.18; R(x - 36, y - 6, 72, 6, '#FFE9A8'); g.globalAlpha = 1; }
-        else { R(x - dw, y - dh, dw * 2, dh, '#5A3E28'); for (let a = 0; a <= dw - 2; a++) { const lg = Math.round(Math.sqrt((dw - 2) ** 2 - (dw - 2 - a) ** 2)); R(x - lg, y - dh - dw + 2 + a, lg * 2, 1, '#5A3E28'); } R(x - 1, y - dh - dw + 2, 2, dh + dw - 2, '#2A1C12'); g.fillStyle = '#C9A63C'; for (let r = 0; r < 5; r++) for (const c of [-14, -6, 6, 14]) g.fillRect(x + c, y - dh + 6 + r * 12, 2, 2); R(x - 6, y - 34, 3, 3, '#E8C873'); R(x + 3, y - 34, 3, 3, '#E8C873'); }
-        for (const lx of [-34, 34]) { R(x + lx - 1, y - 58, 3, 8, '#2A2A3A'); R(x + lx - 3, y - 66, 7, 8, '#17121f'); R(x + lx - 2, y - 65, 5, 6, acesa ? '#FFD98A' : '#3A3A4A'); }
-        R(x - Wd - 12, y - H - 12, Wd * 2 + 24, 12, '#17121f'); R(x - Wd - 10, y - H - 11, Wd * 2 + 20, 9, PD[4]); R(x - Wd - 10, y - H - 4, Wd * 2 + 20, 2, PD[1]);
-        g.fillStyle = '#17121f'; g.beginPath(); g.moveTo(x - 80, y - H - 11); g.lineTo(x, y - H - 50); g.lineTo(x + 80, y - H - 11); g.fill(); g.fillStyle = PD[3]; g.beginPath(); g.moveTo(x - 74, y - H - 12); g.lineTo(x, y - H - 46); g.lineTo(x + 74, y - H - 12); g.fill();
-        g.fillStyle = '#C9A63C'; g.fillRect(x - 1, y - H - 32, 3, 16); g.fillRect(x - 9, y - H - 34, 19, 2); for (let i2 = 0; i2 < 7; i2++) g.fillRect(x - 8 + i2 * 3 - (i2 > 3 ? 1 : 0), y - H - 38, 1, 4);
-        R(x - 60, y - 6, 120, 6, PD[1]); R(x - 52, y - 4, 104, 4, PD[3]); R(x - 44, y - 2, 88, 2, PD[4]); // a escadaria
-        const tx = x + Wd - 40, ty = y - H - 70; R(tx - 1, ty - 22, 42, 92, '#17121f'); R(tx, ty - 20, 40, 90, PD[2]); g.fillStyle = PD[1]; for (let r = ty - 14; r < ty + 70; r += 7) g.fillRect(tx, r, 40, 1);
-        g.fillStyle = '#17121f'; g.beginPath(); g.moveTo(tx - 6, ty - 20); g.lineTo(tx + 20, ty - 48); g.lineTo(tx + 46, ty - 20); g.fill(); g.fillStyle = '#7A4A36'; g.beginPath(); g.moveTo(tx - 3, ty - 21); g.lineTo(tx + 20, ty - 45); g.lineTo(tx + 43, ty - 21); g.fill();
-        R(tx + 8, ty - 12, 24, 30, '#1E2232'); for (let a = 0; a <= 12; a++) { const lg = Math.round(Math.sqrt(144 - (12 - a) ** 2)); R(tx + 20 - lg, ty - 24 + a, lg * 2, 1, '#1E2232'); }
-        const bal = Math.round(Math.sin(G.T * 7) * (o.balanco || 0) * 4); R(tx + 8, ty - 14, 24, 2, '#6B4A2E'); R(tx + 12 + bal, ty - 10, 16, 17, '#17121f'); R(tx + 13 + bal, ty - 9, 14, 15, '#D9A63C'); R(tx + 11 + bal, ty + 4, 18, 3, '#D9A63C'); R(tx + 14 + bal, ty - 8, 2, 10, '#FFE08A'); R(tx + 19 + bal * 2, ty + 7, 2, 3, '#5A3A0C');
-        if (o.balanco > 0.05) { g.globalAlpha = o.balanco * 0.7; g.fillStyle = '#FFE9A8'; for (const [dx, dy] of [[-8, -6], [44, -6], [-12, 4], [48, 4], [-8, 14], [44, 14]]) g.fillRect(tx + dx, ty + dy, 5, 1); g.globalAlpha = 1; } }
+      else if (q === 'sinagoga') { // a casa de oração por fora: pedra clara, telhados de terracota, volumes que se encaixam, porta de madeira em arco, rosácea, janelas redondas, a torre do sino e a mureta com grades e arbustos
+        const k = cultoAgora(G), acesa = !!k || periodo(G) === 'noite', R = (a, b, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(a), Math.round(b), Math.round(w), Math.round(h)); };
+        const PD = ['#5E5448', '#9A8E7E', '#BFB3A2', '#D8CFC0', '#EDE6DA'], TE = ['#6A2A1E', '#9A3E2A', '#C0563A', '#E07A50'], MA = ['#3A2416', '#5A3A22', '#7A4E2E', '#9A6A3E'], TI = '#2A2018', VJ = acesa ? '#F2C46A' : '#3A3448', VJ2 = acesa ? '#FFE9A8' : '#4A4458';
+        const tri = (xa, ya, xb, yb, xc, yc, c) => { g.fillStyle = c; g.beginPath(); g.moveTo(xa, ya); g.lineTo(xb, yb); g.lineTo(xc, yc); g.closePath(); g.fill(); };
+        const parede = (a, b, w, h) => { R(a - 1, b - 1, w + 2, h + 1, TI); R(a, b, w, h, PD[3]); R(a + w - 4, b, 4, h, PD[2]); g.fillStyle = PD[2]; for (let r = 7; r < h; r += 8) for (let c = ((r / 8) % 2) * 6; c < w - 4; c += 12) g.fillRect(a + c, b + r, 5, 1); R(a, b, w, 2, PD[4]); R(a, b + h - 4, w, 4, PD[1]); };
+        const ogiva = (cx2, top, w, h, cv, cv2) => { R(cx2 - w / 2 - 2, top + w / 2, w + 4, h - w / 2 + 2, TI); for (let a = 0; a <= w / 2 + 2; a++) { const lg = Math.round(Math.sqrt((w / 2 + 2) ** 2 - (w / 2 + 2 - a) ** 2)); R(cx2 - lg, top - 2 + a, lg * 2, 1, TI); }
+          R(cx2 - w / 2, top + w / 2, w, h - w / 2, cv); for (let a = 0; a <= w / 2; a++) { const lg = Math.round(Math.sqrt((w / 2) ** 2 - (w / 2 - a) ** 2)); R(cx2 - lg, top + a, lg * 2, 1, cv); } if (cv2) R(cx2 - w / 4, top + w / 2, Math.max(1, w / 4), h - w / 2 - 2, cv2); R(cx2 - w / 2 - 3, top + h, w + 6, 3, PD[4]); };
+        const redonda = (cx2, cy2, r) => { for (let yy = -r - 1; yy <= r + 1; yy++) { const lg = Math.round(Math.sqrt(Math.max(0, (r + 1) ** 2 - yy * yy))); R(cx2 - lg, cy2 + yy, lg * 2, 1, TI); } for (let yy = -r; yy <= r; yy++) { const lg = Math.round(Math.sqrt(Math.max(0, r * r - yy * yy))); R(cx2 - lg, cy2 + yy, lg * 2, 1, VJ); } R(cx2 - r, cy2, r * 2, 1, TI); R(cx2, cy2 - r, 1, r * 2, TI); };
+        // a ala direita, baixa, com três janelas redondas e telhado de uma água
+        parede(x + 48, y - 54, 104, 54); for (const rx of [70, 96, 122]) redonda(x + rx, y - 30, 6);
+        R(x + 44, y - 64, 116, 10, TI); for (let i = 0; i < 112; i += 6) { R(x + 46 + i, y - 62, 6, 8, TE[2]); R(x + 46 + i, y - 62, 1, 8, TE[1]); } R(x + 46, y - 63, 112, 2, TE[3]);
+        // a torre do sino, sobre a ala direita
+        const tx = x + 92, tt = y - 150; parede(tx, tt, 40, 90); ogiva(tx + 20, tt + 12, 22, 36, '#2A2436'); R(tx - 4, tt + 52, 48, 4, PD[4]); R(tx - 4, tt - 4, 48, 6, PD[4]); R(tx - 4, tt + 2, 48, 2, PD[1]);
+        const bal = Math.round(Math.sin(G.T * 7) * (o.balanco || 0) * 4); R(tx + 8, tt + 20, 24, 2, MA[1]); R(tx + 13 + bal, tt + 23, 14, 15, TI); R(tx + 14 + bal, tt + 24, 12, 13, '#D9A63C'); R(tx + 12 + bal, tt + 35, 16, 3, '#D9A63C'); R(tx + 15 + bal, tt + 25, 2, 9, '#FFE08A'); R(tx + 19 + bal * 2, tt + 38, 2, 3, '#5A3A0C');
+        tri(tx - 8, tt - 3, tx + 20, tt - 34, tx + 48, tt - 3, TI); tri(tx - 5, tt - 4, tx + 20, tt - 31, tx + 45, tt - 4, TE[2]); tri(tx + 20, tt - 31, tx + 45, tt - 4, tx + 20, tt - 4, TE[1]); R(tx + 19, tt - 40, 3, 9, PD[4]); R(tx + 17, tt - 42, 7, 3, '#C9A63C');
+        if (o.balanco > 0.05) { g.globalAlpha = o.balanco * 0.7; g.fillStyle = '#FFE9A8'; for (const [dx, dy] of [[-10, 20], [50, 20], [-14, 30], [54, 30]]) g.fillRect(tx + dx, tt + dy, 5, 1); g.globalAlpha = 1; }
+        // a ala esquerda, com janela em ogiva e telhado de duas águas
+        parede(x - 142, y - 62, 92, 62); ogiva(x - 96, y - 52, 14, 34, VJ, VJ2);
+        tri(x - 148, y - 61, x - 96, y - 92, x - 44, y - 61, TI); tri(x - 144, y - 62, x - 96, y - 89, x - 48, y - 62, TE[2]); tri(x - 96, y - 89, x - 48, y - 62, x - 96, y - 62, TE[1]);
+        // o corpo principal, com o frontão para a rua
+        parede(x - 52, y - 98, 104, 98);
+        tri(x - 60, y - 97, x, y - 146, x + 60, y - 97, TI); tri(x - 56, y - 98, x, y - 142, x + 56, y - 98, PD[3]); tri(x, y - 142, x + 56, y - 98, x, y - 98, PD[2]);
+        g.fillStyle = TE[2]; for (let i = 0; i <= 56; i += 3) { g.fillRect(x - 58 + i, y - 99 - i * 0.82, 4, 4); g.fillRect(x + 54 - i, y - 99 - i * 0.82, 4, 4); }
+        redonda(x, y - 116, 9); g.fillStyle = acesa ? '#FFE9A8' : '#5A5468'; for (let a = 0; a < 8; a++) g.fillRect(Math.round(x + Math.cos(a * 0.785) * 5), Math.round(y - 116 + Math.sin(a * 0.785) * 5), 1, 1); // a rosácea
+        g.fillStyle = '#C9A63C'; g.fillRect(x - 4, y - 131, 9, 2); g.fillRect(x, y - 138, 1, 7); for (let b = 1; b <= 3; b++) { g.fillRect(x - b * 2, y - 134 + b, 1, 1); g.fillRect(x + b * 2, y - 134 + b, 1, 1); g.fillRect(x - b * 2, y - 138, 1, 4 + b); g.fillRect(x + b * 2, y - 138, 1, 4 + b); g.fillRect(x - b * 2 + 1, y - 134 + b, b * 2 - 1, 1); g.fillRect(x + 1, y - 134 + b, b * 2 - 1, 1); } g.fillStyle = '#FFE08A'; for (let b = -3; b <= 3; b++) g.fillRect(x + b * 2, y - 140, 1, 2); // a menorá de sete braços no alto do frontão
+        ogiva(x - 34, y - 80, 12, 32, VJ, VJ2); ogiva(x + 34, y - 80, 12, 32, VJ, VJ2);
+        // a porta de madeira em arco (no culto, aberta e acesa)
+        { const dw = 15, dh = 46; R(x - dw - 3, y - dh, dw * 2 + 6, dh, PD[4]); for (let a = 0; a <= dw + 3; a++) { const lg = Math.round(Math.sqrt((dw + 3) ** 2 - (dw + 3 - a) ** 2)); R(x - lg, y - dh - dw - 3 + a, lg * 2, 1, PD[4]); }
+          const fol = k ? '#F2C46A' : MA[2]; R(x - dw, y - dh, dw * 2, dh, fol); for (let a = 0; a <= dw; a++) { const lg = Math.round(Math.sqrt(dw * dw - (dw - a) ** 2)); R(x - lg, y - dh - dw + a, lg * 2, 1, fol); }
+          if (k) { R(x - dw, y - dh, 4, dh, MA[1]); R(x + dw - 4, y - dh, 4, dh, MA[1]); R(x - 3, y - dh + 6, 6, dh - 6, '#FFE9A8'); g.globalAlpha = 0.2; R(x - 30, y - 4, 60, 4, '#FFE9A8'); g.globalAlpha = 1; }
+          else { R(x - 1, y - dh - dw, 2, dh + dw, MA[0]); g.fillStyle = MA[3]; for (let r = 0; r < dh; r += 7) { g.fillRect(x - dw + 2, y - dh + r, dw - 4, 1); g.fillRect(x + 2, y - dh + r, dw - 4, 1); } R(x - 5, y - 24, 2, 3, '#E8C873'); R(x + 3, y - 24, 2, 3, '#E8C873'); } }
+        // degraus, mureta com grades, arbustos e tufos de grama
+        R(x - 26, y - 4, 52, 4, PD[2]); R(x - 22, y - 2, 44, 2, PD[4]);
+        for (const [a, b] of [[x - 172, x - 60], [x + 60, x + 170]]) { for (let px2 = a; px2 < b; px2 += 22) { R(px2, y - 12, 5, 12, PD[4]); R(px2 + 4, y - 12, 1, 12, PD[1]); R(px2 + 5, y - 9, 17, 9, TI); g.fillStyle = '#4A4A58'; for (let gx = px2 + 7; gx < px2 + 21; gx += 3) g.fillRect(gx, y - 9, 1, 9); } R(a, y - 13, b - a, 2, PD[3]); }
+        for (const bx of [x - 48, x + 44, x - 150]) { g.fillStyle = '#2E6A3A'; g.fillRect(bx - 8, y - 8, 16, 8); g.fillStyle = '#4A9A4A'; g.fillRect(bx - 6, y - 10, 12, 4); g.fillStyle = '#7ACB6A'; g.fillRect(bx - 3, y - 10, 4, 2); }
+        g.fillStyle = '#C9B86A'; for (const gx of [-120, -80, 70, 110, 150]) { g.fillRect(x + gx, y - 3, 1, 3); g.fillRect(x + gx + 2, y - 4, 1, 4); } }
       else if (q === 'templo') { const luz = G.cm.sar?.feita; g.fillStyle = '#17121f'; g.fillRect(x - 70, y - 96, 140, 96); g.fillRect(x - 78, y - 104, 156, 10); g.beginPath(); g.moveTo(x - 80, y - 104); g.lineTo(x, y - 132); g.lineTo(x + 80, y - 104); g.fill();
         g.fillStyle = luz ? '#8A8296' : '#3A3644'; g.fillRect(x - 68, y - 94, 136, 94); g.beginPath(); g.moveTo(x - 72, y - 105); g.lineTo(x, y - 128); g.lineTo(x + 72, y - 105); g.fill();
         g.fillStyle = luz ? '#B8B0C0' : '#4A4658'; for (const cx of [-58, -36, 32, 54]) g.fillRect(x + cx, y - 92, 6, 92);
@@ -309,6 +343,7 @@ export function renderPixel(G) {
 
   pintarFundoPixel(g, G, C, vw, vh, cx, cy);
   pintarSalasPixel(g, G, C, vw, vh, cx, cy);
+  if (G.area === 'sinagoga') pintarLuzSinagoga(g, G, cx, cy, luzDoDia(G).d > 0.3);
   for (const o of G.objs) { const x = X(o.x), xv = o.vv ? X(o.vv.x) : x; if (xv < -60 || xv > vw + 60) continue; /* quem anda é visto onde está, não onde mora */ if (o.oculto && !G.achou(o)) { const k = G.p.lampA * clamp(1 - (Math.hypot(o.x - G.p.x, o.y - G.p.y) - 200) / 160, 0, 1); if (k < 0.05) continue; g.globalAlpha = k; } if (!pintarObjeto(g, o, G, x, Y(o.y), Tm)) antigo(() => desenharObjeto(g, o, G)); g.globalAlpha = 1; }
   if (G.def.mundo && G.N.arena) pintarArenaTema(g, G, X, Y, Tm);
   const chefe = G.N.arena && G.inimigos.find(e => e.kind === 'chefe' && e.cen);

@@ -100,55 +100,47 @@ const PINTA = {
     for (let i = 0; i < 40; i++) { const x = 20 + (i * 53) % (W - 40); s.ret(x, 60 + (i * 17) % 80, 1, 2 + (i % 4), L[2]); }
     for (const x of [80, 190, 300, 410]) { s.ret(x, 80, 1, 6, A[3]); s.ret(x, 150, 1, 2, A[3]); }
   },
-  // A sinagoga por dentro: uma nave funda em perspectiva. Colunas que se repetem até o fundo, arcos, vigas que convergem,
-  // a arca com a cortina azul e dourada, a lâmpada eterna acesa diante dela, janelas altas com feixes de luz,
-  // lamparinas penduradas, bancos de pedra dos lados e o piso de lajes fugindo para o fundo. A bimá (o estrado) fica no meio.
+  // A sinagoga por dentro: salão alto de pedra violeta, arcos sobre pilares grossos, o vitral triplo sobre a arca e
+  // vitrais nos vãos dos lados (azul, magenta, ouro, com o chumbo escuro), tochas nos pilares, a lâmpada eterna,
+  // o piso de lajes com as manchas de luz dos vitrais. Os feixes de luz e a poeira são pintados por cima, a cada quadro.
   sinagoga(s) {
-    const P = ['#1C1712', '#2A221A', '#3B3024', '#544433', '#6E5A44', '#8A7458', '#A8916E'].map(cor), O = rampa('#C9A63C'), A = rampa('#2F4A7A'), M = rampa('#6B4A2E'), F = rampa('#FFB53A'), LUZ = cor('#F2D9A0'), TINTA = cor('#17121f');
-    const vx = 240, vy = 118, FX0 = 176, FX1 = 304, FY0 = 64, FY1 = 196; // o ponto de fuga e a parede do fundo
-    s.ret(0, 0, W, H, P[1]);
-    // teto: vigas que convergem para o fundo
-    for (let y = 0; y < FY0; y++) { const k = y / FY0; s.ret(0, y, W, 1, k < 0.5 ? P[0] : P[1]); }
-    for (let i = -8; i <= 8; i++) { const x0 = vx + i * 34; s.linha(x0, 0, vx + (i * (FX1 - FX0)) / 16, FY0, 2, P[3]); }
-    for (let r = 1; r < 5; r++) { const k = r / 5, y = Math.round(FY0 * k * k); s.ret(Math.round(vx - (vx + 20) * (1 - k * 0.3)), y, Math.round((vx + 20) * 2 * (1 - k * 0.3)), 2, P[2]); }
-    // paredes laterais em perspectiva (trapézios) com fiadas de pedra
-    for (let x = 0; x < FX0; x++) { const k = x / FX0, top = Math.round(FY0 * k), bot = Math.round(H - (H - FY1) * k); s.ret(x, top, 1, bot - top, P[k > 0.6 ? 2 : 3]); for (let yy = top; yy < bot; yy += Math.max(3, Math.round(12 * (1 - k * 0.7)))) s.px(x, yy, P[1]); }
-    for (let x = FX1; x < W; x++) { const k = (W - x) / (W - FX1), top = Math.round(FY0 * k), bot = Math.round(H - (H - FY1) * k); s.ret(x, top, 1, bot - top, P[k > 0.6 ? 2 : 3]); for (let yy = top; yy < bot; yy += Math.max(3, Math.round(12 * (1 - k * 0.7)))) s.px(x, yy, P[1]); }
-    // piso: lajes fugindo para o fundo
-    for (let y = FY1; y < H; y++) { const k = (y - FY1) / (H - FY1); s.ret(Math.round(FX0 * (1 - k)), y, Math.round(W - 2 * FX0 * (1 - k)), 1, P[k < 0.3 ? 2 : (Math.floor(Math.pow(k, 0.5) * 9) % 2 ? 3 : 4)]); }
-    for (let i = -10; i <= 10; i++) s.linha(vx + i * 13, FY1, vx + i * 60, H, 1, P[2]);
-    // parede do fundo e a arca
-    s.ret(FX0, FY0, FX1 - FX0, FY1 - FY0, P[2]); for (let y = FY0 + 6; y < FY1; y += 7) s.ret(FX0, y, FX1 - FX0, 1, P[1]);
-    s.ret(vx - 26, FY0 + 34, 52, FY1 - FY0 - 34, TINTA); s.ret(vx - 24, FY0 + 36, 48, FY1 - FY0 - 36, M[2]);
-    for (let k = 0; k <= 24; k++) { const lg = Math.round(Math.sqrt(Math.max(0, 576 - (24 - k) ** 2))); s.ret(vx - lg, FY0 + 12 + k, lg * 2, 1, M[2]); }
-    s.ret(vx - 18, FY0 + 40, 36, FY1 - FY0 - 48, A[2]); for (let x = 0; x < 36; x += 4) s.ret(vx - 18 + x, FY0 + 40, 1, FY1 - FY0 - 48, A[1]); // a cortina (parochet)
-    s.ret(vx - 18, FY0 + 40, 36, 3, O[3]); s.ret(vx - 18, FY1 - 12, 36, 3, O[3]); s.ret(vx - 5, FY0 + 52, 10, 14, O[3]); s.ret(vx - 3, FY0 + 50, 6, 2, O[4]); // tábuas da lei bordadas
-    s.ret(vx - 1, FY0 + 52, 2, 14, O[1]);
-    s.ret(vx - 1, FY0 + 2, 2, 18, O[1]); s.ret(vx - 4, FY0 + 20, 8, 5, O[3]); s.ret(vx - 2, FY0 + 25, 4, 3, F[3]); s.px(vx, FY0 + 24, F[4]); // a lâmpada eterna
-    // colunas e arcos que se repetem até o fundo (dos dois lados)
-    for (let d = 0; d < 5; d++) { const k = d / 5, esc = 1 - k * 0.72, h = Math.round((H - 16) * esc), cw = Math.max(3, Math.round(16 * esc));
-      for (const lado of [-1, 1]) { const x = Math.round(vx + lado * (vx - 8) * esc), y1 = Math.round(vy + (H - vy) * esc), y0 = y1 - h;
-        s.ret(x - cw / 2 - 1, y0, cw + 2, h, TINTA); s.ret(x - cw / 2, y0, cw, h, P[5]); s.ret(x - cw / 2, y0, Math.max(1, cw / 4), h, P[6]); s.ret(x + cw / 2 - Math.max(1, cw / 4), y0, Math.max(1, cw / 4), h, P[4]);
-        s.ret(x - cw / 2 - 2, y0, cw + 4, Math.max(2, Math.round(5 * esc)), P[6]); s.ret(x - cw / 2 - 2, y1 - Math.max(2, Math.round(5 * esc)), cw + 4, Math.max(2, Math.round(5 * esc)), P[3]);
-        if (d < 4) { const k2 = (d + 1) / 5, esc2 = 1 - k2 * 0.72, x2 = Math.round(vx + lado * (vx - 8) * esc2), y2 = Math.round(vy + (H - vy) * esc2) - Math.round((H - 16) * esc2); s.linha(x, y0, x2, y2, Math.max(1, Math.round(3 * esc)), P[4]); }
-        if (d === 1 || d === 3) { const wx = Math.round(x - lado * cw * 2.2), wy = y0 + Math.round(h * 0.18), ww = Math.max(4, Math.round(14 * esc)), wh = Math.round(h * 0.3); // janela alta e o feixe de luz
-          s.ret(wx - ww / 2 - 1, wy - 1, ww + 2, wh + 2, TINTA); s.ret(wx - ww / 2, wy, ww, wh, LUZ); s.ret(wx - 1, wy, 1, wh, P[3]);
-          for (let t = 0; t < 70; t += 2) for (let q = 0; q < ww; q += 2) if ((t + q) % 4 === 0) s.px(wx - ww / 2 + q - lado * t * 0.9, wy + wh + t * 1.4, LUZ); } }
-      // lamparinas penduradas
-      if (d % 2 === 0) for (const lado of [-1, 1]) { const x = Math.round(vx + lado * (vx - 70) * esc), y = Math.round(FY0 * 0.4 + 30 * esc); s.ret(x, 0, 1, y, P[0]); s.ret(x - Math.round(4 * esc) - 1, y, Math.round(8 * esc) + 2, Math.max(2, Math.round(4 * esc)), O[2]); s.px(x, y - 1, F[4]); s.ret(x - 1, y - 2 - Math.round(2 * esc), 3, Math.max(1, Math.round(2 * esc)), F[3]); } }
-    // bancos de pedra ao longo das paredes
-    for (const lado of [-1, 1]) for (let d = 0; d < 4; d++) { const esc = 1 - d / 5 * 0.72, x = Math.round(vx + lado * (vx - 46) * esc), y = Math.round(vy + (H - vy) * esc) - Math.round(14 * esc), w = Math.round(46 * esc); s.ret(lado < 0 ? x - w : x, y, w, Math.max(2, Math.round(6 * esc)), P[4]); s.ret(lado < 0 ? x - w : x, y, w, 1, P[6]); }
-    // a bimá: estrado de madeira no meio, com grade e o atril
-    s.ret(vx - 52, CHAO - 14, 104, 14, TINTA); s.ret(vx - 50, CHAO - 13, 100, 13, M[2]); s.ret(vx - 50, CHAO - 13, 100, 2, M[4]); for (let x = vx - 48; x < vx + 50; x += 8) s.ret(x, CHAO - 26, 2, 13, M[3]); s.ret(vx - 50, CHAO - 27, 100, 2, M[4]);
-    s.ret(vx + 18, CHAO - 40, 16, 4, M[3]); s.ret(vx + 24, CHAO - 36, 4, 10, M[2]); s.ret(vx + 19, CHAO - 43, 14, 3, cor('#E8D9B0'));
-    // a porta de saída, à esquerda: arco de pedra, folhas de madeira abertas e a luz da rua
+    const P = ['#120E1A', '#1E1828', '#2A2236', '#3A3048', '#4A3E5C', '#5E5070', '#7A6A8A', '#9A8AA8'].map(cor), O = rampa('#C9A63C'), A = rampa('#2F4A7A'), M = rampa('#6B4A2E'), F = rampa('#FFB53A'), CH = cor('#1A1422'), TINTA = cor('#0E0A14');
+    const VID = ['#3A5AC8', '#C83A8A', '#E8B84A', '#6A3AA8', '#8AB8E8', '#2E8A7A'].map(cor);
+    // parede de tijolos, mais escura no alto
+    s.ret(0, 0, W, H, P[2]);
+    for (let y = 0; y < CHAO; y += 6) { const tom = y < 60 ? P[1] : y < 140 ? P[2] : P[3]; s.ret(0, y, W, 6, tom); s.ret(0, y + 5, W, 1, P[1]); for (let x = ((y / 6) % 2) * 9; x < W; x += 18) s.ret(x, y, 1, 5, P[1]); }
+    for (let i = 0; i < 140; i++) s.px((i * 97) % W, 20 + (i * 53) % (CHAO - 30), i % 3 ? P[1] : P[4]);
+    // um vitral em arco ogival: moldura de pedra, vidro em losangos coloridos, chumbo
+    const vitral = (x, y, w, h, sem) => {
+      for (let k = 0; k < h; k++) { const yy = y + k, topo = k < w ? Math.round(Math.sqrt(Math.max(0, w * w / 4 - (w / 2 - Math.min(k, w / 2)) ** 2)) * (k < w / 2 ? 1 : 1)) : w / 2; const lg = k < w / 2 ? Math.round(w / 2 * Math.sin(Math.PI / 2 * k / (w / 2)) ** 0.7) : w / 2;
+        s.ret(x + w / 2 - lg - 3, yy, lg * 2 + 6, 1, P[5]); s.ret(x + w / 2 - lg - 2, yy, lg * 2 + 4, 1, TINTA);
+        for (let q = -lg; q < lg; q++) { const gx = x + w / 2 + q, d = ((gx - x) + (yy - y)) % 8, e = ((gx - x) - (yy - y) + 800) % 8; s.px(gx, yy, d === 0 || e === 0 ? CH : VID[(Math.floor((gx - x) / 6) + Math.floor((yy - y) / 9) + sem) % VID.length]); } }
+      s.ret(x + w / 2 - 1, y + 4, 2, h - 4, CH); s.ret(x + 2, y + h - 3, w - 4, 3, P[6]); s.ret(x - 2, y + h, w + 4, 4, P[5]); };
+    // arcos sobre os pilares
+    const pilares = [26, 124, 356, 454];
+    for (let a = 0; a < pilares.length - 1; a++) { const x0 = pilares[a], x1 = pilares[a + 1], cxA = (x0 + x1) / 2, R = (x1 - x0) / 2;
+      for (let t = 0; t <= 60; t++) { const an = Math.PI * t / 60, px = cxA - Math.cos(an) * R, py = 70 - Math.sin(an) * 52; s.ret(px - 3, py - 3, 6, 7, t % 6 ? P[4] : P[5]); s.ret(px - 3, py - 4, 6, 1, P[6]); } }
+    vitral(56, 64, 40, 116, 0); vitral(384, 64, 40, 116, 2); // os vitrais dos lados
+    vitral(186, 40, 30, 126, 1); vitral(222, 26, 36, 140, 3); vitral(264, 40, 30, 126, 4); // o vitral triplo do fundo
+    s.ret(178, 166, 124, 6, P[6]); s.ret(178, 172, 124, 2, P[4]);
+    // pilares grossos com capitel e base
+    for (const px of pilares) { s.ret(px - 13, 20, 26, CHAO - 20, TINTA); s.ret(px - 12, 20, 24, CHAO - 20, P[4]); s.ret(px - 12, 20, 6, CHAO - 20, P[6]); s.ret(px + 6, 20, 6, CHAO - 20, P[3]);
+      for (let y = 30; y < CHAO - 20; y += 22) s.ret(px - 12, y, 24, 1, P[3]); s.ret(px - 16, 64, 32, 8, P[6]); s.ret(px - 16, 72, 32, 2, P[3]); s.ret(px - 16, CHAO - 14, 32, 14, P[5]); s.ret(px - 16, CHAO - 14, 32, 2, P[7]);
+      s.ret(px - 2, 140, 4, 12, cor('#2A2A3A')); s.ret(px - 4, 136, 8, 4, cor('#3A3A4A')); s.ret(px - 3, 129, 6, 7, F[2]); s.ret(px - 2, 126, 4, 5, F[3]); s.px(px, 124, F[4]); }
+    // a arca, sob o vitral, com a cortina azul e dourada; a lâmpada eterna acesa diante dela
+    s.ret(212, 186, 56, 70, TINTA); s.ret(214, 188, 52, 68, M[2]); s.ret(214, 188, 52, 3, M[4]); for (let k = 0; k <= 26; k++) { const lg = Math.round(Math.sqrt(Math.max(0, 676 - (26 - k) ** 2))); s.ret(240 - lg, 176 + k - 14, lg * 2, 1, k < 2 ? TINTA : M[2]); }
+    s.ret(220, 196, 40, 56, A[2]); for (let x = 0; x < 40; x += 4) s.ret(220 + x, 196, 1, 56, A[1]); s.ret(220, 196, 40, 3, O[3]); s.ret(220, 248, 40, 3, O[3]); s.ret(234, 208, 12, 16, O[3]); s.ret(239, 208, 2, 16, O[1]);
+    s.ret(239, 150, 2, 22, O[1]); s.ret(235, 172, 10, 5, O[3]); s.ret(237, 177, 6, 3, F[3]); s.px(240, 176, F[4]);
+    // a porta de saída, à esquerda: arco de pedra, folhas abertas e a luz da rua
     { const dx = 56, dw = 18, dh = 60; for (let a = 0; a <= dw + 3; a++) { const lg = Math.round(Math.sqrt((dw + 3) ** 2 - (dw + 3 - a) ** 2)); s.ret(dx - lg, CHAO - dh - dw - 3 + a, lg * 2, 1, TINTA); }
       s.ret(dx - dw - 3, CHAO - dh, dw * 2 + 6, dh, TINTA); for (let a = 0; a <= dw; a++) { const lg = Math.round(Math.sqrt(dw * dw - (dw - a) ** 2)); s.ret(dx - lg, CHAO - dh - dw + a, lg * 2, 1, cor('#3E5A86')); }
       s.ret(dx - dw, CHAO - dh, dw * 2, dh, cor('#3E5A86')); for (let y = 0; y < 20; y += 3) s.ret(dx - dw + 2, CHAO - 30 + y, dw * 2 - 4, 1, cor('#5A7AA8'));
-      s.ret(dx - dw, CHAO - dh, 6, dh, M[2]); s.ret(dx + dw - 6, CHAO - dh, 6, dh, M[2]); s.ret(dx - dw + 1, CHAO - dh + 2, 1, dh - 4, M[4]); s.ret(dx + dw - 2, CHAO - dh + 2, 1, dh - 4, M[0]);
-      for (let a = 0; a <= 24; a++) { const an = Math.PI * a / 24; s.ret(Math.round(dx - Math.cos(an) * (dw + 2)) - 1, Math.round(CHAO - dh - Math.sin(an) * (dw + 2)) - 1, 3, 3, a % 3 ? P[5] : P[6]); } }
-    // chão perto: faixa clara de pedra
-    s.ret(0, CHAO, W, H - CHAO, P[3]); s.ret(0, CHAO, W, 1, P[5]);
+      s.ret(dx - dw, CHAO - dh, 6, dh, M[2]); s.ret(dx + dw - 6, CHAO - dh, 6, dh, M[2]); }
+    // a bimá: estrado de madeira no meio, com grade e o atril
+    s.ret(190, CHAO - 14, 100, 14, TINTA); s.ret(192, CHAO - 13, 96, 13, M[2]); s.ret(192, CHAO - 13, 96, 2, M[4]); for (let x = 194; x < 288; x += 8) s.ret(x, CHAO - 26, 2, 13, M[3]); s.ret(192, CHAO - 27, 96, 2, M[4]);
+    s.ret(258, CHAO - 40, 16, 4, M[3]); s.ret(264, CHAO - 36, 4, 10, M[2]); s.ret(259, CHAO - 43, 14, 3, cor('#E8D9B0'));
+    // piso de lajes
+    s.ret(0, CHAO, W, H - CHAO, P[3]); s.ret(0, CHAO, W, 1, P[6]); for (let x = 0; x < W; x += 24) s.ret(x, CHAO + 1, 1, H - CHAO, P[2]);
   }
 };
 
@@ -156,4 +148,19 @@ export function fundoSala(deco) {
   let c = cache.get(deco);
   if (!c && PINTA[deco]) { const s = new Sprite(W, H); PINTA[deco](s); c = s.tela(); cache.set(deco, c); }
   return c || null;
+}
+
+// os feixes de luz dos vitrais e a poeira que flutua neles (só na sinagoga por dentro): de dia, dourados; à noite, o luar azulado
+export function pintarLuzSinagoga(g, G, cx, cy, dia) {
+  const cel = G.N.celulas.find(c => c.deco === 'sinagoga'); if (!cel) return;
+  const x0 = cel.cx * W - cx, y0 = cel.cy * H - cy, cor1 = dia ? '255,214,140' : '150,180,255', T = G.T;
+  g.save(); g.globalCompositeOperation = 'lighter';
+  for (const [wx, wy, ww, wh, forca] of [[56, 64, 40, 116, 0.75], [384, 64, 40, 116, 0.75], [186, 40, 108, 126, 1]]) {
+    const ax = x0 + wx, ay = y0 + wy + wh * 0.4, bx = ax + ww, dx = 120, chao = y0 + CHAO, gr = g.createLinearGradient(ax, ay, ax + dx, chao);
+    gr.addColorStop(0, 'rgba(' + cor1 + ',' + (0.42 * forca) + ')'); gr.addColorStop(0.6, 'rgba(' + cor1 + ',' + (0.16 * forca) + ')'); gr.addColorStop(1, 'rgba(' + cor1 + ',0)');
+    g.fillStyle = gr; g.beginPath(); g.moveTo(ax, ay); g.lineTo(bx, ay - 20); g.lineTo(bx + dx + 40, chao); g.lineTo(ax + dx - 30, chao); g.closePath(); g.fill();
+    g.fillStyle = 'rgba(' + cor1 + ',' + (0.3 * forca) + ')'; g.fillRect(Math.round(ax + dx - 28), chao - 3, ww + 70, 4);
+    for (let i = 0; i < 9; i++) { const t = (T * 0.05 + i / 9) % 1, px = ax + 10 + t * (dx + 10) + Math.sin(T + i * 3) * 6, py = ay + t * (chao - ay) - 10 + Math.cos(T * 0.7 + i) * 4; g.fillStyle = 'rgba(' + cor1 + ',0.55)'; g.fillRect(Math.round(px), Math.round(py), 1, 1); }
+  }
+  g.restore();
 }

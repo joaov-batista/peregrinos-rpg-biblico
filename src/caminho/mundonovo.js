@@ -13,6 +13,7 @@ import { falaHistoria, historiaNoRefugio } from './historia.js';
 import { vidaNoRefugio, rotuloVida, usarVida, amizade } from './vida.js';
 import { missaoNoRefugio, rotuloMissao, usarMissao, zeloteDepois, inv } from './missao.js';
 import { falarMorador } from './moradores.js';
+import { rotuloLugar, usarLugar } from './lugares.js';
 
 const rand = (a, b) => a + Math.random() * (b - a);
 export const PRECO_BARCO = 150;
@@ -95,7 +96,7 @@ async function liberarEspirito(G) {
 
 /* ---------------- rótulos e uso dos objetos novos ---------------- */
 export function rotuloNovo(G, ob) {
-  { const rv = rotuloVida(ob) ?? rotuloMissao(ob); if (rv) return rv; }
+  { const rv = rotuloVida(ob) ?? rotuloMissao(ob) ?? rotuloLugar(ob); if (rv) return rv; }
   if (ob.escondido > G.T) return null; // o vizinho que "não era gente" sumiu da rua: não há com quem falar
   switch (ob.tipo) {
     case 'vela': return sar(G).velas[ob.id] ? null : 'Reacender (10 de azeite)';
@@ -109,6 +110,7 @@ export function rotuloNovo(G, ob) {
 export async function usarNovo(G, ob) {
   const p = G.p, cm = G.cm, c = G.char;
   if (await usarVida(G, ob)) return true;
+  if (await usarLugar(G, ob)) return true;
   if (await usarMissao(G, ob)) return true;
   if (ob.tipo === 'vela') {
     const s = sar(G); if (s.velas[ob.id]) return true;
