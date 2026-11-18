@@ -84,11 +84,13 @@ const PECAS = {
   },
   // casa do Oriente antigo: cubo de adobe de teto plano, parapeito, escada externa e uma porta baixa
   casa(s, x, base, h, c, r) {
-    const w = 30 + (r * 20 | 0), hh = Math.max(16, h * 0.5); s.ret(x, base - hh, w, hh, c[1]);
-    for (let y = base - hh; y < base; y++) { s.px(x, y, c[0]); s.px(x + w - 1, y, c[2]); } s.ret(x - 1, base - hh - 2, w + 2, 2, c[1]); s.ret(x - 1, base - hh - 2, w + 2, 1, c[2]);
-    for (let i = 2; i < w - 2; i += 5) s.ret(x + i, base - hh - 4, 2, 2, c[1]); // vigas do teto
-    s.ret(x + w * 0.2, base - 9, 5, 9, c[0]); s.ret(x + w * 0.65, base - hh * 0.62, 3, 4, c[3] || c[0]);
-    if (r > 0.45) { const w2 = w * 0.5, h2 = hh * 0.5; s.ret(x + w * 0.4, base - hh - h2, w2, h2, c[1]); s.ret(x + w * 0.4 - 1, base - hh - h2 - 2, w2 + 2, 2, c[2]); s.ret(x + w * 0.55, base - hh - h2 * 0.6, 3, 4, c[0]); }
+    const w = 30 + (r * 20 | 0), hh = Math.max(22, h * 0.55); s.ret(x, base - hh, w, hh, c[1]);
+    for (let y = base - hh; y < base; y++) { s.px(x, y, c[0]); s.px(x + w - 1, y, c[2]); }
+    s.ret(x - 3, base - hh - 3, w + 6, 3, c[1]); s.ret(x - 3, base - hh - 3, w + 6, 1, c[2]); s.ret(x - 3, base - hh, w + 6, 1, c[0]); // o teto com beiral
+    const jan = c[4] || c[3] || c[0]; s.ret(x + w * 0.62, base - hh * 0.66, 4, 5, c[0]); s.ret(x + w * 0.62 + 1, base - hh * 0.66 + 1, 2, 3, jan); // a janela acesa
+    if (w > 38) { s.ret(x + w * 0.2, base - hh * 0.66, 4, 5, c[0]); s.ret(x + w * 0.2 + 1, base - hh * 0.66 + 1, 2, 3, r > 0.5 ? jan : c[0]); }
+    s.ret(x + w * 0.38, base - 10, 6, 10, c[0]); s.px(x + w * 0.38, base - 10, c[1]); s.px(x + w * 0.38 + 5, base - 10, c[1]); // a porta em arco
+    if (r > 0.45) { const w2 = w * 0.5, h2 = hh * 0.45; s.ret(x + w * 0.4, base - hh - 3 - h2, w2, h2, c[1]); s.ret(x + w * 0.4 - 2, base - hh - 5 - h2, w2 + 4, 2, c[2]); s.ret(x + w * 0.55, base - hh - h2 * 0.7, 3, 4, jan); }
     for (let k = 0; k < 6; k++) s.ret(x + w + k * 2, base - 3 - k * 2, 2, 3 + k * 2, c[0]); // escada externa
   },
   arvore(s, x, base, h, c, r) { s.ret(x + 8, base - h * 0.7, 4, h * 0.7, c[0]); for (let k = 0; k < 6; k++) { const cx = x + 10 + Math.sin(k * 2.4 + r * 6) * 14, cy = base - h * 0.75 - k * 5 * r - 4, rr = 10 + ((k * 5) % 7); for (let yy = -rr; yy <= rr; yy++) for (let xx = -rr; xx <= rr; xx++) { const d = xx * xx + yy * yy; if (d < rr * rr && (d < (rr - 2) * (rr - 2) || (xx + yy) % 2)) s.px(cx + xx, cy + yy * 0.75, xx + yy < -rr * 0.5 ? c[2] : c[1]); } } },
@@ -102,7 +104,7 @@ const SKYLINE = { colunas: ['coluna', 'templo', 'coluna', 'arco', 'templo'], arc
 function pintarCamada(tm, w, h, rng, nivel) {
   // nivel 0 = longe (quase da cor do céu), 1 = meio, 2 = perto
   const s = new Sprite(w, h), ceu = mistura(tm.ceu[1], tm.ceu[2], 0.5), base = [mistura(ceu, tm.longe, 0.55), mistura(tm.longe, tm.meio, 0.5), mistura(tm.meio, tm.bloco, 0.55)][nivel];
-  const c = [cor(mistura(base, '#05060c', 0.3)), cor(base), cor(mistura(base, tm.borda, nivel ? 0.2 : 0.1)), cor(mistura(base, tm.acento, nivel === 1 ? 0.7 : 0.3))];
+  const c = [cor(mistura(base, '#05060c', 0.3)), cor(base), cor(mistura(base, tm.borda, nivel ? 0.2 : 0.1)), cor(mistura(base, tm.acento, nivel === 1 ? 0.7 : 0.3)), cor(mistura(base, tm.acento, [0.55, 0.75, 0.8][nivel]))];
   const chao = h * [0.66, 0.78, 0.93][nivel], lista = SKYLINE[tm.skyline || tm.deco] || SKYLINE.casas, esc = [0.6, 0.95, 1.25][nivel] * (tm.skyline === 'campo' && nivel === 0 ? 0.8 : 1);
   let x = -10;
   const campo = tm.skyline === 'campo';
@@ -156,6 +158,36 @@ function nuvens(tm) { if (nuvemCv) return nuvemCv; const s = new Sprite(520, 70)
   for (let n = 0; n < 7; n++) { const x = 20 + rng() * 460, y = 14 + rng() * 40, w = 30 + rng() * 50; for (let k = 0; k < 6; k++) { const bx = x + (k - 2.5) * w / 6, r = 4 + rng() * 5; for (let yy = -r; yy <= 0; yy++) for (let xx = -r * 1.6; xx <= r * 1.6; xx++) if (xx * xx / 2.56 + yy * yy < r * r) s.px(bx + xx, y + yy, yy < -r * 0.5 ? c[1] : c[0]); } s.ret(x - w / 2, y, w, 2, c[0]); s.ret(x - w / 2 + 4, y + 2, w - 8, 1, c[2]); }
   return nuvemCv = s.tela(); }
 
+// as nuvens de verdade: cúmulos de bolinhas, com a borda de cima acesa pela luz da hora (branca de dia, rosada no poente,
+// prateada de lua à noite), o corpo e a sombra embaixo; borda pontilhada. Duas faixas: longe (pequenas, lentas) e perto.
+const nuvemCache = new Map();
+function corNuvens(G, L) {
+  const q = v => Math.round(v * 4) / 4, d = L ? q(L.d) : G.area === 'sardes' ? 0 : 0.6, po = L ? q(L.poente) : 0;
+  const dia = ['#FFFFFF', '#FFFFFF', '#E2ECF6', '#C2D4E6'], poe = ['#FFF0C8', '#FFC8A0', '#E09098', '#A87088'], noi = G.area === 'sardes' ? ['#7A86A8', '#3A4260', '#262C44', '#181C2E'] : ['#B8C4E0', '#5A6890', '#38446A', '#242C48'];
+  const m = (a, b, k) => mistura(a, b, k), cores = dia.map((c, i) => m(m(noi[i], c, d), poe[i], po * 0.85));
+  return { chave: d + ':' + po + ':' + G.area, cores };
+}
+function faixaDeNuvens(cores, perto, chave) {
+  const k = chave + (perto ? 'p' : 'l'); if (nuvemCache.has(k)) return nuvemCache.get(k);
+  const W = 640, H = perto ? 90 : 60, s = new Sprite(W, H), rng = semente('nuvem' + (perto ? 1 : 2)), [luz, corpo, sombra, borda] = cores.map(cor);
+  for (let n = 0; n < (perto ? 5 : 8); n++) { const x0 = rng() * W, base = H * (perto ? 0.72 : 0.78) - rng() * H * 0.3, w = (perto ? 46 : 26) + rng() * (perto ? 70 : 34);
+    const bolas = 8 + Math.floor(rng() * 7);
+    for (let b = 0; b < bolas; b++) { const u = rng(), cx = x0 + u * w, alto = Math.sin(u * Math.PI) * (0.35 + rng() * 0.65), r = w * (0.07 + alto * 0.15) * (0.7 + rng() * 0.5), cy = base - r * 0.5 - alto * w * 0.12;
+      for (let yy = -r; yy <= r; yy++) { const py = Math.round(cy + yy); if (py > base || py < 0 || py >= H) continue; for (let xx = -r; xx <= r; xx++) { const dd = (xx * xx + yy * yy) / (r * r); if (dd > 1) continue; const px = ((Math.round(cx + xx) % W) + W) % W;
+        if (dd > 0.82 && (px + py) % 2) continue; const cima = yy < -r * 0.45 && xx < r * 0.3, baixo = py > base - r * 0.5;
+        s.px(px, py, dd > 0.82 ? borda : cima ? luz : baixo ? sombra : corpo); } } }
+    for (let i = 0; i < w; i += 2) { const px = ((Math.round(x0 + i) % W) + W) % W; if (Math.round(base) < H) s.px(px, Math.round(base), sombra); if ((i / 2) % 2 === 0 && Math.round(base) + 1 < H) s.px(px, Math.round(base) + 1, borda); } } // a base reta, desfiando
+  const tela = s.tela(); if (nuvemCache.size > 24) nuvemCache.delete(nuvemCache.keys().next().value); nuvemCache.set(k, tela); return tela;
+}
+// as estrelas que piscam de verdade à noite (algumas coloridas, umas poucas grandes, em cruz)
+function estrelasVivas(g, G, vw, dy, cx, noite) {
+  if (noite < 0.35) return; const k = Math.min(1, (noite - 0.35) / 0.4), Tm = G.T, hs = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+  for (let i = 0; i < 110; i++) { const x = Math.round(((hs(i) * vw * 1.3 - cx * 0.01) % vw + vw) % vw), y = Math.round(dy + 4 + hs(i + 500) * 150), tw = 0.5 + 0.5 * Math.sin(Tm * (1 + hs(i + 9) * 2) + i * 1.7);
+    g.globalAlpha = k * (0.25 + tw * 0.6); g.fillStyle = i % 11 === 0 ? '#FFD8B0' : i % 7 === 0 ? '#C8D8FF' : '#F4F6FF'; g.fillRect(x, y, 1, 1);
+    if (i % 23 === 0) { g.globalAlpha = k * tw * 0.7; g.fillRect(x - 1, y, 3, 1); g.fillRect(x, y - 1, 1, 3); } }
+  g.globalAlpha = 1;
+}
+
 export function pintarFundoPixel(g, G, C, vw, vh, cx, cy) {
   const dy = Math.round((vh - C.H) / 2);
   const L = pintarCeuVivo(g, G, C, vw, dy, cx, cy);
@@ -183,7 +215,11 @@ export function pintarCeuVivo(g, G, C, vw, dy, cx, cy) {
     g.globalAlpha = L.d * 0.35; g.fillStyle = L.poente > 0.3 ? '#FFB86A' : '#FFF4C8'; g.beginPath(); g.arc(sx, sy, r + 7, 0, 6.29); g.fill(); g.globalAlpha = L.d; g.beginPath(); g.arc(sx, sy, r, 0, 6.29); g.fill(); g.globalAlpha = 1; }
   }
   if (G.N.def.aberto) pintarCeuDoTempo(g, G, vw, dy, cx, L ? 1 - L.d : G.area === 'sardes' ? 0.85 : 0.2); // arco-íris, meteoros, a estrela do Natal
-  if (G.N.def.aberto) { g.globalAlpha = 0.8; faixa(g, nuvens(G.tm), cx * 0.05 + G.T * 3, dy + 8 + Math.round(-cy * 0.02), vw); g.globalAlpha = 1; }
+  if (G.N.def.aberto) { const noite = L ? 1 - L.d : G.area === 'sardes' ? 0.9 : 0.3; estrelasVivas(g, G, vw, dy, cx, noite);
+    const { chave, cores } = corNuvens(G, L), chuva = Math.min(0.6, (G.chuvaK || 0) * 0.6);
+    g.globalAlpha = 0.85; faixa(g, faixaDeNuvens(cores, false, chave), cx * 0.03 + G.T * 1.5, dy + 6 + Math.round(-cy * 0.02), vw);
+    g.globalAlpha = 0.95; faixa(g, faixaDeNuvens(cores, true, chave), cx * 0.07 + G.T * 3.2, dy + 30 + Math.round(-cy * 0.03), vw); g.globalAlpha = 1;
+    if (chuva > 0.02) { g.globalAlpha = chuva; faixa(g, faixaDeNuvens(cores.map(c => mistura(c, '#4A5060', 0.6)), true, chave + 'c'), cx * 0.09 + G.T * 6, dy + 2, vw); g.globalAlpha = 1; } }
   return L;
 }
 
@@ -234,6 +270,7 @@ export function pintarLuzPixel(g, G, vw, vh, cx, cy, luzCv) {
   l.globalCompositeOperation = 'source-over'; l.clearRect(0, 0, vw, vh); l.fillStyle = `rgba(6,7,16,${e})`; l.fillRect(0, 0, vw, vh);
   l.globalCompositeOperation = 'destination-out';
   const furo = (wx, wy, r, f = 1) => { const x = Math.round(wx / PX - cx), y = Math.round(wy / PX - cy), rr = r / PX; if (x < -rr || y < -rr || x > vw + rr || y > vh + rr) return; for (const [k, a] of [[1, 0.3], [0.78, 0.45], [0.52, 1]]) { l.fillStyle = `rgba(0,0,0,${a * f})`; l.beginPath(); l.arc(x, y, Math.round(rr * k), 0, 6.2832); l.fill(); } };
+  { const L = (G.area === 'refugio' || G.def?.sitio) && G.cm ? luzDoDia(G) : null; if (L && L.d > 0.05) { const gr = l.createLinearGradient(0, 0, 0, vh * 0.42); gr.addColorStop(0, `rgba(0,0,0,${(L.d * 0.9).toFixed(3)})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); l.fillStyle = gr; l.fillRect(0, 0, vw, Math.ceil(vh * 0.42)); } } // de dia, o alto do céu (e as nuvens) não fica na sombra
   furo(G.p.x, G.p.y - 26, G.raioLuz() + (Math.floor(G.T * 8) % 2 ? 2 : 0), 1);
   for (const o of G.N.luzes) furo(o.x, o.y, o.r, 0.8);
   for (const o of G.objs) if (o.luz) furo(o.x, o.y - 20, o.luz, 0.9);
