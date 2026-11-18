@@ -174,9 +174,9 @@ const ASAFE = { skin: '#C68B59', hair: '#2B1A10', tunic: '#3F6A8A', cape: '#C9A6
 const REFUGIO = [
   ...TRILHA,
   { cx: 0, nome: 'Praça do poço', papel: 'inicio', tiles: sala([13, 20, 23]), objs: [
-    { tipo: 'flor', col: 4 }, { tipo: 'flor', col: 25.5 },
+    { tipo: 'portaoCidade', col: 1.4, lado: 1 }, { tipo: 'flor', col: 25.5 },
     planta(11, 'palmeira'), casa(22, 'viuva', 'Casa da viúva de Sarepta'), planta(28, 'oliveira'),
-    { tipo: 'placa', col: 1.5, txt: '← Estrada do campo: o seu sítio' }, { tipo: 'ebenezer', col: 5.5 }, { tipo: 'poco', col: 14.5 },
+    { tipo: 'placa', col: 3.6, txt: '← Pelo portão: a estrada do campo e o seu sítio' }, { tipo: 'ebenezer', col: 5.5 }, { tipo: 'poco', col: 14.5 },
     { tipo: 'npc', col: 8.5, id: 'velho', nome: 'Velho Peregrino', look: velho },
     { tipo: 'npc', col: 17, id: 'pedro', nome: 'Simão, o pescador', look: { skin: '#A0673E', hair: '#3A2314', tunic: '#497A80', cape: 'none', style: 'cacheado', beard: true, body: 'forte' } },
     { tipo: 'npc', col: 26.5, id: 'jumenta', nome: 'Uma jumenta', bicho: 'jumenta' },
@@ -226,15 +226,15 @@ const REFUGIO = [
     { tipo: 'poco', col: 7 }, { tipo: 'npc', col: 17.5, id: 'zelote3', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5E4A3A', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } }, { ...povo(12.5, 2, VILA.ana.look), id: 'ana', nome: VILA.ana.nome }, { ...povo(5, 2, ELIABE), id: 'eliabe', nome: 'Eliabe, o pastor' }, { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
   // o porto: o píer sobre o mar, o barqueiro que leva a Sardes, o pescador e, às vezes, um mercador de além-mar
   { cx: 7, nome: 'Porto do Refúgio', papel: 'vila', tiles: sala([12, 3, 6]), objs: [
-    planta(1.5, 'palmeira'), { tipo: 'cenario', col: 5, qual: 'redes' }, { tipo: 'mar', col: 11 }, { tipo: 'banco', col: 13, lugar: 'mirante' },
+    planta(1.5, 'palmeira'), { tipo: 'cenario', col: 5, qual: 'redes' }, { tipo: 'banco', col: 13, lugar: 'mirante' },
     { tipo: 'npc', col: 8.5, id: 'zebedeu', nome: 'Zebedeu, o pescador', look: { skin: '#A0673E', hair: '#D9D2C5', tunic: '#3F5A6A', cape: 'none', style: 'curto', beard: true, body: 'forte' } },
     { tipo: 'npc', col: 16.5, id: 'viajante', nome: 'Mercador de além-mar', look: { skin: '#6B4A2E', hair: '#1C120A', tunic: '#2E5E6A', cape: '#C9A63C', style: 'turbante', beard: true }, vezOutra: true },
     { tipo: 'npc', col: 23, id: 'barqueiro', nome: 'Jonatã, o barqueiro', look: { skin: '#8A5A3A', hair: '#2B1A10', tunic: '#5A4636', cape: '#3A3456', style: 'cacheado', beard: true } },
     { tipo: 'npc', col: 19, id: 'zelote4', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#4A4036', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } },
-    { tipo: 'barco', col: 26 }, { tipo: 'ave', col: 12, lin: 11 }, { tipo: 'ave', col: 19, lin: 12 }] },
+    { tipo: 'cenario', col: 27, qual: 'redes' }, { tipo: 'ave', col: 12, lin: 11 }, { tipo: 'ave', col: 19, lin: 12 }] },
   // a margem e o mar aberto: da pedra da margem ou de bote se pesca de verdade (Zebedeu empresta a vara)
   { cx: 8, nome: 'A margem do mar', papel: 'vila', semPostes: true, tiles: sala(), objs: [
-    planta(3, 'palmeira'), { tipo: 'placa', col: 6, txt: 'Da pedra se pesca o raso. De bote, mar adentro, os grandes.' }, { tipo: 'bote', col: 10 }, { tipo: 'aguaAberta', col: 12, ate: 58 }, { tipo: 'ave', col: 20, lin: 11 }] },
+    planta(3, 'palmeira'), { tipo: 'placa', col: 6, txt: 'Da pedra se pesca o raso. De bote, mar adentro, os grandes.' }, { tipo: 'bote', col: 10 }, { tipo: 'aguaAberta', col: 12, ate: 58, pierCols: 6 }, { tipo: 'barco', col: 20 }, { tipo: 'ave', col: 20, lin: 11 }] },
   // mar adentro: só de bote. Longe da margem andam os grandes, e na tempestade, o Leviatã (Jó 41)
   { cx: 9, nome: 'O mar aberto', papel: 'vila', semPostes: true, marAberto: 'dir', tiles: sala(), objs: [{ tipo: 'ave', col: 8, lin: 10 }, { tipo: 'ave', col: 22, lin: 9 }] },
   // ---- o subsolo ----
@@ -270,7 +270,7 @@ const SARDES = [
     { tipo: 'cenario', col: 5, qual: 'banca' }, { ...povo(5, 2, sombrio(2)), rua: 2 }, vela(10), povoS('tiquico', 14), { tipo: 'cenario', col: 22, qual: 'banca' }, vela(19), povoS('febe', 25), { tipo: 'vaso', col: 27 }] },
   { nome: 'O bairro baixo', papel: 'vila', tiles: sala([13, 3, 6], [10, 9, 12], [13, 15, 18]), objs: [
     casa(4, 'sar3', 'Casa de Ninfa'), povoS('ninfa', 8), vela(12), { ...povo(15, 3, sombrio(3)), rua: 3 }, casa(20, 'sar4', 'Casa sem nome'), vela(24), { tipo: 'vaso', col: 26 }, { tipo: 'ebenezer', col: 28 }] },
-  { nome: 'O templo apagado', papel: 'vila', tiles: sala([11, 5, 9], [11, 20, 24]), objs: [
+  { nome: 'As ruínas do templo de Ártemis', papel: 'vila', tiles: sala([11, 5, 9], [11, 20, 24]), objs: [
     { tipo: 'cenario', col: 14, qual: 'templo' }, vela(7), vela(22), { tipo: 'escrito', col: 14, lin: 6, txt: '"Sê vigilante e confirma o restante, que estava para morrer" (Ap 3:2)' }] }
 ];
 SARDES.forEach((c, i) => c.objs.forEach(o => { if (o.tipo === 'vela') o.id = 'v' + i + '_' + o.col; }));
@@ -304,12 +304,14 @@ export function areaDef(id) {
       { papel: k === 0 ? 'inicio' : 'vila', nome: donos.length > 1 ? 'A casa de ' + nomeDe(d) : 'A casa', dono: d, tiles: sala(), objs: [
         planta(3, 'oliveira'), { tipo: 'galinheiro', col: 6.5, dono: d }, { tipo: 'essencias', col: 10, dono: d }, { tipo: 'flor', col: 12.5 }, { tipo: 'cesto', col: 14.5, dono: d }, { tipo: 'maquina', qual: 'forno', col: 17, dono: d }, { tipo: 'poco', col: 19.5 }, { tipo: 'velaCasa', col: 21.2, dono: d },
         casa(23, 'peregrino', donos.length > 1 ? 'Casa de ' + nomeDe(d) : 'Sua casa'), { tipo: 'placa', col: 27, txt: k === 0 ? 'Estrada do Refúgio →' : 'Sítio de ' + nomeDe(d) + ' · o de ' + nomeDe(donos[k - 1]) + ' →' }, { tipo: 'ave', col: 20, lin: 13 }] }];
+    // a estrada até o Refúgio: o caminho de terra, oliveiras e, no fim, a muralha da cidade com o portão aberto
+    const estrada = { papel: 'vila', nome: 'A estrada do Refúgio', tiles: sala(), objs: [planta(5, 'oliveira'), { tipo: 'placa', col: 12, txt: 'Refúgio →' }, planta(17, 'cipreste'), { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'portaoCidade', col: 27.6, lado: -1 }] };
     const mar = { papel: 'vila', nome: 'O mar', semPostes: true, marAberto: 'esq', tiles: sala(), objs: [{ tipo: 'aguaAberta', col: 0, ate: 41, esq: true, praia: true }] };
     const praia = { papel: 'vila', nome: 'A praia', praia: true, semPostes: true, tiles: sala(), objs: [
       { tipo: 'areia', col: 12, ate: 29 }, planta(14.5, 'palmeira'), planta(26, 'palmeira'),
       { tipo: 'bancoPraia', col: 19 }, { tipo: 'concha', col: 15.5 }, { tipo: 'concha', col: 22.5 }, { tipo: 'barquinho', col: 13 }, { tipo: 'placa', col: 28, txt: '← A praia' }] };
     return { id, nome: donos.length > 1 ? 'Os sítios' : 'Seu sítio', sub: donos.length > 1 ? donos.map(nomeDe).join(', ') : 'A casa no campo', tema: 'bosque', seed: 'sitio', paz: true, aberto: true, sitio: true, donos,
-      planta: [mar, praia, ...donos.map((d, k) => ({ d, k })).reverse().flatMap(({ d, k }) => fazenda(d, k))] }; }
+      planta: [mar, praia, ...donos.map((d, k) => ({ d, k })).reverse().flatMap(({ d, k }) => fazenda(d, k)), estrada] }; }
   // a sinagoga por dentro: a nave, a arca, a bimá; Jairo conduz as orações e quem veio orar fica de joelhos
   if (id === 'sinagoga:sardes') return { id, nome: 'Sinagoga de Sardes', sub: 'A casa de oração que esperava', tema: 'sardes', seed: id, paz: true, interior: true, planta: [
     { papel: 'inicio', nome: 'A nave', deco: 'sinagoga', tiles: sala(), objs: [{ tipo: 'portal', col: 3, area: 'sardes', porta: true, rotulo: 'Sair da sinagoga' }, { tipo: 'menora', col: 15 }, { tipo: 'npc', col: 19, id: 'natanael', nome: 'Natanael, o último', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#3A3F4C', cape: '#4A4A6A', style: 'turbante', beard: true } }] }] };

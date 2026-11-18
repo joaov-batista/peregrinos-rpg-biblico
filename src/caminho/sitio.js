@@ -10,6 +10,7 @@ import { T, CW } from './nivel.js';
 import { MORADORES, NOMES_SITIO } from './dados.js';
 import { chovendo } from './tempo.js';
 import { passoPraia } from './praia.js';
+import { passoPescaViva } from './pescaviva.js';
 
 const rand = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
 export const limpo = n => String(n || 'peregrino').toLowerCase().replace(/[^a-z0-9]/g, '') || 'peregrino';
@@ -71,7 +72,7 @@ export function passoSitio(G, dt) {
   viradaDoDia(G);
   const p = G.p, S = st(G);
   passoPraia(G, dt); // o banco da praia
-  { const mar = G.objs.find(o => o.tipo === 'aguaAberta' && o.praia); if (mar) { const fim = mar.x - 16 + (mar.ate - mar.col + 1) * T; if (p.x < fim + 14) { p.x = fim + 14; p.vx = Math.max(0, p.vx); } } } // a praia: a água não se anda
+  passoPescaViva(G, dt); // o mar da praia: nadar e pescar
   // no multijogador, conta para os outros como está a sua fazenda (eles a veem do lado da deles)
   if (G.mp && (G.siT = (G.siT || 0) - dt) <= 0) { G.siT = 2.5; const hoje = dia(G);
     G.mp.ev('si', { d: limpo(G.char.name), c: S.canteiros.map(c => c ? [c.estado, c.planta || '', c.pronto ? 1 : 0, c.regado === hoje ? 1 : 0, c.cresceu || 0] : 0), po: S.pomar.map(q => q?.pronto === false ? 0 : 1), m: Object.fromEntries(Object.entries(S.maq).filter(([, v]) => v).map(([k, v]) => [k, v.feito ? 2 : 1])), co: S.cocho === hoje ? 1 : 0, v: velaAcesa(G) ? 1 : 0 }); }

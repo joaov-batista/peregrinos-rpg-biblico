@@ -56,7 +56,7 @@ function pintarAgua(g, o, G, x, y, Tm) {
         for (let r = 2; r < 42; r += 2) { g.fillStyle = corEm(Math.min(1, d + r / 120), x0 + i, yy + r, PAL); g.fillRect(x0 + i, yy + r, 2, 2); }
         g.fillStyle = (i + Math.floor(f3 * 5)) % 22 < 2 ? '#DFF6FA' : corEm(d, x0 + i, yy, ESP); g.fillRect(x0 + i, yy, 2, 2); }
       // a rampa da beira: a areia desce para dentro d'água, com a água rasa por cima e a espuma que vai e volta
-      { const bx = esq ? x0 + w : x0, dir = esq ? -1 : 1, vai = Math.sin(Tm * 0.8) * 0.5 + 0.5, pedra = !o.praia;
+      { const bx = esq ? x0 + w : x0, dir = esq ? -1 : 1, vai = Math.sin(Tm * 0.8) * 0.5 + 0.5, pedra = false;
         for (let i = 0; i < R; i++) { const xx = bx + dir * i - (esq ? 1 : 0), u = i / R, ys = Math.round(y - 1 + u * u * 14);
           for (let yy = ys; yy < y + 42; yy++) { const n = ((xx * 7 + yy * 13) % 11) / 11; g.fillStyle = pedra && n > 0.82 ? '#7A7484' : yy < ys + 2 ? '#C9B07A' : n > 0.5 ? '#A8925E' : '#B89E68'; g.fillRect(xx, yy, 1, 1); }
           if (pedra && i % 9 === 3) { g.fillStyle = '#6A6474'; g.fillRect(xx - 1, ys - 1, 3, 2); g.fillStyle = '#9A94A4'; g.fillRect(xx - 1, ys - 1, 2, 1); } // seixos
@@ -64,6 +64,11 @@ function pintarAgua(g, o, G, x, y, Tm) {
           if (u > 0.12 + (1 - vai) * 0.18) { g.globalAlpha = Math.min(0.9, 0.25 + prof * 0.8); g.fillStyle = prof < 0.4 ? '#7FD4D8' : '#3E9EAE'; g.fillRect(xx, wy, 1, Math.max(1, ys - wy + 2)); g.globalAlpha = 1; } }
         const fx = bx + dir * Math.round((0.1 + (1 - vai) * 0.2) * R); g.fillStyle = '#F4FCFF'; for (let k = 0; k < 7; k++) { g.globalAlpha = 0.9 - k * 0.1; g.fillRect(fx + dir * k * 2, y - 2 - (k % 2) + Math.round((0.1 + (1 - vai) * 0.2) * 2), 2, 1); } g.globalAlpha = 0.45; g.fillStyle = '#5A4A30'; g.fillRect(Math.min(bx, bx + dir * 18), y - 1, 18, 1); g.globalAlpha = 1; } // a areia molhada que a onda deixou
       if (escuro > 0.02) { g.globalAlpha = escuro; g.fillStyle = '#060E1E'; g.fillRect(x0 - (esq ? 0 : 0), y - 6, w, 48); } if (poente > 0.02) { g.globalAlpha = poente; g.fillStyle = '#E07A4A'; g.fillRect(x0, y - 6, w, 6); } g.globalAlpha = 1;
+      if (o.pierCols) { const pw = o.pierCols * 16 + 4, px0 = x0 - 2; // o píer de madeira: sai da beira mar adentro, sobre estacas, com a sombra na água
+        g.globalAlpha = 0.45; g.fillStyle = '#05121C'; g.fillRect(px0, y + 1, pw, 6); g.globalAlpha = 1;
+        g.fillStyle = '#17121f'; for (let i = 6; i < pw; i += 22) g.fillRect(px0 + i - 1, y - 1, 5, 26); g.fillStyle = '#5A3E28'; for (let i = 6; i < pw; i += 22) { g.fillRect(px0 + i, y - 1, 3, 25); } g.fillStyle = '#7A5A3A'; for (let i = 6; i < pw; i += 22) g.fillRect(px0 + i, y - 1, 1, 25);
+        g.fillStyle = '#17121f'; g.fillRect(px0, y - 4, pw, 5); g.fillStyle = '#8A6A44'; g.fillRect(px0, y - 4, pw, 3); g.fillStyle = '#A88458'; g.fillRect(px0, y - 4, pw, 1); g.fillStyle = '#6B4A2E'; for (let i = 0; i < pw; i += 8) g.fillRect(px0 + i, y - 4, 1, 3);
+        g.fillStyle = '#17121f'; g.fillRect(px0 + pw - 4, y - 12, 4, 9); g.fillStyle = '#6B4A2E'; g.fillRect(px0 + pw - 3, y - 11, 2, 8); g.fillStyle = '#C9B88A'; g.fillRect(px0 + pw - 2, y - 9, 8, 1); } // o poste de amarrar, com a corda do barco
       return; }
     case 'areia': { // a areia da praia: clara, com riscos de vento e conchinhas; molhada perto da água; no fim, ela se mistura com a grama aos poucos
       const w = (o.ate - o.col + 1) * 16, x0 = x - 8, mist = 112; // os últimos pixels viram grama, pontilhado
@@ -127,6 +132,20 @@ function pintarObjeto(g, o, G, x, y, Tm) {
       return true; }
     case 'pomar': { const pronta = (o.alheio ? G.sitiosAlheios?.[o.dono] : G.cm.sitio)?.pomar?.[o.idx]?.pronto !== false, s = sprObj('pomar' + (pronta ? 1 : 0), 40, 46, s => { const T2 = rampa('#6B4A2E'), F = rampa('#5A7A4A'); s.ret(18, 26, 5, 20, T2[1]); s.linha(20, 30, 10, 20, 2, T2[1]); for (let i = 0; i < 9; i++) s.bola(8 + (i * 11) % 26, 10 + (i * 7) % 16, 7, 5, F, 0.4, -0.8); if (pronta) for (let i = 0; i < 12; i++) s.ret(6 + (i * 13) % 28, 8 + (i * 5) % 18, 2, 2, cor('#3A4A1A')); }); carimbar(g, s, x, y, 20, 45); return true; }
     case 'cocho': { const s = sprObj('cocho', 28, 12, s => { const M = rampa('#7A4E2E'); s.ret(1, 3, 26, 7, M[2]); s.ret(1, 3, 26, 1, M[4]); s.ret(3, 4, 22, 3, M[0]); s.ret(2, 10, 3, 2, M[1]); s.ret(23, 10, 3, 2, M[1]); }); carimbar(g, s, x, y, 14, 11); if ((o.alheio ? G.sitiosAlheios?.[o.dono] : G.cm.sitio)?.cocho === Math.floor((G.cm.relogio || 0) / 600)) { g.fillStyle = '#E8C24A'; g.fillRect(x - 10, y - 9, 20, 2); } return true; }
+    case 'portaoCidade': { // o portão da cidade: duas torres de pedra com ameias, o arco aberto com as folhas de madeira encostadas, tochas; a muralha segue para trás
+      const PE = ['#3A2E28', '#7A6650', '#9A8468', '#B8A284'], d = o.lado || 1, q = (a, b, w, h, c) => { g.fillStyle = c; g.fillRect(x + a, y + b, w, h); }, noite = (() => { const hh = ((G.cm.relogio || 0) / 600 * 24 + 7) % 24; return hh >= 18.5 || hh < 5.5; })();
+      const pedra = (a, b, w, h) => { q(a - 1, b - 1, w + 2, h + 1, '#17121f'); for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) { const lin = Math.floor(yy / 4), jun = yy % 4 === 3 || (xx + lin * 3) % 8 === 0; if (jun) { q(a + xx, b + yy, 1, 1, PE[0]); continue; } q(a + xx, b + yy, 1, 1, xx > w - 3 ? PE[1] : xx < 2 ? PE[3] : PE[2]); } };
+      pedra(-40, -74, 80, 74); // o bloco da porta
+      for (let k = -40; k < 40; k += 7) { q(k - 1, -80, 6, 7, '#17121f'); q(k, -79, 4, 6, PE[2]); q(k, -79, 4, 1, PE[3]); } // ameias
+      pedra(-52, -92, 18, 92); pedra(34, -92, 18, 92); // as torres
+      for (const tx of [-52, 34]) for (let k = 0; k < 18; k += 6) { q(tx + k - 1, -98, 5, 7, '#17121f'); q(tx + k, -97, 3, 6, PE[2]); }
+      q(-45, -60, 4, 8, '#17121f'); q(41, -60, 4, 8, '#17121f'); // seteiras
+      q(-17, -54, 34, 54, '#17121f'); for (let a = 0; a <= 16; a++) { const yy = Math.round(Math.sqrt(Math.max(0, 1 - ((a - 8) / 8.5) ** 2)) * 10); q(-17 + a * 2, -54 - yy, 2, yy, '#17121f'); } // o arco
+      q(-15, -52, 30, 52, '#2A2238'); g.globalAlpha = 0.5; q(-15, -20, 30, 20, d > 0 ? '#5A6A3A' : '#6A5A44'); g.globalAlpha = 1; // a vista do outro lado
+      for (const s of [-1, 1]) { const fx = s < 0 ? -26 : 17; q(fx, -50, 9, 50, '#17121f'); q(fx + 1, -49, 7, 49, '#6B4A2E'); for (let yy = -44; yy < 0; yy += 9) q(fx + 1, yy, 7, 1, '#4A3020'); q(fx + (s < 0 ? 5 : 1), -30, 2, 2, '#C9A060'); } // as folhas abertas
+      for (const tx of [-30, 26]) { q(tx, -66, 3, 8, '#3A2A1A'); const f = Math.floor(Tm * 9 + tx) % 3; q(tx - 1, -71 - f, 5, 5 + f, '#E2463C'); q(tx, -70 - f, 3, 3 + f, '#FFD86A'); if (noite) { g.globalAlpha = 0.22; g.fillStyle = '#FFC860'; g.beginPath(); g.arc(x + tx + 1, y - 68, 22, 0, 6.29); g.fill(); g.globalAlpha = 1; } } // as tochas
+      q(-36, -88, 2, 10, '#5A3A2A'); q(-34, -88 + Math.round(Math.sin(Tm * 3)), 8, 5, '#8E2E3A'); // o estandarte
+      return true; }
     case 'presepio': { // o presépio do Natal: a estrebaria de palha, a manjedoura que brilha, Maria e José ajoelhados, uma ovelha, e a estrela no alto
       const MARIA = { skin: '#C68B59', hair: '#2B1A10', tunic: '#3E5FA8', cape: '#E8E2D0', style: 'veu' }, JOSE = { skin: '#A0673E', hair: '#3A2314', tunic: '#7A5A3A', cape: '#4A3A2A', style: 'turbante', beard: true };
       g.fillStyle = '#17121f'; g.fillRect(x - 27, y - 44, 3, 44); g.fillRect(x + 24, y - 44, 3, 44); g.fillStyle = '#6B4A2E'; g.fillRect(x - 26, y - 43, 1, 43); g.fillRect(x + 25, y - 43, 1, 43);
@@ -375,11 +394,17 @@ function pintarObjeto(g, o, G, x, y, Tm) {
         for (const [a, b] of [[x - 172, x - 60], [x + 60, x + 170]]) { for (let px2 = a; px2 < b; px2 += 22) { R(px2, y - 12, 5, 12, PD[4]); R(px2 + 4, y - 12, 1, 12, PD[1]); R(px2 + 5, y - 9, 17, 9, TI); g.fillStyle = '#4A4A58'; for (let gx = px2 + 7; gx < px2 + 21; gx += 3) g.fillRect(gx, y - 9, 1, 9); } R(a, y - 13, b - a, 2, PD[3]); }
         for (const bx of [x - 48, x + 44, x - 150]) { g.fillStyle = '#2E6A3A'; g.fillRect(bx - 8, y - 8, 16, 8); g.fillStyle = '#4A9A4A'; g.fillRect(bx - 6, y - 10, 12, 4); g.fillStyle = '#7ACB6A'; g.fillRect(bx - 3, y - 10, 4, 2); }
         g.fillStyle = '#C9B86A'; for (const gx of [-120, -80, 70, 110, 150]) { g.fillRect(x + gx, y - 3, 1, 3); g.fillRect(x + gx + 2, y - 4, 1, 4); } }
-      else if (q === 'templo') { const luz = G.cm.sar?.feita; g.fillStyle = '#17121f'; g.fillRect(x - 70, y - 96, 140, 96); g.fillRect(x - 78, y - 104, 156, 10); g.beginPath(); g.moveTo(x - 80, y - 104); g.lineTo(x, y - 132); g.lineTo(x + 80, y - 104); g.fill();
-        g.fillStyle = luz ? '#8A8296' : '#3A3644'; g.fillRect(x - 68, y - 94, 136, 94); g.beginPath(); g.moveTo(x - 72, y - 105); g.lineTo(x, y - 128); g.lineTo(x + 72, y - 105); g.fill();
-        g.fillStyle = luz ? '#B8B0C0' : '#4A4658'; for (const cx of [-58, -36, 32, 54]) g.fillRect(x + cx, y - 92, 6, 92);
-        g.fillStyle = luz ? '#FFD98A' : '#0A090C'; g.fillRect(x - 18, y - 60, 36, 60); g.fillRect(x - 14, y - 66, 28, 6);
-        if (luz) { g.save(); g.globalAlpha = 0.25 + 0.08 * Math.sin(Tm * 3); g.fillStyle = '#FFE9A8'; g.fillRect(x - 30, y - 72, 60, 72); g.restore(); for (const dx of [-8, 0, 8]) chama(g, x + dx - 2, y - 72, Tm, dx); } }
+      else if (q === 'templo') { // o templo de Ártemis, em ruínas: degraus, colunas jônicas altas (umas inteiras, outras partidas), um pedaço de arquitrave, tambores caídos e hera; nada aceso
+        const PD = ['#2A2630', '#5A5464', '#8A8494', '#B0AAB8'], pd = (a, b, w, h, c) => { g.fillStyle = c; g.fillRect(x + a, y + b, w, h); };
+        pd(-84, -8, 168, 8, '#17121f'); pd(-83, -7, 166, 7, PD[1]); pd(-83, -7, 166, 1, PD[2]); pd(-76, -14, 152, 7, '#17121f'); pd(-75, -13, 150, 6, PD[1]); pd(-75, -13, 150, 1, PD[3]); // os degraus
+        const cols = [[-66, 1], [-46, 0.55], [-26, 1], [-6, 0.3], [14, 1], [34, 0.75], [54, 1]];
+        for (const [cx, k] of cols) { const hh = Math.round(100 * k); pd(cx - 1, -14 - hh, 10, hh, '#17121f'); pd(cx, -14 - hh, 8, hh, PD[2]); pd(cx + 2, -14 - hh, 1, hh, PD[1]); pd(cx + 5, -14 - hh, 1, hh, PD[1]); pd(cx, -14 - hh, 1, hh, PD[3]);
+          if (k === 1) { pd(cx - 4, -118, 16, 4, '#17121f'); pd(cx - 3, -117, 14, 2, PD[3]); pd(cx - 4, -116, 3, 3, PD[2]); pd(cx + 9, -116, 3, 3, PD[2]); } // o capitel com as volutas
+          else { pd(cx, -14 - hh - 2, 3, 2, PD[2]); pd(cx + 5, -14 - hh - 1, 3, 1, PD[2]); } } // a quebra irregular
+        pd(-70, -126, 52, 8, '#17121f'); pd(-69, -125, 50, 6, PD[2]); pd(-69, -125, 50, 1, PD[3]); pd(10, -126, 48, 8, '#17121f'); pd(11, -125, 46, 6, PD[2]); pd(11, -125, 46, 1, PD[3]); // o que sobrou da arquitrave
+        for (const [a, b] of [[-30, -22], [40, -20], [70, -22]]) { pd(a - 1, b - 1, 14, 10, '#17121f'); pd(a, b, 12, 8, PD[1]); pd(a, b, 12, 1, PD[2]); pd(a + 3, b, 1, 8, PD[0]); } // tambores de coluna caídos
+        g.fillStyle = '#3A5A34'; for (const [a, b, n] of [[-66, -40, 22], [14, -70, 30], [54, -36, 18]]) for (let k = 0; k < n; k++) g.fillRect(x + a + (k % 3) * 3 - 1, y + b + k * 2, 2, 1); // a hera subindo
+      }
       else if (q === 'banca') { g.fillStyle = '#17121f'; g.fillRect(x - 40, y - 52, 3, 52); g.fillRect(x + 22, y - 52, 3, 52); g.fillRect(x - 44, y - 58, 72, 8); g.fillRect(x - 40, y - 16, 64, 16); g.fillStyle = '#7A3F8A'; g.fillRect(x - 43, y - 57, 70, 6); for (let i = 0; i < 9; i++) { g.fillStyle = i % 2 ? '#9A5AB0' : '#5E2C6E'; g.fillRect(x - 43 + i * 8, y - 51, 8, 4 + (i % 2) * 2); } g.fillStyle = '#6B4A2E'; g.fillRect(x - 39, y - 15, 62, 14); for (const [dx, c] of [[-34, '#8E2B45'], [-22, '#7A3F8A'], [-10, '#C9A63C'], [2, '#5E2C6E'], [12, '#B03A6E']]) { g.fillStyle = c; g.fillRect(x + dx, y - 24, 9, 9); g.fillStyle = '#17121f'; g.fillRect(x + dx, y - 16, 9, 1); } }
       else if (q === 'armas') { g.fillStyle = '#17121f'; g.fillRect(x + 16, y - 44, 46, 4); g.fillRect(x + 18, y - 44, 3, 44); g.fillRect(x + 57, y - 44, 3, 44); g.fillStyle = '#6B4A2E'; g.fillRect(x + 17, y - 43, 44, 2); for (const [dx, h2, c] of [[24, 30, '#C3DCEA'], [32, 22, '#A0662A'], [40, 34, '#C3DCEA'], [48, 26, '#C48A4E']]) { g.fillStyle = '#17121f'; g.fillRect(x + dx - 1, y - 41, 4, h2 + 2); g.fillStyle = c; g.fillRect(x + dx, y - 40, 2, h2); g.fillStyle = '#D9A63C'; g.fillRect(x + dx - 1, y - 40 + h2 - 6, 4, 2); } g.fillStyle = '#17121f'; g.fillRect(x + 66, y - 22, 16, 22); g.fillStyle = '#7F8C9C'; g.fillRect(x + 67, y - 21, 14, 14); g.fillStyle = '#D9A63C'; g.fillRect(x + 72, y - 16, 4, 4); }
       else if (q === 'tear') { g.fillStyle = '#17121f'; g.fillRect(x + 16, y - 46, 3, 46); g.fillRect(x + 46, y - 46, 3, 46); g.fillRect(x + 14, y - 48, 37, 4); g.fillRect(x + 14, y - 12, 37, 4); g.fillStyle = '#6B4A2E'; g.fillRect(x + 15, y - 47, 35, 2); g.fillRect(x + 15, y - 11, 35, 2); for (let i = 0; i < 9; i++) { g.fillStyle = ['#C8C9BC', '#713E49', '#394F62'][i % 3]; g.fillRect(x + 20 + i * 3, y - 44, 2, 20 + ((i * 5 + Math.floor(Tm * 2)) % 9)); } g.fillStyle = '#A18C61'; g.fillRect(x + 54, y - 8, 14, 8); g.fillStyle = '#C8C9BC'; g.fillRect(x + 56, y - 14, 10, 6); g.fillStyle = '#713E49'; g.fillRect(x + 58, y - 18, 6, 4); }
@@ -547,7 +572,7 @@ export function renderPixel(G) {
   if (G.pomba) pintarPomba(g, G.pomba, X, Y, Tm);
   else if (G.mortoT > 1.2) { const s = quadroHeroi({ ...p, morto: true, atk: null }, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab); s.dissolve(clamp((1.9 - G.mortoT) / 0.7, 0, 1), 5); carimbar(g, s, X(p.x), Y(p.y), AX, AY, p.face); }
   pintarEfeitos(g, G.fxPx, cx, cy, false);
-  if (G.area === 'refugio') { pintarPescaViva(g, G, X, Y, Tm, desenhaBote); if (G.levi) pintarMarBravo(g, G, X, Y, Tm); }
+  if (G.area === 'refugio' || G.def?.sitio) { pintarPescaViva(g, G, X, Y, Tm, desenhaBote); if (G.levi) pintarMarBravo(g, G, X, Y, Tm); }
   elAtual = G.chefe && ELEMENTO_DO_CHEFE[G.chefe.id]; for (const t of G.tiros) pintarTiro(g, t, X(t.x), Y(t.y), Tm);
   for (const o of G.outros) if (o.corpo.ts) for (const t of o.corpo.ts) pintarTiro(g, { x: t[0], y: t[1], vx: t[2], vy: t[3], r: t[4], tipo: t[5], cor: t[6], amigo: true }, X(t[0]), Y(t[1]), Tm);
   // poeira do pulo e da queda: duas nuvenzinhas que se abrem para os lados, crescem e se desfazem

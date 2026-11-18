@@ -111,7 +111,7 @@ export function atualizarHeroi(G, dt) {
 
   // ---- correr ----
   const lento = (p.lamp ? 0.5 : 1) * (G.lentidao || 1) * (G.velTemp > 0 && p === G.eu ? 2 : 1); /* óleo de canela: o dobro do passo */
-  const alvo = p.orando > 0 || G.pescaTrava ? 0 : c.mx * VEL * lento * (p.noBote ? 0.45 : 1) * (G.nado && p === G.eu ? 0.7 : 1); /* pescando, fica parado; no bote, rema devagar */
+  const alvo = p.orando > 0 || G.pescaTrava ? 0 : c.mx * VEL * lento * (p.noBote ? 0.45 : 1) * ((G.nado || p.nada) && p === G.eu ? 0.7 : 1); /* pescando, fica parado; no bote, rema devagar */
   if (!preso && !emDash && p.travaX <= 0) p.vx = aprox(p.vx, alvo, (p.chao ? 2700 : 1750) * dt);
   if (preso && p.chao) p.vx = aprox(p.vx, 0, 900 * dt);
   if (c.mx && !preso && !emDash && p.travaX <= 0 && !p.agarra && (!p.atk || arma.duplo)) { // a adaga é leve: dá para virar no meio do golpe, e o segundo corte já sai para o novo lado

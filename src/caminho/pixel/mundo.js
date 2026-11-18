@@ -7,7 +7,6 @@ import { Sprite, rampa, cor, TINTA, PX } from './raster.js';
 import { fundoSala } from './salas.js';
 import { luzDoDia } from '../moradores.js';
 import { TEMAS, RX } from '../dados.js';
-import { pintarCosta } from './costa.js';
 import { pintarCeuDoTempo, ehNatal, aoArLivre } from '../tempo.js';
 
 const TL = T / PX; // 16
@@ -199,8 +198,6 @@ export function pintarFundoPixel(g, G, C, vw, vh, cx, cy) {
   if (L && L.d > 0) { g.globalAlpha = L.d * 0.16; g.fillStyle = L.poente > 0.3 ? '#F2A65A' : '#DCEBFF'; g.fillRect(0, dy, vw, C.H); g.globalAlpha = 1; } /* de dia, as silhuetas ao longe clareiam um pouco */
   G.tempoNatal = !!(G.cm && ehNatal(G) && aoArLivre(G));
   if (G.tempoNatal) { g.globalAlpha = 0.2 + (G.neveK || 0) * 0.12; g.fillStyle = '#EAF2FF'; g.fillRect(0, dy, vw, C.H); g.globalAlpha = 1; } /* no Natal, tudo lá longe está branco de geada */
-  // a costa: onde há mar, a terra do fundo acaba e se vê o mar aberto até o horizonte, de lado (ver costa.js)
-  pintarCosta(g, G, C, vw, vh, cx, cy, dy, L, pintarCeuVivo);
 }
 // o céu (com o relógio no Refúgio e no sítio: manhã azul, poente laranja, noite estrelada), o sol e as nuvens
 export function pintarCeuVivo(g, G, C, vw, dy, cx, cy) {
@@ -219,6 +216,9 @@ export function pintarCeuVivo(g, G, C, vw, dy, cx, cy) {
     const { chave, cores } = corNuvens(G, L), chuva = Math.min(0.6, (G.chuvaK || 0) * 0.6);
     g.globalAlpha = 0.85; faixa(g, faixaDeNuvens(cores, false, chave), cx * 0.03 + G.T * 1.5, dy + 6 + Math.round(-cy * 0.02), vw);
     g.globalAlpha = 0.95; faixa(g, faixaDeNuvens(cores, true, chave), cx * 0.07 + G.T * 3.2, dy + 30 + Math.round(-cy * 0.03), vw); g.globalAlpha = 1;
+    // bandos de pássaros cruzando o céu, longe, em V (de dia e no poente; à noite, só um ou outro morcego... não: só de dia)
+    if (!L || L.d > 0.25) for (let b = 0; b < 2; b++) { const P = 38 + b * 17, u = ((G.T + b * 21) % P) / P, n = 5 + b * 2, x0 = Math.round(vw + 30 - u * (vw + 120)), y0 = Math.round(dy + 46 + b * 34 + Math.sin(G.T * 0.3 + b) * 6), cB = L && L.poente > 0.4 ? '#3A2A34' : '#3A4458';
+      g.globalAlpha = 0.75; g.fillStyle = cB; for (let i = 0; i < n; i++) { const fila = Math.ceil(i / 2), lado = i % 2 ? 1 : -1, bx = x0 + fila * 7, by = y0 + (i ? lado * fila * 4 : 0), bate = Math.sin(G.T * 7 + i * 1.3) > 0; g.fillRect(bx - 2, by + (bate ? -1 : 0), 2, 1); g.fillRect(bx, by, 1, 1); g.fillRect(bx + 1, by + (bate ? -1 : 0), 2, 1); } g.globalAlpha = 1; }
     if (chuva > 0.02) { g.globalAlpha = chuva; faixa(g, faixaDeNuvens(cores.map(c => mistura(c, '#4A5060', 0.6)), true, chave + 'c'), cx * 0.09 + G.T * 6, dy + 2, vw); g.globalAlpha = 1; } }
   return L;
 }

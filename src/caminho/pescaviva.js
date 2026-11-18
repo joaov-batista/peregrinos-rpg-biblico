@@ -27,7 +27,7 @@ const RAROS = ['dom', 'lingua', 'moeda', 'serpente'];
 const vara = G => VARAS[G.cm.vara === 1 ? 'cedro' : G.cm.vara] || VARAS.cedro;
 const agua = G => G.objs.find(o => o.tipo === 'aguaAberta');
 const bote = G => G.objs.find(o => o.tipo === 'bote');
-const fundura = (A, x) => Math.max(0, Math.min(1, (x - A.x0) / (A.x1 - A.x0)));
+const fundura = (A, x) => { const k = Math.max(0, Math.min(1, (x - A.x0) / (A.x1 - A.x0))); return A.esq ? 1 - k : k; }; // longe da beira é mais fundo (a beira da praia fica à direita da água)
 
 // qual peixe morde, conforme a fundura (0 raso, 1 fundo) e a hora
 function sortear(G, d) {
@@ -54,12 +54,18 @@ function premiar(G, id, seq) {
 export function passoPescaViva(G, dt) {
   const A = agua(G), p = G.p, c = G.ctl || {}, S = G.pesca = G.pesca || { est: 'livre', seq: 0, sombras: [] };
   if (!A) { G.naAgua = false; G.pescaTrava = false; return; }
-  A.x0 = A.x0 ?? A.x - 16; A.x1 = A.x1 ?? A.x - 16 + (A.ate - A.col + 1) * T;
+  A.x0 = A.x0 ?? A.x - 16; A.x1 = A.x1 ?? A.x - 16 + (A.ate - A.col + 1) * T; if (A.pierCols && !A.pier) A.pier = [A.x0 - 10, A.x0 + A.pierCols * T]; // o píer: anda-se por cima
   // a água não se anda: fora do bote, para na margem; no bote, fica no mar
-  if (p.noBote) { p.x = Math.max(A.x0 + 30, Math.min(A.x1 - 30, p.x)); if (p.vy < 0) p.vy = 0; } else if (!G.nado && p.x > A.x0 - 10 && p.x < A.x1) { p.x = A.x0 - 10; p.vx = Math.min(p.vx, 0); }
-  const naBeira = !p.noBote && p.x > A.x0 - 90 && p.x < A.x0 + 5 && p.face > 0;
-  G.naAgua = (naBeira || p.noBote) && !!G.cm.vara && !G.nado; if (G.cm.vara === 1) G.cm.vara = 'cedro';
-  if (p.noBote && c.interagir && p.x < A.x0 + 80) { p.noBote = false; p.x = A.x0 - 20; S.est = 'livre'; G.textoEm(p.x, p.y - 70, 'de volta à margem', '#C9D2E0', 11); }
+  // a água se nada: entrando nela, o peregrino nada (mais devagar, pulinho curto) e pode pescar dali mesmo; no bote, rema
+  const beira = A.esq ? A.x1 : A.x0, mar = A.esq ? -1 : 1, dentro = x => (x - beira) * mar > 10, noPier = A.pier && p.x > A.pier[0] && p.x < A.pier[1];
+  if (p.noBote) { p.x = Math.max(A.x0 + 30, Math.min(A.x1 - 30, p.x)); if (p.vy < 0) p.vy = 0; }
+  else if (!G.nado && dentro(p.x)) p.x = Math.max(A.x0 + 12, Math.min(A.x1 - 12, p.x)); // nadando, até onde o mar do mapa vai
+  const nada = !p.noBote && !G.nado && !noPier && dentro(p.x) && p.y >= A.y - 40;
+  if (nada && !p.nada) { sfx('splash'); for (let i = 0; i < 10; i++) G.parts.push({ x: p.x + rand(-12, 12), y: A.y - 4, vx: rand(-80, 80), vy: rand(-220, -80), t: 0.5, max: 0.5, r: 1.5, cor: '#DFF6FA', g: 700 }); }
+  p.nada = nada; if (nada) { p.pulos = 0; if (p.vy < -420) p.vy = -420; }
+  const naBeira = !p.noBote && !nada && (beira - p.x) * mar > -5 && (beira - p.x) * mar < 90 && p.face === mar;
+  G.naAgua = (naBeira || p.noBote || nada || noPier) && !!G.cm.vara && !G.nado; if (G.cm.vara === 1) G.cm.vara = 'cedro';
+  if (p.noBote && c.interagir && Math.abs(p.x - beira) < 80) { p.noBote = false; p.x = beira - mar * 20; S.est = 'livre'; G.textoEm(p.x, p.y - 70, 'de volta à margem', '#C9D2E0', 11); }
   // as sombras dos peixes: andam debaixo d'água, mais e maiores longe da margem
   while (S.sombras.length < 5) { const x = rand(A.x0 + 20, A.x1 - 20), d = fundura(A, x); S.sombras.push({ x, y: p.y + 8 + d * 14, vx: rand(-20, 20), t: rand(0, 4), tam: 4 + d * 8 + rand(0, 3) }); }
   for (const s of S.sombras) { s.t -= dt; if (s.t <= 0) { s.vx = rand(-24, 24); s.t = rand(1.5, 4); } if (!s.alvo) s.x = Math.max(A.x0 + 10, Math.min(A.x1 - 10, s.x + s.vx * dt)); }
@@ -139,6 +145,9 @@ export function pintarPescaViva(g, G, X, Y, Tm, desenhaBote) {
   const A = agua(G); if (!A) return; const S = G.pesca, p = G.p;
   if (S) for (const s of S.sombras) { g.globalAlpha = 0.35; g.fillStyle = '#05141E'; const x = X(s.x), y = Y(s.y), w = Math.round(s.tam); g.fillRect(x - w, y, w * 2, Math.max(2, Math.round(w / 3))); g.fillRect(x + (s.vx > 0 ? -w - 2 : w), y, 2, 2); g.globalAlpha = 1; }
   if (p.noBote) desenhaBote(g, X(p.x), Y(p.y));
+  if (p.nada && !p.morto && !G.levi) { const x = X(p.x), y = Y(p.y), cobre = p.chao ? 11 : Math.max(0, 11 - Math.round((A.y - p.y) / 2)); // nadando: a água até o peito, e as braçadas
+    if (cobre > 0) { for (let i = -10; i <= 10; i++) { const yy = y - cobre + Math.round(Math.sin(i * 0.5 + Tm * 6) * 1); g.fillStyle = '#1F5A72'; g.fillRect(x + i, yy, 1, cobre + 2); g.fillStyle = (i + Math.floor(Tm * 8)) % 5 ? '#5AB0C0' : '#DFF6FA'; g.fillRect(x + i, yy, 1, 1); }
+      if (p.chao && Math.abs(p.vx) > 20 && Math.floor(Tm * 8) % 2) { g.fillStyle = '#DFF6FA'; g.fillRect(x + (p.face > 0 ? 8 : -10), y - 12, 3, 2); g.fillRect(x + (p.face > 0 ? -10 : 8), y - 13, 2, 1); } } }
   if (!S || !G.naAgua) return;
   const mx = X(p.x + p.face * 6), my = Y(p.y - 24), tx = X(p.x + p.face * 22), ty = Y(p.y - 44);
   g.fillStyle = '#6B4A2E'; for (let k = 0; k <= 10; k++) g.fillRect(Math.round(mx + (tx - mx) * k / 10), Math.round(my + (ty - my) * k / 10), 1, 1); // a vara
