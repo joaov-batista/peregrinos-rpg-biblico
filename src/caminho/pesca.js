@@ -9,7 +9,7 @@ import { DONS } from './dados.js';
 
 const W = 384, H = 216, MAR = 66, FUNDO = 198, BX = 62;
 // faixa: 0 raso, 1 meio, 2 fundo · forca: quanto puxa a linha · v: denários
-const PEIXES = {
+export const PEIXES = {
   sardinha: { nome: 'Sardinha', w: 11, h: 5, vel: 46, faixa: [0, 0], forca: 0.7, v: [8, 14], cor: ['#8FB8C8', '#DCEFF4'], peso: 30 },
   tilapia: { nome: 'Tilápia do mar da Galileia', w: 15, h: 8, vel: 34, faixa: [0, 1], forca: 1, v: [20, 32], cor: ['#7E9A6E', '#D8E2B8'], peso: 24 },
   bagre: { nome: 'Bagre', w: 20, h: 7, vel: 26, faixa: [1, 2], forca: 1.35, v: [38, 56], cor: ['#5E5870', '#B8B0C8'], peso: 14 },
@@ -23,7 +23,7 @@ const ALBUM = ['sardinha', 'tilapia', 'bagre', 'dourado', 'moeda', 'sandalia'];
 const FAIXAS = [[MAR + 14, MAR + 48], [MAR + 50, MAR + 88], [MAR + 92, FUNDO - 10]];
 const rand = (a, b) => a + Math.random() * (b - a);
 
-function desenhaPeixe(g, id, x, y, dir, T, claro) {
+export function desenhaPeixe(g, id, x, y, dir, T, claro) {
   const P = PEIXES[id], w = P.w, hh = P.h; x = Math.round(x); y = Math.round(y);
   if (P.lixo) { g.fillStyle = '#17121f'; g.fillRect(x - 6, y - 3, 12, 6); g.fillStyle = P.cor[0]; g.fillRect(x - 5, y - 2, 10, 4); g.fillStyle = P.cor[1]; g.fillRect(x - 3, y - 4, 2, 3); g.fillRect(x + 1, y - 4, 2, 3); return; }
   const bate = Math.floor(T * 8 + x * 0.1) % 2;

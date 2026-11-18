@@ -9,6 +9,7 @@ import { coracoesDe, somarCoracoes } from './vida.js';
 import { acoesDoCoracao } from './lar.js';
 import { passoSitio, falarConjugeSitio, acoesEliabe, sitioId } from './sitio.js';
 import { passoSinagogaSardes } from './sardesnovo.js';
+import { passoPescaViva } from './pescaviva.js';
 import { agendaDe, lugarNaSinagoga, passoRonda, passoSinagoga, falarSinagoga, falaDaNoite } from './sinagoga.js';
 
 export const DIA = 600; const rand = (a, b) => a + Math.random() * (b - a);
@@ -41,6 +42,7 @@ export function passoVida(G, dt) {
   if (G.area === 'sinagoga:sardes') { passoSinagogaSardes(G, dt); return; }
   if (G.def?.sitio) { passoSitio(G, dt); return; }
   if (G.area !== 'refugio') return;
+  passoPescaViva(G, dt); // a pesca na margem e no bote
   passoSinagoga(G, dt);
   const p = G.p, gente = G.objs.filter(o => o.tipo === 'morador');
   for (const o of gente) {

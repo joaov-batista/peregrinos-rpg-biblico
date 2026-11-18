@@ -111,7 +111,7 @@ export function atualizarHeroi(G, dt) {
 
   // ---- correr ----
   const lento = (p.lamp ? 0.5 : 1) * (G.lentidao || 1);
-  const alvo = p.orando > 0 ? 0 : c.mx * VEL * lento;
+  const alvo = p.orando > 0 || G.pescaTrava ? 0 : c.mx * VEL * lento * (p.noBote ? 0.45 : 1); /* pescando, fica parado; no bote, rema devagar */
   if (!preso && !emDash && p.travaX <= 0) p.vx = aprox(p.vx, alvo, (p.chao ? 2700 : 1750) * dt);
   if (preso && p.chao) p.vx = aprox(p.vx, 0, 900 * dt);
   if (c.mx && !preso && !emDash && p.travaX <= 0 && !p.agarra && (!p.atk || arma.duplo)) { // a adaga é leve: dá para virar no meio do golpe, e o segundo corte já sai para o novo lado
@@ -128,7 +128,7 @@ export function atualizarHeroi(G, dt) {
   passoCorca(G, p, c, dt, paredeAoLado, N, emDash, preso); // Pés de Corça: agarrado na parede, firme
   // descer de uma plataforma: segurar para baixo um instante (ou para baixo + pular)
   if (c.my > 0.5 && p.chao && p.naPonte && !preso) { p.baixoT = (p.baixoT || 0) + dt; if (p.baixoT > 0.14 || p.buf > 0) { p.desce = 0.2; p.buf = 0; p.chao = false; p.baixoT = 0; } } else p.baixoT = 0;
-  if (p.buf > 0 && !preso && p.orando <= 0) {
+  if (p.buf > 0 && !preso && p.orando <= 0 && !p.noBote && !G.pescaTrava) {
     if (p.coyote > 0) { p.vy = -PULO; p.coyote = 0; p.buf = 0; p.sq = 1.22; sfx('step'); G.fx.po(p.x, p.y, 5, '#C9D2C4'); p.dashT = 0; }
     else if ((p.desliza || paredeAoLado(N, p, 1) || paredeAoLado(N, p, -1))) {
       const lado = p.desliza || (paredeAoLado(N, p, 1) ? 1 : -1);
@@ -173,7 +173,7 @@ export function atualizarHeroi(G, dt) {
 
   // ---- golpes ----
   if (c.atk) p.atkBuf = 0.13;
-  if (p.atkBuf > 0 && p.atkCd <= 0 && !preso && !emDash && p.orando <= 0) {
+  if (p.atkBuf > 0 && p.atkCd <= 0 && !preso && !emDash && p.orando <= 0 && !G.naAgua) {
     // virar na hora do golpe: o direcional manda; sem ele, o lado do cursor do mouse. Golpes seguidos não prendem mais o peregrino num lado só.
     if (!emDash && p.travaX <= 0 && !p.agarra) { if (c.mx) p.face = Math.sign(c.mx); else if (c.ladoMouse) p.face = c.ladoMouse; } /* agarrado, golpeia para fora da parede */
     // oito direções: para os lados, para cima, para baixo (no ar quica; no chão é rasteira) e as diagonais
@@ -217,7 +217,7 @@ export function atualizarHeroi(G, dt) {
   }
   // Ataque mira: segurar o golpe carrega; ao soltar, o golpe sai só na direção apontada. Pede muito azeite e demora a voltar.
   if (p.miraCd > 0) p.miraCd -= dt;
-  const livre = !preso && p.orando <= 0 && !G.investidaMira && !G.quedaMira && !G.agarre;
+  const livre = !preso && p.orando <= 0 && !G.investidaMira && !G.quedaMira && !G.agarre && !G.naAgua; /* à beira d'água o golpe é a vara */
   if (c.atkSeg && livre) {
     p.segGolpe = (p.segGolpe || 0) + dt;
     if (p.miraCd > 0 || p.oleo < G.custoMira()) { p.carga = 0; if (p.segGolpe > 0.45 && !p.avisoMira) { p.avisoMira = true; G.textoEm(p.x, p.y - 64, p.miraCd > 0 ? 'ataque mira: ainda não' : 'ataque mira pede ' + G.custoMira() + ' de azeite', '#C9B88A', 12); } }

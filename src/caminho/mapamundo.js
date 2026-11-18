@@ -38,7 +38,7 @@ function camadas(G) {
       lugares: [{ area: 'sitio', nome: 'Seu sítio', ver: foi('sitio'), coisas: [{ k: 'casa', t: 'A sua casa, a lavoura e os animais' }] }, { area: 'clareira', nome: 'Clareira das Provas', ver: foi('clareira'), coisas: [{ k: 'portal', t: 'Arena, ondas e o Conselho' }] },
         { area: 'floresta', nome: 'Floresta Escura', ver: foi('floresta'), coisas: [{ k: 'gente', t: 'Só a lâmpada mostra o chão' }] }, { area: 'getsemani', nome: 'Getsêmani', ver: foi('getsemani'), coisas: [{ k: 'casa', t: G.cm.getsemani ? 'O jardim, de manhã' : 'Um jardim de oliveiras' }] }] },
     { id: 'mar', nome: 'Porto e mar', sub: 'Onde o Refúgio encontra o mar', ver: true, chao: '#1F3A4A', ceu: ['#0E1A30', '#2E4A6A'],
-      lugares: [...lugaresDe('refugio', c => c.cy === 0 && c.cx === 7 + RX), { area: 'mar', nome: 'A travessia', ver: foi('sardes'), coisas: [{ k: 'portal', t: 'Três dias de mar até Sardes' }] }] },
+      lugares: [...lugaresDe('refugio', c => c.cy === 0 && c.cx >= 7 + RX), { area: 'mar', nome: 'A travessia', ver: foi('sardes'), coisas: [{ k: 'portal', t: 'Três dias de mar até Sardes' }] }] },
     { id: 'sardes', nome: 'Sardes', sub: 'A cidade que perdeu a luz', ver: foi('sardes'), chao: '#26222E', ceu: ['#05060C', '#2A2438'], lugares: lugaresDe('sardes') },
     { id: 'vale', nome: 'Vale da Mentira', sub: 'O que assusta aqui não existe', ver: foi('vale'), chao: '#2A1A30', ceu: ['#0A0618', '#5A2E5E'], lugares: lugaresDe('vale') }
   ];
@@ -46,7 +46,7 @@ function camadas(G) {
 // em que camada e lugar o peregrino está agora
 function ondeEstou(G) {
   const cx = Math.floor(G.p.x / 960), cy = Math.floor((G.p.y - 2) / 544);
-  if (G.area === 'refugio') return cy === 1 ? { cam: 'subsolo', cx, cy } : cx === 7 + RX ? { cam: 'mar', cx, cy } : { cam: 'refugio', cx, cy };
+  if (G.area === 'refugio') return cy === 1 ? { cam: 'subsolo', cx, cy } : cx >= 7 + RX ? { cam: 'mar', cx, cy } : { cam: 'refugio', cx, cy };
   const m = { bosque: 'mata', clareira: 'mata', floresta: 'mata', getsemani: 'mata', sardes: 'sardes', vale: 'vale' }[G.area];
   return m ? { cam: m, cx, cy, area: G.area } : null;
 }

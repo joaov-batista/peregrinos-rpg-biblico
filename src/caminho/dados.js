@@ -231,6 +231,9 @@ const REFUGIO = [
     { tipo: 'npc', col: 22, id: 'barqueiro', nome: 'Jonatã, o barqueiro', look: { skin: '#8A5A3A', hair: '#2B1A10', tunic: '#5A4636', cape: '#3A3456', style: 'cacheado', beard: true } },
     { tipo: 'npc', col: 19, id: 'zelote4', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#4A4036', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } },
     { tipo: 'barco', col: 26 }, { tipo: 'ave', col: 12, lin: 11 }, { tipo: 'ave', col: 19, lin: 12 }] },
+  // a margem e o mar aberto: da pedra da margem ou de bote se pesca de verdade (Zebedeu empresta a vara)
+  { cx: 8, nome: 'A margem do mar', papel: 'vila', tiles: sala(), objs: [
+    planta(3, 'palmeira'), { tipo: 'placa', col: 6, txt: 'Da pedra se pesca o raso. De bote, mar adentro, os grandes.' }, { tipo: 'bote', col: 10 }, { tipo: 'aguaAberta', col: 12, ate: 28 }, { tipo: 'ave', col: 20, lin: 11 }] },
   // ---- o subsolo ----
   { cx: 0, cy: 1, nome: 'Salão das Subfases', deco: 'subfases', papel: 'vila', tiles: sala(), objs: [
     { tipo: 'portal', col: 6, area: 'vale', rotulo: 'Vale da Mentira' }, { tipo: 'selado', col: 15, rotulo: 'Selado' }, { tipo: 'selado', col: 24, rotulo: 'Selado' },

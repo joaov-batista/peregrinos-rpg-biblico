@@ -14,6 +14,7 @@ import { vidaNoRefugio, rotuloVida, usarVida, amizade } from './vida.js';
 import { missaoNoRefugio, rotuloMissao, usarMissao, zeloteDepois, inv } from './missao.js';
 import { falarMorador } from './moradores.js';
 import { rotuloLugar, usarLugar } from './lugares.js';
+import { falarZebedeu, rotuloPescaViva, usarPescaViva } from './pescaviva.js';
 import { falarPedro, semChamado, sardesAoEntrar, rotuloSardesNovo, usarSardesNovo, falarSardesNovo } from './sardesnovo.js';
 import { sitioAoEntrar, rotuloSitio, usarSitio } from './sitio.js';
 
@@ -100,7 +101,7 @@ async function liberarEspirito(G) {
 
 /* ---------------- rótulos e uso dos objetos novos ---------------- */
 export function rotuloNovo(G, ob) {
-  { const rv = rotuloVida(ob) ?? rotuloMissao(ob) ?? rotuloLugar(ob) ?? rotuloSardesNovo(ob); if (rv) return rv; }
+  { const rv = rotuloVida(ob) ?? rotuloMissao(ob) ?? rotuloLugar(ob) ?? rotuloSardesNovo(ob) ?? rotuloPescaViva(G, ob); if (rv) return rv; }
   if (G.def?.sitio) { const rs = rotuloSitio(G, ob); if (rs !== undefined) return rs; }
   if (ob.escondido > G.T) return null; // o vizinho que "não era gente" sumiu da rua: não há com quem falar
   switch (ob.tipo) {
@@ -117,6 +118,7 @@ export async function usarNovo(G, ob) {
   if (await usarVida(G, ob)) return true;
   if (await usarLugar(G, ob)) return true;
   if (await usarSardesNovo(G, ob)) return true;
+  if (await usarPescaViva(G, ob)) return true;
   if (G.def?.sitio && await usarSitio(G, ob)) return true;
   if (await usarMissao(G, ob)) return true;
   if (ob.tipo === 'vela') {
@@ -180,7 +182,7 @@ export async function falarNovo(G, ob) {
     else await diz('Você já viu a passagem entre as oliveiras.\n\nEntão por que ainda está aqui falando comigo? Há Alguém esperando do outro lado. Sempre houve.\n\nVá. E não leve pressa.', 'Ir');
     return true;
   }
-  if (ob.id === 'zebedeu') { await pesca(G); return true; }
+  if (await falarZebedeu(G, ob)) return true; // a vara emprestada; a pesca é na margem do mar
   if (ob.id === 'viajante') { await viajante(G, ob); return true; }
   if (ob.id === 'barqueiro') { await barco(G, ob); return true; }
   if (ob.id === 'nata') {

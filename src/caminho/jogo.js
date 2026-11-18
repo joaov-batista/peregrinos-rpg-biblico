@@ -44,6 +44,7 @@ import { aoOrar, sombraDaNoite, venceuNoturno } from './sinagoga.js';
 import { corcaVenceu } from './corca.js';
 import { sitioId } from './sitio.js';
 import { RX } from './dados.js';
+import { falarZebedeu } from './pescaviva.js';
 
 // Primeiros passos: [toque, controle, teclado]
 // os trechos do Bosque do Treino onde cada passo conta (em blocos, da esquerda): [de, até, barreira]. A barreira não deixa seguir antes.
@@ -1345,7 +1346,7 @@ export class Caminho {
       case 'ferreiro': return forja(this);
       case 'armeiro': return armeiro(this);
       case 'noe': return petShop(this);
-      case 'pedro': return pesca(this);
+      case 'pedro': return falarZebedeu(this, ob);
       case 'samuel': return trocarVocacao(this);
       case 'dorcas': return guardaRoupa(this);
       case 'mestre': { cm.tec = cm.tec || {};

@@ -23,6 +23,7 @@ import { cultoAgora } from '../sinagoga.js';
 import { hora, periodo, luzDoDia } from '../moradores.js';
 import { pintarLuzSinagoga } from './salas.js';
 import { visualPortal, pintarConstrucao } from './construcoes.js';
+import { pintarPescaViva } from '../pescaviva.js';
 import { ELEMENTO_DO_CHEFE, zonaElemento, tiroElemento, corDoElemento, elementoAmigo } from './elementos.js';
 
 export const FONTE = '"Pixelify Sans", "Alegreya Sans", monospace';
@@ -40,6 +41,10 @@ function chama(g, x, y, Tm, k = 0) { const f = CHAMA[Math.floor(Tm * 9 + k) % 3]
 function pintarAgua(g, o, G, x, y, Tm) {
   switch (o.tipo) {
     // o mar e o píer: a água cobre o chão dali até o fim da sala (ou até "ate"); por cima, as tábuas do píer e as estacas
+    case 'aguaAberta': { // o mar aberto: cobre o chão, mais escuro e mais fundo para longe da margem, ondas e espuma na beira
+      const w = (o.ate - o.col + 1) * 16, x0 = x - 8, f3 = Tm * 1.4;
+      for (let i = 0; i < w; i += 2) { const d = i / w, yy = y - 3 + Math.round(Math.sin(i * 0.12 + f3 * 2) * 1.4 + Math.sin(i * 0.05 - f3) * 1); g.fillStyle = d < 0.15 ? '#2E7A8A' : d < 0.5 ? '#1F5A72' : '#123A52'; g.fillRect(x0 + i, yy + 2, 2, 40); g.fillStyle = (i + Math.floor(f3 * 5)) % 22 < 2 ? '#DFF6FA' : d < 0.15 ? '#5AB0C0' : '#3A8AA8'; g.fillRect(x0 + i, yy, 2, 2); }
+      g.fillStyle = '#DFF6FA'; for (let k = 0; k < 4; k++) g.fillRect(x0 + ((Math.floor(f3 * 8) + k * 5) % 14), y - 3 + (k % 2), 2, 1); return; }
     case 'mar': { const cols = (o.ate ? o.ate - o.col + 1 : 29 - o.col) , w = cols * 16, x0 = x - 8, f3 = Tm * 1.6;
       g.fillStyle = '#0C2434'; g.fillRect(x0, y + 4, w, 20); g.fillStyle = '#123A52'; g.fillRect(x0, y + 2, w, 4);
       for (let i = 0; i < w; i += 2) { const yy = y + 1 + Math.round(Math.sin(i * 0.15 + f3 * 2) * 1.2); g.fillStyle = (i + Math.floor(f3 * 6)) % 18 < 2 ? '#BFF0F8' : '#2E6B80'; g.fillRect(x0 + i, yy, 2, 1); }
@@ -54,6 +59,8 @@ function pintarAgua(g, o, G, x, y, Tm) {
       g.fillStyle = Math.floor(Tm * 2) % 2 ? '#FFD86A' : '#FFB84A'; g.fillRect(bx + 36 * vira, by - 24, 3, 3); return true; }
   }
 }
+// o bote de um remo (na areia da margem ou no mar, com o peregrino dentro)
+function desenhaBote(g, x, y) { g.fillStyle = '#17121f'; g.fillRect(x - 21, y - 8, 42, 9); g.fillStyle = '#7A4E2E'; g.fillRect(x - 20, y - 7, 40, 6); g.fillStyle = '#9A6A3E'; g.fillRect(x - 20, y - 7, 40, 2); g.fillStyle = '#5A3A22'; g.fillRect(x - 16, y - 1, 32, 2); g.fillRect(x + 12, y - 16, 2, 10); g.fillRect(x + 9, y - 4, 8, 2); }
 function pintarObjeto(g, o, G, x, y, Tm) {
   const tm = G.tm;
   switch (o.tipo) {
@@ -92,6 +99,7 @@ function pintarObjeto(g, o, G, x, y, Tm) {
     case 'menora': { const ac = !!o.acesa; g.fillStyle = '#17121f'; g.fillRect(x - 15, y - 40, 31, 42); g.fillStyle = '#C9A63C'; g.fillRect(x - 1, y - 36, 3, 34); g.fillRect(x - 8, y - 3, 17, 3); g.fillRect(x - 13, y - 22, 27, 2);
       for (let b = 1; b <= 3; b++) for (const sg of [-1, 1]) { g.fillRect(x + sg * b * 4, y - 36, 2, 15); } g.fillStyle = ac ? '#FFE9A8' : '#4A4A58'; for (let b = -3; b <= 3; b++) { const f = ac ? Math.floor(Tm * 8 + b) % 2 : 0; g.fillRect(x + b * 4, y - 40 - f, 2, 3 + f); }
       if (ac) { g.globalAlpha = 0.14; g.fillStyle = '#FFD98A'; g.fillRect(x - 30, y - 60, 60, 60); g.globalAlpha = 1; } else { g.fillStyle = '#6A6A78'; for (let i = 0; i < 6; i++) g.fillRect(x - 12 + i * 5, y - 30 + (i % 3) * 7, 1, 1); } return true; }
+    case 'bote': { if (G.p.noBote) return true; desenhaBote(g, x, y - 1); return true; }
     case 'amendoeira': { // a árvore grande de copa florida (rosa e branca; no porto, verde com flores amarelas), com pétalas caindo
       const v = !!o.verde, s = sprObj('amendoeira' + (v ? 'v' : ''), 130, 112, s => {
         const T2 = rampa(v ? '#6B4A2E' : '#5A3A2A'), F = v ? ['#2E6A3A', '#3F8A3A', '#6FB84A', '#A8D86A', '#F2E27A'].map(cor) : ['#9A3A6A', '#C85A8A', '#E88AAE', '#F4B8CE', '#FFF0F4'].map(cor);
@@ -386,7 +394,7 @@ export function renderPixel(G) {
   const chefe = G.N.arena && G.inimigos.find(e => e.kind === 'chefe' && e.cen);
   if (chefe) pintarPalco(g, G, chefe, X, Y, Tm, false); // o cenário que muda durante a luta
   pintarBlocosPixel(g, G, C, vw, vh, cx, cy);
-  for (const o of G.objs) if (o.tipo === 'mar' || o.tipo === 'barco') pintarAgua(g, o, G, X(o.x), Y(o.y), Tm);
+  for (const o of G.objs) if (o.tipo === 'mar' || o.tipo === 'barco' || o.tipo === 'aguaAberta') pintarAgua(g, o, G, X(o.x), Y(o.y), Tm);
   // avisos de golpe: áreas pontilhadas que fecham até o impacto
   for (const z of G.zonas) pintarZona(g, G, z, X, Y, vw, vh, Tm);
   pintarEfeitos(g, G.fxPx, cx, cy, true);
@@ -452,6 +460,7 @@ export function renderPixel(G) {
   if (G.pomba) pintarPomba(g, G.pomba, X, Y, Tm);
   else if (G.mortoT > 1.2) { const s = quadroHeroi({ ...p, morto: true, atk: null }, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab); s.dissolve(clamp((1.9 - G.mortoT) / 0.7, 0, 1), 5); carimbar(g, s, X(p.x), Y(p.y), AX, AY, p.face); }
   pintarEfeitos(g, G.fxPx, cx, cy, false);
+  if (G.area === 'refugio') pintarPescaViva(g, G, X, Y, Tm, desenhaBote);
   elAtual = G.chefe && ELEMENTO_DO_CHEFE[G.chefe.id]; for (const t of G.tiros) pintarTiro(g, t, X(t.x), Y(t.y), Tm);
   for (const o of G.outros) if (o.corpo.ts) for (const t of o.corpo.ts) pintarTiro(g, { x: t[0], y: t[1], vx: t[2], vy: t[3], r: t[4], tipo: t[5], cor: t[6], amigo: true }, X(t[0]), Y(t[1]), Tm);
   // poeira do pulo e da queda: duas nuvenzinhas que se abrem para os lados, crescem e se desfazem
