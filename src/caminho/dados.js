@@ -116,7 +116,8 @@ export const TEMAS = {
   vale: t(['#0A0618', '#241640', '#5A2E5E'], '#1E1232', '#140C24', '#0A0614', '#C9A6E0', '#FF8A5A', 'dunas', 'brasa', 0.62),
   sardes: t(['#05060C', '#101524', '#2A2438'], '#12141F', '#0C0E17', '#06070C', '#8A8EA6', '#E8C873', 'casas', 'po', 0.86),
   sardes2: t(['#14203A', '#4A4A6A', '#E0A878'], '#22304A', '#172236', '#0C131F', '#E0D6B8', '#FFE08A', 'casas', 'vagalume', 0.3)
-};
+};TEMAS.refugio.skyline = 'campo'; // o fundo do Refúgio é de natureza (colinas e oliveiras), não de prédios
+
 const TEMA_FASE = { jope: 'jope', conves: 'conves', ventre: 'ventre', ninive: 'ninive', sombra: 'sombra' };
 
 const velho = { skin: '#D9A273', hair: '#E3DED2', tunic: '#5B4E66', cape: '#C9B88A', style: 'turbante', beard: true };
@@ -175,7 +176,7 @@ const REFUGIO = [
   { cx: 0, nome: 'Praça do poço', papel: 'inicio', tiles: sala([13, 20, 23]), objs: [
     { tipo: 'flor', col: 4 }, { tipo: 'flor', col: 25 },
     planta(12, 'palmeira'), casa(21, 'viuva', 'Casa da viúva de Sarepta'), planta(27, 'oliveira'),
-    { tipo: 'placa', col: 2, txt: '← A trilha do treino e a estrada do campo' }, { tipo: 'ebenezer', col: 6 }, { tipo: 'poco', col: 14 },
+    { tipo: 'placa', col: 2, txt: '← Estrada do campo: o seu sítio' }, { tipo: 'ebenezer', col: 6 }, { tipo: 'poco', col: 14 },
     { tipo: 'npc', col: 10, id: 'velho', nome: 'Velho Peregrino', look: velho },
     { tipo: 'npc', col: 17, id: 'pedro', nome: 'Simão, o pescador', look: { skin: '#A0673E', hair: '#3A2314', tunic: '#497A80', cape: 'none', style: 'cacheado', beard: true, body: 'forte' } },
     { tipo: 'npc', col: 26, id: 'jumenta', nome: 'Uma jumenta', bicho: 'jumenta' },

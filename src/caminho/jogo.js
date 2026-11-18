@@ -193,7 +193,7 @@ export class Caminho {
     let pos = N.inicio;
     const eb = this.objs.find(ob => ob.tipo === 'ebenezer');
     if (o.ebenezer && (cm.ebenezer?.area === id || o.novo) && eb) pos = { x: eb.x - 40, y: eb.y };
-    else if (o.borda) pos = { x: o.borda === 'direita' ? (N.w - 3) * T : 3 * T, y: 16 * T }; /* chegando a pé pela beira do mapa */
+    else if (o.borda) pos = { x: o.borda === 'direita' ? (N.w - 3) * T : (id === 'refugio' ? RX * CW + 3 : 3) * T, y: 16 * T }; /* chegando a pé pela beira do mapa (no Refúgio, pela Praça: a trilha ficou para trás) */
     else if (o.junto) { const ob = this.objs.find(x => x.tipo === o.junto); if (ob) pos = { x: ob.x - 70, y: ob.y }; }
     else if (o.portal) { const pt = this.objs.find(ob => ob.tipo === 'portal' && (ob.semana === o.portal || ob.mundo === o.portal || ob.area === o.portal)); if (pt) pos = { x: pt.x, y: pt.y }; }
     const antigo = this.p;
@@ -956,7 +956,7 @@ export class Caminho {
     if (noBosque) { const z = ZONA_TUT[s.id], tx = 119 - p.x / T; /* a trilha está espelhada: medimos de trás para a frente */
       if (z) { if (tx < z[0] || tx > z[1]) feito = false; if (s.id === 'saltar') feito = feito || (tx > 14.6 && tx < z[1] && (119 - this.tutX / T) < 13); if (s.id === 'pular') feito = tx > 23.6 && tx < z[1];
         if (tx > z[2]) { p.x = (119 - z[2]) * T; p.vx = Math.max(p.vx, 0); if (!(this.tutAvisoT > this.T)) { this.tutAvisoT = this.T + 2.5; this.textoEm(p.x, p.y - 80, 'Primeiro: ' + s.txt.toLowerCase(), '#FFE9A8', 13); } } } }
-    if (feito && this.tutT > 0.8) { v.tut++; this.tutT = 0; this.tutParry = false; sfx('right'); if (v.tut >= PASSOS.length) { marco('tutorial'); this.ui.toast(noBosque ? 'Você sabe caminhar. Volte para o leste: a Praça do poço e o Refúgio esperam. (A oeste, a estrada leva ao seu sítio.)' : this.temMapa() ? 'Você sabe caminhar. Siga a seta dourada até a sua missão.' : 'Você sabe caminhar. Fale com o Velho Peregrino: ele tem um mapa para você.', 6000); this.salvar(); } }
+    if (feito && this.tutT > 0.8) { v.tut++; this.tutT = 0; this.tutParry = false; sfx('right'); if (v.tut >= PASSOS.length) { if (noBosque) { const eb = this.objs.find(q => q.tipo === 'ebenezer'); if (eb) { this.fade = 1; p.x = eb.x - 40; p.y = eb.y - 1; p.vx = p.vy = 0; this.vista.cam.x = p.x - this.vista.W / this.vista.Z / 2; this.prenderCam(); } } /* o treino acabou: de volta à pedra, e a trilha fica para trás */ marco('tutorial'); this.ui.toast(noBosque ? 'Você sabe caminhar. Bem-vindo ao Refúgio! (A oeste da Praça, a estrada leva ao seu sítio.)' : this.temMapa() ? 'Você sabe caminhar. Siga a seta dourada até a sua missão.' : 'Você sabe caminhar. Fale com o Velho Peregrino: ele tem um mapa para você.', 6000); this.salvar(); } }
   }
 
   /* ================= Emboscadas ================= */

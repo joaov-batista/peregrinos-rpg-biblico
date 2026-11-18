@@ -94,13 +94,14 @@ const PECAS = {
   costela(s, x, base, h, c, r) { for (let i = 0; i < 60; i++) { const k = i / 60, px = x + k * 46, py = base - Math.sin(k * 1.5) * h * 1.6; s.ret(px, py, 4 - k * 2, 5, k < 0.5 ? c[1] : c[0]); s.px(px, py, c[2]); } },
   tenda(s, x, base, h, c, r) { const w = 50 + r * 30, hh = h * 0.6; for (let j = 0; j < hh; j++) { const lg = w * (j / hh) / 2; s.ret(x + w / 2 - lg, base - hh + j, lg * 2, 1, (j + (lg | 0)) % 6 < 1 ? c[0] : c[1]); s.px(x + w / 2 + lg - 1, base - hh + j, c[2]); } s.ret(x + w / 2, base - hh - 5, 1, 6, c[0]); s.ret(x + w / 2 + 1, base - hh - 5, 4, 2, c[3] || c[2]); }
 };
-const SKYLINE = { colunas: ['coluna', 'templo', 'coluna', 'arco', 'templo'], arcos: ['arco', 'torre', 'arco', 'templo'], tendas: ['tenda', 'casa', 'tenda', 'coluna'], mastros: ['mastro', 'casa', 'mastro'], costelas: ['costela', 'costela'], muralha: ['torre', 'torre', 'arco', 'templo'], arvores: ['arvore', 'arvore', 'coluna'], dunas: ['duna', 'duna', 'coluna'], seca: ['duna', 'casa', 'arvore', 'duna'], estrada: ['arvore', 'duna', 'casa', 'arvore', 'coluna'], masmorra: ['torre', 'arco', 'torre'], casas: ['casa', 'torre', 'casa', 'arvore'] };
+const SKYLINE = { colunas: ['coluna', 'templo', 'coluna', 'arco', 'templo'], arcos: ['arco', 'torre', 'arco', 'templo'], tendas: ['tenda', 'casa', 'tenda', 'coluna'], mastros: ['mastro', 'casa', 'mastro'], costelas: ['costela', 'costela'], muralha: ['torre', 'torre', 'arco', 'templo'], arvores: ['arvore', 'arvore', 'coluna'], dunas: ['duna', 'duna', 'coluna'], seca: ['duna', 'casa', 'arvore', 'duna'], estrada: ['arvore', 'duna', 'casa', 'arvore', 'coluna'], masmorra: ['torre', 'arco', 'torre'], casas: ['casa', 'torre', 'casa', 'arvore'],
+  campo: ['arvore', 'duna', 'arvore', 'arvore', 'duna', 'arvore', 'casa', 'arvore', 'duna'] }; // o Refúgio: colinas e oliveiras, e só de vez em quando uma casinha
 
 function pintarCamada(tm, w, h, rng, nivel) {
   // nivel 0 = longe (quase da cor do céu), 1 = meio, 2 = perto
   const s = new Sprite(w, h), ceu = mistura(tm.ceu[1], tm.ceu[2], 0.5), base = [mistura(ceu, tm.longe, 0.55), mistura(tm.longe, tm.meio, 0.5), mistura(tm.meio, tm.bloco, 0.55)][nivel];
   const c = [cor(mistura(base, '#05060c', 0.3)), cor(base), cor(mistura(base, tm.borda, nivel ? 0.2 : 0.1)), cor(mistura(base, tm.acento, nivel === 1 ? 0.7 : 0.3))];
-  const chao = h * [0.66, 0.78, 0.93][nivel], lista = SKYLINE[tm.deco] || SKYLINE.casas, esc = [0.6, 0.95, 1.25][nivel];
+  const chao = h * [0.66, 0.78, 0.93][nivel], lista = SKYLINE[tm.skyline || tm.deco] || SKYLINE.casas, esc = [0.6, 0.95, 1.25][nivel] * (tm.skyline === 'campo' && nivel === 0 ? 0.8 : 1);
   let x = -10;
   while (x < w) { const r = rng(), nome = lista[Math.floor(rng() * lista.length)], alt = (26 + rng() * 60) * esc; PECAS[nome](s, x, chao, alt, c, r); x += (nome === 'templo' ? 70 : nome === 'duna' ? 80 : nome === 'mastro' ? 74 : 26) * esc + rng() * 40 * esc; }
   // terreno da camada, com perfil irregular e um fio de luz no topo
