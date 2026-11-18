@@ -103,7 +103,9 @@ function pintarCamada(tm, w, h, rng, nivel) {
   const c = [cor(mistura(base, '#05060c', 0.3)), cor(base), cor(mistura(base, tm.borda, nivel ? 0.2 : 0.1)), cor(mistura(base, tm.acento, nivel === 1 ? 0.7 : 0.3))];
   const chao = h * [0.66, 0.78, 0.93][nivel], lista = SKYLINE[tm.skyline || tm.deco] || SKYLINE.casas, esc = [0.6, 0.95, 1.25][nivel] * (tm.skyline === 'campo' && nivel === 0 ? 0.8 : 1);
   let x = -10;
-  while (x < w) { const r = rng(), nome = lista[Math.floor(rng() * lista.length)], alt = (26 + rng() * 60) * esc; PECAS[nome](s, x, chao, alt, c, r); x += (nome === 'templo' ? 70 : nome === 'duna' ? 80 : nome === 'mastro' ? 74 : 26) * esc + rng() * 40 * esc; }
+  const campo = tm.skyline === 'campo';
+  while (x < w) { const r = rng(), nome = lista[Math.floor(rng() * lista.length)], alt = (26 + rng() * 60) * esc * (campo && nome === 'arvore' ? 0.75 + nivel * 0.1 : 1); PECAS[nome](s, x, chao, alt, c, r);
+    x += campo ? (nome === 'duna' ? 90 : nome === 'casa' ? 60 : 46) * esc + rng() * 70 * esc + (rng() < 0.25 ? 60 * esc : 0) /* no campo, com respiro e clareiras */ : (nome === 'templo' ? 70 : nome === 'duna' ? 80 : nome === 'mastro' ? 74 : 26) * esc + rng() * 40 * esc; }
   // terreno da camada, com perfil irregular e um fio de luz no topo
   for (let xx = 0; xx < w; xx++) { const hh = chao - 2 - Math.round(Math.sin(xx * 0.05 + nivel) * 2 + Math.sin(xx * 0.013) * 3); s.ret(xx, hh, 1, h - hh, c[1]); s.px(xx, hh, c[2]); if (nivel === 2 && (xx * 7) % 5 === 0) s.px(xx, hh - 1 - ((xx * 3) % 3), c[1]); }
   // névoa pontilhada na base (perspectiva atmosférica)

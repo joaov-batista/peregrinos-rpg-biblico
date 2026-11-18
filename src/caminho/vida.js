@@ -19,8 +19,8 @@ export function vidaNoRefugio(G) {
   const f = festaDeHoje(), em = (sala, col, o) => G.objs.push({ daVida: true, x: ((sala + RX) * CW + col) * T + 16, y: 16 * T, ...o });
   G.objs = G.objs.filter(o => !o.daVida);
   // a Praça do poço é a chegada: fica só com o essencial. O Livro mora no Mercado e a mesa da festa, no Bairro
-  em(1, 11, { tipo: 'livroRefugio', luz: 90 }); em(3, 23, { tipo: 'festa', festa: f.id, luz: 110 });
-  for (const [sala, col] of [[1, 19], [2, 16], [3, 9], [6, 13], [7, 13]]) em(sala, col, { tipo: 'enfeite', qual: f.enfeite });
+  em(1, 19.8, { tipo: 'livroRefugio', luz: 90 }); em(3, 23.5, { tipo: 'festa', festa: f.id, luz: 110 });
+  for (const [sala, col] of [[1, 21.5], [2, 19.5], [3, 9], [6, 13], [7, 15]]) em(sala, col, { tipo: 'enfeite', qual: f.enfeite });
   const v = vida(G); if (v.avisoFesta !== f.id && G.cm.mapa) { /* o novato chega sem esse aviso: primeiro o Velho Peregrino */ v.avisoFesta = f.id; setTimeout(() => { if (G.running && G.area === 'refugio') G.ui.toast('Festa no Refúgio: ' + f.nome + '. Há uma mesa posta no Bairro.', 5000); }, 5000); }
 }
 
