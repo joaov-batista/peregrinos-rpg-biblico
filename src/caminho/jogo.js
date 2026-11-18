@@ -44,6 +44,8 @@ import { aoOrar, sombraDaNoite, venceuNoturno } from './sinagoga.js';
 import { corcaVenceu } from './corca.js';
 
 // Primeiros passos: [toque, controle, teclado]
+// os trechos do Bosque do Treino onde cada passo conta (em blocos, da esquerda): [de, até, barreira]. A barreira não deixa seguir antes.
+const ZONA_TUT = { andar: [0, 12.5, 12.5], saltar: [9, 21, 21], pular: [18, 29.5, 31], golpe: [30, 47, 47], passo: [40, 49, 49], descer: [47, 56, 57], luz: [60, 74, 73], vigilia: [72, 90, 90], azeite: [60, 90, 90], mira: [90, 112, 112], orar: [90, 120, 116] };
 const PASSOS = [ // t: [toque, controle, teclado]; alvo: o botão de toque que pisca. No Bosque do Treino cada passo tem o seu lugar na trilha.
   { id: 'andar', titulo: 'Andar', t: ['arraste à esquerda', 'direcional', '← →', 'A D'], txt: 'Siga a trilha.' },
   { id: 'saltar', titulo: 'Pular', alvo: 'dodge', t: ['PULAR', 'A', '↑', 'W'], txt: 'Pule o tronco.' },
@@ -938,7 +940,11 @@ export class Caminho {
       if (this.tutDardo <= 0) { this.tutDardo = 2.4; const d = p.face || 1; this.tiros.push({ x: p.x + d * 430, y: p.y - 28, vx: -d * 300, vy: 0, r: 7, vida: 3, cor: '#E8D9A8', tipo: 'bola', treino: true, fura: true }); }
     }
     const noBosque = this.area === 'bosque';
-    const feito = { andar: this.tutAndou > 220, saltar: !p.chao && p.vy < -200 && this.tutT > 0.3, pular: !p.chao && p.pulos <= 0 && p.vy < 0, passo: p.dashT > 0, golpe: noBosque && this.tipoArma !== 'funda' && this.tipoArma !== 'cajado' && this.tipoArma !== 'trombeta' ? this.tutBateu : !!p.atk, descer: p.desce > 0 || this.tutT > 9, rasteiro: (p.rasteiro && p.dashT > 0) || this.tutT > 12, luz: p.lampA > 0.8 && this.tutT > 2.5, vigilia: this.tutParry, orar: p.vida > (this.tutVida ?? p.vidaMax), azeite: this.tutT > 8, mira: p.miraCd > 3.5 }[s.id];
+    let feito = { andar: this.tutAndou > 220, saltar: !p.chao && p.vy < -200 && this.tutT > 0.3, pular: !p.chao && p.pulos <= 0 && p.vy < 0, passo: p.dashT > 0, golpe: noBosque && this.tipoArma !== 'funda' && this.tipoArma !== 'cajado' && this.tipoArma !== 'trombeta' ? this.tutBateu : !!p.atk, descer: p.desce > 0 || this.tutT > 25, rasteiro: (p.rasteiro && p.dashT > 0) || this.tutT > 12, luz: p.lampA > 0.8 && this.tutT > 2.5, vigilia: this.tutParry, orar: p.vida > (this.tutVida ?? p.vidaMax), azeite: this.tutT > 8, mira: p.miraCd > 3.5 }[s.id];
+    // no Bosque, cada passo tem o seu trecho da trilha: só conta lá, e não dá para seguir adiante antes de aprender
+    if (noBosque) { const z = ZONA_TUT[s.id], tx = p.x / T;
+      if (z) { if (tx < z[0] || tx > z[1]) feito = false; if (s.id === 'saltar') feito = feito || (tx > 14.6 && tx < z[1] && this.tutX < 13 * T); if (s.id === 'pular') feito = tx > 23.6 && tx < z[1];
+        if (tx > z[2]) { p.x = z[2] * T; p.vx = Math.min(p.vx, 0); if (!(this.tutAvisoT > this.T)) { this.tutAvisoT = this.T + 2.5; this.textoEm(p.x, p.y - 80, 'Primeiro: ' + s.txt.toLowerCase(), '#FFE9A8', 13); } } } }
     if (feito && this.tutT > 0.8) { v.tut++; this.tutT = 0; this.tutParry = false; sfx('right'); if (v.tut >= PASSOS.length) { marco('tutorial'); this.ui.toast(noBosque ? 'Você sabe caminhar. O Refúgio fica no fim da trilha: atravesse o portal.' : this.temMapa() ? 'Você sabe caminhar. Siga a seta dourada até a sua missão.' : 'Você sabe caminhar. Fale com o Velho Peregrino: ele tem um mapa para você.', 6000); this.salvar(); } }
   }
 

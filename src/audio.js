@@ -29,6 +29,17 @@ function tone(f1, f2, dur, type = 'sine', vol = 0.2, delay = 0, dest) {
   g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   o.connect(g); g.connect(dest || sfxGain || master); o.start(t); o.stop(t + dur + 0.02);
 }
+// o sino da sinagoga: bronze batido (parciais inarmônicas de sino, decaimento longo, um pouco de eco de pedra).
+// De longe, só o grave chega: abafado e mais baixo.
+function sino(vol, longe) {
+  if (!AC) return;
+  const t = AC.currentTime, f = 174, saida = AC.createGain(), lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = longe ? 900 : 5200;
+  saida.gain.value = vol; lp.connect(saida); saida.connect(sfxGain || master); try { saida.connect(sala()); } catch { /* sem eco */ }
+  const parciais = [[0.5, 1, 6.5], [1, 0.8, 5], [1.19, 0.45, 3.2], [1.5, 0.35, 2.6], [2, 0.5, 2.2], [2.52, 0.22, 1.5], [3.01, 0.16, 1.1], [4.17, 0.1, 0.7], [5.43, 0.06, 0.45]];
+  for (const [r, a, dur] of parciais) { if (longe && r > 2.1) continue; const o = AC.createOscillator(), g = AC.createGain(); o.type = 'sine'; o.frequency.value = f * r; o.detune.value = (Math.random() - 0.5) * 6;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(a, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + dur * (longe ? 1.2 : 1)); o.connect(g); g.connect(lp); o.start(t); o.stop(t + dur * 1.25 + 0.05); }
+  if (!longe) { const n = AC.createBufferSource(), b = AC.createBuffer(1, AC.sampleRate * 0.05, AC.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length); const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2600; const g = AC.createGain(); g.gain.value = 0.25; n.buffer = b; n.connect(bp); bp.connect(g); g.connect(lp); n.start(t); } // a batida do badalo
+}
 function noiseBurst(dur, vol = 0.15, freq = 1200) {
   if (!AC) return;
   const n = AC.createBufferSource(), b = AC.createBuffer(1, AC.sampleRate * dur, AC.sampleRate), d = b.getChannelData(0);
@@ -61,6 +72,8 @@ export function sfx(n) {
     case 'gate': tone(200, 400, 0.6, 'sine', 0.14); tone(300, 600, 0.6, 'sine', 0.1, 0.1); break;
     case 'click': tone(660, 0, 0.05, 'square', 0.05); break;
     case 'step': noiseBurst(0.03, 0.03, 400); break;
+    case 'sino': sino(0.22, false); break;
+    case 'sinoLonge': sino(0.09, true); break;
   }
 }
 
