@@ -162,20 +162,36 @@ function nuvens(tm) { if (nuvemCv) return nuvemCv; const s = new Sprite(520, 70)
 const nuvemCache = new Map();
 function corNuvens(G, L) {
   const q = v => Math.round(v * 4) / 4, d = L ? q(L.d) : G.area === 'sardes' ? 0 : 0.6, po = L ? q(L.poente) : 0;
-  const dia = ['#FFFFFF', '#FFFFFF', '#E2ECF6', '#C2D4E6'], poe = ['#FFF0C8', '#FFC8A0', '#E09098', '#A87088'], noi = G.area === 'sardes' ? ['#7A86A8', '#3A4260', '#262C44', '#181C2E'] : ['#B8C4E0', '#5A6890', '#38446A', '#242C48'];
+  const dia = ['#FFFFFF', '#EEF6FC', '#BFD8EE', '#9CC0E0'], poe = ['#FFF0C8', '#FFC8A0', '#E09098', '#A87088'], noi = G.area === 'sardes' ? ['#7A86A8', '#3A4260', '#262C44', '#181C2E'] : ['#B8C4E0', '#5A6890', '#38446A', '#242C48'];
   const m = (a, b, k) => mistura(a, b, k), cores = dia.map((c, i) => m(m(noi[i], c, d), poe[i], po * 0.85));
   return { chave: d + ':' + po + ':' + G.area, cores };
 }
 function faixaDeNuvens(cores, perto, chave) {
   const k = chave + (perto ? 'p' : 'l'); if (nuvemCache.has(k)) return nuvemCache.get(k);
-  const W = 640, H = perto ? 90 : 60, s = new Sprite(W, H), rng = semente('nuvem' + (perto ? 1 : 2)), [luz, corpo, sombra, borda] = cores.map(cor);
-  for (let n = 0; n < (perto ? 5 : 8); n++) { const x0 = rng() * W, base = H * (perto ? 0.72 : 0.78) - rng() * H * 0.3, w = (perto ? 46 : 26) + rng() * (perto ? 70 : 34);
-    const bolas = 8 + Math.floor(rng() * 7);
-    for (let b = 0; b < bolas; b++) { const u = rng(), cx = x0 + u * w, alto = Math.sin(u * Math.PI) * (0.35 + rng() * 0.65), r = w * (0.07 + alto * 0.15) * (0.7 + rng() * 0.5), cy = base - r * 0.5 - alto * w * 0.12;
-      for (let yy = -r; yy <= r; yy++) { const py = Math.round(cy + yy); if (py > base || py < 0 || py >= H) continue; for (let xx = -r; xx <= r; xx++) { const dd = (xx * xx + yy * yy) / (r * r); if (dd > 1) continue; const px = ((Math.round(cx + xx) % W) + W) % W;
-        if (dd > 0.82 && (px + py) % 2) continue; const cima = yy < -r * 0.45 && xx < r * 0.3, baixo = py > base - r * 0.5;
-        s.px(px, py, dd > 0.82 ? borda : cima ? luz : baixo ? sombra : corpo); } } }
-    for (let i = 0; i < w; i += 2) { const px = ((Math.round(x0 + i) % W) + W) % W; if (Math.round(base) < H) s.px(px, Math.round(base), sombra); if ((i / 2) % 2 === 0 && Math.round(base) + 1 < H) s.px(px, Math.round(base) + 1, borda); } } // a base reta, desfiando
+  const W = 640, H = perto ? 96 : 62, s = new Sprite(W, H), rng = semente('nuvem' + (perto ? 1 : 2)), [luz, corpo, sombra, borda] = cores.map(cor);
+  const pinta = (x, y, c) => { if (y >= 0 && y < H) s.px(((Math.round(x) % W) + W) % W, y, c); };
+  const n = perto ? 4 : 7;
+  for (let q = 0; q < n; q++) {
+    // um cúmulo: base reta; uma fileira de montes na base e montes menores empilhados por cima, mais altos no meio
+    const w = (perto ? 70 : 30) + rng() * (perto ? 70 : 34), x0 = (q + rng() * 0.6) * (W / n), B = Math.round(H * (perto ? 0.8 : 0.82) - rng() * H * 0.22), bumps = [];
+    const nb = 3 + Math.floor(rng() * 3); for (let b = 0; b < nb; b++) { const u = (b + 0.5) / nb, r = w * (0.13 + Math.sin(u * Math.PI) * 0.14) * (0.85 + rng() * 0.3); bumps.push({ cx: x0 + u * w, cy: B - r * 0.3, r }); }
+    const ns = 1 + Math.floor(rng() * (perto ? 3 : 2)); for (let b = 0; b < ns; b++) { const u = 0.3 + rng() * 0.4, r = w * (0.12 + rng() * 0.08); bumps.push({ cx: x0 + u * w, cy: B - r * 0.3 - w * (0.14 + rng() * 0.08), r }); }
+    bumps.sort((a, b) => b.cy - a.cy); // os de cima por último: ficam na frente
+    for (let y = Math.floor(Math.min(...bumps.map(b => b.cy - b.r))); y <= B; y++) for (let x = Math.floor(x0 - w * 0.1); x <= Math.ceil(x0 + w * 1.1); x++) {
+      let dono = -1; for (let b = bumps.length - 1; b >= 0; b--) { const o = bumps[b]; if ((x - o.cx) ** 2 + (y - o.cy) ** 2 <= o.r * o.r) { dono = b; break; } }
+      if (dono < 0) continue; const o = bumps[dono], dx = (x - o.cx) / o.r, dy = (y - o.cy) / o.r, dist = Math.hypot(dx, dy);
+      // a linha que separa um monte do de baixo (só onde ele está por cima de outro)
+      let sobre = false; if (dist > 0.93 && dy > -0.1) for (let b = 0; b < dono; b++) { const u = bumps[b]; if ((x - u.cx) ** 2 + (y - u.cy) ** 2 <= u.r * u.r) { sobre = true; break; } }
+      const crescente = (dx + 0.22) ** 2 + (dy + 0.3) ** 2 > 0.92 * 0.92; // a sombra em meia-lua, embaixo e à direita de cada monte
+      const c = y >= B - 1 ? borda : sobre ? sombra : crescente ? sombra : (dx + 0.3) ** 2 + (dy + 0.42) ** 2 < 0.5 * 0.5 ? luz : corpo;
+      pinta(x, y, c);
+    }
+    // a base: uma faixa reta mais escura, e fiapos soltos dos lados
+    for (let x = Math.round(x0 - w * 0.08); x < x0 + w * 1.08; x++) if (rng() < 0.85) pinta(x, B + 1, borda);
+    for (let f = 0; f < (perto ? 3 : 2); f++) { const fw = 6 + rng() * (perto ? 26 : 14), fx = x0 + (rng() < 0.5 ? -fw * 0.8 : w * (0.9 + rng() * 0.2)), fy = B - Math.round(rng() * 6); for (let x = 0; x < fw; x++) { pinta(fx + x, fy, x < fw * 0.2 || x > fw * 0.8 ? sombra : corpo); if (x > fw * 0.25 && x < fw * 0.7) pinta(fx + x, fy - 1, luz); } }
+  }
+  // fiapos altos e finos, bem longe (como nas referências): riscos retos de uma ou duas linhas
+  for (let f = 0; f < (perto ? 2 : 6); f++) { const fw = 14 + rng() * 40, fx = rng() * W, fy = 4 + Math.round(rng() * H * 0.35); for (let x = 0; x < fw; x++) pinta(fx + x, fy, x < 3 || x > fw - 3 ? sombra : corpo); for (let x = 4; x < fw * 0.6; x++) pinta(fx + x + 2, fy - 1, corpo); }
   const tela = s.tela(); if (nuvemCache.size > 24) nuvemCache.delete(nuvemCache.keys().next().value); nuvemCache.set(k, tela); return tela;
 }
 // as estrelas que piscam de verdade à noite (algumas coloridas, umas poucas grandes, em cruz)
@@ -214,8 +230,8 @@ export function pintarCeuVivo(g, G, C, vw, dy, cx, cy) {
   if (G.N.def.aberto) pintarCeuDoTempo(g, G, vw, dy, cx, L ? 1 - L.d : G.area === 'sardes' ? 0.85 : 0.2); // arco-íris, meteoros, a estrela do Natal
   if (G.N.def.aberto) { const noite = L ? 1 - L.d : G.area === 'sardes' ? 0.9 : 0.3; estrelasVivas(g, G, vw, dy, cx, noite);
     const { chave, cores } = corNuvens(G, L), chuva = Math.min(0.6, (G.chuvaK || 0) * 0.6);
-    g.globalAlpha = 0.85; faixa(g, faixaDeNuvens(cores, false, chave), cx * 0.03 + G.T * 1.5, dy + 6 + Math.round(-cy * 0.02), vw);
-    g.globalAlpha = 0.95; faixa(g, faixaDeNuvens(cores, true, chave), cx * 0.07 + G.T * 3.2, dy + 30 + Math.round(-cy * 0.03), vw); g.globalAlpha = 1;
+    g.globalAlpha = 0.92; faixa(g, faixaDeNuvens(cores, false, chave), cx * 0.03 + G.T * 1.5, dy + 6 + Math.round(-cy * 0.02), vw);
+    g.globalAlpha = 1; faixa(g, faixaDeNuvens(cores, true, chave), cx * 0.07 + G.T * 3.2, dy + 30 + Math.round(-cy * 0.03), vw); g.globalAlpha = 1;
     // bandos de pássaros cruzando o céu, longe, em V (de dia e no poente; à noite, só um ou outro morcego... não: só de dia)
     if (!L || L.d > 0.25) for (let b = 0; b < 2; b++) { const P = 38 + b * 17, u = ((G.T + b * 21) % P) / P, n = 5 + b * 2, x0 = Math.round(vw + 30 - u * (vw + 120)), y0 = Math.round(dy + 46 + b * 34 + Math.sin(G.T * 0.3 + b) * 6), cB = L && L.poente > 0.4 ? '#3A2A34' : '#3A4458';
       g.globalAlpha = 0.75; g.fillStyle = cB; for (let i = 0; i < n; i++) { const fila = Math.ceil(i / 2), lado = i % 2 ? 1 : -1, bx = x0 + fila * 7, by = y0 + (i ? lado * fila * 4 : 0), bate = Math.sin(G.T * 7 + i * 1.3) > 0; g.fillRect(bx - 2, by + (bate ? -1 : 0), 2, 1); g.fillRect(bx, by, 1, 1); g.fillRect(bx + 1, by + (bate ? -1 : 0), 2, 1); } g.globalAlpha = 1; }
