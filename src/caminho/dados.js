@@ -56,6 +56,7 @@ export const FORJA = [
   { nome: 'Fio de dois gumes', preco: 980, desc: 'Golpes 50% mais fortes. "Mais cortante que qualquer espada de dois gumes" (Hb 4:12).' }
 ];
 export const RELIQUIAS = {
+  lampada_vigia: { nome: 'Lâmpada do Vigia', icone: '🪔', ref: 'Apocalipse 3:2-3', rar: 'lendaria', desc: 'Tomada do Ladrão da Noite. O ataque mira volta 40% mais rápido. "Sê vigilante."' },
   // raras: só o Mercador da primeira página as tem, e nem sempre
   perola_preco: { nome: 'Pérola de Grande Preço', icone: '⚪', ref: 'Mateus 13:46', desc: 'Um espaço a mais para relíquias.', raro: 1400, passiva: true },
   talento_multiplicado: { nome: 'Talento Multiplicado', icone: '🪙', ref: 'Mateus 25:20', desc: 'Todo denário apanhado vale o dobro.', raro: 1100 },
@@ -126,6 +127,7 @@ const saul = { skin: '#C68B59', hair: '#2B1A10', tunic: '#7A2E3A', cape: '#D7B25
 export const MUNDO = {
   golias: { nome: 'Vale de Elá', chefe: 'golias', tema: 'ela', ref: '1 Samuel 17', premio: 'pedra_lisa', pede: { pedras: 5 }, porque: 'Faltam pedras lisas do ribeiro (ache as 5 escondidas nas áreas de Corinto).' },
   behemote: { nome: 'O Ermo de Beemote', chefe: 'behemote', tema: 'ermo', ref: 'Jó 40:15', premio: 'osso_bronze', pede: { hab: 'firmeza' }, porque: 'O despenhadeiro pede o Cinto da Verdade.' },
+  ladrao: { nome: 'Os telhados de Sardes', chefe: 'ladrao', tema: 'sardes2', ref: 'Apocalipse 3:3', premio: 'lampada_vigia', pede: { sardes: true, noite: true }, porque: 'Só de madrugada, depois que Sardes voltar a acender as velas, alguém anda pelos telhados do templo.' },
   leviata: { nome: 'O Mar do Leviatã', chefe: 'leviata', tema: 'mar', ref: 'Jó 41', premio: 'escama_leviata', pede: { hab: 'escudo' }, porque: 'Os jatos do mar pedem o Escudo da Fé.' }
 };
 
@@ -245,6 +247,17 @@ const SARDES = [
     { tipo: 'cenario', col: 14, qual: 'templo' }, vela(7), vela(22), { tipo: 'escrito', col: 14, lin: 6, txt: '"Sê vigilante e confirma o restante, que estava para morrer" (Ap 3:2)' }] }
 ];
 SARDES.forEach((c, i) => c.objs.forEach(o => { if (o.tipo === 'vela') o.id = 'v' + i + '_' + o.col; }));
+// Sardes cresceu para o fim da rua (no fim, para não mudar as velas já acesas de quem já jogou): a sinagoga e o mercado novo
+SARDES.push(
+  { nome: 'A sinagoga de Sardes', papel: 'vila', tiles: sala([12, 23, 26]), objs: [
+    { tipo: 'cenario', col: 14, qual: 'sinagoga' }, { tipo: 'portal', col: 14, area: 'sinagoga:sardes', porta: true, rotulo: 'Entrar na sinagoga' }, { ...povo(5, 3, sombrio(5)), rua: 1 }, { tipo: 'vaso', col: 27 }] },
+  { nome: 'O mercado novo', papel: 'vila', tiles: sala(), objs: [
+    ...[[4, 'cloe'], [10, 'tiquico'], [16, 'onesimo'], [22, 'febe']].flatMap(([col, id]) => [{ tipo: 'cenario', col, qual: 'banca' }, { tipo: 'npc', col: col + 1, id: 'mn_' + id, nome: SARDES_POVO[id].nome + ' · ' + id, look: SARDES_POVO[id].look, mercadoNovo: id }]),
+    { tipo: 'npc', col: 27, id: 'mn_ninfa', nome: 'Ninfa', look: SARDES_POVO.ninfa.look, mercadoNovo: 'ninfa' }, { tipo: 'placa', col: 14, txt: 'Fechado até o medo passar.', fechado: true }] }
+);
+// o segredo do templo apagado: de madrugada, a lâmpada mostra uma escada para os telhados
+SARDES[4].objs.push({ tipo: 'portal', col: 26, mundo: 'ladrao', oculto: true, chave: 'ladrao' });
+
 
 // os moradores do Refúgio (para a sinagoga por dentro saber quem é quem)
 for (const c of REFUGIO) { c.cx += RX; for (const o of c.objs) if (o.patrulha) o.patrulha = o.patrulha.map(x => x + RX * 30 * 32); }
@@ -265,6 +278,8 @@ export function areaDef(id) {
       ...[23, 25, 27].map((col, idx) => ({ tipo: 'pomar', col, idx })), { tipo: 'ave', col: 12, lin: 13 }] }
   ] };
   // a sinagoga por dentro: a nave, a arca, a bimá; Jairo conduz as orações e quem veio orar fica de joelhos
+  if (id === 'sinagoga:sardes') return { id, nome: 'Sinagoga de Sardes', sub: 'A casa de oração que esperava', tema: 'sardes', seed: id, paz: true, interior: true, planta: [
+    { papel: 'inicio', nome: 'A nave', deco: 'sinagoga', tiles: sala(), objs: [{ tipo: 'portal', col: 3, area: 'sardes', porta: true, rotulo: 'Sair da sinagoga' }, { tipo: 'menora', col: 15 }, { tipo: 'npc', col: 19, id: 'natanael', nome: 'Natanael, o último', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#3A3F4C', cape: '#4A4A6A', style: 'turbante', beard: true } }] }] };
   if (id === 'sinagoga') return { id, nome: 'Sinagoga do Refúgio', sub: 'Casa de oração', tema: 'refugio', seed: id, paz: true, interior: true, planta: [
     { papel: 'inicio', nome: 'A nave', deco: 'sinagoga', tiles: sala(), objs: [
       { tipo: 'portal', col: 3, area: 'refugio', porta: true, rotulo: 'Sair da sinagoga' },

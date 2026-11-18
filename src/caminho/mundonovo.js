@@ -14,6 +14,7 @@ import { vidaNoRefugio, rotuloVida, usarVida, amizade } from './vida.js';
 import { missaoNoRefugio, rotuloMissao, usarMissao, zeloteDepois, inv } from './missao.js';
 import { falarMorador } from './moradores.js';
 import { rotuloLugar, usarLugar } from './lugares.js';
+import { falarPedro, semChamado, sardesAoEntrar, rotuloSardesNovo, usarSardesNovo, falarSardesNovo } from './sardesnovo.js';
 import { sitioAoEntrar, rotuloSitio, usarSitio } from './sitio.js';
 
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -47,6 +48,7 @@ export function aoEntrar(G, id, o = {}) {
     marco('sardes'); sar(G); luzDaCidade(G); G.sarEst = 'paz'; G.sarT = sar(G).feita ? rand(90, 140) : 22;
     for (const o of G.objs) if (o.tipo === 'morador' && o.rua != null) o.nome = 'Morador de Sardes';
   }
+  if (id === 'sardes' || id === 'sinagoga:sardes') sardesAoEntrar(G, id);
   if (id === 'vale') marco('vale');
   if (id === 'vale' && G.souDono()) { // o Dragão das Mentiras guarda o fim do vale
     const c = G.objs.find(o => o.tipo === 'covil');
@@ -98,7 +100,7 @@ async function liberarEspirito(G) {
 
 /* ---------------- rótulos e uso dos objetos novos ---------------- */
 export function rotuloNovo(G, ob) {
-  { const rv = rotuloVida(ob) ?? rotuloMissao(ob) ?? rotuloLugar(ob); if (rv) return rv; }
+  { const rv = rotuloVida(ob) ?? rotuloMissao(ob) ?? rotuloLugar(ob) ?? rotuloSardesNovo(ob); if (rv) return rv; }
   if (G.def?.sitio) { const rs = rotuloSitio(G, ob); if (rs !== undefined) return rs; }
   if (ob.escondido > G.T) return null; // o vizinho que "não era gente" sumiu da rua: não há com quem falar
   switch (ob.tipo) {
@@ -114,6 +116,7 @@ export async function usarNovo(G, ob) {
   const p = G.p, cm = G.cm, c = G.char;
   if (await usarVida(G, ob)) return true;
   if (await usarLugar(G, ob)) return true;
+  if (await usarSardesNovo(G, ob)) return true;
   if (G.def?.sitio && await usarSitio(G, ob)) return true;
   if (await usarMissao(G, ob)) return true;
   if (ob.tipo === 'vela') {
@@ -146,6 +149,7 @@ function quadroMissoes(G) {
 async function barco(G, ob) {
   const c = G.char;
   if (G.area === 'sardes') return G.ui.dialog({ nome: 'Jonatã, o barqueiro', texto: 'De volta ao Refúgio? Para quem trabalha por esta cidade, a volta não se paga.', acoes: [{ label: 'Voltar ao Refúgio', fn: () => G.entrar('refugio', { junto: 'barco' }) }, { label: 'Ficar' }] });
+  if (semChamado(G)) return G.ui.dialog({ nome: 'Jonatã, o barqueiro', look: ob.look, texto: 'Sardes? Ninguém atravessa para lá sem motivo. O mar é largo e a cidade, escura.\n\nSimão, o pescador, anda falando dessa cidade na Praça do poço. Fale com ele primeiro.', acoes: [{ label: 'Entendi' }] });
   const pode = c.data.gold >= PRECO_BARCO;
   return G.ui.dialog({ nome: 'Jonatã, o barqueiro', look: ob.look, texto: 'Sardes fica do outro lado do mar. Uma cidade grande, que já foi rica. Hoje quase ninguém desembarca lá: dizem que a luz não chega, que roubam até a sombra da gente.\n\nA travessia custa ' + PRECO_BARCO + ' denários. Você tem ' + Math.floor(c.data.gold) + '.\n\nAviso: o que anda por lá é mais forte do que o que você conhece.',
     acoes: [pode ? { label: 'Pagar e embarcar', fn: () => { c.data.gold -= PRECO_BARCO; sfx('coin'); G.salvar(); G.ui.toast('Três dias de mar. Ondas, sal, e uma cidade escura aparecendo no horizonte…', 4500); setTimeout(() => G.running && G.entrar('sardes'), 900); } } : { label: 'Não tenho o bastante' }, { label: 'Agora não' }] });
@@ -153,6 +157,8 @@ async function barco(G, ob) {
 
 /* ---------------- falas novas ---------------- */
 export async function falarNovo(G, ob) {
+  if (await falarPedro(G, ob)) return true; // Pedro dá a missão de Sardes
+  if (await falarSardesNovo(G, ob)) return true; // a sinagoga e o mercado novo de Sardes
   const cm = G.cm, p = G.p, c = G.char;
   if (await amizade(G, ob)) return true; // o primeiro papo do dia vale um coração; nos marcos, o morador conta algo
   if (await falaHistoria(G, ob)) return true; // a campanha: pedidos, páginas vivas e a volta

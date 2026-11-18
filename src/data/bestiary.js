@@ -208,7 +208,10 @@ export const BOSSES = {
     nome: '???', titulo: 'Secreto', lv: 99, hp: 99999, atk: 40, def: 99, spd: 120, r: 26,
     cor: '#0A0A0F', cor2: '#000000', ref: 'Gênesis 4:7'
   }
-};
+};BOSSES.ladrao = { ...BOSSES.mentira, nome: 'O Ladrão da Noite', titulo: 'Chefe secreto', ref: 'Apocalipse 3:3', cor: '#3A2E4A', cor2: '#C9A63C',
+  intro: 'Ninguém me vê chegar. Eu levo a vela, o sono, a vigília… e ninguém nota o que perdeu.',
+  derrota: '"Lembra-te, pois, do que tens recebido e ouvido, e guarda-o, e arrepende-te. E, se não vigiares, virei sobre ti como um ladrão" (Ap 3:3). Quem vigia não é roubado.' };
+
 
 // Respostas para as acusações do Satanás (o certo é o versículo; mentiras usadas como alternativas erradas).
 export const ACUSACOES = [

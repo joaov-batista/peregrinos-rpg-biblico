@@ -119,6 +119,15 @@ export const CHEFES = {
     fases: [F(1, ['emergir', 'tochas', 'fumaca']), F(0.6, ['redemoinho', 'emergir', 'tochas', 'fumaca'], { grito: 'A MARÉ SE ERGUE!' }), F(0.3, ['emergir', 'redemoinho', 'tochas', 'emergir', 'fumaca'], { grito: 'O MAR FERVE!' })],
     dica: '"Poderás tirar com anzol o Leviatã?" (Jó 41:1). Ele só fica ao alcance logo depois de emergir: a couraça abre.' }
 };
+// o chefe secreto de Sardes: o Ladrão da Noite (Ap 3:3). Anda pelos telhados de madrugada e engana como a Mentira, só que mais forte.
+const NOMES_LADRAO = { copias: 'vultos', copias5: 'vultos5', meiaVerdade: 'furto', inverter: 'apagao', troca: 'trocaSombra', boato: 'sussurro' };
+const nl = n => NOMES_LADRAO[n] || n;
+CHEFES.ladrao = { ...CHEFES.mentira, vida: 1600, dano: 2, pressa: 0.55, arena: 'telhados',
+  golpes: Object.fromEntries(Object.entries(CHEFES.mentira.golpes).map(([k, g]) => [nl(k), g.fn ? { ...g, fn: nl(g.fn) } : g])),
+  fases: CHEFES.mentira.fases.map(f => ({ ...f, golpes: f.golpes.map(nl), ...(f.grito ? { grito: 'QUEM VIGIA? NINGUÉM VIGIA!' } : {}) })),
+  dica: '"Se não vigiares, virei como ladrão" (Ap 3:3). Ele se divide em vultos: erga a lâmpada e ache o verdadeiro. Não fique parado no escuro.' };
+ESTILOS.ladrao = { ...ESTILOS.mentira, golpes: Object.fromEntries(Object.entries(ESTILOS.mentira.golpes).map(([k, f]) => [nl(k), function (...a) { return f.apply(this, a); }])) }; // os mesmos enganos, em golpes próprios dele
+
 
 const golpeDe = (b, nome) => { const def = b.c.golpes[nome]; return ESTILOS[b.id]?.golpes[def?.fn || nome]; };
 

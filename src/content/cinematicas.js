@@ -188,6 +188,15 @@ export const CINEMAS = {
         texto: '[mocking] Ninguém vai acreditar nesse Jesus… E você? Consegue dizer qual de nós é a verdadeira? Hahaha!' }
     ]
   },
+  'chefe-ladrao': {
+    titulo: 'O Ladrão da Noite',
+    cenas: [
+      { cena: 'sinagoga', fx: 'raio', fig: [{ p: 'chefe:ladrao', x: 0.5, y: 0.78, s: 1.8 }], titulo: 'O LADRÃO DA NOITE', sub: 'Apocalipse 3:3',
+        texto: 'Madrugada nos telhados de Sardes. Um vulto encapuzado com um saco nas costas. Ele não quebra portas: entra por onde ninguém vigia.' },
+      { cena: 'sinagoga', voz: 'vilao', fig: [{ p: 'chefe:ladrao', x: 0.35, y: 0.78, s: 1.4 }, { p: 'chefe:ladrao', x: 0.65, y: 0.78, s: 1.6 }],
+        texto: '[whispering] Eu levei as velas. Levei o sono deles, a vigília, os cânticos… e ninguém notou. Você acha que vai notar?' }
+    ]
+  },
   'chefe-imoralidade': {
     titulo: 'Imoralidade Sexual',
     cenas: [
@@ -397,7 +406,7 @@ export const CINEMAS = {
 };
 
 // Qual cutscene toca quando um chefe aparece (id do bestiário → id da cutscene)
-export const CINEMA_CHEFE = { encantadores:'chefe-encantadores', jugo:'chefe-jugo', babilonia:'chefe-babilonia', fera:'chefe-fera', soberba:'chefe-soberba', fuga:'chefe-fuga', pavor:'chefe-pavor', desespero:'chefe-desespero', violencia:'chefe-violencia', ressentimento:'chefe-ressentimento', mamom: 'chefe-mamom', procrastinacao: 'chefe-procrastinacao', mentira: 'chefe-mentira', imoralidade: 'chefe-imoralidade', satanas: 'chefe-satanas', behemote: 'chefe-behemote', leviata: 'chefe-leviata', golias: 'chefe-golias' };
+export const CINEMA_CHEFE = { ladrao:'chefe-ladrao', encantadores:'chefe-encantadores', jugo:'chefe-jugo', babilonia:'chefe-babilonia', fera:'chefe-fera', soberba:'chefe-soberba', fuga:'chefe-fuga', pavor:'chefe-pavor', desespero:'chefe-desespero', violencia:'chefe-violencia', ressentimento:'chefe-ressentimento', mamom: 'chefe-mamom', procrastinacao: 'chefe-procrastinacao', mentira: 'chefe-mentira', imoralidade: 'chefe-imoralidade', satanas: 'chefe-satanas', behemote: 'chefe-behemote', leviata: 'chefe-leviata', golias: 'chefe-golias' };
 
 // Agrupa cenas seguidas com a mesma voz: cada grupo vira um arquivo de áudio (public/narracao/<id>-<n>.mp3)
 export function segmentos(id) {

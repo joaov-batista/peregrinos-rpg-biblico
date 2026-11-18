@@ -77,7 +77,8 @@ export const ARENAS = {
   troncos: [[14, 5, 9], [14, 20, 24]], // Fera: troncos caídos no campo
   terracos: [[13, 2, 7], [13, 22, 27], [10, 5, 10], [10, 19, 24], [7, 11, 18]], // Soberba: os terraços do palácio
   vale: [[14, 2, 5], [14, 24, 27], [15, 13, 16]], // Golias: as encostas do vale de Elá e o ribeiro
-  savana: [[10, 4, 8], [10, 21, 25]] // Beemote: refúgios altos — embaixo é a investida
+  savana: [[10, 4, 8], [10, 21, 25]], // Beemote: refúgios altos — embaixo é a investida
+  telhados: [[12, 2, 6], [9, 8, 12], [12, 14, 16], [9, 18, 22], [12, 24, 27]] // Ladrão da Noite: os telhados de Sardes, de madrugada
 };
 
 const espelha = s => s.split('').reverse().join('');

@@ -11,7 +11,7 @@ import { CHEFES_F } from './chefes-f.js';
 
 const PINTORES = { ...CHEFES_A, ...CHEFES_B, ...CHEFES_C, ...CHEFES_D, ...CHEFES_E, ...CHEFES_F };
 // estes foram desenhados olhando para a esquerda; os antigos olham para a direita. Quem desenha na tela desvira
-const CONTORNO_CLARO = new Set(['conselho', 'zeloteFoice', 'zelotePunhal']);
+const CONTORNO_CLARO = new Set(['conselho', 'zeloteFoice', 'zelotePunhal', 'ladrao']);
 const OLHA_ESQ = new Set(['escassez', 'desprezo', 'carcere', 'mentira', 'imoralidade', 'amargura']);
 // Beemote e Leviatã são colossos: desenhados no dobro do tamanho, ocupam boa parte da arena
 const COLOSSOS = { behemote: 2.5, leviata: 2.4, golias: 1.25, carcere: 1.5, escassez: 1.25, desprezo: 1.2, amargura: 1.7, conselho: 1.3, zeloteFoice: 1.3, zelotePunhal: 1.3 };
@@ -24,6 +24,15 @@ const GARRA = ['O.O.O', 'OOOOO', 'oOOOo', '.ooo.'];
 
 const quadro = new Sprite(120, 112);
 export const CHEFES_PX = {
+  ladrao: { ax: 60, ay: 104, pinta(s, b, Tm) {
+    const ox = 60, oy = 104, resp = Math.floor(Tm * 3) % 2, C = rampa('#2E2440'), M = rampa('#4A3A5E'), O = rampa('#C9A63C'), pele = rampa('#8A6A5A'), prep = b.tele > 0, anda = Math.abs(b.vx) > 8 ? Math.floor(Tm * 6) % 2 : 0;
+    for (let y = 0; y < 62; y++) { const w = Math.round(10 + y * 0.42); s.ret(ox - w, oy - 64 + y + resp, w * 2, 1, y > 50 ? C[1] : C[2]); s.ret(ox - w, oy - 64 + y + resp, 3, 1, C[3]); } // a capa
+    s.bola(ox, oy - 70 + resp, 12, 13, C); s.bola(ox + 2, oy - 68 + resp, 8, 8, rampa('#0E0A14')); // o capuz e o rosto no escuro
+    s.ret(ox - 3, oy - 70 + resp, 3, 2, cor('#FFD86A')); s.ret(ox + 4, oy - 70 + resp, 3, 2, cor('#FFD86A')); // os olhos acesos
+    s.ret(ox - 18 - anda, oy - 4, 9, 4, C[0]); s.ret(ox + 9 + anda, oy - 4, 9, 4, C[0]); // os pés
+    s.bola(ox - 20, oy - 34 + resp, 9, 11, M); s.ret(ox - 24, oy - 46 + resp, 8, 3, O[2]); s.ret(ox - 22, oy - 30 + resp, 4, 4, O[3]); s.ret(ox - 16, oy - 26 + resp, 3, 3, O[4]); // o saco do roubo
+    const ang = prep ? -1.1 : -0.3; s.ret(ox + 14, oy - 40 + resp, 5, 5, pele[2]); for (let k = 0; k < 16; k++) s.ret(Math.round(ox + 18 + Math.cos(ang) * k), Math.round(oy - 40 + resp + Math.sin(ang) * k), 2, 2, k < 4 ? O[1] : rampa('#C9D2E0')[3 - (k > 12 ? 1 : 0)]); // o punhal
+  } },
   mamom: { ax: 60, ay: 104, pinta(s, b, Tm, G) {
     const ox = 60, oy = 104, t = Math.floor(Tm * 6), resp = [0, 0, 1, 1][t % 4], tipo = b.mov?.def.tipo, prep = b.tele > 0, caido = b.quebrado > 0 || b.tonto > 0;
     const noAr = !b.chao && !caido, corre = (tipo === 'investida' || b.corre) && b.art.step === 2, anda = Math.abs(b.vx) > 8 && !corre ? Math.floor(Tm * 5) % 2 : 0;

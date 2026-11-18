@@ -46,3 +46,31 @@ export const SARDES_RUA = [
   ['Três moedas pelo pão. Quatro, se for à noite: à noite tudo é mais caro.', 'Pão a duas moedas. A luz baixou o preço de tudo, até do medo.'],
   ['Dizem que o vizinho do fim da rua não é gente. Eu é que não vou olhar.', 'O vizinho do fim da rua era só um homem triste. Eu levei uma sopa para ele.']
 ];
+
+// Pedro (Simão, o pescador) é quem manda o peregrino a Sardes: levar a Palavra é pescar gente (Lc 5:10)
+export const PEDRO_SARDES = {
+  chamado: ['Você já pescou, peregrino? Eu pescava peixe. Um dia ele me disse: "Desde agora serás pescador de homens" (Lc 5:10). Larguei as redes ali mesmo.',
+    'Chegou notícia do outro lado do mar: Sardes. Uma igreja que tem nome de viva e está morta (Ap 3:1). As velas apagaram, o povo se tranca, ninguém mais congrega.',
+    '"Ide por todo o mundo e pregai o evangelho a toda criatura" (Mc 16:15). Não é para conquistar a cidade: é para acender de novo o que ainda não morreu. Vai?'],
+  aceita: 'Fale com Jonatã, o barqueiro, no Porto. Leve azeite para as velas e a Palavra para quem resiste. Lá tem um ancião, Epafras, que ainda vigia.',
+  andamento: 'E Sardes? Lembre: a gente lança a rede, quem enche é ele.',
+  depois: 'Ouvi dizer que em Sardes cantam de novo à noite. "Grande é a seara" (Lc 10:2)… e eu já ouço falar de outra cidade que precisa de luz. Quando você estiver pronto, conversamos.'
+};
+// a sinagoga de Sardes: Natanael é o último que ainda abre a porta; a menorá apagada acende com azeite
+export const SINAGOGA_SARDES = {
+  natanael: 'Natanael, o último',
+  natLook: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#3A3F4C', cape: '#4A4A6A', style: 'turbante', beard: true },
+  antes: 'Abro a porta todo sábado. Ninguém vem. Varro o chão, leio o rolo em voz alta para os bancos vazios e volto para casa.\n\nA menorá está apagada há tanto tempo que esqueci o cheiro do azeite queimando.',
+  menora: 'A menorá de sete braços, coberta de pó. Precisa de 21 de azeite para acender as sete lâmpadas.',
+  acesa: 'As sete lâmpadas acendem. Natanael fica de pé, as mãos tremendo. "Até que enfim… até que enfim."\n\n(A cidade conta isto como duas velas reacesas.)',
+  depois: 'Agora vem gente. Pouca, mas vem. Ninfa canta, Febe varre, Tíquico chega cedo. É assim que uma sinagoga volta a respirar.'
+};
+// o mercado novo: quem recebeu a Palavra abre uma banca depois que a cidade acende
+export const MERCADO_NOVO = {
+  fechado: 'Bancas com tábuas pregadas por cima. Alguém escreveu na madeira: "Fechado até o medo passar."',
+  cloe: { banca: 'Velas e azeite', fala: 'A vela da sala agora fica acesa todo dia. Vendo do mesmo azeite: para a sua lâmpada e para quem precisar.', itens: { azeite: 22, mel: 30 } },
+  tiquico: { banca: 'O que foi roubado volta', fala: 'Os ladrões começaram a devolver as coisas. O que ninguém reclama eu vendo barato. Cada dia aparece uma coisa.' },
+  onesimo: { banca: 'Compro do campo', fala: 'Sardes tem fome de coisa fresca. Compro o que você colhe no seu sítio, e pago melhor que o cesto.' },
+  febe: { banca: 'Flores e pão', fala: 'Faço pão para os que vêm ao culto. E flores para a mesa da ceia.', itens: { pao: 8, flor: 9 } },
+  ninfa: { banca: 'O cântico', fala: 'Velha não vende nada. Velha canta. Senta um pouco e ouve.' }
+};

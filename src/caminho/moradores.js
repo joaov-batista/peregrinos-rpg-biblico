@@ -8,6 +8,7 @@ import { VILA } from '../content/vila.js';
 import { coracoesDe, somarCoracoes } from './vida.js';
 import { acoesDoCoracao } from './lar.js';
 import { passoSitio, falarConjugeSitio, acoesEliabe } from './sitio.js';
+import { passoSinagogaSardes } from './sardesnovo.js';
 import { agendaDe, lugarNaSinagoga, passoRonda, passoSinagoga, falarSinagoga, falaDaNoite } from './sinagoga.js';
 
 export const DIA = 600; const rand = (a, b) => a + Math.random() * (b - a);
@@ -33,6 +34,7 @@ const marcaCoracoes = n => '♥'.repeat(Math.min(10, n)) + '♡'.repeat(Math.max
 export function passoVida(G, dt) {
   G.cm.relogio = (G.cm.relogio || 0) + dt;
   if (G.area === 'sinagoga') { passoSinagoga(G, dt); return; }
+  if (G.area === 'sinagoga:sardes') { passoSinagogaSardes(G, dt); return; }
   if (G.def?.sitio) { passoSitio(G, dt); return; }
   if (G.area !== 'refugio') return;
   passoSinagoga(G, dt);

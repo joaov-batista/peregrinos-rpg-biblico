@@ -1297,7 +1297,7 @@ export class Caminho {
         else if (ob.area) await this.ui.dialog({ nome: ob.rotulo, texto: ob.area === 'treino' ? 'Um pátio de areia para medir forças com os peregrinos da sua sala. Aqui os golpes de um ferem o outro, mas ninguém perde nada ao cair.\n\nSozinho, serve para treinar os golpes.' : 'As grades se fecham e os vícios vêm em ondas, cada vez mais. Cada onda vencida vale denários.\n\nSua melhor marca: ' + (cm.recorde || 0) + ' ondas.', acoes: [{ label: 'Entrar', fn: () => this.entrar(ob.area) }, { label: 'Agora não' }] });
         else if (ob.semana) escolherFase(this, semanaDe(ob.semana));
         else {
-          const m = MUNDO[ob.mundo], falta = (m.pede.pedras && cm.pedras < m.pede.pedras) || (m.pede.hab && !cm.hab[m.pede.hab]);
+          const m = MUNDO[ob.mundo], falta = (m.pede.pedras && cm.pedras < m.pede.pedras) || (m.pede.hab && !cm.hab[m.pede.hab]) || (m.pede.sardes && !cm.sar?.feita) || (m.pede.noite && periodo(this) !== 'noite');
           if (falta) await this.ui.dialog({ nome: m.nome, texto: m.ref + '\n\n' + m.porque, acoes: [{ label: 'Voltar' }] });
           else await this.ui.dialog({ nome: m.nome, texto: m.ref + '\n\n' + (BOSSES[m.chefe].intro || '').replace(/\*/g, '') + (cm.chefes[m.chefe] ? '\n\nVencido ' + cm.chefes[m.chefe] + ' vez(es).' : ''), acoes: [{ label: 'Entrar', fn: () => this.entrar('mundo:' + ob.mundo) }, { label: 'Agora não' }] });
         }

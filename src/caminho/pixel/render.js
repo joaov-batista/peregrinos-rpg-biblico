@@ -88,6 +88,9 @@ function pintarObjeto(g, o, G, x, y, Tm) {
     case 'galinheiro': { const s = sprObj('galinheiro', 48, 40, s => { const M = rampa('#8A5A36'), Tt = rampa('#9A3E2A'); s.ret(6, 14, 36, 24, M[2]); for (let i = 8; i < 42; i += 5) s.ret(i, 14, 1, 24, M[1]); s.ret(18, 24, 12, 14, cor('#2A1A12')); for (let k = 0; k < 12; k++) s.ret(2 + k * 2, 14 - k, 44 - k * 4, 1, Tt[2]); s.ret(34, 30, 10, 2, M[3]); s.linha(34, 38, 44, 30, 1, M[3]); }); carimbar(g, s, x, y, 24, 39); return true; }
     case 'espantalho': { const s = sprObj('espantalho', 26, 44, s => { const M = rampa('#6B4A2E'), P2 = rampa('#C9A06A'), R2 = rampa('#8E3B4A'); s.ret(12, 10, 2, 34, M[2]); s.ret(2, 16, 22, 2, M[2]); s.bola(13, 8, 5, 5, P2); s.ret(6, 2, 14, 3, M[3]); s.ret(9, 0, 8, 3, M[3]); s.bola(13, 22, 6, 7, R2); s.px(11, 7, TINTA); s.px(15, 7, TINTA); s.ret(0, 14, 3, 6, P2[2]); s.ret(23, 14, 3, 6, P2[2]); }); carimbar(g, s, x, y, 13, 43); return true; }
     case 'cerca': { const w = ((o.ate || o.col) - o.col) * 16; g.fillStyle = '#17121f'; g.fillRect(x - 1, y - 15, w + 2, 2); g.fillRect(x - 1, y - 8, w + 2, 2); g.fillStyle = '#8A6A44'; g.fillRect(x, y - 14, w, 1); g.fillRect(x, y - 7, w, 1); for (let i = 0; i <= w; i += 16) { g.fillStyle = '#17121f'; g.fillRect(x + i - 2, y - 18, 4, 18); g.fillStyle = '#9A7A4E'; g.fillRect(x + i - 1, y - 17, 2, 17); } return true; }
+    case 'menora': { const ac = !!o.acesa; g.fillStyle = '#17121f'; g.fillRect(x - 15, y - 40, 31, 42); g.fillStyle = '#C9A63C'; g.fillRect(x - 1, y - 36, 3, 34); g.fillRect(x - 8, y - 3, 17, 3); g.fillRect(x - 13, y - 22, 27, 2);
+      for (let b = 1; b <= 3; b++) for (const sg of [-1, 1]) { g.fillRect(x + sg * b * 4, y - 36, 2, 15); } g.fillStyle = ac ? '#FFE9A8' : '#4A4A58'; for (let b = -3; b <= 3; b++) { const f = ac ? Math.floor(Tm * 8 + b) % 2 : 0; g.fillRect(x + b * 4, y - 40 - f, 2, 3 + f); }
+      if (ac) { g.globalAlpha = 0.14; g.fillStyle = '#FFD98A'; g.fillRect(x - 30, y - 60, 60, 60); g.globalAlpha = 1; } else { g.fillStyle = '#6A6A78'; for (let i = 0; i < 6; i++) g.fillRect(x - 12 + i * 5, y - 30 + (i % 3) * 7, 1, 1); } return true; }
     case 'amendoeira': { // a árvore grande de copa florida (rosa e branca; no porto, verde com flores amarelas), com pétalas caindo
       const v = !!o.verde, s = sprObj('amendoeira' + (v ? 'v' : ''), 130, 112, s => {
         const T2 = rampa(v ? '#6B4A2E' : '#5A3A2A'), F = v ? ['#2E6A3A', '#3F8A3A', '#6FB84A', '#A8D86A', '#F2E27A'].map(cor) : ['#9A3A6A', '#C85A8A', '#E88AAE', '#F4B8CE', '#FFF0F4'].map(cor);
@@ -375,7 +378,7 @@ export function renderPixel(G) {
 
   pintarFundoPixel(g, G, C, vw, vh, cx, cy);
   pintarSalasPixel(g, G, C, vw, vh, cx, cy);
-  if (G.area === 'sinagoga') pintarLuzSinagoga(g, G, cx, cy, luzDoDia(G).d > 0.3);
+  if (G.area.startsWith('sinagoga')) pintarLuzSinagoga(g, G, cx, cy, luzDoDia(G).d > 0.3);
   for (const o of G.objs) { const x = X(o.x), xv = o.vv ? X(o.vv.x) : x; if (xv < -60 || xv > vw + 60) continue; /* quem anda é visto onde está, não onde mora */ if (o.oculto && !G.achou(o)) { const k = G.p.lampA * clamp(1 - (Math.hypot(o.x - G.p.x, o.y - G.p.y) - 200) / 160, 0, 1); if (k < 0.05) continue; g.globalAlpha = k; } if (!pintarObjeto(g, o, G, x, Y(o.y), Tm)) antigo(() => desenharObjeto(g, o, G)); g.globalAlpha = 1; }
   if (G.def.mundo && G.N.arena) pintarArenaTema(g, G, X, Y, Tm);
   const chefe = G.N.arena && G.inimigos.find(e => e.kind === 'chefe' && e.cen);
