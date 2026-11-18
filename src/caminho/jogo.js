@@ -248,7 +248,7 @@ export class Caminho {
 
   update(dt) {
     this.lerControles();
-    if (this.p.carga >= MIRA_CARGA && !this.mp?.acompanhado()) dt *= 0.4; // mirando sozinho, o tempo quase para
+    // (mirando, só o peregrino desacelera: cai devagar no ar; o mundo segue no ritmo normal)
     this.fade = Math.max(0, this.fade - dt * 1.6);
     if (this.clarao > 0) this.clarao -= dt; if (this.p.flashT > 0) this.p.flashT -= dt;
     if (this.hitstop > 0) { this.hitstop -= dt; this.atualizarFx(dt * 0.2); atualizarEfeitos(this.fxPx, dt * 0.25); return; }

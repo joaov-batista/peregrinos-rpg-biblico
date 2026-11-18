@@ -33,7 +33,7 @@ export function contextoMira(G) {
 // para onde o peregrino aponta: dedo arrastado no botão, analógico direito, mouse, direcional — ou para a frente
 export function anguloMira(G, input) {
   const p = G.p, a = input.arrasto;
-  if (a && Math.hypot(a.x, a.y) > 26) return Math.atan2(a.y, a.x);
+  if (a && Math.hypot(a.x, a.y) > 16) return Math.atan2(a.y, a.x); // o botão fica perto da borda: pouco arrasto já basta
   if (input.padAim != null) return input.padAim;
   if (input.mouseAim && !input.touch && !document.body.classList.contains('pad')) {
     const r = G.cv.getBoundingClientRect(), v = G.vista, wx = v.cam.x + (input.mx - r.left) / r.width * (v.W / v.Z), wy = v.cam.y + (input.my - r.top) / r.height * (v.H / v.Z);
@@ -62,8 +62,8 @@ export function soltarMira(G, ang) {
         for (let i = 0; i < 3; i++) G.efeito('corteAdaga', ox + ux * (60 + i * 90), oy + uy * (60 + i * 90) + 26, i % 2 ? -p.face : p.face, { vel: 1.2 - i * 0.2 });
         G.risco(ox, oy, ox + ux * 320, oy + uy * 320, '#C79BFF', 5);
       } else if (onde === 'ar') { // dois traços cruzados no ar, em X, e o salto volta (dá para emendar)
-        const a2 = ang + (uy > 0.3 ? -0.9 : 0.9) * (ux >= 0 ? 1 : -1);
-        G.investidaMira = { t: 0, dur: 0.12, ux, uy, vel: 1800, dano: base * 2.2, larg: 60, atk: novoAtk(), cortes: [], cor: '#C79BFF', inv: 0.4, depois: { ux: Math.cos(a2), uy: Math.sin(a2), dur: 0.1 }, noFim: () => { p.vy = -380; p.dashAr = true; p.pulos = Math.max(p.pulos, 1); } };
+        const desce = uy > 0.35, a2b = desce ? ang + (ux >= 0 ? 0.7 : -0.7) : ang + 0.9 * (ux >= 0 ? 1 : -1); // o X segue a mira: mirando para baixo, os dois traços descem
+        G.investidaMira = { t: 0, dur: 0.12, ux, uy, vel: 1800, dano: base * 2.2, larg: 60, atk: novoAtk(), cortes: [], cor: '#C79BFF', inv: 0.4, depois: { ux: Math.cos(a2b), uy: Math.sin(a2b), dur: 0.1 }, noFim: () => { if (!desce) p.vy = -380; p.dashAr = true; p.pulos = Math.max(p.pulos, 1); } };
         G.risco(ox, oy, ox + ux * 220, oy + uy * 220, '#C79BFF', 5); G.efeito('corteAdaga', ox + ux * 90, oy + uy * 90 + 26, p.face, { vel: 1.3 });
       } else { // da parede: quica de muro em muro, cortando o que estiver no caminho
         G.investidaMira = { t: 0, dur: 0.5, ux, uy, vel: 1500, dano: base * 1.8, larg: 58, atk: novoAtk(), cortes: [], ricocheta: 3, cor: '#C79BFF', inv: 0.6 };
@@ -121,8 +121,11 @@ export function soltarMira(G, ang) {
 
     case 'valente': {
       if (onde === 'chao') { // some no céu e cai onde mirou, com lanças e fogo
-        const sala = Math.floor(p.x / (CW * T)) * CW * T, tx = Math.max(sala + 2 * T, Math.min(sala + (CW - 2) * T, p.x + (Math.abs(ux) > 0.2 ? ux : p.face * 0.9) * 360));
+        const sala = Math.floor(p.x / (CW * T)) * CW * T, tx = Math.max(sala + 2 * T, Math.min(sala + (CW - 2) * T, p.x + ux * 360)); // mirando reto para cima, cai no mesmo lugar
         G.quedaMira = { fase: 0, t: 0, tx, dano: base * 7, y0: p.y }; p.vy = -1500; p.inv = Math.max(p.inv, 2.2); G.risco(p.x, p.y - 20, p.x + ux * 60, p.y - 420, '#E8C873', 4); G.efeito('baque', p.x, p.y);
+      } else if (onde === 'ar' && uy > 0.35) { // mirando para baixo: o valente mergulha com a lança na direção mirada e cai com fogo
+        G.quedaMira = { fase: 2, t: 0, tx: p.x, dano: base * 5, y0: p.y, vx: ux * 900, mergulho: true }; p.inv = Math.max(p.inv, 1.2);
+        G.risco(ox, oy, ox + ux * 260, oy + uy * 260, '#E8C873', 5); G.efeito('estocadaLonga', p.x, p.y, p.face, { gruda: p }); sfx('boss');
       } else if (onde === 'ar') { // do alto, arremessa uma lança enorme na direção mirada: onde ela cravar, sobe fogo
         G.flutua = 0.45; G.risco(ox, oy, ox + ux * 300, oy + uy * 300, '#E8C873', 4);
         tiro({ vx: ux * 1250, vy: uy * 1250, r: 12, vida: 1.2, tipo: 'lanca', cor: '#E8C873', dano: base * 4, estoura: { raio: 90, dano: base * 2.4, fx: 'explosaoFogo' } });
@@ -224,11 +227,11 @@ export function passoMira(G, dt) {
     }
   }
   if (Q) {
-    Q.t += dt; p.inv = Math.max(p.inv, 0.3); p.atkCd = Math.max(p.atkCd, 0.2); p.vx = 0;
+    Q.t += dt; p.inv = Math.max(p.inv, 0.3); p.atkCd = Math.max(p.atkCd, 0.2); p.vx = Q.vx || 0; if (Q.vx) p.face = Math.sign(Q.vx);
     if (Q.fase === 0) { p.vy = -900; p.y -= 1500 * dt; if (Q.t > 0.3) { Q.fase = 1; Q.t = 0; const topo = Math.floor((Q.y0 - 2) / (CH * T)) * CH * T; p.x = Q.tx; p.y = topo + 2 * T; p.vy = 0; // reaparece no alto, sobre o alvo
         for (let i = 0; i < 9; i++) setTimeout(() => { if (G.running) G.tiros.push({ semOleo: true, x: Q.tx + rand(-210, 210), y: topo + T, vx: rand(-40, 40), vy: 1050, r: 8, amigo: true, vida: 1.1, cor: '#E8C873', tipo: 'lanca', dano: Q.dano * 0.18, estoura: { raio: 44, dano: Q.dano * 0.1, fx: 'explosaoFogo' } }); }, i * 55); } }
     else if (Q.fase === 1) { p.vy = 0; if (Q.t > 0.22) { Q.fase = 2; Q.t = 0; sfx('boss'); } }
-    else { p.vy = 2300; if (p.y < Q.y0 - 40) p.desce = 0.12; if ((p.chao && p.y >= Q.y0 - 40) || Q.t > 0.9) { G.quedaMira = null; p.vy = 0; G.tremor(18); G.clarao = 0.16; sfx('hit'); G.efeito('baque', p.x, p.y); G.efeito('explosaoFogo', p.x, p.y); G.fx.anel(p.x, p.y - 10, '#FFB05A', 220);
+    else { p.vy = Q.mergulho ? 1600 : 2300; if (Q.mergulho) { p.desce = 0.12; if (Math.random() < 0.5) G.parts.push({ x: p.x, y: p.y - 30, vx: 0, vy: -60, t: 0.3, max: 0.3, r: 2, cor: '#E8C873', g: 0 }); } else if (p.y < Q.y0 - 40) p.desce = 0.12; if ((p.chao && (Q.mergulho || p.y >= Q.y0 - 40)) || Q.t > 0.9) { p.vx = 0; G.quedaMira = null; p.vy = 0; G.tremor(18); G.clarao = 0.16; sfx('hit'); G.efeito('baque', p.x, p.y); G.efeito('explosaoFogo', p.x, p.y); G.fx.anel(p.x, p.y - 10, '#FFB05A', 220);
         G.golpear({ x: p.x - 150, y: p.y - 150, w: 300, h: 170 }, Q.dano, novoAtk('cima'));
         for (const s of [-1, 1]) for (let k = 1; k <= 3; k++) G.zonas.push({ tipo: 'col', x: p.x + s * k * 62, w: 50, aviso: 0.05 + k * 0.09, dur: 0.3, cor: '#FF8A2A', amigo: Q.dano * 0.2, y0: p.y - 150, y1: p.y + 20 }); } }
   }
