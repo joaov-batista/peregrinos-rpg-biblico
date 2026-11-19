@@ -307,7 +307,7 @@ export function areaDef(id) {
         planta(3, 'oliveira'), { tipo: 'galinheiro', col: 6.5, dono: d }, { tipo: 'essencias', col: 10, dono: d }, { tipo: 'flor', col: 12.5 }, { tipo: 'cesto', col: 14.5, dono: d }, { tipo: 'maquina', qual: 'forno', col: 17, dono: d }, { tipo: 'poco', col: 19.5 },
         casa(23, 'peregrino', donos.length > 1 ? 'Casa de ' + nomeDe(d) : 'Sua casa'), { tipo: 'placa', col: 27, txt: k === 0 ? 'Estrada do Refúgio →' : 'Sítio de ' + nomeDe(d) + ' · o de ' + nomeDe(donos[k - 1]) + ' →' }, { tipo: 'ave', col: 20, lin: 13 }] }];
     // a estrada até o Refúgio: o caminho de terra, oliveiras e, no fim, a muralha da cidade com o portão aberto
-    const estrada = { papel: 'vila', nome: 'A estrada do Refúgio', tiles: sala(), objs: [planta(5, 'oliveira'), { tipo: 'placa', col: 12, txt: 'Refúgio →' }, planta(17, 'cipreste'), { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'portaoCidade', col: 27.6, lado: -1 }] };
+    const estrada = { papel: 'vila', nome: 'A estrada do Refúgio', tiles: sala(), objs: [planta(5, 'oliveira'), { tipo: 'placa', col: 12, txt: 'Refúgio →' }, planta(17, 'cipreste'), { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'portaoCidade', col: 25.8, lado: -1 }] };
     const mar = { papel: 'vila', nome: 'Mar adentro', semPostes: true, marAberto: 'esq', tiles: sala(), objs: [{ tipo: 'aguaAberta', col: 0, ate: 101, esq: true, praia: true }] };
     const mar2 = { papel: 'vila', nome: 'O alto-mar', semPostes: true, tiles: sala(), objs: [] }, mar3 = { papel: 'vila', nome: 'O mar', semPostes: true, tiles: sala(), objs: [] };
     const praia = { papel: 'vila', nome: 'A praia', praia: true, semPostes: true, tiles: sala(), objs: [

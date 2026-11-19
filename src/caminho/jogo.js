@@ -481,6 +481,7 @@ export class Caminho {
     const v = this.vista, vw = v.W / v.Z, vh = v.H / v.Z, N = this.N;
     let x0 = 0, x1 = N.w * T - vw;
     if (this.area === 'refugio' && !(this.cm.visto?.tut != null && this.cm.visto.tut < PASSOS.length)) x0 = RX * CW * T; // depois do treino, a trilha fica para trás: a câmara não mostra o que fica além do portão
+    else if (this.area === 'refugio') x1 = Math.min(x1, RX * CW * T - 130 - vw); // no treino a câmara para no fim da trilha
     if (this.luta && N.arena) { x0 = N.arena.x0 - T; x1 = N.arena.x1 + T - vw; if (x1 < x0) x0 = x1 = (x0 + x1) / 2; }
     if (x1 < x0) { x0 = x1 = (N.w * T - vw) / 2; }
     v.cam.x = clamp(v.cam.x, x0, x1); v.cam.y = clamp(v.cam.y, 0, Math.max(0, N.h * T - vh));
@@ -954,6 +955,7 @@ export class Caminho {
   tutorial(dt) {
     const v = this.cm.visto, p = this.eu;
     if (v.tut == null || v.tut >= PASSOS.length) { if (this.tutEl) { this.tutEl.remove(); this.tutEl = null; document.querySelectorAll('.tut-alvo').forEach(x => x.classList.remove('tut-alvo')); } return; }
+    if (this.area === 'refugio' && p.x > RX * CW * T - 170) { p.x = RX * CW * T - 170; if (p.vx > 0) p.vx = 0; } // no treino só existe a trilha: o Refúgio ainda não aparece
     const s = PASSOS[v.tut], modo = input.touch ? 0 : document.body.classList.contains('pad') ? 1 : wasd() ? 3 : 2;
     this.tutT = (this.tutT || 0) + dt;
     // a dica é um cartão grande no alto da tela: o que fazer, com que tecla, numa frase
@@ -1465,6 +1467,7 @@ export class Caminho {
   temMapa() { const cm = this.cm; if (!cm.mapa && (Object.keys(cm.feitas).length || Object.keys(cm.hab).length || cm.falas.velho)) cm.mapa = true; return !!cm.mapa; }
   // A missão da vez no Refúgio: o portal da primeira semana com fase por fazer. Na superfície, o alvo é a escada que leva até ele.
   objetivo() {
+    if (this.cm.visto?.tut != null && this.cm.visto.tut < PASSOS.length) return null; // no treino não há missão: só a trilha
     if (this.area === 'sardes') return objetivoSardes(this);
     if (this.area !== 'refugio') return null;
     if (!this.temMapa()) { const v = this.objs.find(o => o.id === 'velho'); return v ? { x: v.x, y: v.y + 40, rot: 'fale com o Velho Peregrino', portal: v } : null; }

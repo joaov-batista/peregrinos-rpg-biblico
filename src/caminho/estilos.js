@@ -1030,12 +1030,14 @@ function entrada(G, b, m, dt, modo) {
   const t1 = 0.14 * e.k, t2 = t1 + 0.22 * e.k, t3 = t2 + (modo === 'ceu' ? 0.2 : 0.14), xw = e.lado < 0 ? A.x0 : A.x1;
   if (e.t < t1) { b.x = e.x0; b.y = e.y0; b.alpha = 1 - e.t / t1; return true; } // desfazendo-se
   if (e.t < t2) { b.alpha = 0; b.x = e.x1; b.y = e.y1; // escondido; no destino, o aviso de onde ele vai sair
-    if (modo === 'ceu') { if (Math.random() < dt * 30) G.parts.push({ x: e.x1 + rand(-8, 8), y: A.y0 + rand(0, 20), vx: 0, vy: 1100, t: 0.22, max: 0.22, r: 1.2, cor: '#FFE9A8', g: 0 }); }
+    if (modo === 'canto') { /* nada avisa: ele simplesmente surge no canto */ }
+    else if (modo === 'ceu') { if (Math.random() < dt * 30) G.parts.push({ x: e.x1 + rand(-8, 8), y: A.y0 + rand(0, 20), vx: 0, vy: 1100, t: 0.22, max: 0.22, r: 1.2, cor: '#FFE9A8', g: 0 }); }
     else { racha(G, xw, e.y1, e.lado, 48); if (Math.random() < dt * 20) G.parts.push({ x: xw - e.lado * 3, y: e.y1 - rand(4, 44), vx: -e.lado * 30, vy: 0, t: 0.5, max: 0.5, r: 1.3, cor: '#8A6A50', g: 700 }); }
     return true; }
-  if (!e.saiu) { e.saiu = true; b.oculto = false; b.naSala = true; if (modo === 'ceu') { sfx('swing'); G.tremor(2); } else brecha(G, xw, e.y1, e.lado, 48); }
-  const k = Math.min(1, (e.t - t2) / (t3 - t2)); b.alpha = 1; b.rastro = 0.22;
-  if (modo === 'ceu') { b.x = e.x1; b.y = A.y0 - 90 + (e.y1 - A.y0 + 90) * (k * k); } // despenca do alto até onde o golpe começa
+  if (!e.saiu) { e.saiu = true; b.oculto = false; b.naSala = true; if (modo === 'canto') { fumaca(G, e.x1, e.y1, 8); sfx('swing'); } else if (modo === 'ceu') { sfx('swing'); G.tremor(2); } else brecha(G, xw, e.y1, e.lado, 48); }
+  const k = Math.min(1, (e.t - t2) / (t3 - t2)); b.alpha = 1; b.rastro = modo === 'canto' ? 0 : 0.22;
+  if (modo === 'canto') { b.x = e.x1; b.y = e.y1; b.alpha = Math.min(1, 0.3 + k); }
+  else if (modo === 'ceu') { b.x = e.x1; b.y = A.y0 - 90 + (e.y1 - A.y0 + 90) * (k * k); } // despenca do alto até onde o golpe começa
   else { const x0 = xw + e.lado * 6; b.x = x0 + (e.x1 - x0) * (1 - (1 - k) * (1 - k)); b.y = e.y1; b.face = -e.lado; } // sai de dentro da parede
   b.corre = k < 1;
   if (k >= 1) { m.ent = null; m.te = m.t; b.x = e.x1; b.y = e.y1; if (modo === 'ceu') { G.efeito('sumico', b.x, b.y - 20); for (let i = 0; i < 10; i++) G.parts.push({ x: b.x + rand(-20, 20), y: b.y - rand(0, 30), vx: rand(-120, 120), vy: rand(-80, 40), t: 0.4, max: 0.4, r: 1.5, cor: '#C9B8A0', g: 0 }); } }
@@ -1047,10 +1049,10 @@ const lancasDoChao = (G, x, n) => { const A = G.N.arena; G.tremor(8); for (let k
     zona(G, { tipo: 'muro', x: xx - 12, y: A.chao - 58, w: 24, h: 58, aviso: a, dur: 0.22, cor: LANCA, semFlash: true }); (G.zelLancas = G.zelLancas || []).push({ x: xx, t: -a }); setTimeout(() => { if (G.luta) { sfx('block'); lascas(G, xx, A.chao, 6); } }, a * 1000); } };
 // lascas do piso onde a arma bate
 const lascas = (G, x, y, n) => { for (let i = 0; i < n; i++) G.parts.push({ x: x + rand(-18, 18), y: y - 2, vx: rand(-260, 260), vy: rand(-420, -120), t: 0.7, max: 0.7, r: rand(1.4, 2.8), cor: ['#3E2620', '#5A3A2E', '#8A6A50', '#C9B48A'][i % 4], g: 1200 }); };
-// rasante: rompe a parede rente ao chão e cruza a sala inteira. Pule (ou atravesse com o passo)
+// rasante: aparece num canto, no chão, e cruza a sala inteira. Pule (ou atravesse com o passo)
 function zRasante(G, b, m, dt, o) {
   const A = G.N.arena;
-  if (m.e === 0) { if (m.t === 0) { m.px0 = b.x; m.py0 = b.y; m.d = G.p.x > A.cx ? 1 : -1; b.x = m.d > 0 ? A.x0 + 46 : A.x1 - 46; b.y = A.chao; b.face = m.d; } if (entrada(G, b, m, dt, 'parede')) return false; b.alpha = 1; b.face = m.d; prepara(b); if (tt(m) > av(G, o.tele)) { m.e = 1; sfx('dodge'); } return false; }
+  if (m.e === 0) { if (m.t === 0) { m.px0 = b.x; m.py0 = b.y; m.d = G.p.x > A.cx ? 1 : -1; b.x = m.d > 0 ? A.x0 + 46 : A.x1 - 46; b.y = A.chao; b.face = m.d; } if (entrada(G, b, m, dt, 'canto')) return false; b.alpha = 1; b.face = m.d; prepara(b); if (tt(m) > av(G, o.tele)) { m.e = 1; sfx('dodge'); } return false; }
   if (m.e === 1) { ataca(b); b.corre = true; b.rastro = 0.2; b.x += m.d * vel(G, o.v) * dt; if (Math.random() < dt * 40) G.fx.po(b.x - m.d * 20, b.y - 4, 2, o.cor); if (Math.random() < dt * 50) G.parts.push({ x: b.x - m.d * 14, y: b.y - rand(2, 8), vx: -m.d * rand(40, 140), vy: rand(-90, -20), t: 0.35, max: 0.35, r: 1.4, cor: '#8A6A50', g: 500 }); // o pó que a corrida levanta
     if ((m.d > 0 && b.x > A.x1 - 56) || (m.d < 0 && b.x < A.x0 + 56)) { b.x = clamp(b.x, A.x0 + 56, A.x1 - 56); b.corre = false; if (o.volta && !m.voltou) { m.voltou = true; m.e = 3; m.t0 = m.t; } else { m.e = 2; m.t0 = m.t; } } return false; }
   if (m.e === 3) { prepara(b); b.face = -m.d; if (m.t - m.t0 > av(G, 0.32)) { m.d *= -1; m.e = 1; sfx('dodge'); } return false; } // vira e volta

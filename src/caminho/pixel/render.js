@@ -135,6 +135,7 @@ function pintarObjeto(g, o, G, x, y, Tm) {
     case 'portaoCidade': { // o portão da cidade: duas torres de pedra com ameias, o arco aberto com as folhas de madeira encostadas, tochas; a muralha segue para trás
       const PE = ['#3A2E28', '#7A6650', '#9A8468', '#B8A284'], d = o.lado || 1, q = (a, b, w, h, c) => { g.fillStyle = c; g.fillRect(x + a, y + b, w, h); }, noite = (() => { const hh = ((G.cm.relogio || 0) / 600 * 24 + 7) % 24; return hh >= 18.5 || hh < 5.5; })();
       const pedra = (a, b, w, h) => { q(a - 1, b - 1, w + 2, h + 1, '#17121f'); for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) { const lin = Math.floor(yy / 4), jun = yy % 4 === 3 || (xx + lin * 3) % 8 === 0; if (jun) { q(a + xx, b + yy, 1, 1, PE[0]); continue; } q(a + xx, b + yy, 1, 1, xx > w - 3 ? PE[1] : xx < 2 ? PE[3] : PE[2]); } };
+      if (d < 0) { const w = 200, a0 = 52; pedra(a0, -70, w, 70); for (let k = 0; k < w; k += 7) { q(a0 + k - 1, -76, 6, 7, '#17121f'); q(a0 + k, -75, 4, 6, PE[2]); q(a0 + k, -75, 4, 1, PE[3]); } for (let k = 20; k < w; k += 46) q(a0 + k, -50, 3, 7, '#17121f'); } // a muralha segue para fora, até onde a vista alcança
       pedra(-40, -74, 80, 74); // o bloco da porta
       for (let k = -40; k < 40; k += 7) { q(k - 1, -80, 6, 7, '#17121f'); q(k, -79, 4, 6, PE[2]); q(k, -79, 4, 1, PE[3]); } // ameias
       pedra(-52, -92, 18, 92); pedra(34, -92, 18, 92); // as torres
