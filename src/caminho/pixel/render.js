@@ -300,10 +300,9 @@ function pintarObjeto(g, o, G, x, y, Tm) {
     case 'casa': { // casa de adobe de teto plano (anda-se por cima): porta, janela acesa, parapeito e um sinal de quem mora ali
       const tom = { estalagem: '#8A6A4E', marta: '#9A8468', oleiro: '#7E5E4A', viuva: '#8C7A66' }[o.id] || '#8A7460';
       const sp = sprObj('casa' + o.id, 68, 58, s => { const A = rampa(tom), M = rampa('#5A3E28'), J = rampa('#FFD98A'), P = rampa('#7A7064'), hh = (x2, y2, k = 0) => hash(x2 + k * 17, y2 + k * 31);
-        // o reboco: manchas largas (gasto, remendado), mais claro à esquerda (a luz vem de lá), e as pedras aparecendo onde caiu
-        for (let y2 = 9; y2 < 51; y2++) for (let x2 = 2; x2 < 48; x2++) { const m = hh(x2 >> 3, y2 >> 3, 2) * 0.6 + hh(x2 >> 2, y2 >> 2, 3) * 0.4, k = m > 0.72 ? 1 : m < 0.2 ? 3 : 2; s.px(x2, y2, x2 < 4 ? A[3] : x2 > 45 ? A[1] : A[k]); }
-        for (const [px0, py0] of [[5, 40], [38, 16], [8, 14]]) for (let j = 0; j < 7; j++) for (let i = 0; i < 9; i++) { const pedra = ((j >> 1) + (i >> 2)) % 2, junta = j % 3 === 2 || (i + (j / 3 | 0) * 2) % 5 === 4; if (hh(i, j, px0) < 0.25 && (i === 0 || i === 8 || j === 0 || j === 6)) continue; s.px(px0 + i, py0 + j, junta ? P[0] : P[pedra ? 2 : 3]); }
-        s.linha(30, 12, 28, 22, 1, A[0]); s.linha(28, 22, 29, 27, 1, A[0]); // uma rachadura
+        // o reboco: liso e bem cuidado, caiado, com a luz vindo da esquerda e um rodapé mais escuro onde a chuva respinga
+        for (let y2 = 9; y2 < 51; y2++) for (let x2 = 2; x2 < 48; x2++) { const lado = x2 < 4 ? 3 : x2 > 44 ? 1 : 2, rodape = y2 > 46; s.px(x2, y2, rodape ? A[1] : A[lado]); }
+        for (let x2 = 2; x2 < 48; x2++) s.px(x2, 46, A[0]);
         // o alicerce de pedras grandes
         for (let y2 = 50; y2 < 58; y2++) for (let x2 = 1; x2 < 49; x2++) { const fi = y2 < 54 ? 0 : 1, jx = (x2 + fi * 6) % 12; s.px(x2, y2, y2 === 53 || jx === 0 ? P[0] : y2 === 50 || y2 === 54 ? P[4] : jx === 1 ? P[3] : P[2]); }
         // o teto: a laje de barro e madeira, as pontas das vigas saindo, e o parapeito baixo com a calha
@@ -317,8 +316,6 @@ function pintarObjeto(g, o, G, x, y, Tm) {
         // as janelas altas, em arco, com a treliça de madeira e o peitoril; a luz de dentro
         for (const wx of [6, 36]) { for (let y2 = 18; y2 < 27; y2++) for (let x2 = wx; x2 < wx + 7; x2++) { if (y2 < 21 && Math.hypot(x2 - wx - 3, y2 - 21) > 3.6) continue; s.px(x2, y2, (x2 - wx + y2) % 3 === 0 || (x2 - wx - y2 + 30) % 3 === 0 ? M[1] : J[y2 < 22 ? 3 : 2]); } s.ret(wx - 1, 27, 9, 1, P[4]); s.ret(wx - 1, 28, 9, 1, A[0]); }
         // a escada de pedra subindo pela parede de fora até o terraço
-        for (let x2 = 49; x2 < 68; x2++) { const topo = Math.round(9 + (x2 - 49) * 2.55); for (let y2 = topo; y2 < 58; y2++) { const deg = (y2 - topo) < 1; s.px(x2, y2, deg ? P[4] : (y2 + (x2 >> 2)) % 5 === 0 || x2 % 6 === 0 ? P[0] : x2 > 65 ? P[1] : P[2]); } } // a escada de pedra encostada na parede: o maciço cheio e os degraus
-        for (let k = 0; k < 7; k++) { const x2 = 50 + k * 2.6, y2 = Math.round(9 + (x2 - 49) * 2.55); s.ret(Math.round(x2), y2 - 1, 3, 1, P[4]); s.px(Math.round(x2) + 3, y2, P[0]); }
         for (let y2 = 8; y2 < 58; y2++) s.px(48, y2, A[0]); // a quina da casa na sombra
         // quem mora ali
         if (o.id === 'estalagem') { s.ret(33, 13, 14, 7, M[2]); s.ret(34, 14, 12, 5, M[3]); s.ret(36, 15, 3, 3, J[3]); s.ret(41, 15, 3, 3, J[3]); s.ret(39, 11, 1, 2, M[0]); } // a tabuleta da estalagem
