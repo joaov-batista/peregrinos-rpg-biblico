@@ -52,7 +52,7 @@ export function passoVida(G, dt) {
     if (G.def?.sitio && G.p.x > (G.N.w - 1.7) * 32) { G.bordaT = G.T + 2; G.entrar('refugio', { borda: 'esquerda' }); return; } }
   if (G.area === 'sinagoga') { passoSinagoga(G, dt); return; }
   if (G.area === 'sinagoga:sardes') { passoSinagogaSardes(G, dt); return; }
-  if (G.def?.sitio) { passoSitio(G, dt); return; }
+  if (G.def?.sitio) { passoMeteoros(G, dt); passoSitio(G, dt); return; }
   if (G.area !== 'refugio') return;
   passoMeteoros(G, dt); // sentados vendo os meteoros
   passoPescaViva(G, dt); // a pesca na margem e no bote

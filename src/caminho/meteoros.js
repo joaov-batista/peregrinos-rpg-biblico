@@ -51,6 +51,13 @@ const FALAS = n => [
   [30, n + ' encosta a cabeça no seu ombro por um instante e ri baixinho.'],
   [36, 'A noite segue. E fica guardada.']
 ];
+const SOLO = [[1.5, 'As nuvens se afastam. O céu inteiro fica limpo.'], [5.5, 'Um risco de luz. Depois outro. Depois dez.'], [10.5, '"Os céus proclamam a glória de Deus" (Sl 19:1).'], [15.5, 'Você fica ali um tempo, só olhando.']];
+// quando a chuva começa: o peregrino senta e olha, sozinho (qualquer tecla levanta)
+export function assistirSozinho(G) {
+  if (G.cenaMeteoros || G.ui.blocking || G.luta || G.p.morto || !G.p.chao) return;
+  const p = G.p; G.cenaMeteoros = { t: 0, ob: null, x: p.x, y: p.y, fala: 0, cor: [], fim: 20, solo: true }; p.vx = 0; music('mundo', 'praia'); sfx('sino');
+  setTimeout(() => { const C = G.cenaMeteoros; if (!C) return; const sai = () => { if (G.cenaMeteoros === C && C.t > 2.5) levantar(G); }; C.ouvir = sai; addEventListener('keydown', sai); addEventListener('pointerdown', sai); }, 800);
+}
 export function assistirJuntos(G, ob) {
   if (G.cenaMeteoros) return; const p = G.p, v = ob.vv;
   G.cm.meteoroJunto = noite(G);
@@ -62,8 +69,9 @@ export function assistirJuntos(G, ob) {
 function levantar(G) {
   const C = G.cenaMeteoros; if (!C) return; const p = G.p;
   if (C.ouvir) { removeEventListener('keydown', C.ouvir); removeEventListener('pointerdown', C.ouvir); }
-  G.cenaMeteoros = null; if (C.ob.vv) { C.ob.vv.estado = 'ceu'; C.ob.vv.t = 2; }
+  G.cenaMeteoros = null; if (C.ob?.vv) { C.ob.vv.estado = 'ceu'; C.ob.vv.t = 2; }
   G.musicaDaArea?.();
+  if (C.solo) return;
   if (C.t > 10) { somarCoracoes(G, C.ob.id, 1); p.vida = p.vidaMax; p.oleo = G.oleoMax(); sfx('heal'); }
   if (!G.cm.meteoroJuntoVisto && C.t > 10) { G.cm.meteoroJuntoVisto = 1; G.ovo?.('meteoros_juntos', 'Uma noite de meteoros, sentados lado a lado. "Que é o homem, para que dele te lembres?" (Sl 8:4)'); }
   G.salvar();
@@ -71,9 +79,9 @@ function levantar(G) {
 export function passoMeteoros(G, dt) {
   const C = G.cenaMeteoros; if (!C) return;
   const p = G.p; C.t += dt; p.x = C.x; p.vx = 0; p.atk = null; p.face = 1; G.perto = null;
-  if (C.ob.vv) { C.ob.vv.x = C.x + 26; C.ob.vv.estado = 'sentadoCeu'; }
-  const F = FALAS(C.n); while (C.fala < F.length && C.t >= F[C.fala][0]) { const [, txt] = F[C.fala++]; G.textos.push({ x: C.x + 13, y: C.y - 150, txt, cor: '#F2ECFF', tam: 13, t: 5 }); }
-  for (const t0 of [9, 19.5, 31]) if (C.t - dt < t0 && C.t >= t0) C.cor.push({ t: 0, x: C.x + 13 + (Math.random() - 0.5) * 8 }); // uns poucos corações
+  if (C.ob?.vv) { C.ob.vv.x = C.x + 26; C.ob.vv.estado = 'sentadoCeu'; }
+  const F = C.solo ? SOLO : FALAS(C.n); while (C.fala < F.length && C.t >= F[C.fala][0]) { const [, txt] = F[C.fala++]; G.textos.push({ x: C.x + 13, y: C.y - 150, txt, cor: '#F2ECFF', tam: 13, t: 5 }); }
+  for (const t0 of [9, 19.5, 31]) if (!C.solo && C.t - dt < t0 && C.t >= t0) C.cor.push({ t: 0, x: C.x + 13 + (Math.random() - 0.5) * 8 }); // uns poucos corações
   for (const c of C.cor) c.t += dt; C.cor = C.cor.filter(c => c.t < 3.2);
   if (C.t > C.fim) levantar(G);
 }
