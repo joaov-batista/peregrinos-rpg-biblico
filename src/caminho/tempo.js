@@ -120,7 +120,8 @@ function pintarMeteoros(g, G, vw, dy, cx, k) {
         for (let t = 0; t < 16; t++) { const ang = t / 16 * 6.29, yy = Math.round(Math.sin(ang) * r * Math.min(1, abre)); if (Math.abs(yy) > H - 1) continue; g.globalAlpha = a * 0.7; g.fillStyle = '#9FC4FF'; g.fillRect(ix + Math.round(Math.cos(ang) * r), ey + yy, 1, 1); } // a íris
         const ac = Math.min(1, a * 1.9); g.globalAlpha = ac * 0.35; g.fillStyle = '#FFE9A8'; g.fillRect(ix - 2, ey - 1, 5, 3); g.fillRect(ix - 1, ey - 2, 3, 5); g.globalAlpha = ac; g.fillStyle = '#FFF8E8'; g.fillRect(ix - 1, ey - 1, 3, 3); g.fillStyle = '#FFFFFF'; g.fillRect(ix, ey - 1, 1, 1); g.fillRect(ix - 1, ey, 1, 1); } } } // a pupila acesa: uma estrela redonda, com brilho
   // as estrelas cadentes: riscos que correm na diagonal e somem; mais delas quando se para para olhar
-  for (let i = 0; i < 6; i++) { const P = 1.2 + i * 0.5, cc = Math.floor((Tm + i * 0.77) / P), u = ((Tm + i * 0.77) % P) / 0.7; if (u > 1 || (i > 3 && c < 0.5)) continue;
+  const nMet = G.cenaMeteoros ? 14 : 6; // sentados juntos, o céu chove mais
+  for (let i = 0; i < nMet; i++) { const P = 1.2 + i * 0.5, cc = Math.floor((Tm + i * 0.77) / P), u = ((Tm + i * 0.77) % P) / 0.7; if (u > 1 || (i > 3 && c < 0.5 && !G.cenaMeteoros)) continue;
     const x0 = h(cc * 13 + i) * vw * 1.2 - 40, y0 = dy + 8 + h(cc * 5 + i) * 80, L = 26 + h(cc) * 34, x = x0 + u * 100, y = y0 + u * 44;
     for (let j = 0; j < L; j++) { g.globalAlpha = k * (1 - j / L) * (1 - u * 0.6); g.fillStyle = j < 3 ? '#FFFFFF' : j < 10 ? '#FFF4D6' : '#BFD4FF'; g.fillRect(Math.round(x - j * 0.9), Math.round(y - j * 0.4), 1, 1); } }
   g.globalAlpha = 1;

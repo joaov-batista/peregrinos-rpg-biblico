@@ -14,6 +14,7 @@ import { passoSitio, falarConjugeSitio, acoesEliabe, sitioId } from './sitio.js'
 import { passoSinagogaSardes } from './sardesnovo.js';
 import { passoPescaViva } from './pescaviva.js';
 import { RX } from './dados.js';
+import { olhaCeu, falaDoCeu, opcaoJuntos, madrugada, noTelhado, passoMeteoros } from './meteoros.js';
 import { AZEITES } from '../content/azeites.js';
 import { passoConvites } from './convites.js';
 import { passoAzeites } from './azeites.js';
@@ -53,6 +54,7 @@ export function passoVida(G, dt) {
   if (G.area === 'sinagoga:sardes') { passoSinagogaSardes(G, dt); return; }
   if (G.def?.sitio) { passoSitio(G, dt); return; }
   if (G.area !== 'refugio') return;
+  passoMeteoros(G, dt); // sentados vendo os meteoros
   passoPescaViva(G, dt); // a pesca na margem e no bote
   passoMarBravo(G, dt); // na tempestade, o Leviatã
   passoSinagoga(G, dt);
@@ -62,6 +64,13 @@ export function passoVida(G, dt) {
   for (const o of gente) {
     const v = o.vv || (o.vv = { x: o.x, alvo: o.x, t: rand(0, 3), estado: 'parado', face: 1, emote: null, emoteT: 0, papo: null });
     if (v.festa) continue; // à mesa da festa, quem manda é a cena
+    if (v.estado === 'sentadoCeu') continue; // sentado com você, vendo os meteoros: quem manda é a cena
+    if (olhaCeu(G) && !o.patrulha) { // noite de meteoros: todo mundo sai e fica olhando para cima
+      if (v.estado !== 'ceu') { if (['dentro', 'dormindo', 'casa', 'telhado'].includes(v.estado)) v.x = v.x + (Math.random() - 0.5) * 40; v.estado = 'ceu'; v.papo = null; v.face = Math.random() < 0.5 ? 1 : -1; }
+      if (v.emoteT <= 0 && Math.random() < dt * 0.06) { v.emote = '☄'; v.emoteT = 1.6; }
+      if (Math.abs(p.x - v.x) < 220 && Math.random() < dt * 0.03) G.fala?.({ x: v.x, y: o.y, h: 40 }, falaDoCeu(G, o));
+      continue; }
+    if (v.estado === 'ceu') v.estado = 'parado';
     const casa = G.objs.find(c => c.tipo === 'casa' && c.cel === o.cel && Math.abs(c.x - o.x) < 640);
     const raio = (o.vai || 3) * 32, ag = agendaDe(G, o), longe = Math.abs(v.x - p.x) > 760; /* fora da vista, andam depressa: ninguém perde o culto por morar longe */
     if (v.emoteT > 0) v.emoteT -= dt;
@@ -80,9 +89,13 @@ export function passoVida(G, dt) {
     // longe de casa (voltando do culto): volta direto
     if (v.estado !== 'indo' && Math.abs(v.x - o.x) > raio * 2 + 40 && ag !== 'casa') { v.alvo = o.x + rand(-raio, raio) * 0.5; v.estado = 'indo'; }
     // à noite, quem tem casa vai para a porta e cochila ali; de manhã, sai
-    if (ag === 'casa' && casa) { if (v.estado !== 'casa') { v.alvo = casa.x; v.estado = 'indo'; } if (Math.abs(v.x - casa.x) < 6 && v.estado !== 'casa') { v.estado = 'casa'; v.emote = '…'; v.emoteT = 2.5; } else if (v.estado === 'indo') { const d = casa.x - v.x; v.face = Math.sign(d); v.x += v.face * Math.min(Math.abs(d), (longe ? 600 : 40) * dt); continue; } } /* fica à porta: quem tem pedido ou história nunca some da rua */
-    else if (v.estado === 'casa') { v.estado = 'parado'; v.emote = '☀'; v.emoteT = 2; }
-    if (v.estado === 'casa') continue;
+    // a noite: quem gosta de alturas sobe no terraço para ver o céu; os outros vão para a porta e, de madrugada, entram e dormem
+    const lar = casa || (ag === 'casa' && madrugada(G) ? G.objs.filter(c => c.tipo === 'casa').sort((q, r) => Math.abs(q.x - v.x) - Math.abs(r.x - v.x))[0] : null);
+    if (ag === 'casa' && lar) { const sobe = casa && noTelhado(G, o), alvoX = lar.x + (sobe ? 16 : 0), fim = sobe ? 'telhado' : madrugada(G) ? 'dormindo' : 'casa';
+      if (v.estado === 'casa' && fim === 'dormindo') { v.estado = 'dormindo'; }
+      if (v.estado !== fim) { const d = alvoX - v.x; if (Math.abs(d) < 6) { v.estado = fim; v.x = alvoX; v.emote = fim === 'telhado' ? '☄' : '…'; v.emoteT = 2.5; v.face = fim === 'telhado' ? 1 : v.face; } else { v.estado = 'indo'; v.face = Math.sign(d); v.x += v.face * Math.min(Math.abs(d), (longe ? 600 : 40) * dt); continue; } } }
+    else if (v.estado === 'casa' || v.estado === 'dormindo' || v.estado === 'telhado') { v.estado = 'parado'; v.emote = '☀'; v.emoteT = 2; }
+    if (v.estado === 'casa' || v.estado === 'dormindo' || v.estado === 'telhado') continue;
     const dp = Math.abs(p.x - v.x), perto = dp < 90 && Math.abs(p.y - o.y) < 80;
     // golpe perto: susto
     if (perto && p.atk && v.estado !== 'susto') { v.estado = 'susto'; v.t = 0.8; v.emote = '!'; v.emoteT = 1; v.alvo = v.x + Math.sign(v.x - p.x) * 40; }
@@ -109,6 +122,10 @@ export async function falarMorador(G, ob) {
   if (G.def?.sitio) return falarConjugeSitio(G, ob);
   if ((G.area === 'refugio' || G.area === 'sinagoga') && await falarSinagoga(G, ob)) return true;
   const id = ob.id, g = GENTE[id], V = VILA[id]; if (!g || G.area !== 'refugio') return false;
+  if (ob.vv?.estado === 'ceu') { // na noite de meteoros, a conversa é sobre o céu (e dá para sentar juntos)
+    const j = opcaoJuntos(G, ob), nome0 = (V?.nome || ob.nome) + '  ' + marcaCoracoes(coracoes(G, id));
+    await G.ui.dialog({ nome: nome0, look: ob.look, texto: falaDoCeu(G, ob) + (j ? '' : coracoes(G, id) < 4 ? '' : '\n\n(Vocês já assistiram juntos esta noite.)'), acoes: [...(j ? [j] : []), { label: 'Ficar olhando' }] });
+    return true; }
   const a = laco(G, id), d = dia(G), n = G.cm.falas[id] = (G.cm.falas[id] || 0) + 1, nome = (V?.nome || ob.nome) + '  ' + marcaCoracoes(coracoes(G, id));
   if (ob.vv) { ob.vv.estado = 'acena'; ob.vv.t = 3; ob.vv.face = Math.sign(G.p.x - ob.vv.x) || 1; }
   const conv = V?.conversa || g.cumprimenta, volta = V?.volta || 0, k = n <= conv.length ? n - 1 : volta + ((n - 1 - volta) % Math.max(1, conv.length - volta));

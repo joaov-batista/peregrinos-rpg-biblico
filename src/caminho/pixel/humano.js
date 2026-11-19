@@ -217,6 +217,7 @@ const npcs = new Map();
 const POSES = {
   ora: r => ({ bob: 0, incl: 1, agacha: 4, joelho: true, pf: { x: 4, y: 0 }, pt: { x: -4, y: 0 }, mao: { x: 6, y: -17 + r }, ang: -1.1, lamp: null, cabX: 1, cabY: 1 + r, respira: r }),
   olha: r => ({ bob: 0, incl: 0, agacha: 4, joelho: true, pf: { x: 4, y: 0 }, pt: { x: -4, y: 0 }, mao: { x: 5, y: -14 }, ang: 1.4, lamp: null, cabX: 0, cabY: 0, respira: r }),
+  ceu: r => ({ bob: 0, incl: -2, agacha: 7, joelho: true, pf: { x: 7, y: 0 }, pt: { x: 3, y: 0 }, mao: { x: -6, y: -7 }, ang: 2.6, lamp: null, cabX: -1, cabY: 1, respira: r }), // sentado no chão, apoiado nas mãos para trás, olhando para cima
   dorme: r => ({ bob: 0, incl: 3, agacha: 7, joelho: true, pf: { x: 6, y: 0 }, pt: { x: -2, y: 0 }, mao: { x: 5, y: -9 }, ang: 1.6, lamp: null, cabX: 2, cabY: 3, respira: r }),
   anda: (r, f) => ({ bob: f % 2, incl: 1, agacha: 0, pf: { x: [4, 1, -2, 1][f], y: f === 1 ? -1 : 0 }, pt: { x: [-2, 1, 4, 1][f], y: f === 3 ? -1 : 0 }, mao: null, ang: 1.3, lamp: null, cabX: 0, cabY: 0, respira: 0 }),
   // sentado no bote, remando: o tronco vai para a frente e para trás, os braços puxam o remo (4 quadros)

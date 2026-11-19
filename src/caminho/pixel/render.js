@@ -2,6 +2,7 @@
 // 1 pixel de arte = 2 unidades do mundo) e ampliado sem suavização; só os textos ficam na resolução da tela.
 // A lógica do jogo não muda: este arquivo só lê o estado e desenha.
 import { pintarChaoAtras, pintarChaoFrente } from './chao.js';
+import { pintarSentadosCeu, pintarCenaMeteoros } from '../meteoros.js';
 import { arvore as arvorePx, copa as copaPx, galho as galhoPx, oliveira as oliveiraPx } from './folhagem.js';
 import { clamp, TAU, hash } from '../../util.js';
 import { input, wasd } from '../../input.js';
@@ -259,12 +260,13 @@ function pintarObjeto(g, o, G, x, y, Tm) {
     case 'segredo': { const f = Math.round(Math.sin(Tm * 3 + o.x) * 2), tipo = o.item === 'pedra' ? 'p' : o.item === 'mana' ? 'm' : 'b', s = sprObj('seg' + tipo, 12, 12, s => { if (tipo === 'p') s.bola(6, 6, 4.5, 3.5, rampa('#B9B4A2')); else if (tipo === 'm') { s.bola(6, 6, 3.5, 3.5, rampa('#F4E6BC')); s.px(5, 4, BRANCO); } else { s.bola(6, 7, 4, 3.5, MADEIRA); s.ret(4, 2, 4, 2, OURO[3]); } }); carimbar(g, s, x, y - 8 + f, 6, 6); if (Math.floor(Tm * 4 + o.x) % 3 === 0) { g.fillStyle = '#fff'; g.fillRect(x + 5, y - 15 + f, 1, 1); g.fillRect(x - 6, y - 5 + f, 1, 1); } return true; }
     case 'sacola': { const s = sprObj('sacola', 12, 13, s => { s.bola(6, 8, 4.5, 4, MADEIRA); s.ret(4, 2, 4, 2, OURO[3]); s.px(6, 8, OURO[4]); }); carimbar(g, s, x, y, 6, 12); if (Math.floor(Tm * 5) % 2) { g.fillStyle = '#FFD23F'; g.fillRect(x - 6, y - 16, 1, 1); g.fillRect(x + 5, y - 13, 1, 1); } return true; }
     case 'morador': { // gente da aldeia, indo e vindo
-      if (o.vv?.estado === 'dentro') return true; // entrou na sinagoga
-      if (o.vv && !(o.escondido > G.T)) { const v = o.vv, xx = x + Math.round((v.x - o.x) / PX), anda = v.estado === 'indo' || v.estado === 'susto', pose = v.estado === 'sentado' ? 'olha' : v.estado === 'acena' ? 'mao' : anda ? 'anda' : v.estado === 'orando' ? 'ora' : v.estado === 'casa' && (hora(G) >= 22 || hora(G) < 5) ? 'dorme' : null;
-        carimbar(g, quadroPessoa({ ...o.look, cls: null }, anda ? Tm * 2.4 : Tm * 0.6, 'mv' + o.x + (pose || ''), pose), xx, y - (v.estado === 'susto' ? 2 : 0), 24, 40, v.face || 1);
+      if (o.vv?.estado === 'dentro' || o.vv?.estado === 'dormindo') return true; // entrou na sinagoga, ou em casa para dormir
+      if (o.vv && !(o.escondido > G.T)) { const v = o.vv, xx = x + Math.round((v.x - o.x) / PX), anda = v.estado === 'indo' || v.estado === 'susto', pose = v.estado === 'sentado' || v.estado === 'telhado' || v.estado === 'sentadoCeu' ? 'ceu' : v.estado === 'acena' ? 'mao' : anda ? 'anda' : v.estado === 'orando' ? 'ora' : v.estado === 'casa' && (hora(G) >= 22 || hora(G) < 5) ? 'dorme' : null;
+        const yy0 = y - (v.estado === 'susto' ? 2 : v.estado === 'telhado' ? 48 : 0); // no terraço, sentado lá em cima
+        carimbar(g, quadroPessoa({ ...o.look, cls: null }, anda ? Tm * 2.4 : Tm * 0.6, 'mv' + o.x + (pose || ''), pose), xx, yy0, 24, 40, v.face || 1);
         if (o.patrulha && periodo(G) === 'noite') { const tx2 = xx + (v.face || 1) * 7, fl = Math.floor(G.T * 10) % 3; g.fillStyle = '#5A3A1C'; g.fillRect(tx2, y - 24, 2, 12); g.fillStyle = '#FF8A2A'; g.fillRect(tx2 - 1, y - 28 - fl, 4, 4 + fl); g.fillStyle = '#FFE08A'; g.fillRect(tx2, y - 26, 2, 2); g.globalAlpha = 0.12; g.fillStyle = '#FFB86A'; g.fillRect(tx2 - 14, y - 40, 30, 40); g.globalAlpha = 1; } /* a ronda da noite leva tocha */
-        if (v.emoteT > 0 && v.emote) { const ey = y - 34 - Math.round(Math.min(1, (2 - v.emoteT) * 4)) ; g.fillStyle = '#17121f'; g.fillRect(xx - 6, ey - 9, 13, 10); g.fillRect(xx - 1, ey + 1, 3, 2); g.fillStyle = '#F4F1E6'; g.fillRect(xx - 5, ey - 8, 11, 8); g.fillStyle = v.emote === '♥' ? '#E2466A' : v.emote === '!' ? '#E2463C' : '#5A4A3A';
-          const E = { '♥': ['.X.X.', 'XXXXX', '.XXX.', '..X..'], '!': ['..X..', '..X..', '..X..', '.....', '..X..'], '♪': ['..XX.', '..X.X', '..X..', 'XXX..', 'XX...'], '…': ['.....', '.....', 'X.X.X'], '☀': ['X.X.X', '.XXX.', 'XXXXX', '.XXX.', 'X.X.X'] }[v.emote] || [];
+        if (v.emoteT > 0 && v.emote) { const ey = yy0 - 34 - Math.round(Math.min(1, (2 - v.emoteT) * 4)) ; g.fillStyle = '#17121f'; g.fillRect(xx - 6, ey - 9, 13, 10); g.fillRect(xx - 1, ey + 1, 3, 2); g.fillStyle = '#F4F1E6'; g.fillRect(xx - 5, ey - 8, 11, 8); g.fillStyle = v.emote === '♥' ? '#E2466A' : v.emote === '!' ? '#E2463C' : v.emote === '☄' ? '#C9902A' : '#5A4A3A';
+          const E = { '♥': ['.X.X.', 'XXXXX', '.XXX.', '..X..'], '!': ['..X..', '..X..', '..X..', '.....', '..X..'], '♪': ['..XX.', '..X.X', '..X..', 'XXX..', 'XX...'], '…': ['.....', '.....', 'X.X.X'], '☀': ['X.X.X', '.XXX.', 'XXXXX', '.XXX.', 'X.X.X'], '☄': ['....X', '...X.', 'XXX..', 'XXX..', 'XX...'] }[v.emote] || [];
           E.forEach((ln, r) => [...ln].forEach((ch, k) => { if (ch === 'X') g.fillRect(xx - 2 + k, ey - 7 + r + (E.length < 5 ? 1 : 0), 1, 1); })); }
         return true; }
       if (o.escondido > G.T) return true; // em Sardes, às vezes o vizinho não era gente
@@ -644,7 +646,7 @@ export function renderPixel(G) {
   // outros peregrinos (multijogador) e o herói
   for (const o of G.outros) pintarJogador(g, o.corpo, o.look, o.cls, o.arma, Tm, o.hab, X, Y, false, o.armaCor, o.armaRar);
   const aguaN = (p.nada || G.nado) && G.objs.find(o => o.tipo === 'aguaAberta');
-  if (G.cenaSono?.deita > 0) pintarDeitado(g, G, X, Y, Tm); else if (G.cenaOracao?.ajoelha) pintarAjoelhado(g, G, X, Y, Tm); else if (G.cenaFesta?.sentado) pintarNaFesta(g, G, X, Y, Tm); else if (G.cenaPraia) pintarSentado(g, G, X, Y, Tm); else if (!p.morto && p.noBote) pintarNoBote(g, G, p, X, Y, Tm); else if (!p.morto && aguaN) pintarNadando(g, G, p, aguaN, X, Y, Tm, vw); else if (!p.morto) pintarJogador(g, p, G.char.look || {}, G.char.cls, G.def?.reverente ? null : G.tipoArma, Tm, G.hab, X, Y, true, G.arma?.lamina, G.arma?.rar);
+  if (G.cenaMeteoros) pintarSentadosCeu(g, G, X, Y, Tm); else if (G.cenaSono?.deita > 0) pintarDeitado(g, G, X, Y, Tm); else if (G.cenaOracao?.ajoelha) pintarAjoelhado(g, G, X, Y, Tm); else if (G.cenaFesta?.sentado) pintarNaFesta(g, G, X, Y, Tm); else if (G.cenaPraia) pintarSentado(g, G, X, Y, Tm); else if (!p.morto && p.noBote) pintarNoBote(g, G, p, X, Y, Tm); else if (!p.morto && aguaN) pintarNadando(g, G, p, aguaN, X, Y, Tm, vw); else if (!p.morto) pintarJogador(g, p, G.char.look || {}, G.char.cls, G.def?.reverente ? null : G.tipoArma, Tm, G.hab, X, Y, true, G.arma?.lamina, G.arma?.rar);
   if (G.pomba) pintarPomba(g, G.pomba, X, Y, Tm);
   else if (G.mortoT > 1.2) { const s = quadroHeroi({ ...p, morto: true, atk: null }, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab); s.dissolve(clamp((1.9 - G.mortoT) / 0.7, 0, 1), 5); carimbar(g, s, X(p.x), Y(p.y), AX, AY, p.face); }
   pintarEfeitos(g, G.fxPx, cx, cy, false);
@@ -670,7 +672,7 @@ export function renderPixel(G) {
   if (G.cenaSono) pintarSono(g, G, vw, vh, Tm);
   if (G.cenaOracao) pintarCenaOracao(g, G, vw, vh, X, Y, Tm);
   if (G.cenaFesta) pintarCenaFesta(g, G, vw, vh);
-  if (G.cenaPraia) pintarPraia(g, G, X, Y, vw, vh, Tm); else { pintarHud(g, G, vw); barraChefe(g, G, vw); }
+  if (G.cenaMeteoros) pintarCenaMeteoros(g, G, vw, vh, X, Y); else if (G.cenaPraia) pintarPraia(g, G, X, Y, vw, vh, Tm); else { pintarHud(g, G, vw); barraChefe(g, G, vw); }
 
   // amplia: primeiro por um fator inteiro (pixels nítidos), depois ajusta à tela
   const cvw = G.cv.width, cvh = G.cv.height, k = Math.max(1, Math.ceil(cvh / vh));
@@ -937,7 +939,7 @@ function pintarTextos(g, G, esc, cx, cy) {
     g.fillStyle = '#17121f'; const seta = (ax, ay, dx, dy, c) => { g.fillStyle = c; for (let i = 0; i < 5; i++) { const lg = (5 - i) * 2 * u; if (dy) g.fillRect(ax - lg / 2, ay + i * 2 * u * dy, lg, 2 * u); else g.fillRect(ax + i * 2 * u * dx, ay - lg / 2, 2 * u, lg); } };
     if (!fora) { seta(x, y + pula - u, 0, 1, '#17121f'); seta(x, y + pula - 2 * u, 0, 1, '#FFD23F'); txt(ob.rot, x, y + pula - 8 * u, 8 * u * 1.6, '#FFE9A8', 'center'); }
     else { const esq = x < m, ax = esq ? m : W2 - m, ay = Math.min(g.canvas.height - 90 * u, Math.max(90 * u, sy(ob.y - 60))); seta(ax + (esq ? -pula : pula) + (esq ? -u : u), ay, esq ? -1 : 1, 0, '#17121f'); seta(ax + (esq ? -pula : pula), ay, esq ? -1 : 1, 0, '#FFD23F'); txt('missão', ax + (esq ? 16 * u : -16 * u), ay + 4 * u, 8 * u * 2, '#FFE9A8', esq ? 'left' : 'right'); } } }
-  if (G.perto && !input.touch) { const o = G.perto; const tecla = document.body.classList.contains('pad') ? 'Y' : wasd() ? 'F' : 'E', sabe = (G.cm.visto.usos?.[o.rot] || 0) >= 3; txt(sabe && o.tipo !== 'npc' ? tecla : tecla + ' · ' + o.rot, sx(o.vv ? o.vv.x : o.x), sy(o.y - (o.tipo === 'npc' ? 80 : o.tipo === 'portal' || o.tipo === 'saida' || o.tipo === 'retorno' ? 142 : 104)), 8 * u * 1.4, '#F2E9D0', 'center'); }
+  if (G.perto && !input.touch && !G.cenaMeteoros) { const o = G.perto; const tecla = document.body.classList.contains('pad') ? 'Y' : wasd() ? 'F' : 'E', sabe = (G.cm.visto.usos?.[o.rot] || 0) >= 3; txt(sabe && o.tipo !== 'npc' ? tecla : tecla + ' · ' + o.rot, sx(o.vv ? o.vv.x : o.x), sy(o.y - (o.tipo === 'npc' ? 80 : o.tipo === 'portal' || o.tipo === 'saida' || o.tipo === 'retorno' ? 142 : 104)), 8 * u * 1.4, '#F2E9D0', 'center'); }
   for (const o of G.objs) if ((o.tipo === 'portal' || o.tipo === 'saida' || o.tipo === 'retorno') && !o.porta && !o.oculto && Math.abs(o.x - p.x) < 900) { /* a trilha escondida não tem letreiro: basta o rótulo de entrar */
     const sem = o.semana ? TODAS.find(s => s.id === o.semana) : null, nome = o.tipo === 'saida' ? 'Seguir' : o.tipo === 'retorno' ? 'Refúgio' : o.rotulo ? o.rotulo : sem ? sem.estudo : MUNDO[o.mundo].nome;
     txt(nome, sx(o.x), sy(o.y - 104), 8 * u * 1.3, '#F2E9D0', 'center');
