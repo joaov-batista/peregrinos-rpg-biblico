@@ -551,3 +551,36 @@ html.remake .vt-carta.sel { background: #4A3020; box-shadow: inset 0 2px 0 #6E4A
 .vt-rar { display: inline-block; width: 9px; height: 9px; margin-right: 6px; box-shadow: 0 0 0 1px #0D0806; vertical-align: 1px; }
 html.remake .vt-ficha h4 { color: #7A1E1E !important; font-size: 22px !important; text-transform: none !important; letter-spacing: .02em !important; text-shadow: none !important; }
 html.remake body.caminho #actions .act.on { filter: brightness(1.35); box-shadow: inset 0 0 0 2px #FFE9A8 !important; }
+/* celular em pé: o título no céu de cima, a cena no meio e o menu no chão escuro de baixo, com botões grandes para o dedo */
+@media (max-aspect-ratio: 1/1) {
+  html.remake #screens:not(.creating) .screen { justify-content: space-between; align-items: center; text-align: center; padding: max(5vh, calc(var(--safe-t) + 14px)) 18px max(3vh, calc(var(--safe-b) + 12px)); gap: 0; }
+  html.remake #screens:not(.creating) .logo { text-align: center; margin: 0; }
+  html.remake #screens:not(.creating) .logo h1 { font-size: clamp(52px, 17vw, 92px); text-align: center; }
+  html.remake #screens:not(.creating) .logo p { text-align: center; padding-left: .42em; font-size: clamp(15px, 4.4vw, 20px); margin-top: 10px; }
+  html.remake .abertura .card.auth:not(:has(input)) { align-items: stretch !important; width: min(340px, 88vw); }
+  html.remake .abertura .card.auth .btn, html.remake .abertura .card.auth .btn.gold { justify-content: center; text-align: center; font-size: 22px !important; min-height: 56px; padding: 8px 16px !important; border: 12px solid transparent !important; border-image: var(--px-moldura) 9 fill / 18px / 0 round !important; color: #FFE9A8 !important; }
+  html.remake .abertura .card.auth .btn::before { position: static !important; display: inline-block; margin: 0 10px 0 0 !important; vertical-align: 2px; }
+  html.remake .abertura .tela-div.baixar { margin-top: 2vh; align-items: center; width: 100%; }
+  html.remake .abertura .tela-div.baixar > span { margin: 0 auto 2px; font-size: 13px; }
+  html.remake .abertura .baixar-btns { justify-content: center; }
+  html.remake .abertura .baixar-btns .porta-btn { font-size: 17px !important; min-height: 40px; }
+  html.remake #screens:not(.creating) .abertura > .meio, html.remake #screens:not(.creating) .screen > .espaco { flex: 1; }
+}
+/* celular deitado: o menu à esquerda com botões que cabem no dedo */
+@media (max-height: 520px) and (min-aspect-ratio: 1/1) {
+  html.remake #screens:not(.creating) .screen { padding: max(3vh, var(--safe-t)) 16px max(3vh, var(--safe-b)) max(5vw, calc(var(--safe-l) + 18px)); gap: 6px; }
+  html.remake .abertura .card.auth .btn, html.remake .abertura .card.auth .btn.gold { min-height: 44px; font-size: 22px !important; }
+  html.remake .abertura .baixar-btns .porta-btn { min-height: 36px; }
+}
+@media (max-aspect-ratio: 1/1) { html.remake #screens:not(.creating) .abertura .card.auth { margin-top: auto; } html.remake #screens:not(.creating) .abertura .tela-div.baixar { margin-top: 1.4vh; } }
+/* a segunda tela (criar o peregrino): o mesmo arranjo, com o botão de madeira no chão de baixo */
+html.remake #screens:not(.creating) .criar-primeiro { justify-content: center; text-align: center; font-size: 22px !important; min-height: 56px; padding: 8px 18px !important; background: none !important; border: 12px solid transparent !important; border-image: var(--px-moldura) 9 fill / 18px / 0 round !important; color: #FFE9A8 !important; text-transform: uppercase; letter-spacing: .08em; box-shadow: none !important; outline: 0 !important; }
+html.remake #screens:not(.creating) .criar-primeiro:hover, html.remake #screens:not(.creating) .criar-primeiro:focus-visible { filter: brightness(1.2); }
+html.remake #screens:not(.creating) .screen > .btn-row .btn.link { background: none !important; box-shadow: none !important; color: var(--px-apagado) !important; text-decoration: none; font-size: 17px; letter-spacing: .12em; text-transform: uppercase; }
+html.remake #screens:not(.creating) .screen > h2.title { color: var(--ab-cor); text-shadow: 2px 2px 0 var(--ab-tinta), 0 3px 0 var(--ab-sombra); }
+@media (max-aspect-ratio: 1/1) {
+  html.remake #screens:not(.creating) .screen > h2.title { margin-top: auto; margin-bottom: 10px; font-size: 22px; text-align: center; }
+  html.remake #screens:not(.creating) .criar-primeiro { width: min(340px, 88vw); }
+  html.remake #screens:not(.creating) .screen > details.saguao-recolhido { margin-top: 8px; }
+}
+@media (min-aspect-ratio: 1/1) { html.remake #screens:not(.creating) .criar-primeiro { align-self: flex-start; min-width: 300px; } }

@@ -558,6 +558,11 @@ export function sortearCena() {
 }
 
 const cache = new Map();
+// as cores das beiradas da cena (para o céu de cima e o chão de baixo continuarem a pintura, no celular em pé)
+const coresCache = new Map();
+function cores(cv, nome, w) { const k = nome + w; let c = coresCache.get(k); if (c) return c; const g = cv.getContext('2d'), med = y => { const d = g.getImageData(0, y, w, 1).data; let r = 0, gg = 0, b = 0; for (let i = 0; i < d.length; i += 4) { r += d[i]; gg += d[i + 1]; b += d[i + 2]; } const n = d.length / 4; return [r / n, gg / n, b / n]; };
+  const a = med(0), b0 = med(H - 1), hx = (v, f = 1) => '#' + v.map(x => Math.max(0, Math.min(255, Math.round(x * f))).toString(16).padStart(2, '0')).join('');
+  c = { ceu0: hx(a, 0.55), ceu1: hx(a), chao: hx(b0), noite: (a[0] + a[1] + a[2]) / 3 < 90 }; coresCache.set(k, c); return c; }
 let quadro = null, baixa = null, img = null;
 export function desenharAbertura(c, t, nome) {
   const cena = CENAS[nome] || cais;
@@ -574,7 +579,14 @@ export function desenharAbertura(c, t, nome) {
   cena.viva(quadro, t, foco);
   composite(quadro.f, img.data, null, 1); baixa.getContext('2d').putImageData(img, 0, 0);
   const G2 = c.getContext('2d'); G2.imageSmoothingEnabled = false;
-  if (retrato) { const k = c.height / H, larg = w * k, x0 = Math.round(c.width / 2 - foco * k); G2.drawImage(baixa, 0, 0, w, H, Math.min(0, Math.max(c.width - larg, x0)), 0, larg, c.height); }
+  if (retrato) { // celular em pé: céu com o título em cima, a cena inteira enquadrada no meio, e o chão escuro com o menu embaixo
+    const topo = Math.round(c.height * 0.27), alt = Math.round(c.height * 0.47), k = alt / H, larg = w * k, x0 = Math.min(0, Math.max(c.width - larg, Math.round(c.width / 2 - foco * k)));
+    const cor = cores(baixa, nome, w), gr1 = G2.createLinearGradient(0, 0, 0, topo + 2); gr1.addColorStop(0, cor.ceu0); gr1.addColorStop(1, cor.ceu1); G2.fillStyle = gr1; G2.fillRect(0, 0, c.width, topo + 2);
+    const px = Math.max(2, Math.round(k)); for (let i = 0; i < 46; i++) { const sx = (i * 7919) % c.width, sy = (i * 3571) % Math.max(1, topo - 10); if (cor.noite && Math.sin(t * (0.6 + (i % 5) * 0.3) + i) > -0.3) { G2.fillStyle = i % 7 ? '#9AA8D8' : '#FFFFFF'; G2.fillRect(sx - sx % px, sy - sy % px, px, px); } } // estrelas no céu de cima, do tamanho do pixel da cena
+    G2.drawImage(baixa, 0, 0, w, H, x0, topo, larg, alt);
+    const fim = topo + alt, gr2 = G2.createLinearGradient(0, fim - 2, 0, c.height); gr2.addColorStop(0, cor.chao); gr2.addColorStop(0.35, '#0D0806'); gr2.addColorStop(1, '#0D0806'); G2.fillStyle = gr2; G2.fillRect(0, fim - 1, c.width, c.height - fim + 1);
+    G2.fillStyle = 'rgba(13,8,6,.55)'; G2.fillRect(0, fim - Math.round(alt * 0.12), c.width, Math.round(alt * 0.12)); // a cena afunda devagar no escuro do menu
+    return; }
   else G2.drawImage(baixa, 0, 0, w, H, 0, 0, c.width, c.height);
   // sombra à esquerda, para o título e o menu lerem bem sobre qualquer cena
   const gr = retrato ? G2.createLinearGradient(0, 0, 0, c.height) : G2.createLinearGradient(0, 0, c.width * 0.5, 0);
