@@ -562,7 +562,7 @@ export function renderPixel(G) {
   pintarSalasPixel(g, G, C, vw, vh, cx, cy);
   pintarChaoAtras(g, G, vw, vh, cx, cy); // a face de cima do chão e as sombras de contato
   if (G.area.startsWith('sinagoga')) pintarLuzSinagoga(g, G, cx, cy, luzDoDia(G).d > 0.3);
-  const fimTreino = G.emTreino?.() ? RX * CW * T - 200 : Infinity; // no treino, nada do que fica além da paliçada aparece
+  const fimTreino = Infinity; // no treino, nada do que fica além da paliçada aparece
   for (const o of G.objs) { if (o.x > fimTreino) continue; const x = X(o.x), xv = o.vv ? X(o.vv.x) : x; if (xv + (o.ate && o.tipo === 'muroOlival' ? o.ate * T / PX : 0) < -60 || xv > vw + 60) continue; /* o muro do olival é comprido: conta a largura */ /* quem anda é visto onde está, não onde mora */ if (o.oculto && !G.achou(o)) { const k = G.p.lampA * clamp(1 - (Math.hypot(o.x - G.p.x, o.y - G.p.y) - 200) / 160, 0, 1); if (k < 0.05) continue; g.globalAlpha = k; } if (!pintarObjeto(g, o, G, x, Y(o.y), Tm)) antigo(() => desenharObjeto(g, o, G)); g.globalAlpha = 1; }
   if (G.def.mundo && G.N.arena) pintarArenaTema(g, G, X, Y, Tm);
   const chefe = G.N.arena && G.inimigos.find(e => e.kind === 'chefe' && e.cen);
@@ -662,7 +662,6 @@ export function renderPixel(G) {
   }
   if (G.def?.casaDe) { const y0 = Y(16 * 32) - 240; for (let k = -1; k < 10; k++) { const bx = Math.round((k * 140 - (G.vista.cam.x / PX) * 0.25) % 1400); g.fillStyle = '#17121f'; g.fillRect(bx, y0 - 30, 20, 40); g.fillStyle = '#4A3420'; g.fillRect(bx + 1, y0 - 30, 18, 38); g.fillStyle = '#5A4028'; g.fillRect(bx + 1, y0 - 30, 4, 38); } } // as vigas da frente, mais perto da câmara (a camada da frente)
   if (chefe) pintarPalco(g, G, chefe, X, Y, Tm, true);
-  if (G.emTreino?.()) barreira(g, X(RX * CW * T - 196), Y(16 * T), Tm); // no treino, a trilha termina numa paliçada: o Refúgio ainda não existe
   pintarLuzPixel(g, G, vw, vh, cx, cy, luzCv);
   pintarClima(g, G, vw, vh, cx, Tm);
   pintarTempo(g, G, vw, vh, cx, Tm, cy);

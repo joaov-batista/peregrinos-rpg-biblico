@@ -171,8 +171,7 @@ const SOLDADO = tunic => ({ skin: '#A0673E', hair: '#1C120A', tunic, cape: '#3A2
 export const RX = 4;
 const MIRIA = { skin: '#D9A273', hair: '#3A2314', tunic: '#8E4A6A', cape: '#E3DED2', style: 'trancas' }, SELA = { skin: '#A0673E', hair: '#1C120A', tunic: '#C98A3A', cape: 'none', style: 'veu' };
 const ASAFE = { skin: '#C68B59', hair: '#2B1A10', tunic: '#3F6A8A', cape: '#C9A63C', style: 'cacheado', beard: true }, ELIABE = { skin: '#8A5A3A', hair: '#1C120A', tunic: '#7A6A4A', cape: '#4A3A2A', style: 'curto', beard: true, body: 'forte' };
-const REFUGIO = [
-  ...TRILHA,
+const REFUGIO = [ // (a trilha do treino agora é um lugar à parte: o Bosque do Treino)
   { cx: 0, nome: 'Praça do poço', papel: 'inicio', tiles: sala([13, 20, 23]), objs: [
     { tipo: 'portaoCidade', col: 1.4, lado: 1 }, { tipo: 'flor', col: 25.5 },
     planta(11, 'palmeira'), casa(22, 'viuva', 'Casa da viúva de Sarepta'), planta(28, 'oliveira'),

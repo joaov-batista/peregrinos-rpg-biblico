@@ -97,7 +97,7 @@ export class Caminho {
     if (this.pixel) this.botao.replaceChildren(iconePx('menu', 22));
     const v0 = this.cm.visto || {}; // quem chega pela primeira vez (ou saiu no meio do treino) começa no Bosque do Treino, antes do Refúgio
     const novo = !v0.intro || (v0.tut != null && v0.tut < PASSOS.length); /* quem chega começa na pedra Ebenézer da Praça do poço; o treino é a trilha a oeste */
-    this.entrar(novo ? 'refugio' : (this.cm.ebenezer?.area && this.cm.ebenezer.area !== 'bosque' ? this.cm.ebenezer.area : 'refugio'), { ebenezer: true, novo });
+    if (novo) this.entrar('bosque', { novo }); else this.entrar(this.cm.ebenezer?.area && this.cm.ebenezer.area !== 'bosque' ? this.cm.ebenezer.area : 'refugio', { ebenezer: true }); // o treino é um lugar à parte: o Bosque do Treino, antes do Refúgio
     this.raf = requestAnimationFrame(t => this.loop(t));
     const sala = limparCodigo(new URLSearchParams(location.search).get('sala'));
     const par = new URLSearchParams(location.search);
@@ -215,8 +215,8 @@ export class Caminho {
     this.fade = 1; this.t0 = this.T; this.ok = 0; this.err = 0; this.mortosAqui = 0;
     this.musicaDaArea();
     this.ui.bossBar(null);
-    const treino = id === 'refugio' && (this.cm.visto.tut == null ? !this.cm.visto.intro : this.cm.visto.tut < PASSOS.length);
-    if (treino) { if (this.cm.visto.tut == null) this.cm.visto.tut = 0; this.p.face = -1; if (this.p.x > RX * CW * T - 280) { this.p.x = RX * CW * T - 280; this.vista.cam.x = this.p.x - this.vista.W / this.vista.Z / 2; this.prenderCam(); } } // novo peregrino: nasce na trilha do treino, longe da beira e dos botões
+    const treino = id === 'bosque' && (this.cm.visto.tut == null ? !this.cm.visto.intro : this.cm.visto.tut < PASSOS.length);
+    if (treino) { if (this.cm.visto.tut == null) this.cm.visto.tut = 0; this.p.face = 1; } // novo peregrino: começa o treino no começo da trilha
     this.ui.banner(def.sem ? def.sem.titulo.toUpperCase() : 'PEREGRINOS', treino ? 'A trilha' : def.nome, treino ? 'Os primeiros passos' : def.sub);
     if (def.fase && !this.avisoNivelado) { this.avisoNivelado = true; setTimeout(() => this.running && this.ui.toast('Página da semana: todos em pé de igualdade.', 4000), 3500); }
     if (def.reverente) setTimeout(() => { if (this.running && this.def === def) this.ui.toast('Casa de oração: aqui se anda devagar, sem pulos e sem armas.', 4500); }, 1200);
@@ -527,7 +527,7 @@ export class Caminho {
   prenderCam() {
     const v = this.vista, vw = v.W / v.Z, vh = v.H / v.Z, N = this.N;
     let x0 = 0, x1 = N.w * T - vw;
-    if (this.area === 'refugio' && !(this.cm.visto?.tut != null && this.cm.visto.tut < PASSOS.length)) x0 = RX * CW * T; // depois do treino, a trilha fica para trás: a câmara não mostra o que fica além do portão
+    if (this.area === 'refugio') x0 = RX * CW * T; // depois do treino, a trilha fica para trás: a câmara não mostra o que fica além do portão
     if (this.luta && N.arena) { x0 = N.arena.x0 - T; x1 = N.arena.x1 + T - vw; if (x1 < x0) x0 = x1 = (x0 + x1) / 2; }
     if (x1 < x0) { x0 = x1 = (N.w * T - vw) / 2; }
     v.cam.x = clamp(v.cam.x, x0, x1); v.cam.y = clamp(v.cam.y, 0, Math.max(0, N.h * T - vh));
@@ -1002,7 +1002,6 @@ export class Caminho {
   tutorial(dt) {
     const v = this.cm.visto, p = this.eu;
     if (v.tut == null || v.tut >= PASSOS.length) { if (this.tutEl) { this.tutEl.remove(); this.tutEl = null; document.querySelectorAll('.tut-alvo').forEach(x => x.classList.remove('tut-alvo')); } return; }
-    if (this.area === 'refugio' && p.x > RX * CW * T - 220) { p.x = RX * CW * T - 220; if (p.vx > 0) p.vx = 0; } // no treino só existe a trilha: o Refúgio ainda não aparece
     const s = PASSOS[v.tut], modo = input.touch ? 0 : document.body.classList.contains('pad') ? 1 : wasd() ? 3 : 2;
     this.tutT = (this.tutT || 0) + dt;
     // a dica é um cartão grande no alto da tela: o que fazer, com que tecla, numa frase
@@ -1011,7 +1010,7 @@ export class Caminho {
     if (this.tutVisto !== v.tut + ':' + modo) { this.tutVisto = v.tut + ':' + modo; document.querySelectorAll('.tut-alvo').forEach(x => x.classList.remove('tut-alvo')); if (s.alvo && modo === 0) document.querySelector(`[data-act="${s.alvo}"]`)?.classList.add('tut-alvo');
       el.replaceChildren(h('span', { class: 'kbd' }, s.t[modo] ?? s.t[2]), h('p', {}, s.txt), h('i', {}, ...PASSOS.map((_, i) => h('u', { class: i < v.tut ? 'ok' : i === v.tut ? 'on' : '' })))); /* compacto: tecla + uma frase + os pontinhos do progresso */ el.classList.remove('entra'); void el.offsetWidth; el.classList.add('entra'); }
     if (this.tutIni !== v.tut) { this.tutIni = v.tut; // o que cada passo prepara ao começar
-      if (s.id === 'luz' && this.area === 'refugio' && p.x > RX * CW * T) { const tx = Math.floor(p.x / T), ty = Math.floor(p.y / T) - 4;
+      if (s.id === 'luz' && this.area === 'refugio' && false) { const tx = Math.floor(p.x / T), ty = Math.floor(p.y / T) - 4;
         for (let k = -2; k <= 3; k++) { const x = tx + (p.face || 1) * 2 + k; if (tileEm(this.N, x, ty) === VAZIO) this.N.tiles[ty * this.N.w + x] = OCULTO; }
         this.objs.push({ tipo: 'escrito', x: (tx + (p.face || 1) * 2.5) * T, y: (ty - 1) * T, txt: '"Lâmpada para os meus pés é a tua palavra" (Sl 119:105)' }); }
       if (s.id === 'mira') { p.oleo = Math.max(p.oleo, this.oleoMax()); p.miraCd = 0; }
@@ -1024,14 +1023,13 @@ export class Caminho {
       this.tutDardo = (this.tutDardo || 1.2) - dt;
       if (this.tutDardo <= 0) { this.tutDardo = 2.4; const d = p.face || 1; this.tiros.push({ x: p.x + d * 430, y: p.y - 28, vx: -d * 300, vy: 0, r: 7, vida: 3, cor: '#E8D9A8', tipo: 'bola', treino: true, fura: true }); }
     }
-    const naTrilha = this.area === 'refugio' && p.x < RX * CW * T, noBosque = naTrilha; /* a trilha do treino: as salas a oeste da Praça do poço */
+    const naTrilha = this.area === 'bosque', noBosque = naTrilha; /* a trilha do treino: as salas a oeste da Praça do poço */
     let feito = { andar: this.tutAndou > 220, saltar: !p.chao && p.vy < -200 && this.tutT > 0.3, pular: !p.chao && p.pulos <= 0 && p.vy < 0, passo: p.dashT > 0, golpe: noBosque && this.tipoArma !== 'funda' && this.tipoArma !== 'cajado' && this.tipoArma !== 'trombeta' ? this.tutBateu : !!p.atk, descer: p.desce > 0 || this.tutT > 25, rasteiro: (p.rasteiro && p.dashT > 0) || this.tutT > 12, luz: p.lampA > 0.8 && this.tutT > 2.5, vigilia: this.tutParry, orar: p.vida > (this.tutVida ?? p.vidaMax), azeite: this.tutT > 8, mira: p.miraCd > 3.5 }[s.id];
     // no Bosque, cada passo tem o seu trecho da trilha: só conta lá, e não dá para seguir adiante antes de aprender
-    if (this.area === 'refugio' && !naTrilha && p.x > (RX * CW + 9) * T) { p.x = (RX * CW + 9) * T; p.vx = Math.min(p.vx, 0); if (!(this.tutAvisoT > this.T)) { this.tutAvisoT = this.T + 2.5; this.textoEm(p.x, p.y - 80, '← Primeiro, a trilha do treino', '#FFE9A8', 13); } } /* o treino vem antes da cidade */
-    if (noBosque) { const z = ZONA_TUT[s.id], tx = 119 - p.x / T; /* a trilha está espelhada: medimos de trás para a frente */
-      if (z) { if (tx < z[0] || tx > z[1]) feito = false; if (s.id === 'saltar') feito = feito || (tx > 14.6 && tx < z[1] && (119 - this.tutX / T) < 13); if (s.id === 'pular') feito = tx > 23.6 && tx < z[1];
-        if (tx > z[2]) { p.x = (119 - z[2]) * T; p.vx = Math.max(p.vx, 0); if (!(this.tutAvisoT > this.T)) { this.tutAvisoT = this.T + 2.5; this.textoEm(p.x, p.y - 80, 'Primeiro: ' + s.txt.toLowerCase(), '#FFE9A8', 13); } } } }
-    if (feito && this.tutT > 0.8) { v.tut++; this.tutT = 0; this.tutParry = false; sfx('right'); if (v.tut >= PASSOS.length) { if (noBosque) { const eb = this.objs.find(q => q.tipo === 'ebenezer'); if (eb) { this.fade = 1; p.x = eb.x - 40; p.y = eb.y - 1; p.vx = p.vy = 0; this.vista.cam.x = p.x - this.vista.W / this.vista.Z / 2; this.prenderCam(); } } /* o treino acabou: de volta à pedra, e a trilha fica para trás */ marco('tutorial'); this.ui.toast(noBosque ? 'Você sabe caminhar. Bem-vindo ao Refúgio! (A oeste da Praça, a estrada leva ao seu sítio.)' : this.temMapa() ? 'Você sabe caminhar. Siga a seta dourada até a sua missão.' : 'Você sabe caminhar. Fale com o Velho Peregrino: ele tem um mapa para você.', 6000); this.salvar(); } }
+    if (noBosque) { const z = ZONA_TUT[s.id], tx = p.x / T; /* no Bosque do Treino a trilha corre para a direita */
+      if (z) { if (tx < z[0] || tx > z[1]) feito = false; if (s.id === 'saltar') feito = feito || (tx > 14.6 && tx < z[1] && (this.tutX / T) < 13); if (s.id === 'pular') feito = tx > 23.6 && tx < z[1];
+        if (tx > z[2]) { p.x = z[2] * T; p.vx = Math.min(p.vx, 0); if (!(this.tutAvisoT > this.T)) { this.tutAvisoT = this.T + 2.5; this.textoEm(p.x, p.y - 80, 'Primeiro: ' + s.txt.toLowerCase(), '#FFE9A8', 13); } } } }
+    if (feito && this.tutT > 0.8) { v.tut++; this.tutT = 0; this.tutParry = false; sfx('right'); if (v.tut >= PASSOS.length) { if (noBosque) { const eb = this.objs.find(q => q.tipo === 'ebenezer'); if (eb) { this.fade = 1; p.x = eb.x - 40; p.y = eb.y - 1; p.vx = p.vy = 0; this.vista.cam.x = p.x - this.vista.W / this.vista.Z / 2; this.prenderCam(); } } /* o treino acabou: de volta à pedra, e a trilha fica para trás */ marco('tutorial'); this.ui.toast(noBosque ? 'Você sabe caminhar. O portal, no fim da trilha, leva ao Refúgio.' : this.temMapa() ? 'Você sabe caminhar. Siga a seta dourada até a sua missão.' : 'Você sabe caminhar. Fale com o Velho Peregrino: ele tem um mapa para você.', 6000); this.salvar(); } }
   }
 
   /* ================= Emboscadas ================= */
@@ -1518,7 +1516,7 @@ export class Caminho {
   // A missão da vez no Refúgio: o portal da primeira semana com fase por fazer. Na superfície, o alvo é a escada que leva até ele.
   // a pedra onde renascer: a última em que se descansou nesta área (a mais perto da posição guardada); sem posição, a primeira
   pedraDescanso() { const pedras = this.objs.filter(ob => ob.tipo === 'ebenezer'), e = this.cm.ebenezer; if (!pedras.length) return null; if (e?.area !== this.area || e.x == null) return pedras[0]; return pedras.reduce((a, b) => Math.hypot(b.x - e.x, b.y - e.y) < Math.hypot(a.x - e.x, a.y - e.y) ? b : a); }
-  emTreino() { const t = this.cm.visto?.tut; return this.area === 'refugio' && t != null && t < PASSOS.length; }
+  emTreino() { const t = this.cm.visto?.tut; return this.area === 'bosque' && t != null && t < PASSOS.length; }
   objetivo() {
     if (this.cm.visto?.tut != null && this.cm.visto.tut < PASSOS.length) return null; // no treino não há missão: só a trilha
     if (this.area === 'sardes') return objetivoSardes(this);
