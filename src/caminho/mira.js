@@ -20,6 +20,15 @@ export const MIRA_NOME = {
 };
 const caixaDe = e => e.hb ? { x: e.x + e.hb.dx - e.hb.w / 2, y: e.y + e.hb.y0, w: e.hb.w, h: e.hb.h } : { x: e.x - e.w / 2, y: e.y - e.h, w: e.w, h: e.h };
 const toca = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+// no fim de um golpe mirado: se o peregrino terminou dentro de um inimigo, sai pelo lado mais perto (se houver parede, pelo outro),
+// virado para ele, e ganha um respiro curto. Não é escudo: quem fica parado ao lado ainda apanha.
+function sairDeCima(G, p, dir, graca) {
+  const eu = () => ({ x: p.x - 10, y: p.y - 44, w: 20, h: 44 }), livre = x => !solido(G.N, Math.floor(x / T), Math.floor((p.y - 10) / T)) && !solido(G.N, Math.floor(x / T), Math.floor((p.y - 40) / T));
+  for (const e of G.inimigos) { if (!(e.hp > 0) || e.morrendo || e.sumiu || (e.alpha ?? 1) < 0.5 || e.amigo) continue; const b = caixaDe(e); if (!toca(eu(), b)) continue;
+    const cx = b.x + b.w / 2, s0 = Math.sign(p.x - cx) || dir || 1;
+    for (const s of [s0, -s0]) { const nx = s > 0 ? b.x + b.w + 14 : b.x - 14; if (livre(nx)) { p.x = nx; p.face = -s; G.fx.po(nx, p.y - 6, 6, '#C9D2C4'); break; } } }
+  p.inv = Math.max(p.inv, graca);
+}
 const novoAtk = (dir = 'lado', hits) => ({ dir, hits: hits || new Set(), semOleo: true, carga: true });
 
 // onde o peregrino está quando solta: no chão, no ar, ou colado numa parede (devolve também o lado da parede)
@@ -223,7 +232,7 @@ export function passoMira(G, dt) {
         if (I.depois) { // o segundo traço do X
           G.investidaMira = { ...I, t: 0, dur: I.depois.dur, ux: I.depois.ux, uy: I.depois.uy, depois: null, atk: novoAtk() };
           G.efeito('corteAdaga', p.x + I.depois.ux * 60, p.y + I.depois.uy * 60, -p.face, { vel: 1.4 }); G.risco(p.x, p.y - 26, p.x + I.depois.ux * 200, p.y - 26 + I.depois.uy * 200, '#C79BFF', 5); sfx('swing');
-        } else I.noFim?.();
+        } else { sairDeCima(G, p, Math.sign(I.ux), Math.min(0.45, I.inv || 0.35)); I.noFim?.(); }
       }
     }
   }
@@ -233,7 +242,7 @@ export function passoMira(G, dt) {
         for (let i = 0; i < 9; i++) setTimeout(() => { if (G.running) G.tiros.push({ semOleo: true, x: Q.tx + rand(-210, 210), y: topo + T, vx: rand(-40, 40), vy: 1050, r: 8, amigo: true, vida: 1.1, cor: '#E8C873', tipo: 'lanca', dano: Q.dano * 0.18, estoura: { raio: 44, dano: Q.dano * 0.1, fx: 'explosaoFogo' } }); }, i * 55); } }
     else if (Q.fase === 1) { p.vy = 0; if (Q.t > 0.22) { Q.fase = 2; Q.t = 0; sfx('boss'); } }
     else { p.vy = Q.mergulho ? 1600 : 2300; if (Q.mergulho) { p.desce = 0.12; if (Math.random() < 0.5) G.parts.push({ x: p.x, y: p.y - 30, vx: 0, vy: -60, t: 0.3, max: 0.3, r: 2, cor: '#E8C873', g: 0 }); } else if (p.y < Q.y0 - 40) p.desce = 0.12; if ((p.chao && (Q.mergulho || p.y >= Q.y0 - 40)) || Q.t > 0.9) { p.vx = 0; G.quedaMira = null; p.vy = 0; G.tremor(18); G.clarao = 0.16; sfx('hit'); G.efeito('baque', p.x, p.y); G.efeito('explosaoFogo', p.x, p.y); G.fx.anel(p.x, p.y - 10, '#FFB05A', 220);
-        G.golpear({ x: p.x - 150, y: p.y - 150, w: 300, h: 170 }, Q.dano, novoAtk('cima'));
+        G.golpear({ x: p.x - 150, y: p.y - 150, w: 300, h: 170 }, Q.dano, novoAtk('cima')); sairDeCima(G, p, Math.sign(Q.vx || 0), 0.45);
         for (const s of [-1, 1]) for (let k = 1; k <= 3; k++) G.zonas.push({ tipo: 'col', x: p.x + s * k * 62, w: 50, aviso: 0.05 + k * 0.09, dur: 0.3, cor: '#FF8A2A', amigo: Q.dano * 0.2, y0: p.y - 150, y1: p.y + 20 }); } }
   }
   passoAgarre(G, dt);

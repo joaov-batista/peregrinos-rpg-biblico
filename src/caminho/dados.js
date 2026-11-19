@@ -219,6 +219,7 @@ const REFUGIO = [
 
   // o olival: figos, sombra e a caravana que às vezes traz algo raro
   { cx: 6, nome: 'Olival', papel: 'vila', tiles: sala([12, 8, 11], [9, 13, 16], [12, 18, 21]), objs: [
+    { tipo: 'muroOlival', col: 0, ate: 29.4 }, { tipo: 'placa', col: 1.2, txt: 'O Olival · as oliveiras do Refúgio' }, // o muro baixo de pedra do olival, com as oliveiras por trás: dá para saber onde começa e onde acaba
     { tipo: 'flor', col: 2 }, { tipo: 'flor', col: 12.5 }, { tipo: 'flor', col: 18 }, { tipo: 'flor', col: 22 }, // canteiros: uma flor por dia em cada um
     planta(4, 'oliveira'), planta(10, 'oliveira'), planta(15.5, 'palmeira'), planta(20, 'oliveira'), { tipo: 'cenario', col: 23.5, qual: 'banca' }, { tipo: 'portal', col: 28.6, area: 'floresta', rotulo: 'Trilha escondida', oculto: true },
     { tipo: 'fruto', col: 4, lin: 14 }, { tipo: 'fruto', col: 10, lin: 11 }, { tipo: 'fruto', col: 15, lin: 8 }, { tipo: 'fruto', col: 20, lin: 11 },

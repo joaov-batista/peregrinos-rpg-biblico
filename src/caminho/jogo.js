@@ -1409,7 +1409,7 @@ export class Caminho {
         texto = n === 1 ? 'Então ainda há quem carregue uma lâmpada.\n\nO Livro não foi queimado, peregrino: foi esquecido. Cada página que ninguém lê, a sombra cobre — e o que a sombra cobre ganha corpo. Mamom, a Mentira, o Pavor… são páginas não lidas andando por aí.\n\n"Lâmpada para os meus pés é a tua palavra" (Sl 119:105). Leia, entenda, e a luz volta.'
           : n % 4 === 2 ? 'Você reparou que as sombras voltam? Fere-se uma hoje, e amanhã ela está inteira.\n\nÉ que elas comem, peregrino. Todo dia alguém as alimenta com o seu pecado: uma mentira aqui, um “depois eu faço” ali. Enquanto houver quem as alimente, elas se refazem.\n\nPor isso não basta feri-las. É preciso vencê-las até o fim, e parar de lhes dar de comer. “Não reine o pecado em vosso corpo mortal” (Rm 6:12).'
           : hab < 6 ? 'Comece por Corinto, no primeiro portal. Cada sombra de lá guarda uma peça da Armadura de Deus (Ef 6): com elas você alcança o que hoje não alcança.\n\nPeças vestidas: ' + hab + ' de 6.\n\nE lembre: a lâmpada não serve só para ver. Erga-a no instante do golpe.'
-            : 'Armadura completa… "depois de terdes vencido tudo, permanecei inabaláveis" (Ef 6:13).\n\nOs gigantes esperam na Cripta, debaixo do bairro.\n\nE no fim do olival, onde as oliveiras acabam, erga a lâmpada. Há uma trilha que só a luz mostra.';
+            : 'Armadura completa… "depois de terdes vencido tudo, permanecei inabaláveis" (Ef 6:13).\n\nOs gigantes esperam na Cripta, debaixo do bairro.\n\nE no fim do olival (depois da sinagoga, onde o muro das oliveiras acaba), erga a lâmpada. Há uma trilha que só a luz mostra.';
         break;
       }
       case 'lidia': return loja(this);
