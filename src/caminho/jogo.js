@@ -64,7 +64,6 @@ const PASSOS = [ // t: [toque, controle, teclado]; alvo: o botão de toque que p
 ];
 
 // por que os chefes recuperam a vida (quando você cai, quando erra a Escritura, quando para de lutar)
-const PORQUE_VOLTAM = 'Os vícios não vivem de si mesmos.\n\nTodos os dias, em algum lugar, alguém os alimenta com o próprio pecado: uma mentira contada, uma hora adiada, uma moeda amada demais. Enquanto forem alimentados, eles se refazem. É por isso que um chefe ferido volta inteiro, e que alguns se curam no meio da luta.\n\nNão basta feri-los: é preciso vencê-los até o fim. E cada dia em que você não os alimenta, eles ficam mais fracos.\n\n"Não reine, portanto, o pecado em vosso corpo mortal" (Rm 6:12).';
 // a caixa de quem pode ser ferido. Chefe desenhado em pixel usa o tamanho real do desenho (e.hb, medido em pixel/render.js)
 const caixa = e => e.hb ? { x: e.x + e.hb.dx - e.hb.w / 2, y: e.y + e.hb.y0, w: e.hb.w, h: e.hb.h } : { x: e.x - e.w / 2, y: e.y - e.h, w: e.w, h: e.h };
 const toca = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -665,9 +664,11 @@ export class Caminho {
     if (this.mp?.acompanhado()) return this.reviver();
     const eb = this.cm.ebenezer;
     this.entrar(this.area, { ebenezer: eb?.area === this.area, quieto: true });
-    const dica = this.def.chefe && this.mortosAqui >= 2 ? CHEFES[this.def.chefe]?.dica : null;
-    this.ui.toast(dica ? 'Dica: ' + dica : '"O justo cai sete vezes e se levanta" (Pv 24:16). Sua sacola ficou onde você caiu.', 6500);    // a primeira vez que o peregrino volta e encontra o chefe inteiro de novo: por quê?
-    if (this.def.chefe && this.luta0 && !this.cm.visto.alimentam) { this.cm.visto.alimentam = 1; this.salvar(); this.ui.dialog({ nome: 'Por que ele está inteiro de novo?', texto: PORQUE_VOLTAM, acoes: [{ label: 'Entendi' }], cls: 'fala-narra', voz: false }); }
+    // um aviso só, depois que a tela clareia: a dica do chefe, ou (na primeira vez) por que ele voltou inteiro, ou o versículo
+    const dica = this.def.chefe && this.mortosAqui >= 2 ? CHEFES[this.def.chefe]?.dica : null, porque = this.def.chefe && this.luta0 && !this.cm.visto.alimentam;
+    if (porque) { this.cm.visto.alimentam = 1; this.salvar(); }
+    const msg = dica ? 'Dica: ' + dica : porque ? 'O chefe está inteiro de novo: os vícios se refazem enquanto alguém os alimenta. Vença até o fim (Rm 6:12).' : '"O justo cai sete vezes e se levanta" (Pv 24:16). Sua sacola ficou onde você caiu.';
+    setTimeout(() => { if (this.running) this.ui.toast(msg, dica ? 7000 : 5500); }, 1300);
     this.luta0 = false;
   }
 
@@ -1232,7 +1233,7 @@ export class Caminho {
       if (ob.tipo === 'fruto' && dd < 30 && !(ob.volta > this.T)) { ob.volta = this.T + 50; this.partilhar('fruto', ob); sfx('coin'); this.efeito('coleta', ob.x, ob.y - 6); ganharItem(this, 'figo', 1); if (p.vida < p.vidaMax) { p.vida++; this.textoEm(p.x, p.y - 60, 'figo: +1 fôlego', '#B8E6A0', 12); } else { this.char.data.gold += 4; this.ganharOleo(12); this.textoEm(p.x, p.y - 60, 'figo: +4 denários', '#FFD23F', 12); } const st = this.char.data.stats; st.figos = (st.figos || 0) + 1; if (st.figos === 12) this.ovo('figos', 'Zaqueu subiu num sicômoro, a figueira brava (Lc 19:4). Doze figos colhidos.'); continue; }
       if (ob.tipo === 'flor' && dd < 26 && this.cm.flores?.[ob.x] !== diaDe(this)) { this.cm.flores = this.cm.flores || {}; this.cm.flores[ob.x] = diaDe(this); sfx('coin'); this.efeito('coleta', ob.x, ob.y - 6); ganharItem(this, 'flor', 1, p.x, p.y - 60); }
       if (ob.tipo === 'sacola' && dd < 30) { ob.fora = true; const s = this.cm.sacola; if (s) { this.char.data.gold += s.gold; this.textoEm(p.x, p.y - 56, '+' + s.gold + ' denários recuperados', '#FFD23F'); sfx('coin'); this.cm.sacola = null; } continue; }
-      const rot = this.rotulo(ob); if (rot && dd < pd) { pd = dd; perto = ob; perto.rot = rot; }
+      const rot = this.rotulo(ob), dk = ob.tipo === 'casa' && ob.id === 'peregrino' && this.def.sitio ? dd * 0.4 : dd; /* a porta de casa ganha de quem está do lado dela */ if (rot && dk < pd) { pd = dk; perto = ob; perto.rot = rot; }
     }
     this.objs = this.objs.filter(ob => !ob.fora);
     this.perto = perto;
