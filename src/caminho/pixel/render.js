@@ -285,6 +285,14 @@ function pintarObjeto(g, o, G, x, y, Tm) {
     case 'flor': { if (G.cm.flores?.[o.x] === Math.floor((G.cm.relogio || 0) / 600)) { g.fillStyle = '#3F6A3A'; g.fillRect(x, y - 4, 1, 4); return true; } // colhida hoje: fica o talo
       const b = Math.round(Math.sin(Tm * 1.6 + o.x) * 0.6), cores = ['#E86A8A', '#F2D06A', '#B88AE8', '#F2F0E8'], c = cores[Math.floor(o.x / 32) % 4];
       g.fillStyle = '#2E5A2E'; g.fillRect(x, y - 8, 1, 8); g.fillRect(x - 2, y - 4, 2, 1); g.fillStyle = '#17121f'; g.fillRect(x - 3 + b, y - 13, 7, 6); g.fillStyle = c; g.fillRect(x - 2 + b, y - 12, 5, 4); g.fillRect(x - 1 + b, y - 13, 3, 6); g.fillStyle = '#FFE08A'; g.fillRect(x + b, y - 11, 1, 2); return true; }
+    case 'frutoCel': { // o fruto que permanece (Jo 15:16): um cacho de uva dourado que brilha; some para todos quando alguém pega
+      if (o.pego) return true; const b = Math.round(Math.sin(Tm * 2.4 + o.x) * 2), y0 = y - 18 + b;
+      g.fillStyle = 'rgba(255,233,168,' + (0.18 + 0.1 * Math.sin(Tm * 4 + o.x)) + ')'; g.fillRect(x - 9, y0 - 9, 19, 22);
+      g.fillStyle = '#3F7A4A'; g.fillRect(x, y0 - 6, 1, 3); g.fillRect(x + 1, y0 - 6, 4, 2); g.fillStyle = '#6AAE5A'; g.fillRect(x + 2, y0 - 6, 2, 1);
+      for (const [dx, dy] of [[-3, 0], [0, 0], [3, 0], [-2, 3], [1, 3], [4, 3], [-1, 6], [2, 6], [0, 9]]) { g.fillStyle = '#17121f'; g.fillRect(x + dx - 2, y0 + dy - 1, 4, 4); }
+      for (const [dx, dy] of [[-3, 0], [0, 0], [3, 0], [-2, 3], [1, 3], [4, 3], [-1, 6], [2, 6], [0, 9]]) { g.fillStyle = '#E0A63C'; g.fillRect(x + dx - 1, y0 + dy, 3, 2); g.fillStyle = '#FFF0A8'; g.fillRect(x + dx - 1, y0 + dy, 1, 1); }
+      if (Math.floor(Tm * 3 + o.x) % 4 === 0) { g.fillStyle = '#FFFFFF'; g.fillRect(x + 5, y0 - 8, 1, 1); g.fillRect(x - 6, y0 + 4, 1, 1); }
+      return true; }
     case 'fruto': { if (o.volta > Tm) return true; const b = Math.round(Math.sin(Tm * 2 + o.x) * 1); g.fillStyle = '#17121f'; g.fillRect(x - 3, y - 9 + b, 6, 7); g.fillStyle = '#8E3B5E'; g.fillRect(x - 2, y - 8 + b, 4, 5); g.fillStyle = '#C56A8A'; g.fillRect(x - 2, y - 8 + b, 1, 2); g.fillStyle = '#3F7A4A'; g.fillRect(x, y - 11 + b, 1, 2); return true; }
     case 'poco': { // o poço antigo: boca redonda de pedra calcária, a trave de madeira em dois esteios, a corda e o cântaro de barro
       const PE = ['#5A4A3C', '#8A7458', '#A8906E', '#C8B08A'];
@@ -675,7 +683,7 @@ export function renderPixel(G) {
   }
   if (p.arpao && !p.morto) { const hx = X(p.x) - p.face * 4, hy = Y(p.y) - 34; g.fillStyle = '#A0662A'; g.fillRect(hx, hy, 1, 26); g.fillStyle = '#EEF6FB'; g.fillRect(hx - 1, hy - 4, 3, 4); }
   // outros peregrinos (multijogador) e o herói
-  for (const o of G.outros) pintarJogador(g, o.corpo, o.look, o.cls, o.arma, Tm, o.hab, X, Y, false, o.armaCor, o.armaRar);
+  for (const o of G.outros) pintarJogador(g, o.corpo, o.look, o.cls, o.arma, Tm, o.hab, X, Y, false, o.armaCor, o.armaRar, o.fantasma);
   const aguaN = (p.nada || G.nado) && G.objs.find(o => o.tipo === 'aguaAberta');
   if (G.cenaMeteoros) pintarSentadosCeu(g, G, X, Y, Tm); else if (G.cenaSono?.deita > 0) pintarDeitado(g, G, X, Y, Tm); else if (G.cenaOracao?.ajoelha) pintarAjoelhado(g, G, X, Y, Tm); else if (G.cenaFesta?.sentado) pintarNaFesta(g, G, X, Y, Tm); else if (G.cenaPraia) pintarSentado(g, G, X, Y, Tm); else if (!p.morto && p.noBote) pintarNoBote(g, G, p, X, Y, Tm); else if (!p.morto && aguaN) pintarNadando(g, G, p, aguaN, X, Y, Tm, vw); else if (!p.morto) pintarJogador(g, p, G.char.look || {}, G.char.cls, G.def?.reverente ? null : G.tipoArma, Tm, G.hab, X, Y, true, G.arma?.lamina, G.arma?.rar);
   if (G.pomba) pintarPomba(g, G.pomba, X, Y, Tm);
@@ -761,12 +769,13 @@ function pintarNadando(g, G, p, A, X, Y, Tm, vw) {
   if (mergulho) for (let i = 0; i < 4; i++) { const t = (Tm * 1.5 + i / 4) % 1; g.globalAlpha = 1 - t; g.fillStyle = '#BFF0F8'; g.fillRect(x - 4 + i * 3, sup + 8 - Math.round(t * 10), 2, 2); }
   g.globalAlpha = 1;
 }
-function pintarJogador(g, p, look, cls, arma, Tm, hab, X, Y, eu, armaCor, armaRar) {
+function pintarJogador(g, p, look, cls, arma, Tm, hab, X, Y, eu, armaCor, armaRar, fantasma) { // fantasma: outro peregrino da sala da célula, que joga a própria partida (meio transparente)
   if (arma === 'chicote' && p.atk && !p.atk.semCaixa) pintarChicote(g, p, X, Y, p.atk.dir, p.atk.face, Math.min(1, p.atk.t / p.atk.dur), 118, '#C48A4E');
   if (p.acoite) pintarChicote(g, p, X, Y, 'lado', p.acoite.face, Math.min(1, p.acoite.t / p.acoite.dur), p.acoite.alc, '#FFE08A');
   const s = quadroHeroi(p, look, cls, arma, Tm, hab, armaCor ? { armaCor } : {});
   if (p.rastro?.length) for (let i = 0; i < p.rastro.length; i += 3) { const r = p.rastro[i]; carimbar(g, vulto(s, cor('#BFD6E8')), X(r.x), Y(r.y), AX, AY, r.face, 0.18 + r.t * 1.6); }
   if (p.inv > 0 && !p.morto && Math.floor(Tm * 20) % 2 && !(p.flashT > 0)) g.globalAlpha = 0.55;
+  if (fantasma) g.globalAlpha = 0.5;
   carimbar(g, s, X(p.x), Y(p.y), AX, AY, p.face); g.globalAlpha = 1;
   // armas épicas e lendárias brilham na mão: centelhas da cor da lâmina sobem em volta
   if ((armaRar === 'epica' || armaRar === 'lendaria') && !p.morto) { const n = armaRar === 'lendaria' ? 6 : 3, hx = X(p.x + p.face * 12), hy = Y(p.y) - 16; g.fillStyle = armaCor || '#FFE08A';
@@ -952,7 +961,7 @@ function pintarTextos(g, G, esc, cx, cy) {
   const sx = wx => (wx / PX - cx) * e, sy = wy => (wy / PX - cy) * e;
   for (const t of G.textos) { const x = t.fixo ? t.fixo.x : t.x, y = t.fixo ? t.fixo.y - t.fixo.h - 16 : t.y, tam = Math.round(t.tam * 0.62 * e / 1.3); g.font = `600 ${tam}px ${FONTE}`; const meia = g.measureText(t.txt).width / 2 + tam * 0.6, W = g.canvas.width; g.globalAlpha = Math.min(1, t.t * 2); txt(t.txt, meia * 2 < W ? clamp(sx(x), meia, W - meia) : W / 2, sy(y), tam, t.cor, 'center'); } // a fala nunca sai pela borda da tela
   g.globalAlpha = 1;
-  for (const o of G.outros) { txt(o.nome, sx(o.corpo.x), sy(o.corpo.y - 68), 8 * u * 1.5, '#BFE3D8', 'center'); const n = Math.max(0, Math.ceil(o.corpo.vida || 0)), mx = o.corpo.vidaMax || 5; for (let i = 0; i < mx; i++) { const xx = sx(o.corpo.x) + (i - mx / 2) * 4 * u, yy = sy(o.corpo.y - 82); g.fillStyle = '#17121f'; g.fillRect(xx - u, yy - u, 4 * u, 4 * u); g.fillStyle = i < n ? '#FF9A3C' : '#4A4658'; g.fillRect(xx, yy, 2 * u, 2 * u); } }
+  for (const o of G.outros) { txt(o.nome, sx(o.corpo.x), sy(o.corpo.y - 68), 8 * u * 1.5, o.fantasma ? '#9FB8D8' : '#BFE3D8', 'center'); if (o.fantasma) continue; const n = Math.max(0, Math.ceil(o.corpo.vida || 0)), mx = o.corpo.vidaMax || 5; for (let i = 0; i < mx; i++) { const xx = sx(o.corpo.x) + (i - mx / 2) * 4 * u, yy = sy(o.corpo.y - 82); g.fillStyle = '#17121f'; g.fillRect(xx - u, yy - u, 4 * u, 4 * u); g.fillStyle = i < n ? '#FF9A3C' : '#4A4658'; g.fillRect(xx, yy, 2 * u, 2 * u); } }
   // ataque mira: a linha de pontaria enquanto carrega e os riscos de luz dos golpes soltos
   if (p.carga >= 0.5 && G.ctl?.mira != null && !p.morto) { const a = G.ctl.mira, ux = Math.cos(a), uy = Math.sin(a), q = Math.max(4, 4 * u), f = Math.floor(G.T * 20);
     for (let d = 26; d < 330; d += 10) { if ((Math.floor(d / 10) + f) % 4 === 0) continue; g.fillStyle = d > 290 ? '#FFFFFF' : '#FFD23F'; g.globalAlpha = 1 - d / 600; g.fillRect(Math.round(sx(p.x + ux * d) - q / 2), Math.round(sy(p.y - 26 + uy * d) - q / 2), q, q); }
@@ -981,8 +990,8 @@ function pintarTextos(g, G, esc, cx, cy) {
   const xg = 52 * e; txt(String(Math.floor(G.char.data.gold)), xg + base * 0.9, 24 * e, base, '#FFE08A'); g.fillStyle = '#17121f'; g.beginPath(); g.arc(xg + base * 0.3, 24 * e - base * 0.33, base * 0.42, 0, TAU); g.fill(); g.fillStyle = '#F2C14E'; g.beginPath(); g.arc(xg + base * 0.3, 24 * e - base * 0.33, base * 0.3, 0, TAU); g.fill();
   let lin = 27 * e;
   if (cm.sacola) txt('sacola caída: ' + cm.sacola.gold, x0 + base * 4, lin, base * 0.8, '#C9B88A');
-  if (def.fase) { lin += base * 1.25; const rol = cm.selos[G.area].length; txt('ROLOS ' + rol + '/3' + (def.estacoes ? '   DECISÕES ' + cm.est[G.area].length + '/' + def.estacoes.length : '') + (G.N.portaAberta && !G.venceu ? '   PORTA ABERTA' : ''), 7 * e, lin, base * 0.9, rol >= 3 ? '#FFE9A8' : '#E6E0CF'); }
-  if (G.peso) { lin += base * 1.2; txt('PESO DE MAMOM ×' + G.peso, 7 * e, lin, base * 0.8, '#FFD23F'); }
+  if (def.fase) { lin += base * 1.25; const rol = cm.selos[G.area].length; txt('ROLOS ' + rol + '/' + (def.rolos || 3) + (def.estacoes ? '   DECISÕES ' + cm.est[G.area].length + '/' + def.estacoes.length : '') + (G.N.portaAberta && !G.venceu ? '   PORTA ABERTA' : ''), 7 * e, lin, base * 0.9, rol >= 3 ? '#FFE9A8' : '#E6E0CF'); }
+  if (G.peso) { lin += base * 1.2; txt((G.chefe?.id === 'interesseiro' ? 'PESO DO INTERESSE ×' : 'PESO DE MAMOM ×') + G.peso, 7 * e, lin, base * 0.8, '#FFD23F'); }
   // companheiros da sala (mesmo PC ou de fora): a vida de cada um, sempre à vista
   const chamas = (x, y, n, max, q) => { for (let i = 0; i < max; i++) { const vivo = i < n, xx = x + i * q * 3.2; g.fillStyle = '#17121f'; g.fillRect(xx - q * 0.2, y - q * 2.6, q * 2.4, q * 3); g.fillStyle = vivo ? '#FF9A3C' : '#4A4658'; g.fillRect(xx, y - q * 2.4, q * 2, q * 2.6); g.fillStyle = vivo ? '#FFD86A' : '#5E5A6E'; g.fillRect(xx + q * 0.5, y - q * 1.6, q, q * 1.6); if (vivo) { g.fillStyle = '#FFFBE6'; g.fillRect(xx + q * 0.7, y - q * 0.9, q * 0.6, q * 0.6); } } };
   const comp = [...(G.vidasTela || []).map(v => ({ nome: v.nome, vida: v.hp, vidaMax: v.max, area: G.area })), ...(G.mp ? G.mp.lista().filter(c => !(c.irmao && G.vidasTela)) : [])];

@@ -8,13 +8,14 @@ import { CHEFES_C } from './chefes-c.js';
 import { CHEFES_D } from './chefes-d.js';
 import { CHEFES_E } from './chefes-e.js';
 import { CHEFES_F } from './chefes-f.js';
+import { CHEFES_G } from './chefes-g.js';
 
-const PINTORES = { ...CHEFES_A, ...CHEFES_B, ...CHEFES_C, ...CHEFES_D, ...CHEFES_E, ...CHEFES_F };
+const PINTORES = { ...CHEFES_A, ...CHEFES_B, ...CHEFES_C, ...CHEFES_D, ...CHEFES_E, ...CHEFES_F, ...CHEFES_G };
 // estes foram desenhados olhando para a esquerda; os antigos olham para a direita. Quem desenha na tela desvira
 const CONTORNO_CLARO = new Set(['conselho', 'zeloteFoice', 'zelotePunhal', 'ladrao']);
 const OLHA_ESQ = new Set(['escassez', 'desprezo', 'carcere', 'mentira', 'imoralidade', 'amargura']);
 // Beemote e Leviatã são colossos: desenhados no dobro do tamanho, ocupam boa parte da arena
-const COLOSSOS = { behemote: 2.5, leviata: 2.4, golias: 1.25, carcere: 1.5, escassez: 1.25, desprezo: 1.2, amargura: 1.7, conselho: 1.3, zeloteFoice: 1.3, zelotePunhal: 1.3 };
+const COLOSSOS = { condenacao: 1.15, fracasso: 1.2, behemote: 2.5, leviata: 2.4, golias: 1.25, carcere: 1.5, escassez: 1.25, desprezo: 1.2, amargura: 1.7, conselho: 1.3, zeloteFoice: 1.3, zelotePunhal: 1.3 };
 
 const OURO = rampa('#D9A63C'), OUROE = rampa('#8A6A2C'), OSSO = rampa('#E4DFCF'), MANTO = rampa('#3B2A4E'), ACO = rampa('#7F8C9C'), FERRO = rampa('#3A3F4C');
 const COROA = ['L.....L.....L', 'G.....G.....G', 'GG...GGG...GG', 'GGG.GGGGG.GGG', 'GgGGGGrGGGGgG', 'GGrGGGGGGGrGG', 'LLLLLLLLLLLLL', 'ggggggggggggg'];

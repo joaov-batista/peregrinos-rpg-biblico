@@ -156,7 +156,7 @@ export const TRILHAS = {
     mel: "5' - 3' - 1' - 3' - | 6' - 3' - 1' - 3' - | 7 - 2' - 4' - 2' - | 1' - 3' - 5' - - -" }
 };
 // trilhas que servem a mais de um lugar
-const APELIDOS = { zeloteFoice: 'conselho', zelotePunhal: 'conselho', zelotes: 'masmorra', treino: 'bosque', desafio: 'raid', getsemani: 'jardim', getsemani2: 'jardim', ermo: 'sombra', mar: 'conves', porto: 'jope', pecado: 'desespero', dragao: 'mentira', chefe: 'batalha' };
+const APELIDOS = { zeloteFoice: 'conselho', zelotePunhal: 'conselho', zelotes: 'masmorra', treino: 'bosque', desafio: 'raid', getsemani: 'jardim', getsemani2: 'jardim', ermo: 'sombra', mar: 'conves', porto: 'jope', pecado: 'desespero', dragao: 'mentira', chefe: 'batalha', rejeicao: 'desprezo', interesseiro: 'mamom', condenacao: 'jugo', covardia: 'pavor', fracasso: 'satanas' }; // os chefes da célula usam as trilhas dos estilos de origem
 export const trilhaDe = id => TRILHAS[id] || TRILHAS[APELIDOS[id]] || null;
 
 // batidas: k = bumbo, s = caixa, h = chimbal, t = tímpano, m = metal; em semicolcheias (16 por compasso de quatro tempos)

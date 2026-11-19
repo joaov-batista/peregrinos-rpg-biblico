@@ -72,7 +72,8 @@ const caixa = e => e.hb ? { x: e.x + e.hb.dx - e.hb.w / 2, y: e.y + e.hb.y0, w: 
 const toca = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 
 export class Caminho {
-  constructor(canvas, char, ui, onExit) {
+  constructor(canvas, char, ui, onExit, evento = null) {
+    this.evento = evento; // a fase à parte da célula (src/celula): começa na própria página, salva no aparelho e tem menu e sala próprios
     this.cv = canvas; this.g = canvas.getContext('2d'); this.char = char; this.ui = ui; this.onExit = onExit;
     const d = char.data;
     this.cm = d.caminho = { ...novoCaminho(), ...(d.caminho || {}) };
@@ -97,6 +98,7 @@ export class Caminho {
     if (this.pixel) this.botao.replaceChildren(iconePx('menu', 22));
     const v0 = this.cm.visto || {}; // quem chega pela primeira vez (ou saiu no meio do treino) começa no Bosque do Treino, antes do Refúgio
     const novo = !v0.intro || (v0.tut != null && v0.tut < PASSOS.length); /* quem chega começa na pedra Ebenézer da Praça do poço; o treino é a trilha a oeste */
+    if (evento) { this.entrar(evento.inicio(this)); this.raf = requestAnimationFrame(t => this.loop(t)); return; }
     if (novo) this.entrar('bosque', { novo }); else this.entrar(this.cm.ebenezer?.area && this.cm.ebenezer.area !== 'bosque' ? this.cm.ebenezer.area : 'refugio', { ebenezer: true }); // o treino é um lugar à parte: o Bosque do Treino, antes do Refúgio
     this.raf = requestAnimationFrame(t => this.loop(t));
     const sala = limparCodigo(new URLSearchParams(location.search).get('sala'));
@@ -112,7 +114,7 @@ export class Caminho {
   }
 
   destroy() {
-    this.mp?.sair(); this.running = false; this.tutEl?.remove(); document.querySelectorAll('.tut-alvo').forEach(x => x.classList.remove('tut-alvo')); cancelAnimationFrame(this.raf); removeEventListener('resize', this.onResize);
+    this.evento?.fim?.(this); this.mp?.sair(); this.running = false; this.tutEl?.remove(); document.querySelectorAll('.tut-alvo').forEach(x => x.classList.remove('tut-alvo')); cancelAnimationFrame(this.raf); removeEventListener('resize', this.onResize);
     for (const [b, filhos, oculto] of this.icones) { b.replaceChildren(...filhos); b.hidden = oculto; }
     document.body.classList.remove('caminho', 'cm-dash', 'cm-pixel'); input.perfil = null; input.padAcoes = this.padAntes; this.botao.remove(); music(null); this.ui.bossBar(null); this.ui.setInteract(null);
   }
@@ -192,9 +194,9 @@ export class Caminho {
       if (ob.tipo === 'ebenezer') ob.luz = 150;
       if (ob.tipo === 'portal' || ob.tipo === 'segredo') ob.luz = 80;
     }
-    if (def.fase || def.mundo || def.historia || def.raiz || def.conselho || (def.extra && !def.desafio)) this.objs.push({ tipo: 'retorno', x: N.inicio.x - 72, y: N.inicio.y, luz: 80 });
+    if (!def.evento && (def.fase || def.mundo || def.historia || def.raiz || def.conselho || (def.extra && !def.desafio))) this.objs.push({ tipo: 'retorno', x: N.inicio.x - 72, y: N.inicio.y, luz: 80 });
     if (cm.sacola?.area === id) this.objs.push({ tipo: 'sacola', x: cm.sacola.x, y: cm.sacola.y, luz: 70 });
-    this.mp?.mudouArea(id);
+    this.mp?.mudouArea(id); this.evento?.entrou?.(this, id);
     if (this.souDono()) this.povoar();
     aoEntrar(this, id, o);
     // onde o peregrino aparece
@@ -311,7 +313,7 @@ export class Caminho {
     this.quadroMed = (this.quadroMed ?? 0.016) * 0.95 + bruto * 0.05; if (!this.leve && this.T > 4 && this.quadroMed > 0.024) { this.leveT = (this.leveT || 0) + bruto; if (this.leveT > 2.5) this.leve = true; } else if (!this.leve) this.leveT = 0;
     const passos = Math.max(1, Math.ceil(bruto / 0.034)), dt = bruto / passos;
     // um erro num quadro não pode parar o jogo (nem a sala, para quem joga junto)
-    try { if (!document.hidden) { if ((!this.ui.blocking || this.cena) && !this.pausaGeral) { for (let i = 0; i < passos; i++) this.update(dt); } /* numa cena o mundo segue vivo por trás das falas; os controles já ficam presos */ else if (this.mp) this.updateAusente(dt * passos); this.mp?.tick(dt); this.telaJunta(dt); } this.render(); }
+    try { if (!document.hidden) { if ((!this.ui.blocking || this.cena) && !this.pausaGeral) { for (let i = 0; i < passos; i++) this.update(dt); } /* numa cena o mundo segue vivo por trás das falas; os controles já ficam presos */ else if (this.mp) this.updateAusente(dt * passos); this.mp?.tick(dt); this.evento?.tick?.(this, bruto); this.telaJunta(dt); } this.render(); }
     catch (e) { this.p = this.eu || this.p; if (!this.erroVisto) { this.erroVisto = true; console.error('[caminho]', e); } }
     this.raf = requestAnimationFrame(t => this.loop(t));
   }
@@ -445,7 +447,7 @@ export class Caminho {
     parent.postMessage({ peregrinosPos: { q: this.quadro, a: this.area, x: Math.round(p.x), y: Math.round(p.y), vw: Math.round(v.W / v.Z), hp: Math.max(0, Math.ceil(p.vida)), max: p.vidaMax, oleo: Math.round(p.oleo / this.oleoMax() * 100), nome: this.char.name || '', livre: !this.ui.blocking && !p.morto && this.fade < 0.5 } }, location.origin);
   }
   meioDoGrupo() { const hs = [this.eu, ...(this.mp ? this.mp.naArea().map(o => o.h) : [])]; let x0 = Infinity, x1 = -Infinity; for (const h of hs) { x0 = Math.min(x0, h.x); x1 = Math.max(x1, h.x); } return { x: (x0 + x1) / 2 }; }
-  get outros() { const r = []; if (this.mp) for (const o of this.mp.naArea()) if (!o.h.morto) r.push({ corpo: o.h, look: o.look, cls: o.cls, arma: o.arma, hab: o.hab, nome: o.nome, armaCor: o.armaCor, armaRar: o.armaRar }); return r; }
+  get outros() { const r = []; if (this.mp) for (const o of this.mp.naArea()) if (!o.h.morto) r.push({ corpo: o.h, look: o.look, cls: o.cls, arma: o.arma, hab: o.hab, nome: o.nome, armaCor: o.armaCor, armaRar: o.armaRar }); if (this.evento?.fantasmas) r.push(...this.evento.fantasmas(this)); return r; }
   async abrirSala(local) {
     if (this.mp) return this.mp.codigo;
     const { novoCodigo } = await import('./juntos.js');
@@ -1061,7 +1063,7 @@ export class Caminho {
       const rolo = this.objs.find(o => o.tipo === 'rolo' && o.cel === c);
       if (!rolo || rolo.feito) { c.vencida = true; return; }
       const lx = p.x - cx * CW * T; if (lx < 4 * T || lx > (CW - 4) * T) return;
-      this.emb = { c, onda: 0, total: (f.n >= 4 ? 3 : 2) + (this.cm.dif === 'fornalha' ? 1 : 0), t: 0.9 };
+      this.emb = { c, onda: 0, total: (f.ondas ?? (f.n >= 4 ? 3 : 2)) + (this.cm.dif === 'fornalha' ? 1 : 0), t: 0.9 };
       this.trancar(c, true); sfx('gate'); this.tremor(7); this.grito('Os vícios guardam o rolo'); music('batalha');
       return;
     }
@@ -1129,7 +1131,7 @@ export class Caminho {
   async estaEscrito(b) {
     this.p = this.eu;
     const f = this.def.fase;
-    const pacote = b.c.acusacoes || !f ? { acc: pick(ACUSACOES), falsas: shuffle(FALSAS.slice()).slice(0, 2) } : { q: this.sortearPergunta(f) };
+    const pacote = b.c.acusacoes || !f ? { acc: pick(this.def.sem?.acusacoes || ACUSACOES), falsas: shuffle(FALSAS.slice()).slice(0, 2) } : { q: this.sortearPergunta(f) };
     let ok;
     if (this.mp?.acompanhado()) { this.congela = true; ok = pacote.q ? await this.mp.votar(pacote.q, 'ESTÁ ESCRITO · ' + b.d.nome, ['Está escrito! O chefe está quebrantado.', 'O chefe se fortalece com o engano.']) : await this.mp.quizJunto(pacote, b); this.congela = false; this.respostaDoGrupo(ok, true); this.mp.ev('qf', { ok }); }
     else { ok = await this.perguntaDoChefe(b, pacote); this.respostaDoGrupo(ok, true); }
@@ -1177,6 +1179,7 @@ export class Caminho {
     cm.chefes[b.id] = (cm.chefes[b.id] || 0) + 1; marco('chefe:' + b.id); corcaVenceu(this, b); c.data.stats.bosses = c.data.stats.bosses || {}; c.data.stats.bosses[b.id] = (c.data.stats.bosses[b.id] || 0) + 1;
     this.p.vida = this.p.vidaMax;
     await this.ui.dialog({ nome: b.d.nome + ' caiu', texto: b.d.derrota || 'A sombra se desfaz.', acoes: [{ label: 'Amém' }] });
+    if (this.evento) { cm.feitas[this.area] = true; this.salvar(); await this.evento.venceu(this, b); return; } // a célula: sem prêmios nem achados, a próxima página já espera
     if (d.fase) { await this.faseCompleta(); conviteOpiniao(this); }
     else if (d.mundo) { const m = MUNDO[d.mundo]; this.xp(300); this.pontos(1500); await this.ganhar(m.premio); }
     else if (d.conselho) { this.xp(600); this.pontos(3000); const primeira = !cm.zelo; cm.zelo = true; c.data.gold += primeira ? 600 : 150; this.salvar();
@@ -1278,6 +1281,7 @@ export class Caminho {
     for (const ob of this.objs) {
       const dd = Math.hypot((ob.vv ? ob.vv.x : ob.x) - p.x, ob.y - 20 - (p.y - 20)); /* morador que anda: fala-se com ele onde ele está */
       if (ob.tipo === 'segredo' && dd < 30) { ob.fora = true; this.partilhar('seg', ob); this.efeito('coleta', ob.x, ob.y - 10); this.cm.seg[this.area].push(ob.n); this.ganhar(ob.item); continue; }
+      if (ob.tipo === 'frutoCel' && dd < 36 && !ob.pego && !ob.pedido) { ob.pedido = true; this.evento?.pegarFruto(this, ob); continue; } // fruto da célula: o primeiro que chega leva, para todos
       if (ob.tipo === 'fruto' && dd < 30 && !(ob.volta > this.T)) { ob.volta = this.T + 50; this.partilhar('fruto', ob); sfx('coin'); this.efeito('coleta', ob.x, ob.y - 6); ganharItem(this, 'figo', 1); if (p.vida < p.vidaMax) { p.vida++; this.textoEm(p.x, p.y - 60, 'figo: +1 fôlego', '#B8E6A0', 12); } else { this.char.data.gold += 4; this.ganharOleo(12); this.textoEm(p.x, p.y - 60, 'figo: +4 denários', '#FFD23F', 12); } const st = this.char.data.stats; st.figos = (st.figos || 0) + 1; if (st.figos === 12) this.ovo('figos', 'Zaqueu subiu num sicômoro, a figueira brava (Lc 19:4). Doze figos colhidos.'); continue; }
       if (ob.tipo === 'flor' && dd < 26 && this.cm.flores?.[ob.x] !== diaDe(this)) { this.cm.flores = this.cm.flores || {}; this.cm.flores[ob.x] = diaDe(this); sfx('coin'); this.efeito('coleta', ob.x, ob.y - 6); ganharItem(this, 'flor', 1, p.x, p.y - 60); }
       if (ob.tipo === 'sacola' && dd < 30) { ob.fora = true; const s = this.cm.sacola; if (s) { this.char.data.gold += s.gold; this.textoEm(p.x, p.y - 56, '+' + s.gold + ' denários recuperados', '#FFD23F'); sfx('coin'); this.cm.sacola = null; } continue; }
@@ -1319,10 +1323,11 @@ export class Caminho {
     switch (ob.tipo) {
       case 'rolo': {
         const trecho = f.estudo?.[ob.n] ? '\n\n' + f.estudo[ob.n] : '';
-        await this.ui.dialog({ nome: '📜 Rolo ' + (ob.n + 1) + ' de 3 · ' + f.ref, texto: (ob.n === 0 ? f.licao : ob.n === 1 ? '“' + f.versiculo.texto + '”\n— ' + f.versiculo.ref : f.reflexao ? 'PARA REFLETIR\n' + f.reflexao : f.licao) + trecho, acoes: [{ label: ob.feito ? 'Fechar' : 'Li. Quero responder' }] });
+        await this.ui.dialog({ nome: '📜 Rolo ' + (ob.n + 1) + ' de ' + (d.rolos || 3) + ' · ' + f.ref, texto: (ob.n === 0 ? f.licao : ob.n === 1 ? '“' + f.versiculo.texto + '”\n— ' + f.versiculo.ref : f.reflexao ? 'PARA REFLETIR\n' + f.reflexao : f.licao) + trecho, acoes: [{ label: ob.feito ? 'Fechar' : 'Li. Quero responder' }] });
         if (ob.feito || !this.running) return;
         const q = this.sortearPergunta(f);
         const fbR = ['Certo! O selo deste rolo se acende.', 'Releia com calma: o rolo se fecha por alguns instantes.'], titR = 'Rolo ' + (ob.n + 1) + ' · ' + f.ref;
+        if (this.evento?.quizRolo) { await this.evento.quizRolo(this, q, ob, titR); return; } // a célula: a sala inteira vota (src/celula/evento.js)
         const ok = this.mp?.acompanhado() ? await this.mp.votar(q, titR, fbR) : await this.ui.quiz({ ...q, tempo: 10, fb: fbR }, titR); // juntos, a resposta é por votação
         if (ok) this.mp?.ev('ap', { tp: 'rolo', n: ob.n });
         this.revisao(q, ok);
@@ -1508,6 +1513,7 @@ export class Caminho {
   balcao(id, padrao) { const k = 'b-' + id, n = this.cm.falas[k] = (this.cm.falas[k] || 0) + 1; return falaDaVila(id, n, 'balcao') || padrao; }
   menu(aba) {
     if (this.ui.blocking) return;
+    if (this.evento) return this.evento.menu(this, aba);
     if (aba === 'mapa' && !this.temMapa()) return this.ui.toast('Ainda sem mapa: fale com o Velho Peregrino.', 3500);
     abrirMenu(this, aba);
   }
@@ -1533,6 +1539,7 @@ export class Caminho {
   }
 
   salvar() {
+    if (this.evento) return this.evento.salvar(this);
     const c = this.char; c.data.hp = null; c.week_id = c.week_id || weekId();
     return net.saveChar(c);
   }

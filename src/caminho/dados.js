@@ -1,7 +1,7 @@
 import { FALAS } from '../content/falas-caminho.js';
 import { VILA } from '../content/vila.js';
 // Dados do Caminho: a Armadura de Deus (habilidades), as relíquias, os temas das áreas e o mapa do mundo.
-import { TODAS } from '../content/index.js';
+import { TODAS, EVENTOS } from '../content/index.js';
 import { DECISOES_CORINTO } from '../content/decisoes-corinto.js';
 
 // A Armadura de Deus (Ef 6:13-17) é a progressão: cada peça muda o que o peregrino consegue fazer.
@@ -299,7 +299,7 @@ SARDES[4].objs.push({ tipo: 'portal', col: 26, mundo: 'ladrao', oculto: true, ch
 // os moradores do Refúgio (para a sinagoga por dentro saber quem é quem)
 for (const c of REFUGIO) { c.cx += RX; for (const o of c.objs) if (o.patrulha) o.patrulha = o.patrulha.map(x => x + RX * 30 * 32); }
 export const MORADORES = REFUGIO.flatMap(c => c.objs.filter(o => o.tipo === 'morador' && !o.patrulha));
-export function semanaDe(id) { return TODAS.find(s => s.id === id); }
+export function semanaDe(id) { return TODAS.find(s => s.id === id) || EVENTOS.find(s => s.id === id); }
 
 // Descrição de uma área para o gerador de níveis. ids: "refugio", "semana-01:3", "mundo:golias"
 export function areaDef(id) {
@@ -415,8 +415,9 @@ export function areaDef(id) {
   if (primeira) segredos.push('pedra');
   if (f.n === 3 || f.n === 5) segredos.push('mana');
   const estacoes = f.estacoes || (primeira ? DECISOES_CORINTO[f.n] : undefined);
-  return { id, sem, fase: f, nome: f.nome, sub: f.ref, tema: TEMA_FASE[f.tema] || f.tema, chefe: f.chefe, seed: id, cols: estacoes ? 8 : 7,
-    rolos: 3, marca: MARCAS[f.chefe], estacoes, npcs: Object.values(f.npcs || {}).map(n => ({ ...n, falas: FALAS[sid]?.[f.n]?.[n.nome] || n.falas })), inimigos: f.inimigos, segredos, arena: arenaDe(f.chefe),
+  // uma semana pode pedir páginas mais curtas (rolos = câmaras), sem tesouro e sem segredos (a fase da célula)
+  return { id, sem, fase: f, nome: f.nome, sub: f.ref, tema: TEMA_FASE[f.tema] || f.tema, chefe: f.chefe, seed: id, cols: estacoes ? 8 : 7, evento: !!sem.evento,
+    rolos: f.rolos ?? 3, tesouro: f.tesouro, marca: MARCAS[f.chefe], estacoes, npcs: Object.values(f.npcs || {}).map(n => ({ ...n, falas: FALAS[sid]?.[f.n]?.[n.nome] || n.falas })), inimigos: f.inimigos, segredos: f.segredos || segredos, arena: arenaDe(f.chefe),
     segTipos: f.n === 1 && primeira ? ['lampada'] : ['lampada', 'lampada', 'firmeza', 'asas'] };
 }
 import { CHEFES } from './chefes.js';
@@ -430,6 +431,7 @@ export const DIFICULDADES = {
   facil: { nome: 'Fácil', desc: 'Focado na história: seus golpes ferem mais, chefes e monstros têm menos vida, avisos mais longos e dois fôlegos a mais.', hp: 1.3, ritmo: 1, aviso: 1.2, vel: 0.9, vidas: 2, oleo: 1.3, dano: 1.5, vidaVicio: 0.6, semDobro: true },
   peregrino: { nome: 'Peregrino', desc: 'Para conhecer a história: um fôlego a mais e avisos um pouco mais longos. Ainda exige atenção.', hp: 1.7, ritmo: 0.92, aviso: 1.05, vel: 1, vidas: 2, oleo: 1.2, semDobro: true },
   provacao: { nome: 'Original', desc: 'O jogo como ele é, e é difícil pra caramba: chefes rápidos, que agarram quem fica na cabeça deles e ferem em dobro na última fase. Espere morrer algumas vezes.', hp: 3, ritmo: 0.64, aviso: 0.74, vel: 1.3, vidas: 0, oleo: 1 },
+  celula: { nome: 'Célula', desc: 'Fácil, mas não fácil demais: chefes com menos vida e avisos mais longos, dois fôlegos a mais. Ainda é preciso aprender os golpes.', hp: 1.45, ritmo: 0.9, aviso: 1.12, vel: 0.95, vidas: 2, oleo: 1.25, dano: 1.25, vidaVicio: 0.7, semDobro: true },
   hard: { nome: 'Hard', desc: 'Você recebe o DOBRO de dano. Chefes com mais vida, mais rápidos, que se curam uma vez quando quase caem, e a porta deles se abre em silêncio, sem brilho nem aviso: é preciso procurar.', hp: 3.8, ritmo: 0.56, aviso: 0.64, vel: 1.4, vidas: 0, oleo: 0.9, ferida: 2, vidaVicio: 1.25, escondido: true, cura: 0.3 },
   fornalha: { nome: 'Fornalha', desc: 'Sete vezes mais quente (Dn 3:19): chefes muito rápidos, avisos curtos e um fôlego a menos.', hp: 3.8, ritmo: 0.5, aviso: 0.6, vel: 1.45, vidas: -1, oleo: 0.9 }
 };

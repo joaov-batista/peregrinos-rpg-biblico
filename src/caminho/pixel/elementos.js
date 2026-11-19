@@ -6,7 +6,8 @@ export const ELEMENTO_DO_CHEFE = {
   mamom: 'moedas', procrastinacao: 'areia', mentira: 'sombra', imoralidade: 'veneno', satanas: 'fogo',
   fuga: 'vento', pavor: 'raio', desespero: 'agua', violencia: 'pedra', ressentimento: 'fogo',
   encantadores: 'magia', jugo: 'pedra', babilonia: 'pedra', fera: 'sombra', soberba: 'luz',
-  golias: 'pedra', behemote: 'pedra', leviata: 'agua'
+  golias: 'pedra', behemote: 'pedra', leviata: 'agua',
+  rejeicao: 'sombra', interesseiro: 'moedas', condenacao: 'fogo', covardia: 'raio', fracasso: 'fogo' // a fase da célula
 };
 const PAL = {
   fogo: ['#5A1410', '#C9281F', '#FF6A1F', '#FFB53A', '#FFF1A8'], raio: ['#1E2A5A', '#5A7AE8', '#9FC8FF', '#E8F4FF', '#FFFFFF'],

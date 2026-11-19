@@ -127,6 +127,20 @@ CHEFES.ladrao = { ...CHEFES.mentira, vida: 1600, dano: 2, pressa: 0.55, arena: '
   fases: CHEFES.mentira.fases.map(f => ({ ...f, golpes: f.golpes.map(nl), ...(f.grito ? { grito: 'QUEM VIGIA? NINGUÉM VIGIA!' } : {}) })),
   dica: '"Se não vigiares, virei como ladrão" (Ap 3:3). Ele se divide em vultos: erga a lâmpada e ache o verdadeiro. Não fique parado no escuro.' };
 ESTILOS.ladrao = { ...ESTILOS.mentira, golpes: Object.fromEntries(Object.entries(ESTILOS.mentira.golpes).map(([k, f]) => [nl(k), function (...a) { return f.apply(this, a); }])) }; // os mesmos enganos, em golpes próprios dele
+// A fase da célula, "Jesus me escolheu" (content/celula-escolheu.js): cinco chefes com golpes de estilos já conhecidos,
+// arte própria (pixel/chefes-g.js) e menos fases, para uma luta curta mas que ainda pede atenção.
+export const CELULA_DE = { rejeicao: 'desprezo', interesseiro: 'mamom', condenacao: 'jugo', covardia: 'pavor', fracasso: 'satanas' };
+const celula = (id, extra) => { const base = CHEFES[CELULA_DE[id]], usa = new Set(extra.fases.flatMap(f => f.golpes)); CHEFES[id] = { ...base, ...extra, golpes: Object.fromEntries(Object.entries(base.golpes).filter(([g]) => usa.has(g))) }; ESTILOS[id] = ESTILOS[CELULA_DE[id]]; };
+celula('rejeicao', { vida: 430, fases: [F(1, ['calaTe', 'dedos', 'empurrao']), F(0.5, ['atropelo', 'calaTe', 'empurrao', 'dedos'], { grito: 'NINGUÉM ESCOLHEU VOCÊ!' })],
+  dica: 'A voz rasteira se pula; a voz alta passa por cima de quem fica no chão. No atropelo, corra para o vão livre. Cada golpe enche a luz no fim da estrada: cheia, a Rejeição fica sem defesa. Ele te escolheu (Jo 15:16)!' });
+celula('interesseiro', { vida: 400, fases: [F(1, ['cofre', 'moedao', 'preco']), F(0.5, ['ganancia', 'moedao', 'preco', 'cofre'], { grito: 'SÓ TE AMO SE VOCÊ PAGAR!' })],
+  dica: 'Ele corre atrás das moedas que caem e se recupera com elas: apanhe-as antes (pesam) ou bata nele enquanto se abaixa. O amor de Jesus não cobra nada (Rm 5:8).' });
+celula('condenacao', { vida: 460, fases: [F(1, ['chicote', 'tijolos', 'cangalha']), F(0.5, ['amarras', 'chicote', 'tijolos', 'cangalha'], { grito: 'VOCÊ NUNCA VAI MUDAR!' })],
+  dica: 'Ela luta à distância do chicote: chegue perto. Se a corrente prender, ataque: a corrente cede. Já não há condenação para quem está em Cristo (Rm 8:1).' });
+celula('covardia', { vida: 400, fases: [F(1, ['relampago', 'granizo', 'rajada']), F(0.5, ['vagalhao', 'relampago', 'granizo', 'rajada'], { grito: 'NÃO SEI DO QUE VOCÊ ESTÁ FALANDO!' })],
+  dica: 'Ela pisca de um canto a outro do céu. O raio cai no meio e depois dos lados. Quando a onda vier, suba nas plataformas. O Espírito tira de nós a covardia (At 2:14).' });
+celula('fracasso', { vida: 620, fases: [F(1, ['dardos', 'acusacao', 'leao']), F(0.66, ['abismo', 'dardos', 'cadeias', 'leao'], { grito: 'DEUS ERROU COM VOCÊ!' }), F(0.33, ['acusacao', 'cadeias', 'abismo', 'leao', 'dardos'], { grito: 'VOCÊ NÃO É CAPAZ!', escuro: 0.25 })],
+  dica: 'Os dardos chegam na sua altura: erga a lâmpada na hora certa. Quando o chão vira abismo, suba nas plataformas. Nas acusações, responda com o que está escrito. Deus não errou ao te escolher!' });
 
 
 const golpeDe = (b, nome) => { const def = b.c.golpes[nome]; return ESTILOS[b.id]?.golpes[def?.fn || nome]; };

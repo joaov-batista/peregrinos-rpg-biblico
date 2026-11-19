@@ -10,3 +10,4 @@ import './input.test.js';
 import './jonas.test.js';
 import './caminho.test.js';
 import './chefes.test.js';
+import './celula.test.js';

@@ -14,10 +14,11 @@ const PADRAO = {
   atmosfera: true,       // névoa, partículas, cor e vinheta por cima do mundo (game/atmos.js)
   cinemas: true,         // cutscenes narradas (content/cinematicas.js)
   vozNavegador: true,    // sem o mp3 da narração, o aparelho lê a legenda em voz alta
-  texto: 1               // tamanho da interface: 1, 1.15 ou 1.3
+  texto: 1,              // tamanho da interface: 1, 1.15 ou 1.3
+  alphaControles: 1      // quão visíveis são os botões e o direcional de toque (0.15 a 1): menos = mais transparente
 };
 export const config = { ...PADRAO, ...store.get('peregrinos.config', {}) };
 export function setConfig(k, v) { config[k] = v; store.set('peregrinos.config', config); aplicarTexto(); }
 // tamanho do texto/interface (combina com o zoom do navegador, ver zoom.js)
-export function aplicarTexto() { if (typeof document === 'undefined') return; document.documentElement.style.setProperty('--ui-esc', String(config.texto || 1)); }
+export function aplicarTexto() { if (typeof document === 'undefined') return; document.documentElement.style.setProperty('--ui-esc', String(config.texto || 1)); document.documentElement.style.setProperty('--ctl-alpha', String(Math.max(0.15, Math.min(1, config.alphaControles ?? 1)))); }
 aplicarTexto();

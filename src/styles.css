@@ -268,7 +268,9 @@ body:not(.touch) #toasts { bottom: calc(var(--safe-b) + 205px); }
 body:not(.touch) #aInteract span::before { content: "[E] "; opacity: .7; }
 #stick { position: fixed; width: 116px; height: 116px; margin: -58px 0 0 -58px; border-radius: 50%; z-index: 9; pointer-events: none; opacity: 0; transition: opacity .15s;
   background: radial-gradient(circle, rgba(26,17,10,.25), rgba(26,17,10,.5)); border: 2px solid rgba(232,181,79,.55); box-shadow: 0 0 0 2px rgba(26,17,10,.5); }
-#stick.on { opacity: 1; }
+#stick.on { opacity: var(--ctl-alpha, 1); }
+/* Ajustes › Transparência dos controles: os botões de toque podem ficar quase invisíveis (o toque continua valendo) */
+body.touch #actions { opacity: var(--ctl-alpha, 1); }
 #knob { position: absolute; left: 50%; top: 50%; width: 50px; height: 50px; margin: -25px 0 0 -25px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #FFF0C2, var(--gold) 60%, #A86E22); box-shadow: 0 0 0 2px var(--wood-0), 0 3px 8px rgba(0,0,0,.4); }
 
 /* ---------- Chat ---------- */
