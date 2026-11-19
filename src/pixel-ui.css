@@ -423,3 +423,56 @@ html.remake .inv-q.esp, .inv-q.esp { box-shadow: inset 0 0 0 2px #7FD0A0; margin
 
 /* casa de oração: não se pula nem se golpeia lá dentro */
 body.reverente #actions [data-act="dodge"], body.reverente #actions [data-act="attack"], body.reverente #actions [data-act="lock"], body.reverente #actions [data-act="skill"] { visibility: hidden !important; }
+
+/* ===== Telas de abertura: título grande e menu à esquerda, a cena pintada na direita (src/ui/abertura.js) ===== */
+html.remake { --ab-cor: #FFE9A8; --ab-sombra: #6A3A10; --ab-tinta: #05060B; --ab-sub: #F1E9D2; }
+html.remake[data-abertura="lamparina"] { --ab-cor: #F2A65A; --ab-sombra: #5A2410; --ab-sub: #E8C8A0; }
+html.remake[data-abertura="getsemani"] { --ab-cor: #EEF3FF; --ab-sombra: #2A3C86; --ab-sub: #B8C8F0; }
+html.remake[data-abertura="jerusalem"] { --ab-cor: #F04A4A; --ab-sombra: #4A0E1E; --ab-sub: #FFD878; }
+html.remake[data-abertura="cais"] { --ab-cor: #F4E6C6; --ab-sombra: #141A3A; --ab-sub: #F4E6C6; }
+html.remake[data-abertura="ponte"] { --ab-cor: #FFF3DA; --ab-sombra: #7A4A24; --ab-sub: #5A3418; }
+html.remake #screens:not(.creating) .screen { align-items: flex-start; justify-content: center; text-align: left; padding: max(5vh, var(--safe-t)) 16px 5vh max(6vw, 24px); gap: 10px; }
+html.remake #screens:not(.creating) .screen > * { max-width: min(520px, 92vw); }
+html.remake #screens:not(.creating) .logo { text-align: left; margin: 0 0 1vh; }
+html.remake #screens:not(.creating) .logo h1 { font-family: 'Jersey 20', 'Pixelify Sans', monospace !important; font-weight: 400 !important; font-size: clamp(56px, 10.5vw, 132px); line-height: .86; letter-spacing: .02em; padding-left: 0; color: var(--ab-cor) !important;
+  text-shadow: 0 5px 0 var(--ab-sombra), 4px 5px 0 var(--ab-sombra), -4px 5px 0 var(--ab-sombra), 0 9px 0 var(--ab-tinta), 4px 0 0 var(--ab-tinta), -4px 0 0 var(--ab-tinta), 0 -4px 0 var(--ab-tinta), 4px 9px 0 var(--ab-tinta), -4px 9px 0 var(--ab-tinta) !important; }
+html.remake #screens:not(.creating) .logo .floreio { display: none; }
+html.remake #screens:not(.creating) .logo p { text-align: left; margin-top: 14px; padding-left: 4px; letter-spacing: .42em; font-size: 22px; color: var(--ab-sub); text-shadow: 2px 2px 0 var(--ab-tinta); }
+html.remake[data-abertura="jerusalem"] #screens:not(.creating) .logo p::before { content: "✦ "; color: #FFD878; letter-spacing: 0; }
+html.remake #screens:not(.creating) .week { text-align: left; color: var(--px-osso); opacity: .85; font-size: 18px; margin: 0 0 2vh 4px; text-shadow: 2px 2px 0 var(--ab-tinta); }
+html.remake .abertura .card.auth:not(:has(input)) { align-items: flex-start !important; padding: 0 !important; }
+html.remake .abertura .btn, html.remake .abertura .btn.gold, html.remake .abertura .btn.install, html.remake .abertura .porta-btn { text-align: left; justify-content: flex-start; padding: 4px 10px 4px 30px !important; font-size: 30px !important; color: var(--px-osso) !important; background: none !important; box-shadow: none !important; border: 0 !important; min-height: 42px; }
+html.remake .abertura .btn:hover:not(:disabled), html.remake .abertura .btn:focus-visible, html.remake .abertura .porta-btn:hover, html.remake .abertura .porta-btn:focus-visible { color: var(--ab-cor) !important; }
+html.remake .abertura .porta-btn { position: relative; }
+html.remake .abertura .porta-btn::before { content: "◆"; position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-size: 16px; color: var(--ab-cor); opacity: 0; }
+html.remake .abertura .porta-btn:hover::before, html.remake .abertura .porta-btn:focus-visible::before { opacity: 1; }
+html.remake .abertura .btn::before { background: var(--ab-cor); box-shadow: 0 -6px var(--ab-cor), 0 -3px var(--ab-cor), 0 3px var(--ab-cor), 0 6px var(--ab-cor), 3px -3px var(--ab-cor), 3px 0 var(--ab-cor), 3px 3px var(--ab-cor), 6px 0 var(--ab-cor); }
+html.remake .abertura .card.auth:not(:has(input)) .btn::before { opacity: 1; animation: pxSeta .5s steps(2) infinite; }
+/* baixar o jogo: uma linha discreta embaixo, como "créditos" no menu */
+html.remake .abertura .tela-div.baixar { background: none !important; border: 0 !important; border-image: none !important; box-shadow: none !important; padding: 0 !important; margin-top: 3vh; align-items: flex-start; display: flex; }
+html.remake .abertura .tela-div.baixar > span { color: var(--px-apagado); font-size: 16px; letter-spacing: .16em; text-transform: uppercase; margin: 0 0 2px 4px; text-shadow: 2px 2px 0 var(--ab-tinta); }
+html.remake .abertura .baixar-btns { display: flex; gap: 0; flex-wrap: wrap; }
+html.remake .abertura .baixar-btns .porta-btn { font-size: 20px !important; min-height: 30px; padding: 2px 10px 2px 24px !important; color: var(--px-apagado) !important; text-shadow: 2px 2px 0 var(--ab-tinta); }
+html.remake .abertura .baixar-btns .porta-btn::before { font-size: 12px; left: 6px; }
+html.remake .abertura .baixar-ajuda { background: rgba(5, 6, 11, .82); padding: 8px 12px; border-left: 3px solid var(--ab-cor); text-align: left; }
+html.remake[data-abertura="ponte"] .abertura .tela-div.baixar > span, html.remake[data-abertura="ponte"] .abertura .baixar-btns .porta-btn, html.remake[data-abertura="ponte"] #screens:not(.creating) .week { color: #3A2214 !important; text-shadow: 1px 1px 0 rgba(255, 240, 210, .6) !important; }
+html.remake[data-abertura="ponte"] .abertura .btn, html.remake[data-abertura="ponte"] .abertura .btn.gold { color: #2A1608 !important; text-shadow: 2px 2px 0 rgba(255, 240, 210, .7) !important; }
+html.remake[data-abertura="ponte"] .abertura .btn:hover:not(:disabled) { color: #8A3A10 !important; }
+html.remake[data-abertura="ponte"] { --ab-tinta: #3A2214; }
+/* celular em pé: título no alto, menu embaixo, a cena no meio */
+@media (max-aspect-ratio: 1/1) {
+  html.remake #screens:not(.creating) .screen { justify-content: space-between; padding: max(9vh, var(--safe-t)) 22px max(6vh, 24px); }
+  html.remake #screens:not(.creating) .logo h1 { font-size: clamp(54px, 19vw, 96px); }
+  html.remake #screens:not(.creating) .week { display: none; }
+}
+@media (max-height: 520px) and (min-aspect-ratio: 1/1) {
+  html.remake #screens:not(.creating) .logo h1 { font-size: clamp(40px, 15vh, 76px); }
+  html.remake #screens:not(.creating) .logo p { font-size: 16px; margin-top: 8px; }
+  html.remake .abertura .btn, html.remake .abertura .btn.gold { font-size: 24px !important; min-height: 34px; }
+}
+html.remake .abertura .btn, html.remake .abertura .porta-btn { outline: 0 !important; }
+html.remake #screens .abertura button:focus-visible, html.remake body.pad #screens .abertura button:focus { outline: 0 !important; }
+/* menu como nas capas de jogo: itens em caixa alta, a seta laranja no escolhido */
+html.remake .abertura .card.auth .btn, html.remake .abertura .card.auth .btn.gold { text-transform: uppercase; letter-spacing: .08em; font-size: 26px !important; }
+html.remake .abertura .card.auth .btn::before { content: "▶" !important; background: none !important; box-shadow: none !important; width: auto !important; height: auto !important; color: #F2A03A; font-size: 16px; line-height: 1; margin-top: -8px !important; left: 6px !important; }
+html.remake[data-abertura="cais"] #screens:not(.creating) .logo h1 { text-shadow: 0 5px 0 #6A4A30, 4px 5px 0 #6A4A30, -4px 5px 0 #6A4A30, 0 9px 0 #0E1230, 4px 0 0 #0E1230, -4px 0 0 #0E1230, 0 -4px 0 #0E1230, 4px 9px 0 #0E1230, -4px 9px 0 #0E1230, 0 14px 18px rgba(0,0,0,.45) !important; }

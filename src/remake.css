@@ -130,7 +130,7 @@ html.remake .sync-conflict b { display: block; font-family: var(--font-title); l
 html.remake .sync-conflict p { font-size: 14px; line-height: 1.45; margin-bottom: 8px; }
 html.remake .card.auth { background: rgba(7, 8, 14, .6); backdrop-filter: blur(3px); padding: 18px; }
 html.remake .logo .cross { display: none; }
-html.remake #ceu { image-rendering: pixelated; }
+html.remake #ceu { image-rendering: pixelated; filter: none; }
 @media (max-width: 560px) { html.remake .char-card { flex-wrap: wrap; } html.remake .char-card .col { width: 100%; } }
 
 /* ---------- abertura: título que brilha, floreio e menu em lista (sem caixas) ---------- */

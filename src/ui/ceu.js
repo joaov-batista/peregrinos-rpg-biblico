@@ -1,11 +1,14 @@
 // Fundo das telas iniciais: céu da aurora animado. Raios de sol saindo de trás dos montes, nuvens passando,
 // partículas de luz subindo, a Cidade de Refúgio ao longe e pássaros. Roda só enquanto as telas iniciais estão abertas.
 import { hash, TAU } from '../util.js';
+import { desenharAbertura, sortearCena } from './abertura.js';
+let cenaAbertura = '';
 
 let cv = null, raf = 0, t0 = 0;
 export function ligarCeu() {
   if (cv) return;
   cv = document.createElement('canvas'); cv.id = 'ceu';
+  if (!cenaAbertura) cenaAbertura = sortearCena(); document.documentElement.dataset.abertura = cenaAbertura;
   document.body.prepend(cv);
   t0 = performance.now();
   // agenda o próximo quadro antes de desenhar: um erro num quadro não pode parar o céu
@@ -53,7 +56,7 @@ function desenharPixel(c, T) {
   const grad = G2.createRadialGradient(c.width / 2, c.height * 0.42, 0, c.width / 2, c.height * 0.42, c.height * 0.6); grad.addColorStop(0, 'rgba(5,6,11,.28)'); grad.addColorStop(1, 'rgba(5,6,11,0)'); G2.fillStyle = grad; G2.fillRect(0, 0, c.width, c.height);
 }
 function desenhar(c, T) {
-  if (document.documentElement.classList.contains('remake')) return desenharPixel(c, T);
+  if (document.documentElement.classList.contains('remake')) return desenharAbertura(c, T, cenaAbertura);
   const dpr = Math.min(2, devicePixelRatio || 1), W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr);
   if (!W || !H) return; // janela ainda sem tamanho (aba escondida)
   if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
