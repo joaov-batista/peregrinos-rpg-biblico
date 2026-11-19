@@ -7,18 +7,18 @@ const KEYMAP = {
 };
 // No Caminho, o teclado segue o padrão de Hollow Knight: setas andam, Z pula, X golpeia, C é o passo,
 // Padrão: seta para cima pula, Z e X golpeiam, C é o passo, A (segurar) ora, D ergue a lâmpada, S solta o especial, E interage.
-const KEYMAP_HK = { ArrowUp: 'dodge', KeyZ: 'attack', KeyX: 'attack', KeyC: 'dash', KeyA: 'botija', KeyD: 'defend', KeyS: 'skill', KeyF: 'skill',
+const KEYMAP_HK = { KeyV: 'devagar', ArrowUp: 'dodge', KeyZ: 'attack', KeyX: 'attack', KeyC: 'dash', KeyA: 'botija', KeyD: 'defend', KeyS: 'skill', KeyF: 'skill',
   KeyE: 'interact', Enter: 'interact', KeyQ: 'item2', KeyR: 'item2', Tab: 'map', KeyM: 'map', KeyI: 'menu', Escape: 'escape' };
 // Modo WASD + mouse (menu › Ajustes): A D andam, W ou Espaço pula, S abaixa, Q ora, E ergue a lâmpada, Shift é o passo,
 // botão esquerdo do mouse golpeia e o direito solta o especial. F interage, R usa o dom.
-const KEYMAP_WASD = { KeyW: 'dodge', Space: 'dodge', ArrowUp: 'dodge', ShiftLeft: 'dash', ShiftRight: 'dash', KeyQ: 'botija', KeyE: 'defend', KeyF: 'interact', Enter: 'interact',
+const KEYMAP_WASD = { KeyC: 'devagar', KeyW: 'dodge', Space: 'dodge', ArrowUp: 'dodge', ShiftLeft: 'dash', ShiftRight: 'dash', KeyQ: 'botija', KeyE: 'defend', KeyF: 'interact', Enter: 'interact',
   KeyR: 'item2', KeyJ: 'attack', KeyK: 'skill', Tab: 'map', KeyM: 'map', KeyI: 'menu', Escape: 'escape' };
 const MOVE_WASD = { KeyW: [0, -1], KeyS: [0, 1], KeyA: [-1, 0], KeyD: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
 export const wasd = () => config.esquema !== 'setas'; // WASD + mouse é o padrão; setas + Z X C fica como opção
 const base = () => wasd() ? KEYMAP_WASD : KEYMAP_HK;
 const moveHK = () => wasd() ? MOVE_WASD : MOVE_HK;
 // teclas escolhidas pelo jogador (menu › Ajustes › Teclas): { ação: código da tecla }
-export const ACOES_TECLA = [['dodge', 'Pular'], ['attack', 'Golpear'], ['dash', 'Passo pronto'], ['botija', 'Orar (alma)'], ['defend', 'Lâmpada (vela)'], ['skill', 'Especial'], ['item2', 'Dom'], ['interact', 'Ler e falar']];
+export const ACOES_TECLA = [['dodge', 'Pular'], ['attack', 'Golpear'], ['dash', 'Passo pronto'], ['botija', 'Orar (alma)'], ['defend', 'Lâmpada (vela)'], ['skill', 'Especial'], ['item2', 'Dom'], ['interact', 'Ler e falar'], ['devagar', 'Andar devagar']];
 export function teclaDe(acao) { const B = base(); return config.teclas?.[acao] || Object.keys(B).find(k => B[k] === acao); }
 function mapaHK() {
   const t = config.teclas; if (!t || !Object.keys(t).length) return base();

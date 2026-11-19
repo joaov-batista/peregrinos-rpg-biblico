@@ -91,9 +91,9 @@ export class Caminho {
     this.botao = h('button', { id: 'cmMenu', 'aria-label': 'Menu', title: 'Menu (Esc)', onclick: () => this.menu() }, '☰');
     document.body.append(this.botao);
     this.padAntes = input.padAcoes; input.padAcoes = { menu: () => this.menu(), mapa: () => this.menu('mapa') };
-    for (const [act, nome] of Object.entries({ dodge: 'Pular', lock: 'Passo', defend: 'Lâmpada', botija: 'Orar', skill: CLASSES[char.cls]?.skill.nome || 'Verso', attack: 'Golpe' })) { const b = document.querySelector(`[data-act="${act}"]`); if (b) { b.dataset.name = nome; b.title = nome; } }
+    for (const [act, nome] of Object.entries({ devagar: 'Devagar', dodge: 'Pular', lock: 'Passo', defend: 'Lâmpada', botija: 'Orar', skill: CLASSES[char.cls]?.skill.nome || 'Verso', attack: 'Golpe' })) { const b = document.querySelector(`[data-act="${act}"]`); if (b) { b.dataset.name = nome; b.title = nome; } }
     this.icones = [];
-    for (const [act, simb] of Object.entries({ dodge: '⤒', lock: '»', defend: '🪔', botija: '🙏' })) { const b = document.querySelector(`[data-act="${act}"]`); if (b) { this.icones.push([b, [...b.childNodes], b.hidden]); b.replaceChildren(this.pixel ? iconePx({ dodge: 'pular', lock: 'passo', defend: 'lampada', botija: 'orar' }[act]) : simb); b.hidden = false; } }
+    for (const [act, simb] of Object.entries({ devagar: '🚶', dodge: '⤒', lock: '»', defend: '🪔', botija: '🙏' })) { const b = document.querySelector(`[data-act="${act}"]`); if (b) { this.icones.push([b, [...b.childNodes], b.hidden]); b.replaceChildren(this.pixel ? iconePx({ devagar: 'devagar', dodge: 'pular', lock: 'passo', defend: 'lampada', botija: 'orar' }[act]) : simb); b.hidden = false; } }
     if (this.pixel) this.botao.replaceChildren(iconePx('menu', 22));
     const v0 = this.cm.visto || {}; // quem chega pela primeira vez (ou saiu no meio do treino) começa no Bosque do Treino, antes do Refúgio
     const novo = !v0.intro || (v0.tut != null && v0.tut < PASSOS.length); /* quem chega começa na pedra Ebenézer da Praça do poço; o treino é a trilha a oeste */
@@ -334,6 +334,8 @@ export class Caminho {
     if (input.consume('menu') || input.consume('escape')) this.menu();
     if (input.consume('map')) this.menu('mapa');
     c.dom = input.consume('item2'); for (const a of ['mount', 'chat']) input.consume(a);
+    if (input.consume('devagar')) { this.devagar = !this.devagar; document.querySelector('[data-act="devagar"]')?.classList.toggle('on', this.devagar); this.ui.toast(this.devagar ? 'Andando devagar' : 'Andando normal', 1200); } // andar devagar: liga e desliga (tecla, controle ou botão na tela)
+    if (this.devagar && !this.def.reverente) c.mx *= 0.42;
     if (this.def.reverente) { c.mx *= 0.45; c.pulo = c.puloSeg = c.atk = c.atkSeg = c.dash = c.verso = c.dom = false; } // casa de oração: anda-se devagar, sem pulos e sem armas
   }
 

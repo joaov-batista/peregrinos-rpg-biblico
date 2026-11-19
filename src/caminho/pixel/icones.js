@@ -6,6 +6,7 @@ const DESENHOS = {
   passo: ['............', '.W...W...W..', '..W...W...W.', '...W...W...W', '..W...W...W.', '.W...W...W..', '............'],
   lampada: ['.....R......', '....RO......', '....OW......', '.....O......', '..ooooooo...', '.oOOOOOOOoo.', 'oOOOOOOOOOoo', '.oOOOOOOoo.o', '..ooooooo...', '...oooo.....'],
   orar: ['.....WW.....', '.....WW.....', '....WBBW....', '....WBBW....', '...WWBBWW...', '...WBBBBW...', '...WBBBBW...', '....WBBW....', '....bBBb....', '...bb..bb...'],
+  devagar: ['....WW......', '....WW......', '...WBBW.....', '..W.BB.W....', '....BB......', '....BB......', '...B..B.....', '..B....B....', '............', '.b..b..b..b.'],
   menu: ['WWWWWWWWWW', 'BBBBBBBBBB', '..........', 'WWWWWWWWWW', 'BBBBBBBBBB', '..........', 'WWWWWWWWWW', 'BBBBBBBBBB']
 };
 export function iconePx(nome, tam = 30) {

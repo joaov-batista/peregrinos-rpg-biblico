@@ -550,3 +550,4 @@ html.remake .vt-carta.sel { background: #4A3020; box-shadow: inset 0 2px 0 #6E4A
 @media (max-width: 720px), (max-height: 520px) { .vt-corpo { grid-template-columns: 1fr; } .vt-balcao { grid-template-columns: auto 1fr; } .vt-bolsa { grid-column: 1 / -1; grid-auto-flow: column; gap: 8px; align-items: center; } .vt-moldura { width: 80px; height: 74px; } .vt-retrato { width: 64px; height: 59px; } .vt-grade { max-height: none; } .vt-fala p { font-size: 16px; } }
 .vt-rar { display: inline-block; width: 9px; height: 9px; margin-right: 6px; box-shadow: 0 0 0 1px #0D0806; vertical-align: 1px; }
 html.remake .vt-ficha h4 { color: #7A1E1E !important; font-size: 22px !important; text-transform: none !important; letter-spacing: .02em !important; text-shadow: none !important; }
+html.remake body.caminho #actions .act.on { filter: brightness(1.35); box-shadow: inset 0 0 0 2px #FFE9A8 !important; }
