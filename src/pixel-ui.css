@@ -584,3 +584,4 @@ html.remake #screens:not(.creating) .screen > h2.title { color: var(--ab-cor); t
   html.remake #screens:not(.creating) .screen > details.saguao-recolhido { margin-top: 8px; }
 }
 @media (min-aspect-ratio: 1/1) { html.remake #screens:not(.creating) .criar-primeiro { align-self: flex-start; min-width: 300px; } }
+#actions [data-act="devagar"] { display: none !important; } /* no celular, andar devagar é empurrar pouco o direcional */

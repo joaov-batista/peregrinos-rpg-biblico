@@ -512,13 +512,35 @@ function pintarObjeto(g, o, G, x, y, Tm) {
           s.bola(19, 15, 12, 6, J, 0.4, -0.7); s.bola(19, 18, 9, 3, V, 0.2, -0.4); s.poli([[27, 12], [33, 4], [37, 6], [32, 16]], J[2]); s.bola(35, 7, 4, 4, J, 0.5, -0.7); s.poli([[36, 8], [40, 10], [36, 13]], V[2]);
           s.linha(33, 4, 31, 0, 2, J[1]); s.linha(36, 4, 36, 0, 2, J[3]); s.px(36, 6, TINTA); for (let xx = 28; xx < 33; xx++) s.px(xx, 11 - (xx - 28), TINTA); s.linha(7, 13, 4, 22, 1, J[0]); s.ret(3, 22, 2, 3, TINTA); s.ret(15, 9, 8, 2, rampa('#8E2B45')[2]); s.contorno(TINTA); });
         carimbar(g, s, x, y, 20, 29, G.p.x < o.x ? -1 : 1); return true; }
+      if (o.id === 'zaqueu') { // Zaqueu espiando de dentro do sicômoro: o rosto de frente entre as folhas, as mãos segurando os galhos
+        const pisca = Math.floor(Tm * 0.7) % 6 === 0 && (Tm * 0.7) % 1 < 0.15, olha = Math.sign(G.p.x - o.x);
+        carimbar(g, sprObj('zaqueu-folhas' + (pisca ? 'p' : '') + olha, 48, 44, s => zaqueuNaArvore(s, o.look, pisca, olha)), x, y, 24, 40, 1); return true; }
       carimbar(g, quadroPessoa({ ...o.look, cls: null }, Tm, (o.id || o.nome) + ''), x, y, 24, 40, G.p.x < o.x ? -1 : 1);
-      if (o.id === 'zaqueu') { const arv = G.objs.find(q => q.tipo === 'arvore' && Math.abs(q.x - o.x) < 200); if (arv) carimbar(g, sprObj('sicomoro2f', 104, 132, s => sicomoro(s, true)), x + Math.round((arv.x - o.x) / PX), y + Math.round((arv.y - o.y) / PX), 52, 131); } // as folhas da frente: dele, só a cabeça aparece
       return true;
   }
   return false;
 }
 
+// o rosto de Zaqueu de frente, espiando entre as folhas (48 x 44; o pé do sprite fica no galho)
+function zaqueuNaArvore(s, look, pisca, olha) {
+  const P = rampa(look.skin), C = rampa(look.hair), F = rampa('#4E8A52'), F2 = rampa('#3F7A4A'), T = rampa('#6B4A2E'), cx = 24, cy = 22;
+  // atrás do rosto: a sombra de dentro da copa
+  for (let y = 10; y < 38; y++) for (let x = 10; x < 38; x++) { const d = Math.hypot((x - cx) / 13, (y - cy) / 13); if (d < 1) s.px(x, y, F2[0]); }
+  // o cabelo e a cabeça (de frente: oval, orelhas dos lados, a barba curta)
+  for (let y = 12; y < 33; y++) for (let x = 15; x < 34; x++) { const dx = (x - cx + 0.5) / 8.5, dy = (y - 22) / 10; if (dx * dx + dy * dy > 1) continue;
+    const cabelo = y < 16 || (y < 19 && Math.abs(x - cx + 0.5) > 6), barba = y > 25 && Math.abs(x - cx + 0.5) < 7 && !(y < 28 && Math.abs(x - cx + 0.5) < 2.5);
+    s.px(x, y, cabelo ? (y === 12 || x < 18 ? C[1] : C[2]) : barba ? (y > 30 ? C[1] : C[2]) : x < 19 ? P[3] : x > 29 ? P[1] : P[2]); }
+  for (const ox of [15, 32]) { s.px(ox, 21, P[2]); s.px(ox, 22, P[1]); s.px(ox, 23, P[2]); } // as orelhas
+  for (const ex of [20, 27]) { if (pisca) { s.px(ex, 21, C[1]); s.px(ex + 1, 21, C[1]); } else { s.px(ex, 20, cor('#F4F1E6')); s.px(ex + 1, 20, cor('#F4F1E6')); s.px(ex + (olha > 0 ? 1 : 0), 20, cor('#1A1218')); s.px(ex, 18, C[1]); s.px(ex + 1, 18, C[1]); } } // os olhos e as sobrancelhas
+  s.px(23, 22, P[1]); s.px(24, 23, P[1]); s.px(22, 26, cor('#7A3A2E')); s.px(23, 26, cor('#7A3A2E')); s.px(24, 26, cor('#7A3A2E')); s.px(25, 26, cor('#7A3A2E')); s.px(21, 25, P[3]); // o nariz e o sorriso
+  // as mãos segurando os galhos dos lados
+  galhoPx(s, [[2, 34], [14, 30], [20, 31]], 1.6, 1, T, { sd: 8 }); galhoPx(s, [[46, 32], [34, 30], [28, 31]], 1.6, 1, T, { sd: 9 });
+  for (const [hx, hy] of [[13, 28], [33, 28]]) for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) s.px(hx + i, hy + j, i === 0 || j === 0 ? P[3] : P[2]);
+  // as folhas em volta, por cima das bordas: o rosto fica emoldurado no meio do mato
+  copaPx(s, [{ x: 8, y: 14, r: 8 }, { x: 40, y: 13, r: 8 }, { x: 24, y: 6, r: 7 }, { x: 6, y: 30, r: 7 }, { x: 42, y: 30, r: 7 }, { x: 15, y: 38, r: 7 }, { x: 33, y: 38, r: 7 }, { x: 24, y: 41, r: 6 }], F, { sd: 61, folha: 2.2, buracos: 0.1, aspero: 0.5 });
+  for (const [fx, fy] of [[12, 36], [36, 10], [40, 34]]) if (s.le(fx, fy - 2)) s.bola(fx, fy, 1.4, 1.8, rampa('#8E3B5E'));
+  s.contorno(TINTA);
+}
 // o sicômoro (Lc 19:4): a parte de trás (tronco, galhos, copa) e a de frente (o cacho de folhas que esconde Zaqueu até o pescoço)
 function sicomoro(s, frente) {
   const T = rampa('#6B4A2E'), F = rampa('#3F7A4A'), F2 = rampa('#4E8A52'), FIG = rampa('#8E3B5E');

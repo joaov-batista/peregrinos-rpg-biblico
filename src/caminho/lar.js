@@ -11,7 +11,7 @@ import { MORADORES } from './dados.js';
 
 export const ANEL_PRECO = 500, LACO_CEIA = 4;
 const pick = a => a[Math.floor(Math.random() * a.length)];
-export const horaDaCeia = G => { const h = hora(G); return h >= 21.1 && h < 22.6; };
+export const horaDaCeia = G => { const h = hora(G); return h >= 18 || h < 1; }; // a ceia é a refeição da noite: do pôr do sol até a meia-noite
 export const sexoDe = G => G.char.look?.sexo === 'f' ? 'f' : 'm';
 export const podeCasar = (G, id) => GENTE[id]?.casavel && GENTE[id].casavel !== sexoDe(G) && !G.cm.conjuge;
 // quem vai à ceia: os moradores com laço (e o cônjuge, sempre)
@@ -42,7 +42,7 @@ export function casaAoEntrar(G) {
 }
 export function rotuloCasa(G, ob) {
   if (ob.tipo === 'cama') return 'Deitar na esteira';
-  if (ob.tipo === 'mesaCasa') return G.cm.conjuge && horaDaCeia(G) && G.cm.ceiaCasa !== noiteN(G) ? 'Ceiar em casa' : 'A mesa';
+  if (ob.tipo === 'mesaCasa') return horaDaCeia(G) && G.cm.ceiaCasa !== noiteN(G) ? 'Ceiar' : 'A mesa';
   if (ob.tipo === 'lareira') return 'Esquentar-se à lareira';
   if (ob.tipo === 'janelaCasa') return null;
   return undefined;
@@ -57,7 +57,9 @@ export async function usarCasa(G, ob) {
   if (ob.tipo === 'mesaCasa') { const c = cm.conjuge, cj = c && G.objs.find(o => o.conjuge), nomeC = cj?.nome;
     if (c && horaDaCeia(G) && cm.ceiaCasa !== noiteN(G)) { cm.ceiaCasa = noiteN(G); somarCoracoes(G, c, 1); p.vida = p.vidaMax; p.oleo = G.oleoMax(); sfx('heal'); G.salvar();
       await G.ui.dialog({ nome: 'Ceia em casa', look: cj?.look, texto: 'Pão, azeite e o que sobrou do dia. ' + nomeC + ' dá graças em voz baixa e conta como foi o dia.\n\n"' + pick(CASAMENTO.bomDia) + '"\n\nFôlegos e azeite refeitos.', acoes: [{ label: 'Amém' }] }); }
-    else await G.ui.dialog({ nome: 'A mesa', texto: 'Uma mesa baixa de madeira, um cântaro, o pão coberto com um pano.' + (c ? '' : ' Um dia, quem sabe, alguém para partir o pão com você.') + (horaDaCeia(G) ? '' : '\n\n(A ceia é à noite.)'), acoes: [{ label: 'Ok' }], voz: false });
+    else if (!c && horaDaCeia(G) && cm.ceiaCasa !== noiteN(G)) { cm.ceiaCasa = noiteN(G); p.vida = p.vidaMax; p.oleo = G.oleoMax(); sfx('heal'); G.efeito('cura', p.x, p.y, 1, { gruda: p }); G.salvar(); // sozinho também se janta
+      await G.ui.dialog({ nome: 'Ceia em casa', texto: 'Você parte o pão, molha no azeite e dá graças. A casa está quieta; o fogo estala.\n\n"Tudo o que fizerdes, seja comendo, seja bebendo, fazei para a glória de Deus" (1Co 10:31).\n\nFôlegos e azeite refeitos.', acoes: [{ label: 'Amém' }], voz: false }); }
+    else await G.ui.dialog({ nome: 'A mesa', texto: 'Uma mesa baixa de madeira, um cântaro, o pão coberto com um pano.' + (cm.ceiaCasa === noiteN(G) ? '\n\n(Você já ceou esta noite.)' : horaDaCeia(G) ? '' : '\n\n(A ceia é à noite, a partir do pôr do sol.)'), acoes: [{ label: 'Ok' }], voz: false });
     return true; }
   if (ob.tipo === 'lareira') { p.vida = Math.min(p.vidaMax, p.vida + 1); sfx('heal'); G.textoEm(p.x, p.y - 80, 'o fogo esquenta as mãos', '#FFC870', 12); return true; }
   return false;

@@ -93,7 +93,7 @@ export class Caminho {
     this.padAntes = input.padAcoes; input.padAcoes = { menu: () => this.menu(), mapa: () => this.menu('mapa') };
     for (const [act, nome] of Object.entries({ devagar: 'Devagar', dodge: 'Pular', lock: 'Passo', defend: 'Lâmpada', botija: 'Orar', skill: CLASSES[char.cls]?.skill.nome || 'Verso', attack: 'Golpe' })) { const b = document.querySelector(`[data-act="${act}"]`); if (b) { b.dataset.name = nome; b.title = nome; } }
     this.icones = [];
-    for (const [act, simb] of Object.entries({ devagar: '🚶', dodge: '⤒', lock: '»', defend: '🪔', botija: '🙏' })) { const b = document.querySelector(`[data-act="${act}"]`); if (b) { this.icones.push([b, [...b.childNodes], b.hidden]); b.replaceChildren(this.pixel ? iconePx({ devagar: 'devagar', dodge: 'pular', lock: 'passo', defend: 'lampada', botija: 'orar' }[act]) : simb); b.hidden = false; } }
+    for (const [act, simb] of Object.entries({ dodge: '⤒', lock: '»', defend: '🪔', botija: '🙏' })) { const b = document.querySelector(`[data-act="${act}"]`); if (b) { this.icones.push([b, [...b.childNodes], b.hidden]); b.replaceChildren(this.pixel ? iconePx({ dodge: 'pular', lock: 'passo', defend: 'lampada', botija: 'orar' }[act]) : simb); b.hidden = false; } }
     if (this.pixel) this.botao.replaceChildren(iconePx('menu', 22));
     const v0 = this.cm.visto || {}; // quem chega pela primeira vez (ou saiu no meio do treino) começa no Bosque do Treino, antes do Refúgio
     const novo = !v0.intro || (v0.tut != null && v0.tut < PASSOS.length); /* quem chega começa na pedra Ebenézer da Praça do poço; o treino é a trilha a oeste */
@@ -319,7 +319,7 @@ export class Caminho {
   lerControles() {
     if (this.cena) { this.ctl = { mx: this.cenaMx || 0, my: 0 }; for (const k of ['dodge', 'attack', 'dash', 'lock', 'defend', 'botija', 'item1', 'skill', 'interact', 'item2', 'menu', 'escape', 'map']) input.consume(k); return; } // numa cena, o peregrino não se move sozinho
     const m = input.move(), c = this.ctl = {};
-    c.mx = Math.abs(m.x) > 0.3 ? Math.sign(m.x) : 0; c.my = Math.abs(m.y) > 0.45 ? Math.sign(m.y) : 0;
+    c.mx = Math.abs(m.x) > 0.3 ? Math.sign(m.x) * (Math.abs(m.x) < 0.62 ? 0.42 : 1) : 0; // no celular e no controle, empurrar pouco o direcional é andar devagar c.my = Math.abs(m.y) > 0.45 ? Math.sign(m.y) : 0;
     if (this.invertido > 0) c.mx = -c.mx; // a palavra torta da Mentira: esquerda vira direita
     c.pulo = input.consume('dodge'); c.puloSeg = input.isHeld('dodge');
     c.atk = input.consume('attack'); c.atkSeg = input.isHeld('attack');
@@ -1388,7 +1388,7 @@ export class Caminho {
         else this.entrar('refugio', { portal: d.mundo });
         break;
       }
-      case 'poco': p.oleo = this.oleoMax(); p.vida = Math.min(p.vidaMax, p.vida + 1); sfx('heal'); this.efeito('cura', p.x, p.y); this.ui.toast('Azeite cheio. (Jo 4:14)', 3000); break;
+      case 'poco': if ((this.bebeuT || 0) > this.T) { this.ui.toast('Você acabou de beber. A água mata a sede; descanso é outra coisa (a estalagem, ou a sua casa).', 3500); break; } this.bebeuT = this.T + 60; p.vida = Math.min(p.vidaMax, p.vida + 1); sfx('heal'); this.efeito('cura', p.x, p.y); this.ui.toast('Água fresca: +1 fôlego. (Jo 4:14)', 3000); break; // o poço mata a sede (um fôlego); quem enche a lâmpada e descansa de verdade é a estalagem ou a casa
       case 'retorno': if (['treino', 'desafio', 'conselho'].includes(d.id)) this.entrar('clareira', { portal: d.id }); else this.entrar('refugio', { portal: d.sem?.id || d.mundo || d.id }); break;
       case 'querubim': this.ovo('querubim', 'Um querubim e uma espada flamejante guardam o caminho da árvore da vida (Gn 3:24). Por aqui não se volta: o caminho de volta é outro.'); await this.ui.dialog({ nome: 'O querubim', texto: 'A espada de fogo se revolve sem ruído. Atrás dela, um verde que você nunca viu e de que, estranhamente, sente saudade.\n\n"E pôs querubins ao oriente do jardim do Éden, e uma espada flamejante que se revolvia, para guardar o caminho da árvore da vida" (Gn 3:24).', acoes: [{ label: 'Falar com o querubim' }] });
         await this.ui.dialog({ nome: 'O querubim', texto: 'Eu guardo a passagem para o Jardim. Em breve ela se abrirá, e você poderá entrar.\n\nMas ainda não, peregrino. A sua jornada ainda é longa: há páginas que você não leu e sombras que ainda não venceu.\n\n"Ao vencedor, dar-lhe-ei que se alimente da árvore da vida, que está no paraíso de Deus" (Ap 2:7).', acoes: [{ label: 'Seguir o caminho' }] }); break;
@@ -1448,7 +1448,7 @@ export class Caminho {
         break;
       case 'estalagem': {
         const cheio = p.vida >= p.vidaMax && p.oleo >= this.oleoMax();
-        return this.ui.dialog({ nome: ob.nome, texto: '"Cuida dele, e tudo o que gastares a mais eu te pagarei quando voltar" (Lc 10:35).\n\nCama, pão e azeite para a lâmpada: dois denários, como o samaritano deixou.' + (cheio ? '\n\n(Você já está inteiro.)' : ''),
+        return this.ui.dialog({ nome: ob.nome, texto: '"Cuida dele, e tudo o que gastares a mais eu te pagarei quando voltar" (Lc 10:35).\n\nCama, pão e azeite para a lâmpada: dois denários, como o samaritano deixou. O poço só mata a sede; aqui você dorme, come e sai com tudo cheio.' + (cheio ? '\n\n(Você já está inteiro.)' : ''),
           acoes: [!cheio && c.data.gold >= 2 ? { label: 'Descansar (2 denários)', fn: () => { c.data.gold -= 2; p.vida = p.vidaMax; p.oleo = this.oleoMax(); sfx('heal'); this.efeito('cura', p.x, p.y); this.fade = 1; this.ui.toast('Fôlegos e azeite cheios.', 3500); this.salvar(); } } : null, { label: 'Agora não' }].filter(Boolean) });
       }
       case 'viuva':
