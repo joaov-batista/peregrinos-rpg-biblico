@@ -44,7 +44,7 @@ export function vitrine(G, o) {
           const b = h('button', { class: 'vt-carta vt-' + (it.estado || 'comprar') + (sel === it.chave ? ' sel' : '') + (it.preco != null && it.estado === 'comprar' && c.data.gold < it.preco ? ' caro' : ''), style: it.cor ? '--rar:' + it.cor : '', onclick: () => { sfx('click'); sel = it.chave; confirmar = null; desenha(); }, ondblclick: () => { if (it.acao && !it.confirma && it.estado !== 'trancado' && (it.preco == null || c.data.gold >= it.preco)) { it.acao.fn(); desenha(); } } },
             h('span', { class: 'vt-ico' }, it.oculto ? h('span', { class: 'vt-tranca' }, '?') : it.icone),
             h('span', { class: 'vt-nome' }, it.oculto ? '???' : it.nome),
-            it.estado === 'comprar' && it.preco != null ? moeda(it.preco) : h('span', { class: 'vt-selo' }, it.estado === 'usando' ? 'em uso' : it.estado === 'seu' ? 'seu' : it.estado === 'gratis' ? 'de graça' : it.estado === 'trancado' ? 'trancado' : ''));
+            it.estado === 'comprar' && it.preco != null ? moeda(it.preco) : h('span', { class: 'vt-selo' }, it.selo ? it.selo : it.estado === 'usando' ? 'em uso' : it.estado === 'seu' ? 'seu' : it.estado === 'gratis' ? 'de graça' : it.estado === 'trancado' ? 'trancado' : ''));
           linha.append(b);
         }
         grade.append(linha);
@@ -52,7 +52,7 @@ export function vitrine(G, o) {
       mostra(achou);
     };
     p.append(h('div', { class: 'p-head' }, h('h3', {}, o.titulo), h('button', { class: 'x', onclick: () => { o.aoFechar?.(); close(); }, 'aria-label': 'Fechar' }, '✕')),
-      h('div', { class: 'vt-balcao' }, h('div', { class: 'vt-moldura' }, retrato(o.look)), h('div', { class: 'vt-fala' }, h('b', { class: 'vt-dono' }, o.dono || o.titulo), h('p', {}, o.fala || '')), bolsa),
+      h('div', { class: 'vt-balcao' }, h('div', { class: 'vt-moldura' }, o.look ? retrato(o.look) : o.icone ? (o.icone.classList?.add('vt-big'), o.icone) : retrato(null)), h('div', { class: 'vt-fala' }, h('b', { class: 'vt-dono' }, o.dono || o.titulo), h('p', {}, o.fala || '')), bolsa),
       o.aviso ? h('p', { class: 'vt-aviso' }, o.aviso) : '',
       h('div', { class: 'vt-corpo' }, grade, ficha));
     desenha();
