@@ -429,7 +429,7 @@ html.remake { --ab-cor: #FFE9A8; --ab-sombra: #6A3A10; --ab-tinta: #0D0806; --ab
 html.remake[data-abertura="lamparina"] { --ab-cor: #F2A65A; --ab-sombra: #5A2410; --ab-sub: #E8C8A0; }
 html.remake[data-abertura="getsemani"] { --ab-cor: #EEF3FF; --ab-sombra: #2A3C86; --ab-sub: #B8C8F0; }
 html.remake[data-abertura="jerusalem"] { --ab-cor: #F04A4A; --ab-sombra: #4A0E1E; --ab-sub: #FFD878; }
-html.remake[data-abertura="cais"] { --ab-cor: #F4E6C6; --ab-sombra: #141A3A; --ab-sub: #F4E6C6; }
+html.remake[data-abertura="cais"], html.remake[data-abertura="praca"] { --ab-cor: #F4E6C6; --ab-sombra: #141A3A; --ab-sub: #F4E6C6; }
 html.remake[data-abertura="ponte"] { --ab-cor: #FFF3DA; --ab-sombra: #7A4A24; --ab-sub: #5A3418; }
 html.remake #screens:not(.creating) .screen { align-items: flex-start; justify-content: center; text-align: left; padding: max(5vh, var(--safe-t)) 16px 5vh max(6vw, 24px); gap: 10px; }
 html.remake #screens:not(.creating) .screen > * { max-width: min(520px, 92vw); }
@@ -475,4 +475,4 @@ html.remake #screens .abertura button:focus-visible, html.remake body.pad #scree
 /* menu como nas capas de jogo: itens em caixa alta, a seta laranja no escolhido */
 html.remake .abertura .card.auth .btn, html.remake .abertura .card.auth .btn.gold { text-transform: uppercase; letter-spacing: .08em; font-size: 26px !important; }
 html.remake .abertura .card.auth .btn::before { content: "▶" !important; background: none !important; box-shadow: none !important; width: auto !important; height: auto !important; color: #F2A03A; font-size: 16px; line-height: 1; margin-top: -8px !important; left: 6px !important; }
-html.remake[data-abertura="cais"] #screens:not(.creating) .logo h1 { text-shadow: 0 5px 0 #6A4A30, 4px 5px 0 #6A4A30, -4px 5px 0 #6A4A30, 0 9px 0 #0E1230, 4px 0 0 #0E1230, -4px 0 0 #0E1230, 0 -4px 0 #0E1230, 4px 9px 0 #0E1230, -4px 9px 0 #0E1230, 0 14px 18px rgba(0,0,0,.45) !important; }
+html.remake[data-abertura="cais"] #screens:not(.creating) .logo h1, html.remake[data-abertura="praca"] #screens:not(.creating) .logo h1 { text-shadow: 0 5px 0 #6A4A30, 4px 5px 0 #6A4A30, -4px 5px 0 #6A4A30, 0 9px 0 #0E1230, 4px 0 0 #0E1230, -4px 0 0 #0E1230, 0 -4px 0 #0E1230, 4px 9px 0 #0E1230, -4px 9px 0 #0E1230, 0 14px 18px rgba(0,0,0,.45) !important; }

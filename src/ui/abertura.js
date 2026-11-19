@@ -455,8 +455,97 @@ function refletir(T, yh) {
 function mixc(c, k) { return ((255 << 24) | ((((c >>> 16) & 255) * k) << 16) | ((((c >>> 8) & 255) * k) << 8) | ((c & 255) * k)) >>> 0; }
 function mixc2(a, b, k) { const ch = s => Math.round(((a >>> s) & 255) * (1 - k) + ((b >>> s) & 255) * k); return ((255 << 24) | (ch(16) << 16) | (ch(8) << 8) | ch(0)) >>> 0; }
 
-const CENAS = { cais, getsemani, jerusalem };
-const SORTEIO = ['cais']; // as telas entram no sorteio quando estão prontas
+// ======================================================================================================
+// A PRAÇA DO POÇO À NOITE — a chegada ao Refúgio: a lua sobre a muralha, as casas de teto plano com as janelas acesas,
+// a torre da sinagoga, o poço no meio da praça de lajes e o peregrino de lâmpada acesa. A aldeia dorme; a luz fica.
+// ======================================================================================================
+const CEU_P = rampa(['#050818', '#081024', '#0C1630', '#101C3C', '#152448', '#1C2C54', '#24365E', '#2E4068', '#3A4A72', '#4A547A']);
+const MURO_P = rampa(['#0A0E20', '#10162A', '#171E36', '#1F2842', '#28324E', '#323C5A']);
+const BARRO = rampa(['#14121E', '#1C1A2A', '#262236', '#302A42', '#3C344E', '#4A405A', '#5C4E68', '#726078', '#8C768A']);
+const LAJE = rampa(['#0E0E1A', '#151624', '#1D1E2E', '#262838', '#303244', '#3C3E52', '#4C4C60', '#605E70']);
+const praca = {
+  luzes: [],
+  parada(T, R, f) {
+    const w = T.w, yh = 122, mx = Math.round(w * 0.8), my = 32; this.luzes = []; this.yh = yh;
+    // o céu: noite funda em cima, mais clara perto da muralha; a lua cheia com o halo em degraus
+    ceu(T, CEU_P, (x, y) => clamp(0.08 + (y / yh) * 0.62 + (1 - Math.min(1, Math.hypot(x - mx, (y - my) * 1.3) / 120)) * 0.22 + (fbm(x * 0.02, y * 0.04, 3) - 0.5) * 0.05, 0, 0.99), 0.7);
+    for (let i = 0; i < 160; i++) { const x = Math.floor(R() * w), y = Math.floor(R() * (yh - 30)); if (Math.hypot(x - mx, y - my) < 30) continue; T.set(x, y, hex(R() < 0.12 ? '#FFFFFF' : R() < 0.5 ? '#9AA8D8' : '#5E6AA0')); }
+    for (let y = -11; y <= 11; y++) for (let x = -11; x <= 11; x++) { const d = Math.hypot(x, y) / 11; if (d > 1) continue; const mar = fbm((x + 20) * 0.25, (y + 20) * 0.25, 41); T.set(mx + x, my + y, tom(rampa(['#B8BCC8', '#CFD2DA', '#E2E2E6', '#F2F0EA', '#FFFDF4']), 0.95 - d * 0.35 - (x + y > 6 ? 0.25 : 0) - (mar > 0.6 ? 0.2 : 0), mx + x, my + y, 0.3)); }
+    const NV = rampa(['#1A2244', '#232C52', '#2E3860', '#3C466E', '#525C80', '#6E7894', '#9098AE']);
+    for (const [x0, y0, larg, n, sd] of [[mx - 40, 44, 120, 14, 3], [w * 0.35, 26, 150, 16, 7], [w * 0.12, 54, 90, 9, 11]]) { const RR = rng(sd), bl = []; for (let i = 0; i < n; i++) { const u = RR(); bl.push({ x: x0 + (u - 0.5) * larg, y: y0 - Math.sin(u * Math.PI) * 5 * RR(), r: 3 + RR() * 5, a: 0.4 }); } copa(T, bl, NV, { s: sd, lx: (mx - x0) / 200, ly: -0.8, lz: 0.4, folha: 5, achata: 1, aspero: 0.25, forca: 0.5, base: 0.2, geral: 0.1, borda: 0.25, soltas: false }); }
+    // os montes e a muralha da cidade ao longe, com as ameias e as torres
+    for (let x = 0; x < w; x++) { const y = Math.round(yh - 30 - fbm(x * 0.015, 0, 13, 4) * 22); for (let yy = y; yy < yh; yy++) T.set(x, yy, tom(MURO_P, 0.2 - (yy - y) / 60, x, yy)); }
+    const muroY = yh - 22; for (let x = 0; x < w; x++) { const torre = (x % 70) < 12, topo = muroY - (torre ? 12 : 0) - ((x % 70 < 12 ? x % 4 : x % 6) < 2 ? 2 : 0); for (let y = topo; y < yh; y++) T.set(x, y, tom(MURO_P, 0.5 + (y === topo ? 0.3 : 0) - (y - topo) / 70 + (x % 70 === 11 ? -0.2 : 0), x, y, 0.3)); if (torre && x % 70 === 5) { T.set(x, topo + 5, LUZ_Q[3]); T.set(x, topo + 6, LUZ_Q[2]); this.luzes.push({ x, y: topo + 5, r: 6, k: 0.3 }); } }
+    // as casas de teto plano (barro e pedra), com parapeito, escada por fora, janelas acesas e lamparinas
+    const casa = (x, y, l, a, p, o = {}) => {
+      caixa(T, x, y, l, a, p, BARRO, BARRO, BARRO, { vf: 0.48, vl: 0.26, vt: 0.62 });
+      for (let j = 2; j < a; j++) for (let i = 0; i < l; i++) { const n = fbm((x + i) * 0.09, (y + j) * 0.12, 33); if (n > 0.62) T.set(x + i, y + j, BARRO[n > 0.7 ? 2 : 3]); else if (n < 0.3 && (j % 4 === 0 || (i + (j >> 2) * 5) % 9 === 0)) T.set(x + i, y + j, BARRO[2]); } // o reboco gasto mostra as pedras por baixo
+      for (let i = 3; i < l - 2; i += 7) { T.set(x + i, y + 3, MADEIRA[6]); T.set(x + i + 1, y + 3, MADEIRA[4]); T.set(x + i, y + 4, MADEIRA[2]); T.veu(x + i, y + 5, hex('#05060C'), 0.5); T.veu(x + i + 1, y + 5, hex('#05060C'), 0.3); } // as pontas das vigas do teto
+      for (let i = 0; i < l + p * 0.62; i += 3) { const X = Math.round(x + i), Y = Math.round(y - 2 - Math.max(0, i - l) * 0.42); T.set(X, Y, BARRO[6]); T.set(X + 1, Y, BARRO[5]); } // o parapeito
+      for (const [jx, jy] of o.jan || []) { for (let j = 0; j < 5; j++) for (let i = 0; i < 4; i++) T.set(x + jx + i, y + jy + j, tom(LUZ_Q, 0.9 - j * 0.1, x + jx + i, y + jy + j)); for (let i = -1; i <= 4; i++) T.set(x + jx + i, y + jy + 5, BARRO[6]); this.luzes.push({ x: x + jx + 2, y: y + jy + 2, r: 12, k: 0.3 }); }
+      if (o.porta != null) { for (let j = 0; j < 11; j++) for (let i = 0; i < 7; i++) { if (j < 3 && Math.hypot(i - 3, j - 3) > 3.4) continue; T.set(x + o.porta + i, y + a - 11 + j, i === 3 ? MADEIRA[1] : tom(MADEIRA, 0.42 - Math.abs(i - 3) * 0.03 + (j % 4 === 0 ? -0.08 : 0), x + o.porta + i, y + a - 11 + j)); } for (let i = -1; i <= 7; i++) T.set(x + o.porta + i, y + a, BARRO[6]); T.set(x + o.porta + 5, y + a - 5, hex('#C9A44A')); } // a porta de tábuas, em arco, com a soleira e a argola
+      if (o.escada) for (let k = 0; k < Math.floor(a / 3); k++) for (let i = 0; i < 6; i++) T.set(x + l - 6 - k * 2 + i - 10, y + a - 3 - k * 3, BARRO[k % 2 ? 6 : 5]); // a escada de pedra subindo para o terraço
+      if (o.toldo) for (let i = 0; i < 18; i++) { T.set(x + o.toldo + i, y + 8 + (i % 6 === 0 ? 1 : 0), hex(i % 6 < 3 ? '#7A2E4A' : '#C8B89A')); T.set(x + o.toldo + i, y + 9, hex('#3A1A24')); }
+    };
+    // a torre da sinagoga, de pedra clara, com a janela da vigília acesa
+    { const tx = Math.round(w * 0.42), ty = yh - 66; caixa(T, tx, ty, 16, 66, 8, BARRO, BARRO, BARRO, { vf: 0.62, vl: 0.34, vt: 0.78, tex: true }); for (let i = 0; i < 16; i += 3) { T.set(tx + i, ty - 3, BARRO[7]); T.set(tx + i + 1, ty - 3, BARRO[7]); T.set(tx + i, ty - 2, BARRO[6]); }
+      for (let j = 0; j < 9; j++) for (let i = 0; i < 6; i++) { const arco = j < 3 && Math.hypot(i - 2.5, j - 3) > 3; if (!arco) T.set(tx + 5 + i, ty + 10 + j, tom(LUZ_Q, 0.95 - j * 0.06, tx + 5 + i, ty + 10 + j)); } this.luzes.push({ x: tx + 8, y: ty + 14, r: 18, k: 0.45, tremer: true });
+      for (let k = 0; k < 4; k++) for (let i = 0; i < 16; i++) T.set(tx + i, ty + 22 + k * 11, BARRO[2]); }
+    casa(Math.round(w * 0.06), yh - 34, 44, 34, 12, { jan: [[8, 10], [28, 10]], porta: 18, toldo: 4 });
+    casa(Math.round(w * 0.27), yh - 26, 30, 26, 10, { jan: [[6, 8]], porta: 18 });
+    casa(Math.round(w * 0.55), yh - 30, 40, 30, 12, { jan: [[6, 9], [26, 9]], porta: 15, escada: true });
+    casa(Math.round(w * 0.8), yh - 40, 50, 40, 14, { jan: [[8, 10], [34, 10], [20, 24]], porta: 36 });
+    // uma palmeira e uma oliveira entre as casas
+    galho(T, [[w * 0.5, yh + 2], [w * 0.505, yh - 20], [w * 0.512, yh - 40]], 1.8, 1.1, CASCA_N, { s: 4 });
+    for (let k = 0; k < 7; k++) { const a = -2.6 + k * 0.42, L = 16 + (k % 3) * 3; for (let i = 0; i < L; i++) { const t = i / L, X = w * 0.512 + Math.cos(a) * i, Y = yh - 40 + Math.sin(a) * i + t * t * 9; T.set(X, Y, FOLHA_C[i % 3 === 0 ? 2 : 4]); if (i % 2) T.set(X, Y + 1, FOLHA_C[1]); } }
+    copa(T, [{ x: w * 0.7, y: yh - 22, r: 12 }, { x: w * 0.73, y: yh - 28, r: 10 }, { x: w * 0.75, y: yh - 20, r: 9 }], rampa(['#0A1218', '#101C22', '#16262C', '#1E3236', '#283E40', '#36504C', '#4A6458']), { s: 8, lx: 0.7, ly: -0.6, buracos: 0.3, forca: 0.5, base: 0.05 });
+    galho(T, [[w * 0.72, yh + 2], [w * 0.725, yh - 14]], 2.2, 1.6, CASCA_N, { s: 9 });
+    // a praça: lajes em perspectiva (as juntas correm para o fundo), gastas no caminho do poço, mais escuras longe da luz
+    for (let y = yh; y < H; y++) { const d = 26 / (y - yh + 5), Z = d * 10;
+      for (let x = 0; x < w; x++) { const X = (x - f) * d * 0.09, fz = Z - Math.floor(Z), lin = Math.floor(Z), fx = X + (lin % 2) * 0.5, jx = fx - Math.floor(fx), id = Math.floor(fx) * 31 + lin * 7;
+        const junta = fz < 0.07 + (1 - d) * 0.02 || jx < 0.05 / Math.max(0.3, d), gasto = Math.exp(-(((x - f) / 50) ** 2)) * 0.12;
+        const perto = Math.min(1, (y - yh) / 22); let v = 0.34 + (h2(id, 1, 5) - 0.5) * 0.18 * perto + (y - yh) / (H - yh) * 0.08 + gasto + (fbm(x * 0.06, y * 0.12, 21) - 0.5) * 0.08 - (junta ? 0.26 * perto : 0) + (!junta && fz < 0.2 ? 0.05 * perto : 0); // ao longe as juntas somem (sem chuvisco no fundo)
+        T.set(x, y, tom(LAJE, v, x, y, 0.25)); } }
+    for (let x = 0; x < w; x++) { T.set(x, yh, MURO_P[1]); T.veu(x, yh + 1, hex('#05060C'), 0.4); } // o pé das casas encontra a praça
+    // o poço: o bocal redondo de pedra, a armação de madeira, a corda e o balde
+    const px = Math.round(f + 6), py = 152; this.poco = [px, py];
+    for (let y = py - 14; y <= py + 2; y++) for (let x = px - 15; x <= px + 15; x++) { const dx = (x - px) / 15; if (Math.abs(dx) > 1) continue; const topo = py - 14 + Math.round((1 - Math.sqrt(1 - dx * dx)) * -4 + 4); if (y < topo) continue; const fi = Math.floor((y - topo) / 4); T.set(x, y, tom(PEDRA_C, 0.55 - dx * 0.25 - (y - topo) / 30 - ((y - topo) % 4 === 0 || ((x + fi * 3) % 7 === 0) ? 0.2 : 0), x, y, 0.3)); }
+    for (let x = px - 15; x <= px + 15; x++) { const dx = (x - px) / 15, a = Math.sqrt(Math.max(0, 1 - dx * dx)) * 4; T.set(x, Math.round(py - 10 - a), PEDRA_C[7]); T.set(x, Math.round(py - 10 + a), PEDRA_C[4]); for (let y = Math.round(py - 9 - a); y < py - 10 + a; y++) T.set(x, y, hex('#05070F')); } // a borda de cima e a boca escura
+    for (const sx of [-13, 12]) for (let y = py - 40; y < py - 10; y++) { T.set(px + sx, y, MADEIRA[5]); T.set(px + sx + 1, y, MADEIRA[3]); }
+    for (let x = px - 15; x <= px + 15; x++) { T.set(x, py - 41, MADEIRA[6]); T.set(x, py - 40, MADEIRA[3]); } for (let y = py - 40; y < py - 24; y++) T.set(px, y, hex('#8A7A60'));
+    for (let j = 0; j < 6; j++) for (let i = -3; i <= 3; i++) T.set(px + i, py - 24 + j, tom(MADEIRA, 0.6 - j * 0.05 + i * 0.03, px + i, py - 24 + j)); for (let i = -3; i <= 3; i++) T.set(px + i, py - 24, MADEIRA[7]);
+    // a sombra do poço na praça e a pedra de Ebenézer ao lado
+    for (let i = -18; i <= 22; i++) for (let j = 0; j < 4; j++) if (h2(i, j, 3) < 0.7 - j * 0.15) T.veu(px + i + 4, py + 2 + j, hex('#05060C'), 0.4);
+    pedra(T, px + 36, py - 4, 6, 12, PEDRA_C, { s: 77, faceta: 3, corte: 0.75, lx: -0.5, ly: -0.7, musgo: MUSGO_C, rachas: false }); for (let i = -7; i <= 8; i++) T.veu(px + 37 + i, py + 6, hex('#05060C'), 0.45);
+    // os braseiros de pedra da praça (colunas baixas com a bacia de fogo em cima) e a luz que deixam no chão
+    for (const [lx, ly] of [[Math.round(w * 0.35), 158], [Math.round(w * 0.94), 166]]) { caixa(T, lx - 3, ly - 22, 7, 22, 3, PEDRA_C, PEDRA_C, PEDRA_C, { vf: 0.5, vl: 0.28, vt: 0.7 }); for (let i = -6; i <= 7; i++) { T.set(lx + i, ly - 24, hex('#2A1E1A')); T.set(lx + i, ly - 23, i === -6 || i === 7 ? hex('#2A1E1A') : hex('#5A3A24')); } for (let i = -5; i <= 6; i++) T.set(lx + i, ly - 25, BRASA);
+      for (let i = -9; i <= 12; i++) T.veu(lx + i + 2, ly + 1, hex('#05060C'), 0.45 * (1 - Math.abs(i) / 13));
+      for (let y = ly - 6; y < H; y++) for (let x = lx - 50; x < lx + 50; x++) { const dd = Math.hypot((x - lx) / 50, (y - ly) / 16); if (dd < 1) T.luz(x, y, hex('#FF9A40'), (1 - dd) * 0.35); }
+      this.luzes.push({ x: lx, y: ly - 27, r: 26, k: 0.55, tremer: true, fogo: true }); }
+    // os cântaros junto ao poço, um banco de pedra e a jumenta descansando perto da casa
+    for (const [cx, cy, c] of [[this.poco[0] + 21, this.poco[1] + 4, '#8A4A2E'], [this.poco[0] + 26, this.poco[1] + 6, '#A85E3A']]) { for (let j = 0; j < 8; j++) { const l = j < 2 ? 1 : j < 6 ? 2.5 : 1.5; for (let i = -l; i <= l; i++) T.set(cx + i, cy - 8 + j, tom(rampa(['#3A1A10', '#5A2A1A', c, '#C8805A', '#E0A47A']), 0.55 + i / 6 - j / 18, cx + i | 0, cy - 8 + j)); } T.set(cx, cy - 9, hex('#3A1A10')); T.veu(cx + 1, cy + 1, hex('#05060C'), 0.5); }
+    caixa(T, Math.round(w * 0.44), 164, 24, 5, 5, PEDRA_C, PEDRA_C, PEDRA_C, { vf: 0.45, vl: 0.25, vt: 0.68 }); for (let i = -1; i < 28; i++) T.veu(Math.round(w * 0.44) + i, 170, hex('#05060C'), 0.45); // o banco de pedra
+    // primeiro plano: a sombra de um telhado e um vaso, à esquerda (onde está o menu)
+    for (let y = 0; y < H; y++) for (let x = 0; x < 34 - Math.max(0, y - 120) * 0.2; x++) T.veu(x, y, hex('#03040A'), 0.55 - x / 80);
+  },
+  viva(T, t, f) {
+    const w = T.w;
+    for (let i = 0; i < 30; i++) { const x = (i * 7919) % w, y = (i * 3571) % 80; if (Math.sin(t * (0.5 + i % 5 * 0.3) + i) > 0.7) T.set(x, y, hex('#FFFFFF')); }
+    T.brilho(Math.round(w * 0.8), 32, 50, hex('#8EA0D8'), 0.25);
+    for (const l of this.luzes) { const tr = l.tremer ? Math.sin(t * 9 + l.x) * 0.06 + Math.sin(t * 23 + l.y) * 0.04 : 0; T.brilho(l.x, l.y, l.r * (1 + tr), hex('#FFB050'), l.k + tr); if (l.chao) T.brilho(l.x, 160, l.r * 0.9, hex('#FFA040'), 0.28 + tr); }
+    for (let i = 0; i < 5; i++) { const l = this.luzes[this.luzes.length - 1 - (i % 2)], a = t * (2 + i * 0.4) + i * 2; T.set(l.x + Math.round(Math.cos(a) * (4 + i)), l.y + Math.round(Math.sin(a * 1.3) * 3), hex('#E8E0C8')); } // mariposas em volta das lamparinas
+    // um gato andando no muro de trás e a fumaça de uma chaminé
+    { const k = (t * 0.02) % 1, X = Math.round(w * 0.1 + k * w * 0.8), Y = 118 - 22 - 3; sprite(T, [['#..#', '####', '.##.'], ['#..#', '####', '#..#']][Math.floor(t * 4) % 2], X, Y, { '#': hex('#05060C') }); }
+    // o peregrino junto ao poço, de lâmpada acesa
+    const [px, py] = this.poco, HX = px - 30, HY = py + 14, s = quadroPessoa(HEROI_LOOK, t, 'abertura-praca');
+    for (let i = -6; i <= 6; i++) T.veu(HX + i - 4, HY + 1, hex('#05060C'), 0.5 * (1 - Math.abs(i) / 7));
+    if (s?.b) { const tinta = hex('#141A40'); for (let j = 0; j < s.h; j++) for (let i = 0; i < s.w; i++) { const c = s.b[j * s.w + i]; if (!(c >>> 24)) continue; T.set(HX - 24 + i, HY - 40 + j, mixc2(c, tinta, 0.3)); } }
+    lanterna(T, HX + 7, HY - 18); T.brilho(HX + 7, HY - 15, 34, hex('#FFC060'), 0.62 + Math.sin(t * 7) * 0.05);
+  }
+};
+
+const CENAS = { cais, praca, getsemani, jerusalem };
+const SORTEIO = ['cais', 'praca']; // as telas entram no sorteio quando estão prontas
 export const NOMES_CENAS = Object.keys(CENAS);
 
 // sorteia a cena sem repetir a da última vez (?abertura=nome força uma)
