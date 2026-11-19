@@ -90,7 +90,7 @@ export const VILA = {
       'Leram no livro, claramente, dando o sentido, para que entendessem (Ne 8:8). Não basta ler. É preciso entender. É por isso que, lá dentro, as sombras perguntam.'
     ], volta: 2
   },
-  rode: { nome: 'Rode, a criada', look: { skin: '#C68B59', hair: '#6B4423', tunic: '#497A80', cape: 'none', style: 'rabo' },
+  rode: { nome: 'Rode, a criada', look: { skin: '#C68B59', hair: '#6B4423', tunic: '#8E4A6A', cape: '#E3DED2', style: 'trancas' },
     conversa: [
       'Uma noite bateram na porta. Era Pedro, que devia estar preso! Eu fiquei tão feliz que corri para avisar todo mundo… e esqueci de abrir a porta (At 12:13-14).',
       'Ficaram me chamando de louca. E ele lá fora, batendo, batendo. Até hoje, quando alguém bate, eu abro primeiro e comemoro depois.',

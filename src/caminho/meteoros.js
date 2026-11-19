@@ -16,6 +16,10 @@ const nomeDe = ob => (VILA[ob.id]?.nome || ob.nome || 'Alguém').split(',')[0];
 const noite = G => Math.floor(((G.cm.relogio || 0) + 180) / 600);
 export const olhaCeu = G => G.area === 'refugio' && noiteDeMeteoros(G) && G.ceuEscuro && (hora(G) >= 20 || hora(G) < 3);
 export const JUNTO_MIN = 4;
+// quem é moça e quem é rapaz: a cena com corações é só entre homem e mulher; entre amigos do mesmo sexo, é amizade
+const SEXO = { rode: 'f', sela: 'f', miria: 'f', rute: 'f', ana: 'f', eutico: 'm', bartimeu: 'm', eliabe: 'm', asafe: 'm' };
+const sexoEu = G => G.char.look?.sexo === 'f' ? 'f' : 'm';
+const romantico = (G, id) => SEXO[id] && SEXO[id] !== sexoEu(G);
 // quem sobe no terraço de madrugada (Êutico gosta de alturas desde a janela de Trôade; Eliabe vigia como pastor)
 export const TELHADO = ['eutico', 'eliabe', 'asafe'];
 export const madrugada = G => { const h = hora(G); return h >= 23 || h < 5; };
@@ -42,6 +46,15 @@ export function opcaoJuntos(G, ob) {
   if (coracoesDe(G, ob.id) < JUNTO_MIN) return null;
   return { label: 'Sentar e assistir juntos', fn: () => assistirJuntos(G, ob) };
 }
+const AMIGO = n => [
+  [2.5, 'Vocês se sentam no chão da praça, ainda morno do dia.'],
+  [7, n + ': "Você viu aquele? Comprido, de um lado ao outro!"'],
+  [12.5, 'Por um tempo, ninguém fala. Só o céu riscando.'],
+  [18, n + ': "Amigo é para essas coisas: parar e olhar junto."'],
+  [24, '"Quando contemplo os teus céus, obra dos teus dedos… que é o homem, para que dele te lembres?" (Sl 8:3-4)'],
+  [30, n + ' ri e conta quantos já viu. Perdeu a conta de novo.'],
+  [36, 'A noite segue. E fica guardada.']
+];
 const FALAS = n => [
   [2.5, 'Vocês se sentam no chão da praça, ainda morno do dia.'],
   [7, n + ': "Você viu aquele? Comprido, de um lado ao outro!"'],
@@ -61,7 +74,7 @@ export function assistirSozinho(G) {
 export function assistirJuntos(G, ob) {
   if (G.cenaMeteoros) return; const p = G.p, v = ob.vv;
   G.cm.meteoroJunto = noite(G);
-  const C = G.cenaMeteoros = { t: 0, ob, x: p.x, y: p.y, fala: 0, cor: [], fim: 40, n: nomeDe(ob) };
+  const C = G.cenaMeteoros = { t: 0, ob, x: p.x, y: p.y, fala: 0, cor: [], fim: 40, n: nomeDe(ob), amor: romantico(G, ob.id) };
   if (v) { v.estado = 'sentadoCeu'; v.x = p.x + 26; v.face = -1; } p.face = 1; p.vx = 0;
   music('mundo', 'praia'); sfx('sino');
   setTimeout(() => { const sai = () => { if (G.cenaMeteoros === C && C.t > 4) levantar(G); }; C.ouvir = sai; addEventListener('keydown', sai); addEventListener('pointerdown', sai); }, 800);
@@ -80,8 +93,8 @@ export function passoMeteoros(G, dt) {
   const C = G.cenaMeteoros; if (!C) return;
   const p = G.p; C.t += dt; p.x = C.x; p.vx = 0; p.atk = null; p.face = 1; G.perto = null;
   if (C.ob?.vv) { C.ob.vv.x = C.x + 26; C.ob.vv.estado = 'sentadoCeu'; }
-  const F = C.solo ? SOLO : FALAS(C.n); while (C.fala < F.length && C.t >= F[C.fala][0]) { const [, txt] = F[C.fala++]; G.textos.push({ x: C.x + 13, y: C.y - 150, txt, cor: '#F2ECFF', tam: 13, t: 5 }); }
-  for (const t0 of [9, 19.5, 31]) if (!C.solo && C.t - dt < t0 && C.t >= t0) C.cor.push({ t: 0, x: C.x + 13 + (Math.random() - 0.5) * 8 }); // uns poucos corações
+  const F = C.solo ? SOLO : C.amor ? FALAS(C.n) : AMIGO(C.n); while (C.fala < F.length && C.t >= F[C.fala][0]) { const [, txt] = F[C.fala++]; G.textos.push({ x: C.x + 13, y: C.y - 150, txt, cor: '#F2ECFF', tam: 13, t: 5 }); }
+  for (const t0 of [9, 19.5, 31]) if (!C.solo && C.amor && C.t - dt < t0 && C.t >= t0) C.cor.push({ t: 0, x: C.x + 13 + (Math.random() - 0.5) * 8 }); // uns poucos corações
   for (const c of C.cor) c.t += dt; C.cor = C.cor.filter(c => c.t < 3.2);
   if (C.t > C.fim) levantar(G);
 }
