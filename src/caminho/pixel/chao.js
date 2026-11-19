@@ -80,7 +80,7 @@ function tiraFrente(G, mat, v) {
 // a largura (em px de arte) de quem pisa o chão: a sombra de contato e os tufos seguem a base de cada coisa
 const PEGADA = { casa: 62, planta: 18, arvore: 34, poco: 22, portaoCidade: 66, ebenezer: 22, vaso: 11, banco: 26, npc: 11, morador: 11, pessoa: 11, discipulo: 11, jesus: 11, boneco: 12, placa: 7, flor: 7,
   bote: 40, galinheiro: 44, espantalho: 8, cesto: 18, cocho: 24, pomar: 26, amendoeira: 44, fogueira: 40, lagar: 58, essencias: 38, rocha: 50, festa: 0, estacao: 14, rolo: 18, portal: 30, lugarOracao: 30, canteiro: 30, cerca: 0, maquina: 36, animal: 18, covil: 40, querubim: 40, menora: 16, lamparina: 8, tocha: 6, retorno: 20, selado: 26 };
-const CENARIO = { banca: 46, forja: 42, armas: 42, tear: 30, arca: 92, redes: 32, descida: 0, sinagoga: 0, quadro: 26, templo: 0, balcao: 40, cofre: 26, andares: 0 };
+const CENARIO = { banca: 46, padaria: 64, forja: 42, armas: 42, tear: 30, arca: 92, redes: 32, descida: 0, sinagoga: 0, quadro: 26, templo: 0, balcao: 40, cofre: 26, andares: 0 };
 export const pegada = o => o.tipo === 'cenario' ? (CENARIO[o.qual] ?? 30) : (PEGADA[o.tipo] ?? 0);
 
 const cheio = (N, tx, ty) => { const t = tileEm(N, tx, ty); return t === SOLIDO || (t === FALSA && !N.desfeita.has(ty * N.w + tx)); };

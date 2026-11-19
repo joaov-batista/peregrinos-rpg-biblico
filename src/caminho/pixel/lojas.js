@@ -2,6 +2,8 @@
 // mercadoria à mostra. Coordenadas em pixel de jogo: x no meio do lugar, y no chão. Cada uma ocupa mais ou menos o mesmo
 // espaço de antes, para não esbarrar em quem trabalha ali.
 const TI = '#17121f';
+const mixH = (a, b, t) => { const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16), f = s => Math.round((pa >> s & 255) * (1 - t) + (pb >> s & 255) * t); return '#' + (f(16) << 16 | f(8) << 8 | f(0)).toString(16).padStart(6, '0'); };
+const rampaH = c => [mixH(c, '#120C1A', 0.55), mixH(c, '#1A1424', 0.3), c, mixH(c, '#FFF2D8', 0.25)];
 const MAD = ['#3A2416', '#5A3A22', '#7A4E2E', '#9A6A3E', '#B8864A'], PED = ['#4A4450', '#6A6470', '#8A8490', '#AAA4AE'];
 
 export function pintarLoja(g, q, o, x, y, Tm) {
@@ -18,6 +20,16 @@ export function pintarLoja(g, q, o, x, y, Tm) {
       for (const [a, c] of [[-32, '#7A2E6A'], [-22, '#B8322A'], [-12, '#2F5FB0'], [-2, '#C9A63C'], [8, '#3F7A4A'], [18, '#8E2B45']]) { R(a - 1, -33, 10, 9, TI); R(a, -32, 8, 7, c); R(a + 1, -31, 2, 5, '#FFFFFF44'); }
       R(-30, -50, 2, 16, '#8E2B45'); R(-26, -50, 2, 12, '#7A2E6A'); R(-22, -50, 2, 14, '#C9A63C'); // panos pendurados
       R(24, -8, 12, 10, TI); R(25, -7, 10, 8, '#6A5A4A'); R(26, -9, 8, 3, '#7A2E6A'); // o pote de tinta
+      return true; }
+    case 'padaria': { // a padaria de Sela: o forno de barro (tanur) aceso, a esteira de junco por cima, a mesa com os pães redondos e os cestos
+      poste(-34, -46, 46); poste(30, -46, 46); R(-38, -50, 76, 5, TI); for (let i = -37; i < 37; i += 2) R(i, -49, 2, 3, i % 4 ? '#B8A06A' : '#9A8250'); for (let i = -37; i < 37; i += 6) R(i + 2, -46, 1, 2, '#9A8250'); // a esteira de junco
+      const B = ['#5A3424', '#8A5236', '#B0703F', '#C98A52']; // o forno: cúpula de barro com a boca acesa
+      for (let r = 0; r < 20; r++) { const l = Math.round(Math.sqrt(1 - (r / 20) ** 2) * 15); R(-30 - l, -1 - r, l * 2 + 1, 1, TI); R(-29 - l, -1 - r, l * 2 - 1, 1, r > 15 ? B[3] : r > 7 ? B[2] : B[1]); R(-29 + l - 4, -1 - r, 3, 1, B[0]); }
+      R(-34, -10, 9, 9, TI); R(-33, -9, 7, 8, f % 2 ? '#FFB040' : '#FF8A2A'); R(-32, -6, 5, 5, '#FFE08A'); R(-31, -20, 3, 2, B[3]); // a boca e a brasa
+      tabuas(-10, -16, 40, 16); R(-10, -18, 40, 3, MAD[4]); // a mesa
+      for (const [a, b] of [[-7, -21], [1, -21], [9, -21], [17, -21], [-3, -24], [5, -24], [13, -24], [1, -27], [9, -27]]) { R(a - 1, b - 1, 9, 4, TI); R(a, b, 7, 3, '#C98A52'); R(a + 1, b, 5, 1, '#E8B878'); R(a + 3, b + 1, 1, 1, '#8A5236'); } // os pães redondos, empilhados
+      for (const a of [22, 31]) { R(a - 1, -10, 10, 10, TI); R(a, -9, 8, 9, '#9A7A44'); for (let r = -8; r < 0; r += 2) R(a, r, 8, 1, '#7A5A30'); R(a + 1, -11, 6, 2, '#E8B878'); } // cestos de pão
+      if (f % 3 === 0) { R(-30, -26 - (f % 6), 1, 2, '#CFC6B8'); R(-28, -31 - (f % 4), 1, 2, '#BFB6A8'); } // o calor do forno
       return true; }
     case 'forja': { // a forja: casinha de pedra com chaminé, a fornalha acesa, bigorna e foles
       R(-6, -56, 58, 56, TI); R(-5, -55, 56, 55, PED[1]); for (let r = -50; r < 0; r += 7) for (let c = (r / 7) % 2 ? 0 : 6; c < 54; c += 12) R(-5 + c, r, 11, 1, PED[0]); R(46, -55, 5, 55, PED[0]);
@@ -38,7 +50,12 @@ export function pintarLoja(g, q, o, x, y, Tm) {
       poste(14, -46, 46); poste(46, -46, 46); R(14, -46, 35, 3, MAD[3]); R(14, -10, 35, 3, MAD[3]);
       for (let i = 0; i < 12; i++) R(18 + i * 2.4, -43, 1, 33, ['#C83A3A', '#E8DCC8', '#2F5FB0', '#C9A63C'][i % 4]); R(17, -24, 28, 10, '#8E4A6A'); R(17, -24, 28, 1, '#B86A8A'); // o pano saindo
       R(52, -40, 46, 1, MAD[1]); poste(50, -42, 42); poste(96, -42, 42);
-      for (const [a, c] of [[56, '#3F7A4A'], [70, '#C9A63C'], [84, '#2F5FB0']]) { R(a - 1, -39, 12, 20, TI); R(a, -38, 10, 18, c); R(a - 3, -38, 3, 7, c); R(a + 10, -38, 3, 7, c); R(a + 4, -40, 2, 3, '#E8DCC8'); }
+      // no varal, panos de lã dobrados sobre a corda (mantos e cintos tecidos ali mesmo): dobra em cima, pregas, listras de tear e franjas
+      for (const [a, c, lst, comp] of [[55, '#6E8A5A', '#E8DCC8', 22], [69, '#B8863A', '#7A3A2A', 18], [83, '#3F5F8A', '#D8C8A0', 24]]) {
+        const L = rampaH(c); R(a - 1, -40, 12, comp + 2, TI); R(a, -39, 10, comp, L[2]); R(a, -39, 10, 3, L[1]); R(a, -36, 10, 1, L[0]); // a dobra sobre a corda faz sombra
+        for (const px of [a + 2, a + 6]) R(px, -35, 1, comp - 5, L[1]); R(a + 4, -35, 1, comp - 5, L[3]); R(a + 8, -35, 1, comp - 6, L[3]); // pregas
+        R(a, -39 + comp - 6, 10, 1, lst); R(a, -39 + comp - 4, 10, 1, lst); // as listras do tear
+        for (let f = 0; f < 10; f += 2) R(a + f, -39 + comp, 1, 2, L[1]); } // a franja
       return true; }
     case 'arca': { // a arca de Noé (um modelo grande, de madeira): casco curvo, a casa em cima, a rampa e os bichos espiando
       const W = 104, fundo = i => Math.round(Math.sin(i / W * Math.PI) * 10); for (let i = -1; i <= W + 1; i++) R(i - W / 2, -35, 1, 24 + fundo(Math.max(0, Math.min(W, i))) + 1, TI); for (let i = 0; i <= W; i++) { R(i - W / 2, -34, 1, 21 + fundo(i), i % 6 === 0 ? MAD[2] : MAD[3]); R(i - W / 2, -14 + fundo(i), 1, 1, MAD[1]); }
