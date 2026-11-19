@@ -10,6 +10,7 @@ import { quadroVicio } from './viciospx.js';
 import { desenharChefe } from '../chefes.js';
 import { desenharObjeto } from '../objetos.js';
 import { MUNDO, RX } from '../dados.js';
+import { pintarDeitado, pintarSono } from '../sono.js';
 import { OLEO_USO } from '../heroi.js';
 import { Sprite, rampa, cor, carimbar, TINTA, BRANCO, PX } from './raster.js';
 import { quadroHeroi, quadroPessoa, vulto, AX, AY } from './humano.js';
@@ -606,7 +607,7 @@ export function renderPixel(G) {
   // outros peregrinos (multijogador) e o herói
   for (const o of G.outros) pintarJogador(g, o.corpo, o.look, o.cls, o.arma, Tm, o.hab, X, Y, false, o.armaCor, o.armaRar);
   const aguaN = (p.nada || G.nado) && G.objs.find(o => o.tipo === 'aguaAberta');
-  if (G.cenaPraia) pintarSentado(g, G, X, Y, Tm); else if (!p.morto && p.noBote) pintarNoBote(g, G, p, X, Y, Tm); else if (!p.morto && aguaN) pintarNadando(g, G, p, aguaN, X, Y, Tm, vw); else if (!p.morto) pintarJogador(g, p, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab, X, Y, true, G.arma?.lamina, G.arma?.rar);
+  if (G.cenaSono?.deita > 0) pintarDeitado(g, G, X, Y, Tm); else if (G.cenaPraia) pintarSentado(g, G, X, Y, Tm); else if (!p.morto && p.noBote) pintarNoBote(g, G, p, X, Y, Tm); else if (!p.morto && aguaN) pintarNadando(g, G, p, aguaN, X, Y, Tm, vw); else if (!p.morto) pintarJogador(g, p, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab, X, Y, true, G.arma?.lamina, G.arma?.rar);
   if (G.pomba) pintarPomba(g, G.pomba, X, Y, Tm);
   else if (G.mortoT > 1.2) { const s = quadroHeroi({ ...p, morto: true, atk: null }, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab); s.dissolve(clamp((1.9 - G.mortoT) / 0.7, 0, 1), 5); carimbar(g, s, X(p.x), Y(p.y), AX, AY, p.face); }
   pintarEfeitos(g, G.fxPx, cx, cy, false);
@@ -629,6 +630,7 @@ export function renderPixel(G) {
   pintarLuzPixel(g, G, vw, vh, cx, cy, luzCv);
   pintarClima(g, G, vw, vh, cx, Tm);
   pintarTempo(g, G, vw, vh, cx, Tm, cy);
+  if (G.cenaSono) pintarSono(g, G, vw, vh, Tm);
   if (G.cenaPraia) pintarPraia(g, G, X, Y, vw, vh, Tm); else { pintarHud(g, G, vw); barraChefe(g, G, vw); }
 
   // amplia: primeiro por um fator inteiro (pixels nítidos), depois ajusta à tela

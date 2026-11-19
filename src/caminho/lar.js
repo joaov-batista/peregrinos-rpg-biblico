@@ -1,6 +1,7 @@
 // A vida em casa e à mesa: a ceia dos irmãos (toda noite, na casa de Marta e Maria, para quem já criou laço),
 // a sua casa na Rua das casas, e o casamento (dez corações, um anel forjado por Tubalcaim, a festa na sinagoga).
 // Só os moradores da Rua das casas e do Portão das vinhas são casáveis (personagens fictícios, para não mexer na história bíblica).
+import { dormir } from './sono.js';
 import { sfx } from '../audio.js';
 import { GENTE, ITENS, CASAMENTO, CEIA } from '../content/gente.js';
 import { coracoesDe, somarCoracoes } from './vida.js';
@@ -49,9 +50,8 @@ export function rotuloCasa(G, ob) {
 export async function usarCasa(G, ob) {
   const p = G.p, cm = G.cm;
   if (ob.tipo === 'cama') { const h = hora(G), noite = h >= 19 || h < 5.5;
-    const r = await G.ui.dialog({ nome: 'A esteira', texto: noite ? 'Já é noite. A casa está quieta; lá fora, só os grilos.' : 'Uma esteira de palha, um cobertor de lã de ovelha. Dá para cochilar um pouco.', voz: false, acoes: [...(noite ? [{ label: 'Dormir até de manhã' }] : []), { label: 'Cochilar' }, { label: 'Levantar' }] });
-    if (r === 'Dormir até de manhã') { cm.relogio = (Math.floor((cm.relogio || 0) / 600) + 1) * 600; /* o dia começa às 7 */ G.fade = 1; p.vida = p.vidaMax; p.oleo = G.oleoMax(); sfx('heal');
-      await G.ui.dialog({ nome: 'De manhã', texto: 'Você acorda com o galo e a luz entrando pela janela. "As misericórdias do Senhor… renovam-se cada manhã" (Lm 3:22-23).\n\nFôlegos e lâmpada cheios.', acoes: [{ label: 'Levantar' }], cls: 'fala-narra', voz: false }); }
+    const r = await G.ui.dialog({ nome: 'A esteira', texto: noite ? 'Já é noite. A casa está quieta; lá fora, só os grilos.' : 'Uma esteira de palha, um cobertor de lã de ovelha. Dá para cochilar um pouco.', voz: false, acoes: [{ label: noite ? 'Dormir até de manhã' : 'Dormir até amanhã' }, { label: 'Cochilar' }, { label: 'Levantar' }] });
+    if (r === 'Dormir até de manhã' || r === 'Dormir até amanhã') { dormir(G, ob); return true; } // a cena: deita, a noite passa, o galo canta
     else if (r === 'Cochilar') { p.vida = p.vidaMax; p.oleo = G.oleoMax(); sfx('heal'); G.efeito('cura', p.x, p.y, 1, { gruda: p }); G.textoEm(p.x, p.y - 80, 'Descansou em casa', '#FFE9A8', 12); }
     G.salvar(); return true; }
   if (ob.tipo === 'mesaCasa') { const c = cm.conjuge, cj = c && G.objs.find(o => o.conjuge), nomeC = cj?.nome;

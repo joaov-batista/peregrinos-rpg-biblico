@@ -1237,7 +1237,7 @@ export class Caminho {
   /* ================= Interações ================= */
   interacoes() {
     const p = this.p; let perto = null, pd = 58;
-    if (p.morto) { this.ui.setInteract(null); return; }
+    if (p.morto || this.cenaSono) { this.perto = null; this.ui.setInteract(null); return; }
     for (const ob of this.objs) {
       const dd = Math.hypot((ob.vv ? ob.vv.x : ob.x) - p.x, ob.y - 20 - (p.y - 20)); /* morador que anda: fala-se com ele onde ele está */
       if (ob.tipo === 'segredo' && dd < 30) { ob.fora = true; this.partilhar('seg', ob); this.efeito('coleta', ob.x, ob.y - 10); this.cm.seg[this.area].push(ob.n); this.ganhar(ob.item); continue; }

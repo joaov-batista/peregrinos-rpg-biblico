@@ -67,6 +67,7 @@ export function sfx(n) {
     case 'crit': tone(520, 160, 0.18, 'square', 0.14); noiseBurst(0.1, 0.14, 1400); break;
     case 'hurt': tone(160, 70, 0.25, 'sawtooth', 0.16); break;
     case 'block': tone(900, 600, 0.08, 'triangle', 0.18); break;
+    case 'galo': tone(620, 980, 0.12, 'sawtooth', 0.06); tone(980, 1240, 0.16, 'sawtooth', 0.06, 0.13); tone(1240, 1300, 0.3, 'sawtooth', 0.06, 0.3); tone(1300, 820, 0.4, 'sawtooth', 0.05, 0.6); break; // o galo da manhã
     case 'parry': tone(1200, 1800, 0.12, 'triangle', 0.2); tone(1800, 2400, 0.15, 'sine', 0.12, 0.05); break;
     case 'dodge': noiseBurst(0.18, 0.08, 600); break;
     case 'shoot': tone(700, 300, 0.1, 'triangle', 0.1); break;
