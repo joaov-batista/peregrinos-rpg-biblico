@@ -416,7 +416,7 @@ export function areaDef(id) {
   if (f.n === 3 || f.n === 5) segredos.push('mana');
   const estacoes = f.estacoes || (primeira ? DECISOES_CORINTO[f.n] : undefined);
   // uma semana pode pedir páginas mais curtas (rolos = câmaras), sem tesouro e sem segredos (a fase da célula)
-  return { id, sem, fase: f, nome: f.nome, sub: f.ref, tema: TEMA_FASE[f.tema] || f.tema, chefe: f.chefe, seed: id, cols: estacoes ? 8 : 7, evento: !!sem.evento,
+  return { id, sem, fase: f, nome: f.nome, sub: f.ref, tema: TEMA_FASE[f.tema] || f.tema, chefe: f.chefe, seed: id, cols: estacoes ? 8 : 7, evento: !!sem.evento, arenaLarga: !!sem.evento,
     rolos: f.rolos ?? 3, tesouro: f.tesouro, marca: MARCAS[f.chefe], estacoes, npcs: Object.values(f.npcs || {}).map(n => ({ ...n, falas: FALAS[sid]?.[f.n]?.[n.nome] || n.falas })), inimigos: f.inimigos, segredos: f.segredos || segredos, arena: arenaDe(f.chefe),
     segTipos: f.n === 1 && primeira ? ['lampada'] : ['lampada', 'lampada', 'firmeza', 'asas'] };
 }

@@ -13,7 +13,7 @@ const { ESTILOS } = await import('../src/caminho/estilos.js');
 const { EVENTOS, TODAS } = await import('../src/content/index.js');
 const { BOSSES } = await import('../src/data/bestiary.js');
 const { CINEMAS } = await import('../src/content/cinematicas.js');
-const { CHEFES_G } = await import('../src/caminho/pixel/chefes-g.js');
+const { CHEFES_G, GRANDES } = await import('../src/caminho/pixel/chefes-g.js');
 const { apurar, pacoteQuiz } = await import('../src/celula/rede.js');
 
 const sem = EVENTOS.find(s => s.id === 'celula-escolheu');

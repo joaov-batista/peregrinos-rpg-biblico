@@ -14,7 +14,10 @@ import { ligar, manda, junta, novoCodigo, limparCodigo } from '../caminho/juntos
 import { novoHeroi, damp } from '../caminho/heroi.js';
 import { CLASSES } from '../data/classes.js';
 
-const PREFIXO = 'peregrinos-celula-', MAX_FANTASMAS = 12, HZ = 0.2, VOTO_S = 20, REVELA_S = 5;
+const PREFIXO = 'peregrinos-celula-', MAX_FANTASMAS = 12, HZ = 0.2, VOTO_S = 20, REVELA_S = 5, GERACOES = 6;
+// a sala tem "gerações": quando o anfitrião cai (o celular foi para o WhatsApp e o sistema congelou a aba), quem assume abre
+// a geração seguinte com o mesmo código, sem esperar o servidor soltar o nome antigo. Quem chega pelo link procura da 0 em diante.
+const nomeSala = (cod, g) => cod + (g ? '-' + g : '');
 export { novoCodigo, limparCodigo };
 
 // o retrato enxuto do peregrino: só o que o desenho precisa (posição, pose, golpe, lâmpada)
@@ -54,6 +57,7 @@ export class Rede {
     this.frutos = {}; // 'area#k' → nome de quem pegou
     this.fila = []; this.quiz = null; this.nQuiz = 0; // (anfitrião) votações
     this.aoAviso = null; this.aoMudar = null; this.aoQuiz = null; this.aoVotos = null; this.aoResultado = null; this.aoFruto = null;
+    this.ger = 0; this.coop = false; this.aoJx = null; this.areaDe = new Map(); this.nE = new Map(); this.tPulso = performance.now();
     this.relogio = setInterval(() => this.pulso(), 200); // independente do desenho: segue mesmo com a aba em segundo plano
   }
   get total() { return [...this.lista.values()].filter(q => !q.telao).length; }
@@ -63,54 +67,56 @@ export class Rede {
   async conectar(codigo, local = false) {
     this.codigo = limparCodigo(codigo) || novoCodigo(); this.local = local;
     if (this.telao) { await this.abrir(); return this; }
-    for (let tentativa = 0; tentativa < 4; tentativa++) {
-      try { await this.entrar(); return this; } catch (e) { if (this.fechado) throw e; }
-      try { await this.abrir(); return this; } catch (e) { if (!/em uso/.test(e.message || '') && tentativa === 3) throw e; }
+    for (let tentativa = 0; tentativa < 3; tentativa++) {
+      if (await this.procurar(0)) return this;
+      for (let g = 0; g < GERACOES; g++) { try { await this.abrir(g); return this; } catch (e) { if (!/em uso/.test(e.message || '')) { if (tentativa === 2) throw e; break; } } } // o nome está preso por um anfitrião congelado: a geração seguinte
       await new Promise(r => setTimeout(r, 500 + Math.random() * 1200)); // espera um pouco: outro pode estar virando o anfitrião
     }
     throw new Error('Não deu para entrar na sala.');
   }
-  async abrir() {
+  // procura a sala da geração g em diante; entra na primeira que responder
+  async procurar(g0) { for (let g = g0; g < GERACOES; g++) { if (this.fechado) return false; try { await this.entrar(g); return true; } catch { /* não há anfitrião nesta geração */ } } return false; }
+  async abrir(g = this.ger) {
     const antes = new Map(this.lista);
-    this.rede = await ligar(this.codigo, true, this.local, {
+    this.rede = await ligar(nomeSala(this.codigo, g), true, this.local, {
       entra: () => {},
       msg: (c, m) => { m = junta(m); if (!m) return; try { this.doAnfitriao(c, m); } catch (e) { console.error('[celula]', e); } },
       sai: c => { const id = this.cons.get(c); if (id == null) return; this.cons.delete(c); this.saiu(id); this.paraTodos({ t: 'sx', id }); this.conferirVotos(); }
     }, PREFIXO);
-    this.anfitriao = true; this.id = 0; this.lista.clear(); this.fant.clear();
+    this.anfitriao = true; this.ger = g; this.id = 0; this.lista.clear(); this.fant.clear(); this.areaDe.clear(); this.tPulso = performance.now();
     this.lista.set(0, { id: 0, ...this.eu, telao: this.telao, pg: this.meuPg, pts: antes.get(this.id)?.pts || 0, visto: performance.now() });
     this.prox = Math.max(1, ...[...antes.keys()].map(k => k + 1)) + 50; // ids novos não colidem com os que voltam
     this.aoMudar?.();
   }
-  async entrar() {
+  async entrar(g = this.ger) {
     let ok, erro; const bem = new Promise((a, b) => { ok = a; erro = b; });
-    this.rede = await ligar(this.codigo, false, this.local, {
-      msg: (_, m) => { m = junta(m); if (!m) return; this.ultimo = performance.now(); if (m.t === 'bem') { this.id = m.id; ok(); } try { this.receber(m); } catch (e) { console.error('[celula]', e); } },
-      sai: () => this.religar()
+    const rede = await ligar(nomeSala(this.codigo, g), false, this.local, {
+      msg: (_, m) => { if (this.rede !== rede && m?.t !== 'bem') return; m = junta(m); if (!m) return; this.ultimo = performance.now(); if (m.t === 'bem') { this.rede = rede; this.id = m.id; this.ger = m.ger ?? g; ok(); } try { this.receber(m); } catch (e) { console.error('[celula]', e); } },
+      sai: () => { if (this.rede === rede) this.religar(); }
     }, PREFIXO);
-    manda(this.rede.con, { t: 'oi', ...this.eu, pg: this.meuPg, pts: this.lista.get(this.id)?.pts || 0 });
+    this.rede = rede;
+    manda(rede.con, { t: 'oi', ...this.eu, pg: this.meuPg, pts: this.lista.get(this.id)?.pts || 0 });
     const tempo = setTimeout(() => erro(new Error('O anfitrião não respondeu.')), 8000);
-    try { await bem; } catch (e) { try { this.rede.fechar(); } catch { /* */ } throw e; } finally { clearTimeout(tempo); }
+    try { await bem; } catch (e) { try { rede.fechar(); } catch { /* */ } if (this.rede === rede) this.rede = null; throw e; } finally { clearTimeout(tempo); }
     this.anfitriao = false; this.ultimo = performance.now();
   }
   // A sala caiu (o anfitrião saiu ou a internet piscou). Para não nascerem dois anfitriões, há uma ordem: o primeiro da
   // lista (o mais antigo na sala, fora o anfitrião que caiu e o telão) tenta abrir na hora; os outros esperam a vez dele e
   // entram. Só se ninguém aparecer por várias rodadas é que os outros tentam abrir também. Insiste por até 2 minutos.
-  async religar() {
-    if (this.fechado || this.religando || this.anfitriao) return; this.religando = true;
+  async religar(exAnfitriao = false) {
+    if (this.fechado || this.religando || (this.anfitriao && !exAnfitriao)) return; this.religando = true;
     this.aoAviso?.('A sala piscou. Reconectando…');
     const quiz = this.quizLocal; if (quiz) { this.quizLocal = null; this.aoResultado?.({ id: quiz.id, cancelado: true }); } // a votação que estava na tela termina sem efeito
     const fila = [...this.lista.values()].filter(q => q.id !== 0 && !q.telao).map(q => q.id).sort((a, b) => a - b);
-    const vez = Math.max(0, fila.indexOf(this.id)), t0 = Date.now();
-    try { this.rede?.fechar(); } catch { /* */ }
-    this.fant.clear();
+    const vez = exAnfitriao ? 99 : Math.max(0, fila.indexOf(this.id)), t0 = Date.now(), g = this.ger + 1;
+    try { this.rede?.fechar(); } catch { /* */ } this.rede = null; this.anfitriao = false;
+    this.fant.clear(); this.cons.clear();
     for (let rodada = 0; !this.fechado && Date.now() - t0 < 120000; rodada++) {
-      const abrir = rodada >= 3 + vez * 2 ? true : vez === 0;
       try {
-        if (abrir && rodada > 0 || vez === 0) { try { await this.abrir(); } catch (e) { if (!/em uso/.test(e.message || '')) throw e; await this.entrar(); } }
-        else { await new Promise(r => setTimeout(r, 1200 + vez * 900)); await this.entrar(); }
-        this.religando = false; this.aoAviso?.(this.anfitriao ? 'Você agora segura a sala ' + this.codigo + '.' : 'De volta à sala ' + this.codigo + '.'); return;
-      } catch { await new Promise(r => setTimeout(r, 1500 + Math.random() * 1000)); }
+        if (vez === 0 || rodada >= 3 + Math.min(vez, 6) * 2) { try { await this.abrir(g + Math.floor(rodada / 8)); } catch (e) { if (!/em uso/.test(e.message || '')) throw e; if (!await this.procurar(g)) throw e; } }
+        else { await new Promise(r => setTimeout(r, 1200 + Math.min(vez, 8) * 700)); if (!await this.procurar(exAnfitriao ? 0 : g)) throw new Error('ninguém ainda'); }
+        this.religando = false; this.aoAviso?.(this.anfitriao ? 'Você agora segura a sala ' + this.codigo + '.' : 'De volta à sala ' + this.codigo + '.'); this.aoMudar?.(); return;
+      } catch { await new Promise(r => setTimeout(r, 1200 + Math.random() * 1000)); }
     }
     this.religando = false;
     if (!this.fechado) this.aoAviso?.('Sem sala por enquanto: você continua jogando sozinho.');
@@ -123,7 +129,7 @@ export class Rede {
       const id = this.prox++; this.cons.set(c, id);
       const q = { id, nome: String(m.nome || 'Peregrino').slice(0, 16), look: m.look || {}, cls: m.cls, pg: m.pg || {}, pts: m.pts || 0, visto: performance.now() };
       this.lista.set(id, q);
-      manda(c, { t: 'bem', id, l: this.rol(), fr: this.frutos, qz: this.quiz && this.quizParaRede(), vc: this.quiz && this.contagem() });
+      manda(c, { t: 'bem', id, ger: this.ger, l: this.rol(), fr: this.frutos, qz: this.quiz && this.quizParaRede(), vc: this.quiz && this.contagem() });
       this.paraTodos({ t: 'ch', q: this.ficha(q) }, c);
       this.aoAviso?.(q.nome + ' entrou na sala.'); this.aoMudar?.();
       return;
@@ -137,6 +143,7 @@ export class Rede {
       case 'qz?': this.pedirQuiz(id, m); break;
       case 'vt': this.votar(id, m.id, m.i); break;
       case 'fr?': this.pegarFruto(id, m.k, c); break;
+      case 'jx': this.retransmitir(id, m.m, c); break;
     }
   }
   paraTodos(m, menos) { for (const c of this.cons.keys()) if (c !== menos) { try { manda(c, m); } catch { /* um caindo não derruba os outros */ } } }
@@ -145,7 +152,9 @@ export class Rede {
   // o batimento: a cada 200 ms (mesmo em segundo plano); posições em lotes, presença, quem sumiu, a votação em curso
   pulso() {
     if (this.fechado || !this.rede) return;
-    const agora = performance.now();
+    const agora = performance.now(), parado = agora - this.tPulso; this.tPulso = agora;
+    // o anfitrião ficou congelado (o celular foi para outro app): os outros já escolheram outro. Devolve o posto e entra como convidado.
+    if (this.anfitriao && !this.telao && parado > 6000 && this.cons.size + (this.lista.size - 1) > 0) { this.religar(true); return; }
     if (this.anfitriao) {
       this.lotes();
       if ((this.nP = (this.nP || 0) + 1) % 10 === 0) { // a cada 2 s: o placar inteiro (também serve de "estou vivo")
@@ -175,6 +184,7 @@ export class Rede {
       case 'qr': this.resultado(m); break;
       case 'fr': this.frutos[m.k] = m.nome; this.aoFruto?.(m); break;
       case 'fila': this.aoAviso?.(m.txt); break;
+      case 'jx': this.aoJx?.(m.m); break;
     }
   }
   saiu(id) { const q = this.lista.get(id); if (!q) return; this.lista.delete(id); this.fant.delete(id); this.aoAviso?.(q.nome + ' saiu da sala.'); this.aoMudar?.(); }
@@ -198,7 +208,7 @@ export class Rede {
     for (const [id, f] of this.fant) if (agora - f.t > 4000) this.fant.delete(id);
     if (!this.rede || this.fechado || !G) return;
     if ((this.tE = (this.tE || 0) - dt) <= 0) {
-      this.tE = HZ; const r = retrato(G.eu || G.p), a = G.area;
+      this.tE = HZ; if (this.coop) return; const r = retrato(G.eu || G.p), a = G.area;
       if (this.anfitriao) this.posicao(0, a, r); else { try { if ((this.rede.con?.dataChannel?.bufferedAmount || 0) < 64000) manda(this.rede.con, { t: 'p', a, r }); } catch { /* */ } }
     }
   }
@@ -225,6 +235,28 @@ export class Rede {
       .sort((a, b) => b.chefes - a.chefes || (a.fim && b.fim ? a.tempo - b.tempo : 0) || b.pts - a.pts || a.quedas - b.quedas || a.tempo - b.tempo);
   }
 
+  // ---------- o co-op (src/celula/coop.js): mensagens do "Caminhar juntos", retransmitidas pelo anfitrião ----------
+  // O retrato de cada um ('e') vai para todos (para todos saberem em que página cada um está), mas só 4 vezes por segundo para
+  // quem está noutra página; o resto (o mundo da área, golpes, efeitos) só vai para quem está na mesma página.
+  jx(m) {
+    if (this.anfitriao) this.retransmitir(this.id, m, null);
+    else if (this.rede?.con) { const leve = m.t === 'w' || m.t === 'e' || m.t === 'fx'; if (leve && (this.rede.con.dataChannel?.bufferedAmount || 0) > 150000) return; try { manda(this.rede.con, { t: 'jx', m }); } catch { /* */ } }
+  }
+  retransmitir(de, m, origem) {
+    if (!m || typeof m !== 'object') return; m.de = de;
+    if (m.t === 'e' && m.a) this.areaDe.set(de, m.a);
+    const n = (this.nE.get(de) || 0) + 1; this.nE.set(de, n);
+    const env = { t: 'jx', m };
+    for (const [c, id] of this.cons) {
+      if (c === origem || this.lista.get(id)?.telao) continue;
+      const mesma = !m.a || this.areaDe.get(id) === m.a || !this.areaDe.has(id);
+      if (!mesma && (m.t !== 'e' || n % 3)) continue;
+      const leve = m.t === 'w' || m.t === 'e' || m.t === 'fx'; if (leve && (c.dataChannel?.bufferedAmount || 0) > 200000) continue;
+      try { manda(c, env); } catch { /* */ }
+    }
+    if (de !== this.id && !this.telao) this.aoJx?.(m);
+  }
+
   // ---------- frutos: o primeiro que pede leva ----------
   pedirFruto(k) {
     if (this.frutos[k]) return;
@@ -245,8 +277,8 @@ export class Rede {
   }
   pedirQuiz(id, m) {
     const quem = this.lista.get(id)?.nome || 'Alguém';
-    if ((this.quiz && this.quiz.dono === id) || this.fila.some(f => f.dono === id)) return; // um pedido por vez por peregrino
-    this.fila.push({ dono: id, quem, pac: m.pac, area: m.area, rolo: m.rolo, titulo: String(m.titulo || '').slice(0, 80) });
+    if (m.tipo !== 'chefe' && ((this.quiz && this.quiz.dono === id && this.quiz.tipo !== 'chefe') || this.fila.some(f => f.dono === id && f.tipo !== 'chefe'))) return; // um rolo por vez por peregrino (a pergunta do chefe sempre entra)
+    this.fila.push({ dono: id, quem, pac: m.pac, area: m.area, rolo: m.rolo, tipo: m.tipo || 'rolo', titulo: String(m.titulo || '').slice(0, 80) });
     if (this.quiz) { const c = [...this.cons].find(([, i]) => i === id)?.[0]; const txt = 'Na fila da votação: espere a pergunta de ' + this.quiz.quem + ' terminar.'; if (c) manda(c, { t: 'fila', txt }); else if (id === this.id) this.aoAviso?.(txt); }
     else this.proximoQuiz();
   }
@@ -256,7 +288,7 @@ export class Rede {
     const m = this.quizParaRede(); this.paraTodos({ t: 'qz', q: m }); this.chegouQuiz(m);
     clearTimeout(this.tQuiz); this.tQuiz = setTimeout(() => this.encerrar(), VOTO_S * 1000 + 300);
   }
-  quizParaRede() { const z = this.quiz; return { id: z.id, quem: z.quem, dono: z.dono, area: z.area, rolo: z.rolo, titulo: z.titulo, q: z.pac.q, op: z.pac.op, resta: Math.max(0, z.ate - Date.now()) }; }
+  quizParaRede() { const z = this.quiz; return { id: z.id, quem: z.quem, dono: z.dono, area: z.area, rolo: z.rolo, tipo: z.tipo, titulo: z.titulo, q: z.pac.q, op: z.pac.op, resta: Math.max(0, z.ate - Date.now()) }; }
   contagem() { const z = this.quiz, n = z.pac.op.map(() => 0); for (const i of z.votos.values()) if (n[i] != null) n[i]++; return { t: 'vc', id: z.id, n, votaram: z.votos.size, total: this.total }; }
   votar(id, qid, i) {
     const z = this.quiz; if (!z || z.id !== qid || z.votos.has(id) || this.lista.get(id)?.telao || !(i >= 0 && i < z.pac.op.length)) return;
@@ -269,7 +301,7 @@ export class Rede {
     const n = z.pac.op.map(() => 0); for (const i of z.votos.values()) n[i]++;
     const r = apurar(n, z.pac.certa), votos = z.pac.op.map(() => []);
     for (const [id, i] of z.votos) { const q = this.lista.get(id); if (!q) continue; votos[i].push(q.nome); if (i === z.pac.certa) q.pts = (q.pts || 0) + 100; }
-    const m = { t: 'qr', id: z.id, n, votos, certa: z.pac.certa, venc: r.venc, certo: r.certo, empate: r.empate, porque: z.pac.porque, area: z.area, rolo: z.rolo, dono: z.dono, quem: z.quem };
+    const m = { t: 'qr', id: z.id, n, votos, certa: z.pac.certa, venc: r.venc, certo: r.certo, empate: r.empate, porque: z.pac.porque, area: z.area, rolo: z.rolo, tipo: z.tipo, dono: z.dono, quem: z.quem };
     this.paraTodos(m); this.resultado(m);
     setTimeout(() => this.proximoQuiz(), REVELA_S * 1000 + 600); // a próxima pergunta só depois de todos verem o resultado
   }

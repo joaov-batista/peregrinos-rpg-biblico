@@ -686,6 +686,7 @@ export function renderPixel(G) {
   for (const o of G.outros) pintarJogador(g, o.corpo, o.look, o.cls, o.arma, Tm, o.hab, X, Y, false, o.armaCor, o.armaRar, o.fantasma);
   const aguaN = (p.nada || G.nado) && G.objs.find(o => o.tipo === 'aguaAberta');
   if (G.cenaMeteoros) pintarSentadosCeu(g, G, X, Y, Tm); else if (G.cenaSono?.deita > 0) pintarDeitado(g, G, X, Y, Tm); else if (G.cenaOracao?.ajoelha) pintarAjoelhado(g, G, X, Y, Tm); else if (G.cenaFesta?.sentado) pintarNaFesta(g, G, X, Y, Tm); else if (G.cenaPraia) pintarSentado(g, G, X, Y, Tm); else if (!p.morto && p.noBote) pintarNoBote(g, G, p, X, Y, Tm); else if (!p.morto && aguaN) pintarNadando(g, G, p, aguaN, X, Y, Tm, vw); else if (!p.morto) pintarJogador(g, p, G.char.look || {}, G.char.cls, G.def?.reverente ? null : G.tipoArma, Tm, G.hab, X, Y, true, G.arma?.lamina, G.arma?.rar);
+  if (!p.morto && (G.evento || G.mp?.pares?.size)) pintarSetaVoce(g, X(p.x), Y(p.y) - 44, Tm); // com gente junto, cada um sabe qual é o seu
   if (G.pomba) pintarPomba(g, G.pomba, X, Y, Tm);
   else if (G.mortoT > 1.2) { const s = quadroHeroi({ ...p, morto: true, atk: null }, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab); s.dissolve(clamp((1.9 - G.mortoT) / 0.7, 0, 1), 5); carimbar(g, s, X(p.x), Y(p.y), AX, AY, p.face); }
   pintarEfeitos(g, G.fxPx, cx, cy, false);
@@ -768,6 +769,13 @@ function pintarNadando(g, G, p, A, X, Y, Tm, vw) {
   if (anda && !mergulho) for (let k = 1; k <= 5; k++) { const bx = x - f * (6 + k * 6), ab = k * 2; g.globalAlpha = 0.6 - k * 0.1; g.fillStyle = '#DFF6FA'; g.fillRect(bx, sup - 1 + (k % 2), 3, 1); g.fillRect(bx - f * 2, sup + ab, 2, 1); g.fillRect(bx - f * 2, sup - 2 - (k > 2 ? 1 : 0), 2, 1); }
   if (mergulho) for (let i = 0; i < 4; i++) { const t = (Tm * 1.5 + i / 4) % 1; g.globalAlpha = 1 - t; g.fillStyle = '#BFF0F8'; g.fillRect(x - 4 + i * 3, sup + 8 - Math.round(t * 10), 2, 2); }
   g.globalAlpha = 1;
+}
+// a seta dourada que pula em cima do SEU peregrino (na sala da célula, com até dez iguais na tela)
+const SETA_VOCE = ['#######', '#ooooo#', '.#ooo#.', '..#o#..', '...#...'];
+function pintarSetaVoce(g, x, y, Tm) {
+  const b = Math.round(Math.abs(Math.sin(Tm * 4)) * -3), cor = Math.floor(Tm * 3) % 2 ? '#FFE08A' : '#FFC23D';
+  for (let j = 0; j < SETA_VOCE.length; j++) for (let i = 0; i < 7; i++) { const c = SETA_VOCE[j][i]; if (c === '.') continue; g.fillStyle = c === '#' ? '#17121f' : cor; g.fillRect(x - 7 + i * 2, y - 6 + b + j * 2, 2, 2); }
+  g.fillStyle = '#FFF6C8'; g.fillRect(x - 5, y - 4 + b, 2, 2);
 }
 function pintarJogador(g, p, look, cls, arma, Tm, hab, X, Y, eu, armaCor, armaRar, fantasma) { // fantasma: outro peregrino da sala da célula, que joga a própria partida (meio transparente)
   if (arma === 'chicote' && p.atk && !p.atk.semCaixa) pintarChicote(g, p, X, Y, p.atk.dir, p.atk.face, Math.min(1, p.atk.t / p.atk.dur), 118, '#C48A4E');
@@ -961,6 +969,7 @@ function pintarTextos(g, G, esc, cx, cy) {
   const sx = wx => (wx / PX - cx) * e, sy = wy => (wy / PX - cy) * e;
   for (const t of G.textos) { const x = t.fixo ? t.fixo.x : t.x, y = t.fixo ? t.fixo.y - t.fixo.h - 16 : t.y, tam = Math.round(t.tam * 0.62 * e / 1.3); g.font = `600 ${tam}px ${FONTE}`; const meia = g.measureText(t.txt).width / 2 + tam * 0.6, W = g.canvas.width; g.globalAlpha = Math.min(1, t.t * 2); txt(t.txt, meia * 2 < W ? clamp(sx(x), meia, W - meia) : W / 2, sy(y), tam, t.cor, 'center'); } // a fala nunca sai pela borda da tela
   g.globalAlpha = 1;
+  if (!G.p.morto && (G.evento || G.mp?.pares?.size)) txt('VOCÊ', sx(G.p.x), sy(G.p.y - 112), 8 * u * 1.5, '#FFE08A', 'center');
   for (const o of G.outros) { txt(o.nome, sx(o.corpo.x), sy(o.corpo.y - 68), 8 * u * 1.5, o.fantasma ? '#9FB8D8' : '#BFE3D8', 'center'); if (o.fantasma) continue; const n = Math.max(0, Math.ceil(o.corpo.vida || 0)), mx = o.corpo.vidaMax || 5; for (let i = 0; i < mx; i++) { const xx = sx(o.corpo.x) + (i - mx / 2) * 4 * u, yy = sy(o.corpo.y - 82); g.fillStyle = '#17121f'; g.fillRect(xx - u, yy - u, 4 * u, 4 * u); g.fillStyle = i < n ? '#FF9A3C' : '#4A4658'; g.fillRect(xx, yy, 2 * u, 2 * u); } }
   // ataque mira: a linha de pontaria enquanto carrega e os riscos de luz dos golpes soltos
   if (p.carga >= 0.5 && G.ctl?.mira != null && !p.morto) { const a = G.ctl.mira, ux = Math.cos(a), uy = Math.sin(a), q = Math.max(4, 4 * u), f = Math.floor(G.T * 20);

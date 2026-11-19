@@ -12,6 +12,8 @@ import { VICIOS, ehVoador } from '../caminho/bichos.js';
 import { abrirVoto } from './votacao.js';
 import { pacoteQuiz, apurar } from './rede.js';
 import { telaEpica } from './titulo.js';
+import { JuntosCelula } from './coop.js';
+import { FALSAS } from '../data/bestiary.js';
 
 const FRUTOS_POR_PAGINA = 4;
 const fmt = s => { s = Math.round(s); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
@@ -29,7 +31,8 @@ export function criarEvento({ sem, char, rede, salvar, sair, ui }) {
     rede.aoVotos = vc => voto?.votos(vc);
     rede.aoResultado = m => revelar(m);
     rede.aoFruto = m => sincronizarFrutos(m);
-    rede.aoMudar = () => { hudT = 0; };
+    rede.aoMudar = () => { hudT = 0; if (G?.mp instanceof JuntosCelula) G.mp.sincronizar(); };
+    rede.aoJx = m => { if (G?.mp instanceof JuntosCelula && G.running) G.mp.chegouDaSala(m); };
     rede.progresso(pg());
   }
 
@@ -39,7 +42,9 @@ export function criarEvento({ sem, char, rede, salvar, sair, ui }) {
     voto = abrirVoto({ q, total: rede ? rede.total : 1, onVoto: i => { if (rede) rede.meuVoto(i); else voto.meu = i; } });
     voto.q = q;
   }
+  let esperaChefe = null; // o "Está escrito" do chefe: quem é dono da luta espera o resultado da votação da sala
   async function revelar(m) {
+    if (m.tipo === 'chefe' && esperaChefe && (!rede || m.dono === rede.id || m.cancelado)) { const r = esperaChefe; esperaChefe = null; setTimeout(() => r(!!m.certo), m.cancelado ? 0 : 5200); }
     const v = voto; if (!v) { aplicar(m); return; }
     if (m.cancelado) { v.fechar(); voto = null; document.body.classList.remove('cel-votando'); if (G) G.pausaGeral = false; return; }
     await v.revelar(m); v.fechar(); if (voto === v) voto = null;
@@ -48,13 +53,13 @@ export function criarEvento({ sem, char, rede, salvar, sair, ui }) {
   }
   // o efeito da votação na MINHA partida
   function aplicar(m) {
-    if (!G || !G.running) return;
+    if (!G || !G.running || m.tipo === 'chefe') return; // no chefe, quem aplica é a luta (estaEscrito em jogo.js)
     const st = d.stats;
     if (m.certo) {
       st.quizOk = (st.quizOk || 0) + 1;
       if (G.area === m.area) { const ob = G.objs.find(o => o.tipo === 'rolo' && o.n === m.rolo); const cm = G.cm;
         if (ob && !ob.feito) { ob.feito = true; if (!cm.selos[G.area].includes(ob.n)) cm.selos[G.area].push(ob.n); G.fx.anel(ob.x, ob.y - 30, '#FFE9A8', 120); G.efeito('pilar', ob.x, ob.y); G.ganharOleo(33); G.pontos(80); sfx('key'); G.conferirPorta(); G.salvar();
-          G.textoEm(G.p.x, G.p.y - 80, 'SELO ACESO PARA A CÉLULA!', '#FFE9A8', 14); } }
+          G.textoEm(G.p.x, G.p.y - 80, 'SELO ACESO PARA A CÉLULA!', '#FFE9A8', 14); } G.efeito('pilarCeu', G.p.x, G.p.y); G.efeito('cura', G.p.x, G.p.y, 1, { gruda: G.p }); G.clarao = 0.3; }
     } else {
       st.quizErr = (st.quizErr || 0) + 1;
       if (G.area === m.area) { const ob = G.objs.find(o => o.tipo === 'rolo' && o.n === m.rolo); if (ob && (!rede || m.dono === rede.id)) ob.trava = G.T + 6; }
@@ -147,7 +152,8 @@ export function criarEvento({ sem, char, rede, salvar, sair, ui }) {
   return {
     sem,
     inicio(g) {
-      G = g; const cm = g.cm; cm.dif = 'celula'; cm.difEscolhida = 1; cm.visto = { ...cm.visto, intro: 1, tut: 99, bosque: 1 };
+      G = g; if (rede) { g.mp = new JuntosCelula(g, rede); rede.coop = true; } // todos na mesma luta
+      const cm = g.cm; cm.dif = 'celula'; cm.difEscolhida = 1; cm.visto = { ...cm.visto, intro: 1, tut: 99, bosque: 1 };
       mortes0 = cm.mortes || 0;
       if (E.fim) E.pagina = 1;
       return area(Math.min(5, E.pagina));
@@ -159,7 +165,7 @@ export function criarEvento({ sem, char, rede, salvar, sair, ui }) {
       if ((g.cm.mortes || 0) !== mortes0) { E.quedas += (g.cm.mortes || 0) - mortes0; mortes0 = g.cm.mortes || 0; rede?.progresso(pg()); }
       if ((hudT -= dt) <= 0) { hudT = 1; pintarHud(); if (rede && Math.random() < 0.2) rede.progresso(pg()); }
     },
-    fantasmas(g) { return rede ? rede.fantasmas(g.area) : []; },
+    fantasmas(g) { return rede && !g.mp ? rede.fantasmas(g.area) : []; },
     salvar() { return salvar(char); },
     async quizRolo(g, q, ob, titulo) {
       const pac = pacoteQuiz(q);
@@ -170,11 +176,31 @@ export function criarEvento({ sem, char, rede, salvar, sair, ui }) {
       const n = pac.op.map((_, i) => i === meu ? 1 : 0), ap = apurar(n, pac.certa);
       await revelar({ id: 'solo', n, votos: pac.op.map((_, i) => i === meu ? [char.name] : []), certa: pac.certa, venc: ap.venc, certo: ap.certo, empate: false, porque: pac.porque, area: g.area, rolo: ob.n, dono: -1 });
     },
+    // "Está escrito": a pergunta (ou a mentira do chefe) vira votação da sala; vale para a luta de todos
+    votoChefe(g, pacote, b) {
+      let pac;
+      if (pacote.q) pac = pacoteQuiz(pacote.q);
+      else { const a = pacote.acc, falsas = [...(pacote.falsas || []), ...FALSAS.filter(f => !(pacote.falsas || []).includes(f))].slice(0, 3); pac = pacoteQuiz({ q: 'A MENTIRA: "' + a.lie + '" — o que está escrito?', a: ['"' + a.v + '" (' + a.ref + ')', ...falsas.map(f => '"' + f + '"')], porque: a.ref + ': ' + a.v }); }
+      return new Promise(res => {
+        esperaChefe = res; setTimeout(() => { if (esperaChefe === res) { esperaChefe = null; res(false); } }, 75000); // a sala caiu no meio: a luta não fica presa
+        const titulo = 'ESTÁ ESCRITO · ' + b.d.nome;
+        if (rede && rede.rede) { if (!rede.pedirVotacao(pac, { area: g.area, rolo: -1, tipo: 'chefe', titulo })) { esperaChefe = null; res(false); } return; }
+        const z = { id: 'solo-chefe', q: pac.q, op: pac.op, quem: char.name, titulo, tipo: 'chefe', resta: 20000 }; mostrarVoto(z);
+        const t0 = Date.now(), iv = setInterval(() => { if (voto?.meu != null || Date.now() - t0 > 20000) { clearInterval(iv); const meu = voto?.meu ?? -1, n = pac.op.map((_, i) => i === meu ? 1 : 0), ap = apurar(n, pac.certa);
+          revelar({ id: 'solo-chefe', tipo: 'chefe', n, votos: pac.op.map((_, i) => i === meu ? [char.name] : []), certa: pac.certa, venc: ap.venc, certo: ap.certo, empate: false, porque: pac.porque, area: g.area, rolo: -1, dono: -1 }); } }, 100);
+      });
+    },
     pegarFruto(g, ob) {
       if (rede && rede.rede) { rede.pedirFruto(ob.k); setTimeout(() => { if (!ob.pego) ob.pedido = false; }, 3000); return; }
       (E.frutosSolo = E.frutosSolo || {})[ob.k] = 1; ob.pego = true; recompensa(ob);
     },
+    // PixelFX nos momentos fortes: a entrada do chefe e a queda dele em cadeia de explosões e luz
+    chefeEntrou(g, b) { g.efeito('fumacaNegra', b.x, b.y - 30); g.efeito('baque', b.x, b.y); g.tremor?.(14); g.clarao = 0.35; },
+    async explosao(g, b) { const pts = [[-30, -60], [26, -90], [-10, -120], [34, -40], [0, -70]];
+      for (let i = 0; i < pts.length; i++) { const [dx, dy] = pts[i]; g.efeito(i % 2 ? 'critico' : 'explosaoFogo', b.x + dx, b.y + dy); g.tremor?.(10); sfx('boss'); await new Promise(r => setTimeout(r, 160)); }
+      g.efeito('almas', b.x, b.y); g.efeito('pilarCeu', b.x, b.y); g.clarao = 0.6; },
     async venceu(g, b) {
+      await this.explosao(g, b).catch(() => {});
       const n = g.def.fase.n, f = g.def.fase; E.chefes = Math.max(E.chefes, n); E.pagina = n + 1;
       if (n >= sem.fases.length) E.fim = true;
       salvar(char); rede?.progresso(pg()); rede?.aviso('⚔ ' + char.name + ' venceu ' + b.d.nome + '!');

@@ -159,7 +159,7 @@ export class Caminho {
     const vistas = this.char.data.cinemas;
     if (!CINEMAS[id] || (!forcar && (vistas.includes(id) || config.cinemas === false))) return false;
     if (remoto && this.ui.blocking) return false;
-    if (!remoto) this.mp?.ev('cin', { id }); // juntos, a história aparece para todos de uma vez
+    if (!remoto && !this.evento) this.mp?.ev('cin', { id }); // juntos, a história aparece para todos de uma vez (na célula, cada um vê a sua ao chegar)
     if (!vistas.includes(id)) vistas.push(id);
     const antes = audio.modo, chaveAntes = audio.chave; music('cinema');
     await this.emGeral(() => this.ui.cinema(id, { look: this.char.look }));
@@ -500,7 +500,7 @@ export class Caminho {
   resetarEncontro() {
     this.resetT = this.T; this.mp?.ev('rs');
     if (this.emb) { const c = this.emb.c; this.inimigos = this.inimigos.filter(v => v.cel !== c); this.trancar(c, false); this.emb = null; sfx('gate'); this.musicaDaArea(); }
-    if (this.luta) { const b = this.chefe || this.inimigos.find(e => e.kind === 'chefe'); if (b && b.max) this.chefeSalvo = { area: this.area, id: b.id, frac: Math.max(0.05, b.hp / b.max) }; /* a sombra não se refaz inteira: a dupla volta e a luta continua de onde parou */
+    if (this.luta) { const b = this.chefe || this.inimigos.find(e => e.kind === 'chefe'); if (b && b.max && !this.evento) this.chefeSalvo = { area: this.area, id: b.id, frac: Math.max(0.05, b.hp / b.max) }; /* a sombra não se refaz inteira: a dupla volta e a luta continua de onde parou */
       this.inimigos = this.inimigos.filter(e => e.kind !== 'chefe' && !e.daLuta); this.lutaRemota(false); }
   }
   // o resultado de uma pergunta votada vale para todos os que estão na área
@@ -1120,9 +1120,9 @@ export class Caminho {
     if (!juntos) { this.N.portaAberta = false; await this.cinema(CINEMA_CHEFE[d.chefe] || 'chefe-' + d.chefe); }
     else { this.congela = true; await this.cinema(CINEMA_CHEFE[d.chefe] || 'chefe-' + d.chefe); this.congela = false; } // todos assistem à entrada do chefe; ele espera
     const b = novoChefe(d.chefe, A, this.dif);
-    if (juntos) { b.max = b.hp = Math.round(b.hp * (1 + 0.6 * this.mp.naArea().length)); b.art.max = b.max; } // mais peregrinos, mais fôlego na sombra
+    if (juntos) { b.max = b.hp = Math.round(b.hp * (1 + (this.evento ? 0.45 : 0.6) * this.mp.naArea().length)); b.art.max = b.max; } // mais peregrinos, mais fôlego na sombra
     const sv = this.chefeSalvo; if (sv && sv.area === this.area && sv.id === b.id) { b.hp = Math.round(b.max * Math.min(1, sv.frac + 0.05)); this.chefeSalvo = null; setTimeout(() => this.ui.toast('A sombra ainda está ferida. Vocês continuam de onde pararam.', 4000), 1200); }
-    this.inimigos.push(b); this.chefe = b; if (d.mundo && this.mp?.acompanhado()) music('raid'); else music('chefe', d.chefe); /* os gigantes enfrentados em grupo são as raids */ sfx('boss');
+    this.inimigos.push(b); this.chefe = b; this.evento?.chefeEntrou?.(this, b); if (d.mundo && this.mp?.acompanhado()) music('raid'); else music('chefe', d.chefe); /* os gigantes enfrentados em grupo são as raids */ sfx('boss');
     this.ui.banner(b.d.titulo || 'Chefe', b.d.nome, b.d.ref);
     if (b.d.intro) this.fala(b, b.d.intro.replace(/\*/g, ''));
   }
@@ -1133,7 +1133,8 @@ export class Caminho {
     const f = this.def.fase;
     const pacote = b.c.acusacoes || !f ? { acc: pick(this.def.sem?.acusacoes || ACUSACOES), falsas: shuffle(FALSAS.slice()).slice(0, 2) } : { q: this.sortearPergunta(f) };
     let ok;
-    if (this.mp?.acompanhado()) { this.congela = true; ok = pacote.q ? await this.mp.votar(pacote.q, 'ESTÁ ESCRITO · ' + b.d.nome, ['Está escrito! O chefe está quebrantado.', 'O chefe se fortalece com o engano.']) : await this.mp.quizJunto(pacote, b); this.congela = false; this.respostaDoGrupo(ok, true); this.mp.ev('qf', { ok }); }
+    if (this.evento?.votoChefe) { this.congela = true; ok = await this.evento.votoChefe(this, pacote, b); this.congela = false; this.respostaDoGrupo(ok, true); } // a célula: a sala inteira vota (Kahoot)
+    else if (this.mp?.acompanhado()) { this.congela = true; ok = pacote.q ? await this.mp.votar(pacote.q, 'ESTÁ ESCRITO · ' + b.d.nome, ['Está escrito! O chefe está quebrantado.', 'O chefe se fortalece com o engano.']) : await this.mp.quizJunto(pacote, b); this.congela = false; this.respostaDoGrupo(ok, true); this.mp.ev('qf', { ok }); }
     else { ok = await this.perguntaDoChefe(b, pacote); this.respostaDoGrupo(ok, true); }
     if (!this.running || b.hp <= 0) return;
     if (ok) {
@@ -1172,7 +1173,7 @@ export class Caminho {
     b.fora = true; this.chefe = null; this.luta = false; this.escuroAlvo = 0; this.lentidaoAlvo = 1; this.peso = 0; this.puxao = null; this.invertido = 0; this.amarra = 0;
     this.ui.bossBar(null); this.musicaDaArea(); sfx('level');
     // juntos, a vitória só conta para quem leu os rolos desta página
-    if (this.mp && !this.temSelos()) { this.ui.toast(b.d.nome + ' caiu. A recompensa pede os três rolos desta página: leia-os e volte.', 8000); this.semLutaAte = this.T + 8; return; }
+    if (this.mp && !this.evento && !this.temSelos()) { this.ui.toast(b.d.nome + ' caiu. A recompensa pede os três rolos desta página: leia-os e volte.', 8000); this.semLutaAte = this.T + 8; return; }
     this.venceu = true; this.N.portaAberta = true;
     this.fx.anel(b.x, b.y - b.h / 2, '#FFE9A8', 260); this.soltarMoedas(b.x, b.y - b.h / 2, 18);
     setTimeout(() => this.running && this.conferirFolego(), 2500);

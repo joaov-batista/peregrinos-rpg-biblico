@@ -18,7 +18,7 @@ const espera = ms => new Promise(r => setTimeout(r, ms));
     localStorage.setItem('peregrinos.celula.celula-escolheu', JSON.stringify(c)); }, nome);
 
   // ---- o telão do líder ----
-  const tel = await pagina(); await tel.goto(URL + '?redelocal'); await tel.click('text=abrir o telão');
+  const tel = await pagina(); await tel.goto(URL + '?redelocal&telao'); await tel.click('text=TELÃO');
   await tel.waitForSelector('.cel-telao'); const cod = await tel.evaluate(() => __celula.rede.codigo);
   ok(/^[A-Z0-9]{5}$/.test(cod), 'telão abriu a sala ' + cod);
 
@@ -26,7 +26,7 @@ const espera = ms => new Promise(r => setTimeout(r, ms));
   const nomes = ['Ana', 'Bia', 'Caio'], js = [];
   for (const n of nomes) {
     const p = await pagina(); await p.goto(URL + '?sala=' + cod + '&redelocal'); await personagem(p, n); await p.reload();
-    await p.click('text=Continuar como'); await p.click('.cel-card:nth-child(3) button'); await p.waitForSelector('text=Começar!', { timeout: 10000 }); await p.click('text=Começar!');
+    await p.waitForSelector('.cel-menu'); await p.keyboard.press('Enter'); await p.click('.cel-card:nth-child(3) button'); await p.waitForSelector('text=Começar!', { timeout: 10000 }); await p.click('text=Começar!');
     for (let i = 0; i < 20 && !(await p.evaluate(() => !!window.__game?.running)); i++) await espera(300);
     await p.evaluate(() => __game.ui.closeAll?.()); js.push(p);
   }
@@ -36,8 +36,8 @@ const espera = ms => new Promise(r => setTimeout(r, ms));
   // todos na mesma página, perto um do outro: os fantasmas aparecem
   for (const p of js) await p.evaluate(() => { const g = __game; g.ui.closeAll?.(); g.p.x = g.N.inicio.x + 60; });
   await espera(1500);
-  const fant = await js[1].evaluate(() => __game.outros.filter(o => o.fantasma).map(o => o.nome));
-  ok(fant.length === 2, 'Bia vê os fantasmas de ' + fant.join(' e '));
+  const fant = await js[1].evaluate(() => __game.outros.map(o => o.nome));
+  ok(fant.length === 2, 'Bia vê ' + fant.join(' e ') + ' na mesma página (co-op)');
   if (SHOTS) await js[1].screenshot({ path: SHOTS + '/20-fantasmas.png' });
 
   // ---- votação: Ana abre um rolo; todos veem, todos congelam ----
@@ -100,12 +100,13 @@ const espera = ms => new Promise(r => setTimeout(r, ms));
   // ---- chefe vencido: o placar do telão anda ----
   await js[2].evaluate(async () => { const g = __game; g.cm.selos[g.area] = [0, 1]; g.conferirPorta(true); const A = g.N.arena; g.p.x = A.x0 + 130; g.p.y = A.chao - 2; });
   for (let i = 0; i < 30 && !(await js[2].evaluate(() => !!__game.chefe)); i++) { await espera(300); await js[2].evaluate(() => __game.ui.closeAll?.()); }
-  await js[2].evaluate(() => { const b = __game.chefe; b.hp = 1; __game.atingirJa(b, 9999, b.x - 10, {}); });
-  for (let i = 0; i < 40; i++) { await espera(400); await js[2].locator('.cel-epica, #overlay button').first().click({ timeout: 200 }).catch(() => {}); if (await js[2].evaluate(() => __game.area === 'celula-escolheu:2')) break; }
-  ok(await js[2].evaluate(() => __game.area) === 'celula-escolheu:2', 'Caio venceu a Rejeição e foi para a página 2');
+  const donoP = js[(await Promise.all(js.map(p => p.evaluate(() => __game.souDono())))).indexOf(true)] || js[2];
+  await donoP.evaluate(() => { const b = __game.chefe; b.hp = 1; __game.atingirJa(b, 9999, b.x - 10, {}); });
+  for (let i = 0; i < 40; i++) { await espera(400); for (const p of js) await p.locator('.cel-epica, #overlay button').first().click({ timeout: 150 }).catch(() => {}); if ((await Promise.all(js.map(p => p.evaluate(() => __game.area)))).every(a => a === 'celula-escolheu:2')) break; }
+  ok((await Promise.all(js.map(p => p.evaluate(() => __game.area)))).every(a => a === 'celula-escolheu:2'), 'o chefe é de todos: caiu, e os 3 foram para a página 2');
   await espera(2500);
   const placarTel = await tel.evaluate(() => __celula.rede.placar()[0]);
-  ok(placarTel.nome === 'Caio' && placarTel.chefes === 1, 'o telão mostra Caio em 1º com 1 chefe');
+  ok(placarTel.chefes === 1, 'o telão mostra 1 chefe vencido (' + placarTel.nome + ' em 1º)');
   if (SHOTS) await tel.screenshot({ path: SHOTS + '/24-telao-placar.png' });
 
   // ---- sala sem telão: o anfitrião cai e outro assume ----
@@ -113,7 +114,7 @@ const espera = ms => new Promise(r => setTimeout(r, ms));
   const cod2 = 'TESTE'.replace(/[^A-Z0-9]/g, '').slice(0, 5); const ps = [];
   for (const n of ['Davi', 'Eva', 'Fil']) {
     const p = await pagina(); await p.goto(URL + '?sala=Q' + 'RT34' + '&redelocal'); await personagem(p, n); await p.reload();
-    await p.click('text=Continuar como'); await p.click('.cel-card:nth-child(3) button'); await p.waitForSelector('text=Começar!', { timeout: 10000 }); await p.click('text=Começar!');
+    await p.waitForSelector('.cel-menu'); await p.keyboard.press('Enter'); await p.click('.cel-card:nth-child(3) button'); await p.waitForSelector('text=Começar!', { timeout: 10000 }); await p.click('text=Começar!');
     for (let i = 0; i < 20 && !(await p.evaluate(() => !!window.__game?.running)); i++) await espera(300);
     ps.push(p); await espera(400);
   }

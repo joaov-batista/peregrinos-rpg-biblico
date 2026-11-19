@@ -2,6 +2,25 @@
    Cores do estudo da semana: azul profundo que vira brasa, com o ouro do jogo. */
 body.celula { background: #070A1E; }
 html.remake body.celula #screens, body.celula #screens:not(.creating) { position: fixed; inset: 0; overflow: auto; z-index: 20; background: linear-gradient(135deg, #0A1250 0%, #1A33D0 38%, #6A3AA8 64%, #C8442E 100%) !important; }
+/* as telas de entrada ficam por cima da cena da Galileia (o canvas #celFundo), com um véu escuro à esquerda */
+html.remake body.celula #screens.cel-sobre-cena { background: linear-gradient(90deg, rgba(6, 8, 24, .55), rgba(6, 8, 24, .18) 55%, rgba(6, 8, 24, 0)) !important; }
+#celFundo { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 19; image-rendering: pixelated; display: block; }
+.cel-titulo-tela { position: relative; width: 100%; min-height: calc(100vh - 32px); display: flex; align-items: center; }
+.cel-titulo-esq { display: flex; flex-direction: column; align-items: flex-start; gap: clamp(10px, 3vh, 26px); margin-left: clamp(8px, 5vw, 70px); text-align: left; }
+.cel-logo { width: clamp(240px, 34vw, 470px); height: auto; image-rendering: pixelated; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .45)); }
+.cel-menu { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.cel-mi { display: flex; align-items: baseline; gap: 12px; background: none; border: 0; padding: 4px 6px; color: #EDE3CC; font: 400 clamp(22px, 3.2vw, 34px) 'Jersey 20', 'Pixelify Sans', monospace; letter-spacing: 3px; cursor: pointer; text-shadow: 0 3px 0 #0B0A18, 0 0 12px rgba(0, 0, 0, .5); text-align: left; }
+#screens .cel-mi, #screens .cel-mi:focus, #screens .cel-mi:focus-visible, #screens .cel-mi:hover { outline: none !important; box-shadow: none !important; border: 0 !important; border-image: none !important; background: none !important; }
+.cel-mi small { font: 700 13px 'Nunito', sans-serif; letter-spacing: 0; opacity: .7; text-shadow: 0 1px 0 #000; }
+.cel-mi.fraco { font-size: clamp(18px, 2.4vw, 26px); opacity: .8; }
+.cel-cursor { color: #F2B23E; visibility: hidden; font-size: .7em; transform: translateY(-2px); }
+.cel-menu li.sel .cel-cursor { visibility: visible; animation: cel-cursor .6s steps(2) infinite; }
+.cel-menu li.sel .cel-mi { color: #FFE08A; }
+@keyframes cel-cursor { 50% { transform: translate(4px, -2px); } }
+.cel-cantos { position: absolute; top: 4px; left: clamp(8px, 5vw, 70px); right: clamp(8px, 3vw, 40px); display: flex; justify-content: space-between; font: 400 16px 'Jersey 20', monospace; letter-spacing: 2px; color: #E8E2F2; text-shadow: 0 2px 0 #0B0A18; }
+.cel-rodape { position: absolute; bottom: 2px; left: clamp(8px, 5vw, 70px); margin: 0; font: 600 12px 'Nunito', sans-serif; color: #D8D4E8; opacity: .8; text-shadow: 0 1px 0 #000; }
+.cel-ajustes-t { max-width: 460px; gap: 14px; }
+@media (orientation: portrait) { .cel-titulo-tela { align-items: flex-end; } .cel-titulo-esq { margin: 0 auto 60px; align-items: center; } .cel-logo { width: min(86vw, 420px); } }
 body.celula #screens.creating { background: #0B1024; }
 .cel-tela { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); box-sizing: border-box; color: #F2EEDF; font-family: 'Nunito', system-ui, sans-serif; text-align: center; }
 .cel-titulo, .px-titulo { image-rendering: pixelated; width: min(96vw, 960px, calc((100vh - 170px) * 16 / 9)); aspect-ratio: 16 / 9; height: auto; border: 4px solid #0B0A18; box-shadow: 0 0 0 3px #E0A63C, 0 18px 50px rgba(0, 0, 0, .55); background: #0A1250; }
@@ -16,7 +35,7 @@ body.celula #screens.creating { background: #0B1024; }
 .cel-lider { opacity: .9; }
 .cel-h { margin: 0; font-family: 'Jersey 20', 'Pixelify Sans', monospace; font-size: clamp(30px, 5vw, 52px); font-weight: 400; color: #FFF0C8; text-shadow: 0 3px 0 #0B0A18; letter-spacing: 1px; }
 .cel-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; width: min(1000px, 100%); }
-.cel-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 14px; background: rgba(8, 10, 30, .78); border: 3px solid #0B0A18; box-shadow: 0 0 0 2px #E0A63C; text-align: center; }
+.cel-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 14px; background: rgba(8, 10, 30, .82); backdrop-filter: blur(2px); border: 3px solid #0B0A18; box-shadow: 0 0 0 2px #E0A63C; text-align: center; }
 .cel-card.sugerido { box-shadow: 0 0 0 3px #FFD45A, 0 0 26px rgba(255, 212, 90, .45); }
 .cel-card b { font-size: 19px; color: #FFD45A; }
 .cel-card p, .cel-card ul { margin: 0; font-size: 14px; opacity: .9; } .cel-card ul { padding: 0; list-style: none; } .cel-card li { padding: 2px 0; }

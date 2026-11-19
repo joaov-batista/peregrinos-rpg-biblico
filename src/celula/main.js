@@ -23,6 +23,7 @@ import { EVENTOS } from '../content/index.js';
 import { Rede, limparCodigo, novoCodigo } from './rede.js';
 import { criarEvento } from './evento.js';
 import { montarTitulo } from './titulo.js';
+import { desenharAbertura, logoCelula } from '../ui/abertura.js';
 import { abrirVoto } from './votacao.js';
 
 const SEM = EVENTOS.find(s => s.id === 'celula-escolheu');
@@ -39,22 +40,58 @@ const lerChar = () => { try { return JSON.parse(localStorage.getItem(CHAVE) || '
 const salvarChar = c => { try { localStorage.setItem(CHAVE, JSON.stringify(c)); return true; } catch { return false; } };
 const uid = () => 'cel-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
-function tela(...filhos) { titulo?.parar(); titulo = null; telas.className = ''; telas.hidden = false; telas.replaceChildren(h('div', { class: 'cel-tela' }, ...filhos)); return telas.firstChild; }
+function tela(...filhos) { titulo?.parar(); titulo = null; telas.className = 'cel-sobre-cena'; telas.hidden = false; telas.replaceChildren(h('div', { class: 'cel-tela' }, ...filhos)); return telas.firstChild; }
 const botao = (txt, fn, cls = 'btn gold') => h('button', { class: cls, onclick: e => { sfx('click'); fn(e); } }, txt);
 
-// ---------- 1. a abertura ----------
+// ---------- o fundo das telas de entrada: a Galileia ao entardecer, pintada pixel a pixel e viva ----------
+let fundo = null, rafFundo = 0;
+function ligarFundo() {
+  if (fundo) return; fundo = h('canvas', { id: 'celFundo', 'aria-hidden': 'true' }); document.body.prepend(fundo);
+  const t0 = performance.now(), passo = now => { if (!fundo) return; try { desenharAbertura(fundo, (now - t0) / 1000, 'galileia'); } catch (e) { console.error(e); } rafFundo = requestAnimationFrame(passo); };
+  rafFundo = requestAnimationFrame(passo);
+}
+function desligarFundo() { cancelAnimationFrame(rafFundo); fundo?.remove(); fundo = null; }
+let musicaTitulo = false;
+const tocarTitulo = () => { if (game || musicaTitulo) return; musicaTitulo = true; initAudio(); music('abertura'); };
+addEventListener('pointerdown', tocarTitulo, { once: true }); addEventListener('keydown', tocarTitulo, { once: true });
+
+// um menu como o dos jogos de console: a lista, o cursor ▶ e a navegação por setas, mouse, toque e controle
+function menuPx(itens) {
+  let sel = 0, vivo = true, antes = null;
+  const lis = itens.map((it, i) => h('li', {}, h('button', { class: 'cel-mi' + (it.fraco ? ' fraco' : ''), onmouseenter: () => marca(i), onfocus: () => marca(i), onclick: () => vai(i) }, h('span', { class: 'cel-cursor' }, '▶'), h('span', {}, it.txt), it.dica ? h('small', {}, it.dica) : '')));
+  const ul = h('ul', { class: 'cel-menu', role: 'menu' }, ...lis);
+  function marca(i) { if (i === sel) return; sel = i; lis.forEach((li, k) => li.classList.toggle('sel', k === i)); sfx('click'); }
+  function vai(i) { if (!vivo) return; vivo = false; sfx('key'); removeEventListener('keydown', tecla); clearInterval(pad); itens[i].fn(); }
+  const tecla = e => { if (!ul.isConnected) { removeEventListener('keydown', tecla); clearInterval(pad); return; }
+    if (e.key === 'ArrowDown' || e.key === 's') { e.preventDefault(); marca((sel + 1) % itens.length); } else if (e.key === 'ArrowUp' || e.key === 'w') { e.preventDefault(); marca((sel - 1 + itens.length) % itens.length); } else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); vai(sel); } };
+  addEventListener('keydown', tecla);
+  const pad = setInterval(() => { if (!ul.isConnected) { clearInterval(pad); return; } const gp = [...(navigator.getGamepads?.() || [])].find(Boolean); if (!gp) return; const b = [12, 13, 0, 9].map(k => !!gp.buttons[k]?.pressed), ey = gp.axes[1] || 0; b[0] ||= ey < -0.6; b[1] ||= ey > 0.6;
+    if (antes) { if (b[0] && !antes[0]) marca((sel - 1 + itens.length) % itens.length); if (b[1] && !antes[1]) marca((sel + 1) % itens.length); if ((b[2] && !antes[2]) || (b[3] && !antes[3])) vai(sel); } antes = b; }, 50);
+  lis[0].classList.add('sel');
+  return ul;
+}
+
+// ---------- 1. a abertura (no estilo das telas de título em pixel art: a cena inteira, o logo e o menu à esquerda) ----------
 function abertura() {
+  ligarFundo();
   const cod = limparCodigo(par.get('sala') || ''), c = lerChar();
-  const cv = h('canvas', { class: 'cel-titulo', 'aria-label': 'Jesus me escolheu' });
-  const acoes = h('div', { class: 'cel-acoes' });
-  tela(cv, h('div', { class: 'cel-painel' },
-    cod ? h('p', { class: 'cel-convite' }, '✉ Você foi convidado para a sala ', h('b', {}, cod)) : h('p', { class: 'cel-convite' }, 'Célula de adolescentes · semana de ' + SEM.semana),
-    acoes,
-    h('p', { class: 'cel-mini' }, 'Sem conta: só o seu nome. Cinco páginas, cinco chefes e as perguntas são votadas pela sala inteira.')));
-  titulo = montarTitulo(cv, { linhas: ['JESUS ME', 'ESCOLHEU'], topo: 'PEREGRINOS NA CÉLULA', sub: 'JOÃO 15:16' });
-  if (c) acoes.append(botao('▶ Continuar como ' + c.name, () => controles(c)), botao('Criar outro peregrino', () => criar(), 'btn'));
-  else acoes.append(botao('▶ Entrar', () => criar()));
-  if (!cod) acoes.append(botao('📺 Sou o líder: abrir o telão', () => telao(), 'btn cel-lider'));
+  const logo = logoCelula(); logo.className = 'cel-logo'; logo.setAttribute('role', 'img'); logo.setAttribute('aria-label', 'Jesus me escolheu · João 15:16');
+  const itens = [];
+  if (c) itens.push({ txt: 'CONTINUAR', dica: c.name, fn: () => controles(c) });
+  itens.push({ txt: c ? 'NOVO PEREGRINO' : 'COMEÇAR', fn: () => criar() });
+  if (par.has('telao')) itens.push({ txt: 'TELÃO', dica: 'segura a sala sem jogar', fn: () => telao() }); // extra: só com ?telao no link
+  itens.push({ txt: 'AJUSTES', fraco: true, fn: () => ajustesTitulo() });
+  tela(h('div', { class: 'cel-titulo-tela' },
+    h('div', { class: 'cel-titulo-esq' }, logo, menuPx(itens)),
+    h('div', { class: 'cel-cantos' }, h('span', {}, cod ? '✉ CONVITE · SALA ' + cod : 'CÉLULA DE ADOLESCENTES'), h('span', {}, 'SEMANA ' + SEM.semana)),
+    h('p', { class: 'cel-rodape' }, 'Sem conta: só o seu nome · até quantos vierem · as perguntas são votadas pela sala')));
+  telas.classList.add('cel-sobre-cena');
+}
+function ajustesTitulo() {
+  const faixa = (k, nome, min) => h('label', { class: 'cel-faixa' }, h('b', {}, nome), h('input', { type: 'range', min, max: 100, step: 5, value: Math.round((config[k] ?? 1) * 100), oninput: e => { setConfig(k, +e.target.value / 100); initAudio(); } }));
+  tela(h('h1', { class: 'cel-h' }, 'AJUSTES'), h('div', { class: 'cel-card cel-ajustes-t' }, faixa('volMusica', '🎵 Música', 0), faixa('volEfeitos', '🔔 Efeitos', 0), faixa('volVoz', '🎙 Narração', 0), faixa('alphaControles', '👆 Transparência dos botões (celular)', 15)),
+    menuPx([{ txt: 'VOLTAR', fn: () => abertura() }]));
+  telas.classList.add('cel-sobre-cena');
 }
 
 // ---------- 2. criar o peregrino (o mesmo criador do jogo, guardado só aqui) ----------
@@ -119,7 +156,7 @@ function saguao(c) {
 
 // ---------- 5. o jogo ----------
 async function jogar(c, r) {
-  titulo?.parar(); titulo = null; telas.hidden = true; telas.replaceChildren();
+  titulo?.parar(); titulo = null; desligarFundo(); telas.hidden = true; telas.replaceChildren();
   ui.show(true); input.clear(); music(null);
   const ev = criarEvento({ sem: SEM, char: c, rede: r, salvar: salvarChar, sair: () => sairDaPartida(), ui });
   game = new Caminho(canvas, c, ui, () => sairDaPartida(), ev);
