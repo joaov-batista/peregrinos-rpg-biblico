@@ -47,10 +47,16 @@ export function passoAzeites(G, dt) {
 
 // a mesa de essências do sítio: uma botija de azeite e o aroma
 export async function mesaDeEssencias(G) {
-  const b = bolsa(G), pode = k => Object.entries(AZEITES[k].receita).every(([i, n]) => (b[i] || 0) >= n), rec = k => Object.entries(AZEITES[k].receita).map(([i, n]) => n + ' ' + nomeItem(i, n)).join(' + ');
-  const reabre = () => setTimeout(() => mesaDeEssencias(G), 60);
-  await G.ui.dialog({ nome: 'A mesa de essências', texto: 'Frascos de barro, um pilão, ervas secando no varal. Uma botija de azeite e o aroma certo: cada cor serve para uma coisa.\n\n' + Object.entries(AZEITES).map(([k, A]) => '• ' + A.nome + ' (' + A.aroma + '): ' + rec(k)).join('\n'), voz: false,
-    acoes: [...Object.keys(AZEITES).filter(pode).map(k => ({ label: 'Fazer ' + AZEITES[k].nome.toLowerCase(), fn: () => { for (const [i, n] of Object.entries(AZEITES[k].receita)) b[i] -= n; ganhar(G, k, 1, G.p.x, G.p.y - 80); sfx('level'); G.fx.anel(G.p.x, G.p.y - 30, AZEITES[k].cor, 70); G.salvar(); reabre(); } })), { label: 'Sair' }] });
+  const b = bolsa(G), pode = k => Object.entries(AZEITES[k].receita).every(([i, n]) => (b[i] || 0) >= n);
+  const USO = { presente: 'Para dar de presente', espanta: 'Espanta os monstros pequenos', dano: 'Golpes com o dobro de dano', veloz: 'O dobro de velocidade', fazenda: 'Para o sítio', pesca: 'Para a pesca', cura: 'Cura e enche a lâmpada', alegria: 'Alegria: denários e corações a mais' };
+  const { vitrine } = await import('./vitrine.js'), { iconeItem } = await import('./pixel/icones.js'), { h } = await import('../util.js');
+  return vitrine(G, { titulo: 'A mesa de essências', dono: 'Frascos, pilão e ervas', look: null, icone: iconeItem('oleo_nardo', 64),
+    fala: 'Uma botija de azeite e o aroma certo: cada cor serve para uma coisa. Toque num frasco para ver o que ele faz e do que é feito.', bolsa: () => 'denários',
+    secoes: () => [{ titulo: 'Óleos e perfumes', itens: Object.entries(AZEITES).map(([k, A]) => { const ok = pode(k), tem = b[k] || 0;
+      const receita = h('div', { class: 'vt-extra' }, h('b', {}, 'Receita: '), ...Object.entries(A.receita).map(([i, n], j) => h('span', { style: 'color:' + ((b[i] || 0) >= n ? '#2E5A2A' : '#8E2B2B') }, (j ? ' + ' : '') + n + ' ' + nomeItem(i, n) + ' (tem ' + (b[i] || 0) + ')')),
+        h('div', {}, h('b', {}, 'Aroma: '), A.aroma), A.dur ? h('div', {}, h('b', {}, 'Dura: '), A.dur >= 60 ? Math.round(A.dur / 60) + ' min' : A.dur + ' s') : '', h('div', {}, h('b', {}, 'Na bolsa: '), String(tem)));
+      return { chave: k, icone: iconeItem(k), nome: A.nome, sub: USO[A.efeito] || '', desc: A.desc, cor: A.cor, estado: ok ? 'gratis' : 'trancado', selo: ok ? 'dá para fazer' : 'falta ingrediente', trava: 'Faltam ingredientes', extra: receita,
+        acao: ok ? { rot: 'Fazer um frasco', fn: () => { for (const [i, n] of Object.entries(A.receita)) b[i] -= n; ganhar(G, k, 1, G.p.x, G.p.y - 80); sfx('level'); G.fx.anel(G.p.x, G.p.y - 30, A.cor, 70); G.salvar(); } } : null }; }) }] });
 }
 // Lídia também vende perfumes (mais caros do que fazer). Devolve false para seguir para a loja de sempre.
 export async function lojaDeLidia(G, ob) { return false; } // a púrpura, o maná e os perfumes ficam todos na mesma vitrine (menu.js)
