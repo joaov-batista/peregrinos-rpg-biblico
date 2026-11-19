@@ -11,6 +11,7 @@ import { net, ONLINE } from './net.js';
 import { Game } from './game/game.js';
 import { Caminho } from './caminho/jogo.js';
 import './caminho/caminho.css';
+import { instalarMolduras } from './ui/molduras.js';
 import './remake.css';
 import './pixel-ui.css';
 import { createHud } from './ui/hud.js';
@@ -34,6 +35,7 @@ ui.show(false);
 
 const CLASSICO = new URLSearchParams(location.search).has('classico') || import.meta.env.VITE_MODO === 'classico';
 document.documentElement.classList.toggle('remake', !CLASSICO);
+if (!CLASSICO) instalarMolduras(); // as molduras de madeira e latão da interface, pintadas pixel a pixel
 async function play(char, modo) {
   // Evita duas abas editando o mesmo personagem ao mesmo tempo.
   if (navigator.locks) {
