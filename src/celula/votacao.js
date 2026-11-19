@@ -21,7 +21,8 @@ export function abrirVoto({ q, telao = false, onVoto, total = 1 }) {
     banner);
   document.body.append(caixa); sfx('boss');
   const fimEm = Date.now() + (q.resta ?? 20000), dur = q.resta ?? 20000;
-  const relogio = setInterval(() => { const r = Math.max(0, fimEm - Date.now()); segs.textContent = String(Math.ceil(r / 1000)); barra.style.width = (r / dur * 100) + '%'; if (r < 5000 && !fim && Math.ceil(r / 1000) !== relogio.ult) { relogio.ult = Math.ceil(r / 1000); sfx('click'); } caixa.classList.toggle('pressa', r < 5000); }, 100);
+  let ultSeg = -1; // o tique dos últimos cinco segundos (um por segundo)
+  const relogio = setInterval(() => { const r = Math.max(0, fimEm - Date.now()); segs.textContent = String(Math.ceil(r / 1000)); barra.style.width = (r / dur * 100) + '%'; if (r < 5000 && !fim && Math.ceil(r / 1000) !== ultSeg) { ultSeg = Math.ceil(r / 1000); sfx('click'); } caixa.classList.toggle('pressa', r < 5000); }, 100);
   function escolhe(i) { if (telao || fim || votei >= 0 || !(i >= 0 && i < q.op.length)) return; votei = i; sfx('key'); opcoes[i].classList.add('meu'); caixa.classList.add('votou'); onVoto?.(i); }
   const tecla = e => { const n = +e.key; if (n >= 1 && n <= 4) { e.preventDefault(); e.stopPropagation(); escolhe(n - 1); } else if (!fim) { e.stopPropagation(); } };
   addEventListener('keydown', tecla, true);

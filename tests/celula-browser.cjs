@@ -102,7 +102,7 @@ const espera = ms => new Promise(r => setTimeout(r, ms));
   for (let i = 0; i < 30 && !(await js[2].evaluate(() => !!__game.chefe)); i++) { await espera(300); await js[2].evaluate(() => __game.ui.closeAll?.()); }
   const donoP = js[(await Promise.all(js.map(p => p.evaluate(() => __game.souDono())))).indexOf(true)] || js[2];
   await donoP.evaluate(() => { const b = __game.chefe; b.hp = 1; __game.atingirJa(b, 9999, b.x - 10, {}); });
-  for (let i = 0; i < 40; i++) { await espera(400); for (const p of js) await p.locator('.cel-epica, #overlay button').first().click({ timeout: 150 }).catch(() => {}); if ((await Promise.all(js.map(p => p.evaluate(() => __game.area)))).every(a => a === 'celula-escolheu:2')) break; }
+  for (let i = 0; i < 40; i++) { await espera(400); for (const p of js) { await p.keyboard.press('1').catch(() => {}); await p.locator('.cel-epica, #overlay button').first().click({ timeout: 150 }).catch(() => {}); } /* vota no "Está escrito" se aparecer */ if ((await Promise.all(js.map(p => p.evaluate(() => __game.area)))).every(a => a === 'celula-escolheu:2')) break; }
   ok((await Promise.all(js.map(p => p.evaluate(() => __game.area)))).every(a => a === 'celula-escolheu:2'), 'o chefe é de todos: caiu, e os 3 foram para a página 2');
   await espera(2500);
   const placarTel = await tel.evaluate(() => __celula.rede.placar()[0]);
