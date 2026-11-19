@@ -7,6 +7,11 @@ import { sfx } from '../audio.js';
 import { areaDef, MUNDO } from './dados.js';
 import { TODAS } from '../content/index.js';
 import { sitioId } from './sitio.js';
+import { pintarLoja } from './pixel/lojas.js';
+// as construções que o mapa desenha com a arte do próprio jogo (em miniatura): quem conhece a praça, reconhece no mapa
+const DESENHAVEIS = ['arca', 'forja', 'armas', 'banca', 'padaria', 'tear', 'redes'];
+const miniaturas = new Map();
+function miniatura(q) { let c = miniaturas.get(q); if (c) return c; c = document.createElement('canvas'); c.width = 220; c.height = 100; const g = c.getContext('2d'); try { pintarLoja(g, q, {}, 110, 96, 0); } catch { /* sem desenho */ } miniaturas.set(q, c); return c; }
 
 const LOJAS = { lidia: 'loja', ferreiro: 'forja', armeiro: 'armas', dorcas: 'roupas', noe: 'animais', mateus: 'banco', mercador: 'loja', zebedeu: 'pesca', viajante: 'loja', barqueiro: 'barco', escriba: 'rolos' };
 // o que cada lugar tem, tirado dos próprios objetos da sala
@@ -32,7 +37,7 @@ function coisas(cel) {
 }
 // os lugares de uma área (cada sala da planta é um lugar)
 const lugaresDe = (area, filtro = () => true) => {
-  const def = areaDef(area); return (def.planta || []).map((c, i) => ({ ...c, cx: c.cx ?? i, cy: c.cy ?? 0, area })).filter(filtro).map(c => ({ area, cx: c.cx, cy: c.cy, nome: c.nome || def.nome, deco: c.deco, coisas: coisas(c) }));
+  const def = areaDef(area); return (def.planta || []).map((c, i) => ({ ...c, cx: c.cx ?? i, cy: c.cy ?? 0, area })).filter(filtro).map(c => ({ area, cx: c.cx, cy: c.cy, nome: c.nome || def.nome, deco: c.deco, coisas: coisas(c), lojas: (c.objs || []).filter(o => o.tipo === 'cenario' && DESENHAVEIS.includes(o.qual)).map(o => o.qual) }));
 };
 // as quatro salas da trilha do treino são um lugar só no mapa: a trilha
 const juntaTrilha = L => { const t = L.filter(c => c.cx < RX), r = L.filter(c => c.cx >= RX); return t.length ? [{ ...t[0], nome: 'A trilha do treino', cx: RX - 1, trilha: true, coisas: t.flatMap(c => c.coisas) }, ...r] : r; };
@@ -65,7 +70,7 @@ export const temMapaMundo = G => !!ondeEstou(G);
 export function mapaCamadas(G) {
   const CS = camadas(G), aqui = ondeEstou(G), missao = G.objetivo?.();
   let i = Math.max(0, CS.findIndex(c => c.id === aqui?.cam)), sel = null;
-  const abas = h('div', { class: 'mm-abas', role: 'tablist' }), cv = h('canvas', { class: 'mm-cv', width: 720, height: 200 }), info = h('div', { class: 'mm-info' }), titulo = h('div', { class: 'mm-titulo' });
+  const abas = h('div', { class: 'mm-abas', role: 'tablist' }), cv = h('canvas', { class: 'mm-cv', width: MW, height: MH }), info = h('div', { class: 'mm-info' }), titulo = h('div', { class: 'mm-titulo' });
   const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
   let caixas = [];
   const desenha = () => {
@@ -73,8 +78,9 @@ export function mapaCamadas(G) {
     abas.replaceChildren(...CS.map((c, k) => h('button', { class: 'mm-aba' + (k === i ? ' on' : '') + (c.ver ? '' : ' nevoa'), role: 'tab', 'aria-selected': k === i, onclick: () => { i = k; sfx('click'); desenha(); } }, c.ver ? c.nome : '???')));
     titulo.replaceChildren(h('b', {}, C.ver ? C.nome : 'Ainda não descoberto'), h('span', {}, C.ver ? C.sub : 'Continue a jornada para chegar aqui.'));
     // o pergaminho: papel de couro com manchas largas, a aguada do céu da região, os montes a bico de pena e a borda queimada
-    const W = 720, H = 200, chao = 124, n = Math.max(1, C.lugares.length), passo = W / n;
+    const n = Math.max(1, C.lugares.length); MW = Math.max(720, n * PASSO); if (cv.width !== MW) cv.width = MW; const W = MW, H = MH, chao = MCHAO, passo = W / n;
     pergaminho(g, W, H, C);
+    g.fillStyle = 'rgba(58,38,20,.55)'; g.fillRect(12, 12, W - 24, 1); g.fillRect(12, H - 13, W - 24, 1); g.fillRect(12, 12, 1, H - 24); g.fillRect(W - 13, 12, 1, H - 24); rosa(g, W - 40, 42);
     g.fillStyle = TINTA_M; g.fillRect(0, chao, W, 1); for (let x = 3; x < W - 3; x += 5) if (hm(x, 9) > 0.4) g.fillRect(x, chao - 1 - (hm(x, 3) > 0.7 ? 1 : 0), 1, 1); // a linha do chão com capim
     g.fillStyle = 'rgba(58,38,20,.5)'; for (let y = chao + 4; y < chao + 12; y += 3) for (let x = 6 + (y % 2) * 3; x < W - 6; x += 7) g.fillRect(x, y, 3, 1); // hachura do chão
     g.fillStyle = '#8A6A44'; for (let x = passo / 2; x < W - passo / 2; x += 9) g.fillRect(Math.round(x), chao + 16, 4, 2); // o caminho pontilhado que liga os lugares
@@ -92,12 +98,13 @@ export function mapaCamadas(G) {
       const temMissao = ver && missao && missao.portal && L.area === G.area && C.id === aqui?.cam && Math.floor(missao.portal.x / 960) === L.cx && Math.floor((missao.portal.y - 2) / 544) === L.cy;
       if (temMissao) estrela(g, x + 26, chao - 92);
       if (euAqui) pino(g, x, chao - 96);
-      caixas.push({ x0: x - passo / 2, x1: x + passo / 2, L, ver });
+      caixas.push({ x0: x - passo / 2, x1: x + passo / 2, L, ver, aqui: euAqui });
     });
     info.replaceChildren(h('p', { class: 'mm-dica' }, C.ver ? 'Toque num lugar para ver o que tem lá.' : ''));
+    requestAnimationFrame(() => { const q = cv.parentElement; if (!q) return; const k = cv.clientWidth / MW, alvo = caixas.find(b => b.aqui) || caixas[0]; if (alvo) q.scrollLeft = Math.max(0, (alvo.x0 + alvo.x1) / 2 * k - q.clientWidth / 2); }); // o mapa abre onde o peregrino está
   };
   cv.addEventListener('click', e => {
-    const r = cv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 720, c = caixas.find(b => x >= b.x0 && x < b.x1); if (!c) return;
+    const r = cv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * MW, c = caixas.find(b => x >= b.x0 && x < b.x1); if (!c) return;
     sfx('click'); if (!c.ver) { info.replaceChildren(h('p', { class: 'mm-dica' }, 'Ainda não descoberto.')); return; }
     const icone = { loja: '◆', gente: '●', portal: '▲', casa: '■', pedra: '✚', poco: '◉', vela: '✦' };
     info.replaceChildren(h('b', {}, c.L.nome), h('ul', {}, ...(c.L.coisas.length ? c.L.coisas.slice(0, 8).map(o => h('li', { class: 'mm-' + o.k }, (icone[o.k] || '·') + ' ' + o.t)) : [h('li', {}, 'Um lugar tranquilo.')])));
@@ -109,23 +116,34 @@ export function mapaCamadas(G) {
   desenha(); return raiz;
 }
 
-const TINTA_M = '#3A2614';
+const TINTA_M = '#3A2614', MH = 212, MCHAO = 128; let MW = 960; const PASSO = 132; // cada lugar ganha a sua largura; o mapa rola de lado
+// a rosa dos ventos e o filete a tinta, como nos mapas copiados à mão
+function rosa(g, x, y) { g.fillStyle = 'rgba(58,38,20,.75)'; for (let i = -14; i <= 14; i++) { g.fillRect(x + i, y, 1, 1); g.fillRect(x, y + i, 1, 1); }
+  for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) for (let k = 0; k < 12; k++) { const l = Math.round((12 - k) / 4); for (let j = -l; j <= l; j++) g.fillRect(x + dx * k + (dy ? j : 0), y + dy * k + (dx ? j : 0), 1, 1); }
+  g.fillStyle = '#8E2B2B'; for (let k = 0; k < 12; k++) { const l = Math.round((12 - k) / 4); for (let j = -l; j <= l; j++) g.fillRect(x + j, y - k, 1, 1); } // o norte em vermelho
+  g.fillStyle = TINTA_M; g.font = '14px "Jersey 15", monospace'; g.textAlign = 'center'; g.fillText('N', x, y - 17); }
 const hm = (x, y) => { let n = (x * 374761393 + y * 668265263) | 0; n = (n ^ (n >>> 13)) * 1274126177; return ((n ^ (n >>> 16)) >>> 0) / 4294967295; };
 let papel = null;
 function pergaminho(g, W, H, C) {
-  if (!papel) { papel = document.createElement('canvas'); papel.width = W; papel.height = H; const p = papel.getContext('2d');
+  if (!papel || papel.width !== W) { papel = document.createElement('canvas'); papel.width = W; papel.height = H; const p = papel.getContext('2d');
     p.fillStyle = '#DCC79C'; p.fillRect(0, 0, W, H);
     for (let i = 0; i < 60; i++) { const x = hm(i, 1) * W, y = hm(i, 2) * H, r = 10 + hm(i, 3) * 40; p.fillStyle = hm(i, 4) > 0.5 ? 'rgba(170,135,80,.10)' : 'rgba(250,236,200,.12)'; p.beginPath(); p.ellipse(x, y, r * 1.6, r, 0, 0, 7); p.fill(); } // manchas largas, como couro curtido
     for (let i = 0; i < 260; i++) { p.fillStyle = 'rgba(120,90,50,.18)'; p.fillRect(Math.floor(hm(i, 7) * W), Math.floor(hm(i, 8) * H), 1 + Math.floor(hm(i, 9) * 3), 1); } // fibras
     for (let d = 0; d < 8; d++) { p.fillStyle = d < 2 ? '#5A3A1E' : d < 4 ? 'rgba(120,80,40,.55)' : 'rgba(150,110,60,' + (0.3 - d * 0.03).toFixed(2) + ')'; p.fillRect(d, d, W - d * 2, 1); p.fillRect(d, H - 1 - d, W - d * 2, 1); p.fillRect(d, d, 1, H - d * 2); p.fillRect(W - 1 - d, d, 1, H - d * 2); } } // a borda queimada
   g.drawImage(papel, 0, 0);
-  const ce = g.createLinearGradient(0, 0, 0, 124); ce.addColorStop(0, C.ceu[1]); ce.addColorStop(1, 'rgba(0,0,0,0)'); g.globalAlpha = 0.16; g.fillStyle = ce; g.fillRect(8, 8, W - 16, 116); g.globalAlpha = 1; // a aguada do céu
+  const ce = g.createLinearGradient(0, 0, 0, MCHAO); ce.addColorStop(0, C.ceu[1]); ce.addColorStop(1, 'rgba(0,0,0,0)'); g.globalAlpha = 0.16; g.fillStyle = ce; g.fillRect(8, 8, W - 16, MCHAO - 8); g.globalAlpha = 1; // a aguada do céu
   g.fillStyle = 'rgba(58,38,20,.55)'; let yAnt = 0;
-  for (let x = 10; x < W - 10; x++) { const y = 124 - 34 - Math.round(Math.sin(x * 0.013) * 16 + Math.sin(x * 0.037 + 1) * 7); g.fillRect(x, y, 1, 1); if (yAnt && Math.abs(y - yAnt) > 1) g.fillRect(x, Math.min(y, yAnt), 1, Math.abs(y - yAnt)); yAnt = y; if (x % 4 === 0) for (let k = 3; k < 12; k += 4) g.fillRect(x + (k % 3), y + k, 1, 2); } // os montes a bico de pena, com hachura
+  for (let x = 10; x < W - 10; x++) { const y = MCHAO - 40 - Math.round(Math.sin(x * 0.013) * 16 + Math.sin(x * 0.037 + 1) * 7); g.fillRect(x, y, 1, 1); if (yAnt && Math.abs(y - yAnt) > 1) g.fillRect(x, Math.min(y, yAnt), 1, Math.abs(y - yAnt)); yAnt = y; if (x % 4 === 0) for (let k = 3; k < 12; k += 4) g.fillRect(x + (k % 3), y + k, 1, 2); } // os montes a bico de pena, com hachura
 }
 
 // silhuetas por tipo de lugar (pelo nome ou pelo cenário da sala), em pixel
 function silhueta(g, x, chao, L, ver, cam) {
+  if (ver && L.lojas?.length && !L.deco) { // as lojas de verdade, em miniatura, lado a lado
+    const qs = [...new Set(L.lojas)].sort((a, b) => DESENHAVEIS.indexOf(a) - DESENHAVEIS.indexOf(b)).slice(0, 2), k = qs.length > 1 ? 0.78 : qs[0] === 'arca' ? 0.82 : 1;
+    g.imageSmoothingEnabled = false; qs.forEach((q, i) => { const m = miniatura(q), dx = qs.length > 1 ? (i ? 33 : -33) : 0; g.drawImage(m, Math.round(x + dx - 110 * k), Math.round(chao - 96 * k), Math.round(220 * k), Math.round(100 * k)); });
+    if (/mercado/i.test(L.nome)) { const ar = (cx, hh) => { g.fillStyle = '#7A5634'; g.fillRect(cx - 2, chao - hh / 2, 4, hh / 2); g.fillStyle = TINTA_M; g.fillRect(cx - hh / 3 - 1, chao - hh - 1, hh * 2 / 3 + 2, hh / 2 + 2); g.fillStyle = '#6E8A4A'; g.fillRect(cx - hh / 3, chao - hh, hh * 2 / 3, hh / 2); }; ar(x + 44, 46); } // o sicômoro de Zaqueu
+    if (/olival/i.test(L.nome)) { for (const [dx, hh] of [[-30, 50], [30, 44]]) { g.fillStyle = '#7A5634'; g.fillRect(x + dx - 2, chao - hh / 2, 4, hh / 2); g.fillStyle = TINTA_M; g.fillRect(x + dx - hh / 3 - 1, chao - hh - 1, hh * 2 / 3 + 2, hh / 2 + 2); g.fillStyle = '#6E8A4A'; g.fillRect(x + dx - hh / 3, chao - hh, hh * 2 / 3, hh / 2); } }
+    return; }
   const n = (L.nome || '').toLowerCase(), tinta = TINTA_M, luz = '#E8B040', pedra = '#A89A80', mad = '#7A5634', folha = '#6E8A4A';
   const ret = (a, b, w, hh, c) => { g.fillStyle = c; g.fillRect(Math.round(a), Math.round(b), Math.round(w), Math.round(hh)); };
   const casa = (cx, w, hh) => { ret(cx - w / 2 - 2, chao - hh - 2, w + 4, hh + 2, tinta); ret(cx - w / 2, chao - hh, w, hh, '#C9A878'); ret(cx + w / 2 - 4, chao - hh, 4, hh, '#A88A5E'); ret(cx - 4, chao - 14, 8, 14, tinta); ret(cx + w / 4 - 3, chao - hh + 8, 6, 6, luz); };

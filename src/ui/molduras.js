@@ -54,6 +54,61 @@ function quadro() {
   });
 }
 
+// pergaminho: 36x36, partes de 12 — couro curtido claro, fibras, manchas e a borda escurecida e irregular
+function papel() {
+  const S = 36;
+  return tela(S, S, P => {
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      const d = Math.min(x, y, S - 1 - x, S - 1 - y), r = h(x, y, 21), irreg = h(Math.floor((x + y) / 3), Math.min(x, y) < 12 ? 1 : 2, 5) * 1.6;
+      let c = '#E4D1A4';
+      if (d === 0) c = TINTA; else if (d < 1.6 + irreg * 0.6) c = '#5A3A1E'; else if (d < 3 + irreg) c = '#9A7444'; else if (d < 5 + irreg) c = '#C9AA74';
+      else { c = '#E4D1A4'; if (r > 0.95) c = '#D6C094'; else if (r < 0.03) c = '#EEDFBC'; } // o miolo quase liso: a fibra rara, sem quadriculado que se repete
+      P(x, y, c);
+    }
+  });
+}
+// couro costurado: 24x24, partes de 8 — o alforje: couro curtido escuro com granulado e a costura clara
+function couro() {
+  const S = 24;
+  return tela(S, S, P => {
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      const d = Math.min(x, y, S - 1 - x, S - 1 - y), r = h(x, y, 31);
+      let c = r > 0.8 ? '#4E321E' : r < 0.18 ? '#6E4A2E' : '#5C3D24';
+      if (d === 0) c = TINTA; else if (d === 1) c = (x === 1 || y === 1) && x < S - 2 && y < S - 2 ? '#7E5636' : '#3A2414';
+      else if (d === 3 && ((x + y) % 3 !== 0)) c = '#D8BE8A'; // a costura
+      else if (d === 4 && ((x + y) % 3 === 1)) c = '#3A2414'; // a sombra do ponto
+      P(x, y, c);
+    }
+  });
+}
+// encaixe com aro de latão (as peças da armadura): 18x18, partes de 6
+function medalha() {
+  const S = 18;
+  return tela(S, S, P => {
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      const d = Math.min(x, y, S - 1 - x, S - 1 - y), canto = Math.min(x, S - 1 - x) + Math.min(y, S - 1 - y);
+      if (canto < 3) continue;
+      let c = d === 0 || canto === 3 ? TINTA : d === 1 ? ((y <= 2 || x <= 2) && !(x >= S - 3 || y >= S - 3) ? LAT.brilho : LAT.sombra) : d === 2 ? LAT.base : d === 3 ? '#0F0A07' : (h(x, y >> 1, 4) > 0.8 ? '#2A1C12' : '#22170F');
+      P(x, y, c);
+    }
+  });
+}
+// fita (o título das seções): 40x16, partes de 10 nas pontas — vermelho de tinta de cochonilha, dobra e ponta em V
+function fita() {
+  const W = 40, H = 16;
+  return tela(W, H, P => {
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const ponta = Math.min(x, W - 1 - x), corte = Math.abs(y - 7.5) < (6 - ponta) * 1.2 && ponta < 6; // o V das pontas
+      if (y < 1 || y > 14 || corte) continue;
+      let c = y === 1 || y === 14 ? TINTA : y === 2 ? '#C8504A' : y === 13 ? '#4A1414' : y > 10 ? '#6E2020' : '#8E2B2B';
+      if ((ponta === 6 || ponta === 7) && y > 1 && y < 14) c = '#4A1414'; // a dobra
+      if (ponta < 6 && !corte && (Math.abs(y - 7.5) >= (6 - ponta) * 1.2 - 1)) c = TINTA;
+      P(x, y, c);
+    }
+  });
+}
+
 export function instalarMolduras() {
-  try { const r = document.documentElement.style; r.setProperty('--px-moldura', `url(${moldura()})`); r.setProperty('--px-quadro', `url(${quadro()})`); } catch { /* sem canvas: fica a moldura simples do CSS */ }
+  try { const r = document.documentElement.style; r.setProperty('--px-moldura', `url(${moldura()})`); r.setProperty('--px-quadro', `url(${quadro()})`);
+    r.setProperty('--px-papel', `url(${papel()})`); r.setProperty('--px-couro', `url(${couro()})`); r.setProperty('--px-medalha', `url(${medalha()})`); r.setProperty('--px-fita', `url(${fita()})`); } catch { /* sem canvas: fica a moldura simples do CSS */ }
 }
