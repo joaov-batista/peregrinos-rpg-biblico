@@ -144,10 +144,10 @@ export function novoChefe(id, A, dif) {
 function escolher(G, b, f) {
   const E = ESTILOS[b.id], lista = [...new Set(f.golpes)], fora = new Set(b.recentes.slice(-(lista.length > 3 ? 2 : 1)));
   let cand = lista.filter(n => !fora.has(n)); if (E.pode) { const ok = lista.filter(n => E.pode(G, b, n)), sem = ok.filter(n => !fora.has(n)); cand = sem.length ? sem : ok.length ? ok : cand; }
-  const pesos = cand.map(n => Math.max(0, (E.pref?.[b.c.golpes[n]?.fn || n]?.(G, b) ?? 1)) + 0.05);
+  const pesos = cand.map(n => (Math.max(0, (E.pref?.[b.c.golpes[n]?.fn || n]?.(G, b) ?? 1)) + 0.05) * (b.recentes.includes(n) ? 1 : 2)); // o que não sai há um tempo pesa o dobro: nenhum golpe some da luta
   let r = rand(0, pesos.reduce((a, c) => a + c, 0)), nome = cand[0];
   for (let i = 0; i < cand.length; i++) { r -= pesos[i]; if (r <= 0) { nome = cand[i]; break; } }
-  b.recentes.push(nome); if (b.recentes.length > 4) b.recentes.shift();
+  b.recentes.push(nome); if (b.recentes.length > 6) b.recentes.shift();
   return nome;
 }
 
