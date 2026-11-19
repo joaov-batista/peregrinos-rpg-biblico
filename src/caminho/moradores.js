@@ -3,6 +3,7 @@
 // gostos de presente, um pedido e presentes para dar quando a amizade cresce (aos 5, 9 e 10 corações; os de 3 e 7 são
 // os eventos de vida.js). O dia tem três partes (manhã, tarde, noite) e dura 10 minutos de jogo.
 import { passoSono } from './sono.js';
+import { passoOracao } from './oracao.js';
 import { passoFesta } from './festa.js';
 import { sfx } from '../audio.js';
 import { GENTE, ITENS, PAPOS } from '../content/gente.js';
@@ -42,7 +43,7 @@ const marcaCoracoes = n => '♥'.repeat(Math.min(10, n)) + '♡'.repeat(Math.max
 
 /* ---------------- a cada quadro ---------------- */
 export function passoVida(G, dt) {
-  G.cm.relogio = (G.cm.relogio || 0) + dt; if (G.cenaSono) passoSono(G, dt);
+  G.cm.relogio = (G.cm.relogio || 0) + dt; if (G.cenaSono) passoSono(G, dt); if (G.cenaOracao) passoOracao(G, dt);
   passoAzeites(G, dt); passoTempo(G, dt);
   // a pé, pela beira do mapa: do fim da trilha (oeste do Refúgio) para o sítio, e de volta (sem portal)
   if (!G.p.morto && !G.ui.blocking && !(G.bordaT > G.T)) { const tutOk = !(G.cm.visto?.tut != null && G.cm.visto.tut < 11);

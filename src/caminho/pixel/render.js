@@ -11,6 +11,7 @@ import { desenharChefe } from '../chefes.js';
 import { desenharObjeto } from '../objetos.js';
 import { MUNDO, RX } from '../dados.js';
 import { pintarDeitado, pintarSono } from '../sono.js';
+import { pintarAjoelhado, pintarCenaOracao } from '../oracao.js';
 import { pintarMesaFesta, pintarNaFesta, pintarCenaFesta } from '../festa.js';
 import { OLEO_USO } from '../heroi.js';
 import { Sprite, rampa, cor, carimbar, TINTA, BRANCO, PX } from './raster.js';
@@ -446,6 +447,7 @@ function pintarObjeto(g, o, G, x, y, Tm) {
     case 'pista': { const b = Math.floor(Tm * 3) % 2; g.fillStyle = '#0B0F0A'; g.fillRect(x - 9, y - 3, 18, 3); g.fillRect(x - 5, y - 6, 9, 3); g.fillRect(x + 4, y - 5, 2, 2); g.fillStyle = '#1E2A18'; g.fillRect(x - 7, y - 2, 13, 1); g.fillStyle = '#B8E060'; g.fillRect(x - 3 + b * 4, y - 5, 1, 1); g.fillRect(x + 2 - b * 3, y - 2, 1, 1); g.fillStyle = '#FFD23F'; g.fillRect(x - 1, y - 22 - b, 3, 5); g.fillRect(x + 1, y - 17 - b, 1, 3); g.fillRect(x, y - 12 - b, 2, 2); return true; }
     case 'livroRefugio': { const b = Math.floor(Tm * 2) % 2; g.fillStyle = '#17121f'; g.fillRect(x - 6, y - 18, 12, 18); g.fillRect(x - 11, y - 25, 22, 8); g.fillStyle = '#6E6A78'; g.fillRect(x - 5, y - 17, 10, 17); g.fillStyle = '#8A8696'; g.fillRect(x - 5, y - 17, 2, 17); g.fillStyle = '#E9E6DC'; g.fillRect(x - 10, y - 24, 9, 6); g.fillRect(x + 1, y - 24, 9, 6); g.fillStyle = '#8A6A2C'; g.fillRect(x - 1, y - 24, 2, 6); g.fillStyle = '#5A544A'; for (let i = 0; i < 3; i++) { g.fillRect(x - 8, y - 23 + i * 2, 5, 1); g.fillRect(x + 3, y - 23 + i * 2, 5, 1); } g.fillStyle = '#FFE9A8'; g.fillRect(x - 3 + b * 5, y - 29 - b, 1, 2); return true; }
     case 'festa': pintarMesaFesta(g, G, o, x, y, Tm); return true;
+    case 'lugarOracao': { g.fillStyle = '#17121f'; g.fillRect(x - 15, y - 3, 30, 3); g.fillStyle = '#7A3A2E'; g.fillRect(x - 14, y - 3, 28, 2); g.fillStyle = '#C9A050'; for (let i = -12; i < 13; i += 4) g.fillRect(x + i, y - 3, 2, 1); g.fillStyle = '#E8D9A8'; for (const s2 of [-1, 1]) for (let k = 0; k < 3; k++) g.fillRect(x + s2 * 16 + (s2 > 0 ? 0 : -1), y - 3 + k, 1, 1); return true; } // a esteira de oração diante da arca, com franjas
     case 'muroOlival': { // o muro baixo de pedra seca do olival, com as copas prateadas das oliveiras por trás; no fim, onde a trilha escondida se abre, o muro se desfaz em pedras soltas e hera
       const L = Math.round(((o.ate || 29) * T) / PX), trilha = G.objs.find(q => q.tipo === 'portal' && q.area === 'floresta'), gx = trilha ? Math.round((trilha.x - o.x) / PX) : L + 99, achou = trilha && G.achou(trilha);
       for (let i = 0; i * 34 < L; i++) { const tx = x + 14 + i * 34 + ((i * 7) % 9), th = 30 + ((i * 13) % 12); if (Math.abs(tx - x - gx) < 30) continue; // as oliveiras do olival, atrás do muro
@@ -621,7 +623,7 @@ export function renderPixel(G) {
   // outros peregrinos (multijogador) e o herói
   for (const o of G.outros) pintarJogador(g, o.corpo, o.look, o.cls, o.arma, Tm, o.hab, X, Y, false, o.armaCor, o.armaRar);
   const aguaN = (p.nada || G.nado) && G.objs.find(o => o.tipo === 'aguaAberta');
-  if (G.cenaSono?.deita > 0) pintarDeitado(g, G, X, Y, Tm); else if (G.cenaFesta?.sentado) pintarNaFesta(g, G, X, Y, Tm); else if (G.cenaPraia) pintarSentado(g, G, X, Y, Tm); else if (!p.morto && p.noBote) pintarNoBote(g, G, p, X, Y, Tm); else if (!p.morto && aguaN) pintarNadando(g, G, p, aguaN, X, Y, Tm, vw); else if (!p.morto) pintarJogador(g, p, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab, X, Y, true, G.arma?.lamina, G.arma?.rar);
+  if (G.cenaSono?.deita > 0) pintarDeitado(g, G, X, Y, Tm); else if (G.cenaOracao?.ajoelha) pintarAjoelhado(g, G, X, Y, Tm); else if (G.cenaFesta?.sentado) pintarNaFesta(g, G, X, Y, Tm); else if (G.cenaPraia) pintarSentado(g, G, X, Y, Tm); else if (!p.morto && p.noBote) pintarNoBote(g, G, p, X, Y, Tm); else if (!p.morto && aguaN) pintarNadando(g, G, p, aguaN, X, Y, Tm, vw); else if (!p.morto) pintarJogador(g, p, G.char.look || {}, G.char.cls, G.def?.reverente ? null : G.tipoArma, Tm, G.hab, X, Y, true, G.arma?.lamina, G.arma?.rar);
   if (G.pomba) pintarPomba(g, G.pomba, X, Y, Tm);
   else if (G.mortoT > 1.2) { const s = quadroHeroi({ ...p, morto: true, atk: null }, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab); s.dissolve(clamp((1.9 - G.mortoT) / 0.7, 0, 1), 5); carimbar(g, s, X(p.x), Y(p.y), AX, AY, p.face); }
   pintarEfeitos(g, G.fxPx, cx, cy, false);
@@ -645,6 +647,7 @@ export function renderPixel(G) {
   pintarClima(g, G, vw, vh, cx, Tm);
   pintarTempo(g, G, vw, vh, cx, Tm, cy);
   if (G.cenaSono) pintarSono(g, G, vw, vh, Tm);
+  if (G.cenaOracao) pintarCenaOracao(g, G, vw, vh, X, Y, Tm);
   if (G.cenaFesta) pintarCenaFesta(g, G, vw, vh);
   if (G.cenaPraia) pintarPraia(g, G, X, Y, vw, vh, Tm); else { pintarHud(g, G, vw); barraChefe(g, G, vw); }
 

@@ -1,6 +1,7 @@
 // O Caminho — remake de Peregrinos em vista lateral.
 // Um peregrino, uma lâmpada e um Livro com as páginas cobertas de sombra. Cada área é uma passagem bíblica:
 // os rolos precisam ser lidos (e entendidos) para abrir a porta do chefe, e cada chefe guarda uma peça da Armadura de Deus.
+import { comecarOracao } from './oracao.js';
 import { rand, clamp, lerp, TAU, pick, shuffle, weekId, h } from '../util.js';
 import { input, wasd } from '../input.js';
 import { anguloMira, passoMira, tiroEspecial, estourar, MIRA_CARGA, MIRA_CUSTO } from './mira.js';
@@ -218,6 +219,7 @@ export class Caminho {
     if (treino) { if (this.cm.visto.tut == null) this.cm.visto.tut = 0; this.p.face = -1; if (this.p.x > RX * CW * T - 280) { this.p.x = RX * CW * T - 280; this.vista.cam.x = this.p.x - this.vista.W / this.vista.Z / 2; this.prenderCam(); } } // novo peregrino: nasce na trilha do treino, longe da beira e dos botões
     this.ui.banner(def.sem ? def.sem.titulo.toUpperCase() : 'PEREGRINOS', treino ? 'A trilha' : def.nome, treino ? 'Os primeiros passos' : def.sub);
     if (def.fase && !this.avisoNivelado) { this.avisoNivelado = true; setTimeout(() => this.running && this.ui.toast('Página da semana: todos em pé de igualdade.', 4000), 3500); }
+    if (def.reverente) setTimeout(() => { if (this.running && this.def === def) this.textoEm(this.p.x, this.p.y - 90, 'Casa de oração: aqui se anda devagar, sem pulos e sem armas', '#E8DEC4', 12); }, 1200);
     if (!o.quieto) this.chegada(def);
     this.salvar();
   }
@@ -332,6 +334,7 @@ export class Caminho {
     if (input.consume('menu') || input.consume('escape')) this.menu();
     if (input.consume('map')) this.menu('mapa');
     c.dom = input.consume('item2'); for (const a of ['mount', 'chat']) input.consume(a);
+    if (this.def.reverente) { c.mx *= 0.45; c.pulo = c.puloSeg = c.atk = c.atkSeg = c.dash = c.verso = c.dom = false; } // casa de oração: anda-se devagar, sem pulos e sem armas
   }
 
   update(dt) {
@@ -1270,7 +1273,7 @@ export class Caminho {
   /* ================= Interações ================= */
   interacoes() {
     const p = this.p; let perto = null, pd = 58;
-    if (p.morto || this.cenaSono || this.cenaFesta) { this.perto = null; this.ui.setInteract(null); return; }
+    if (p.morto || this.cenaSono || this.cenaFesta || this.cenaOracao) { this.perto = null; this.ui.setInteract(null); return; }
     for (const ob of this.objs) {
       const dd = Math.hypot((ob.vv ? ob.vv.x : ob.x) - p.x, ob.y - 20 - (p.y - 20)); /* morador que anda: fala-se com ele onde ele está */
       if (ob.tipo === 'segredo' && dd < 30) { ob.fora = true; this.partilhar('seg', ob); this.efeito('coleta', ob.x, ob.y - 10); this.cm.seg[this.area].push(ob.n); this.ganhar(ob.item); continue; }
@@ -1296,6 +1299,7 @@ export class Caminho {
       case 'biblia': return 'Ler';
       case 'lagar': return 'Olhar';
       case 'casa': return ob.id === 'peregrino' && this.def.sitio ? 'Entrar em casa' : 'Bater à porta';
+      case 'lugarOracao': return this.cena ? null : 'Ajoelhar e orar';
       case 'ebenezer': return 'Descansar';
       case 'portal': return ob.oculto && !this.achou(ob) ? null : ob.porta ? ob.rotulo : ob.rotulo ? 'Entrar · ' + ob.rotulo : ob.mundo ? 'Abrir o túmulo' : ob.slot != null || ob.semana ? 'Ler a página' : 'Entrar';
       case 'saida': return 'Seguir caminho';
@@ -1309,6 +1313,7 @@ export class Caminho {
   async usar(ob) {
     const d = this.def, cm = this.cm, f = d.fase, p = this.p;
     p.vx = 0; sfx('click');
+    if (ob.tipo === 'lugarOracao') { comecarOracao(this, ob); return; }
     if (await usarNovo(this, ob)) return;
     switch (ob.tipo) {
       case 'rolo': {

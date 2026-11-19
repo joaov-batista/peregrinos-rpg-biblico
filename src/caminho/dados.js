@@ -322,11 +322,12 @@ export function areaDef(id) {
       { tipo: 'portal', col: 3.5, area: 'sitio:' + suf, porta: true, rotulo: 'Sair para o sítio' }, { tipo: 'janelaCasa', col: 8.5, lin: 11 }, { tipo: 'velaCasa', col: 11 },
       { tipo: 'mesaCasa', col: 14.5 }, { tipo: 'lareira', col: 19.5 }, { tipo: 'janelaCasa', col: 23, lin: 11 }, { tipo: 'cama', col: 25.5 }] }] }; }
   // a sinagoga por dentro: a nave, a arca, a bimá; Jairo conduz as orações e quem veio orar fica de joelhos
-  if (id === 'sinagoga:sardes') return { id, nome: 'Sinagoga de Sardes', sub: 'A casa de oração que esperava', tema: 'sardes', seed: id, paz: true, interior: true, planta: [
+  if (id === 'sinagoga:sardes') return { id, nome: 'Sinagoga de Sardes', sub: 'A casa de oração que esperava', tema: 'sardes', seed: id, paz: true, interior: true, reverente: true, planta: [
     { papel: 'inicio', nome: 'A nave', deco: 'sinagoga', tiles: sala(), objs: [{ tipo: 'portal', col: 3, area: 'sardes', porta: true, rotulo: 'Sair da sinagoga' }, { tipo: 'menora', col: 15 }, { tipo: 'npc', col: 19, id: 'natanael', nome: 'Natanael, o último', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#3A3F4C', cape: '#4A4A6A', style: 'turbante', beard: true } }] }] };
-  if (id === 'sinagoga') return { id, nome: 'Sinagoga do Refúgio', sub: 'Casa de oração', tema: 'refugio', seed: id, paz: true, interior: true, planta: [
+  if (id === 'sinagoga') return { id, nome: 'Sinagoga do Refúgio', sub: 'Casa de oração', tema: 'refugio', seed: id, paz: true, interior: true, reverente: true, planta: [
     { papel: 'inicio', nome: 'A nave', deco: 'sinagoga', tiles: sala(), objs: [
       { tipo: 'portal', col: 3, area: 'refugio', porta: true, rotulo: 'Sair da sinagoga' },
+      { tipo: 'lugarOracao', col: 12 }, // a esteira diante da arca: ajoelhar e orar
       { tipo: 'npc', col: 15, id: 'jairo', nome: 'Jairo, chefe da sinagoga', look: { skin: '#C68B59', hair: '#3A2314', tunic: '#E3DED2', cape: '#2F4A7A', style: 'turbante', beard: true } }] }] };
   if (id === 'refugio') return { id, nome: 'Refúgio', sub: 'A última aldeia acesa', tema: 'refugio', planta: REFUGIO, seed: 'refugio', paz: true, aberto: true };
   if (id === 'treino') return { id, nome: 'Arena de treino', sub: 'Ferro com ferro se afia (Pv 27:17)', tema: 'ela', seed: id, extra: true, pvp: true,

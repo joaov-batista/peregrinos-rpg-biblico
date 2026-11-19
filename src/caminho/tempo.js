@@ -8,6 +8,7 @@ import { sfx, music, somDaChuva } from '../audio.js';
 import { DIA } from './moradores.js';
 import { T, CW, tileEm, SOLIDO, PONTE } from './nivel.js';
 
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const h = n => { let x = Math.imul((n | 0) ^ 0x9E3779B9, 0x85EBCA6B); x ^= x >>> 13; x = Math.imul(x, 0xC2B2AE35); x ^= x >>> 16; return (x >>> 0) / 4294967296; };
 export const quarto = G => Math.floor((G.cm.relogio || 0) / (DIA / 4));
 const noiteN = G => Math.floor(((G.cm.relogio || 0) + DIA * 0.3) / DIA); // a noite conta a partir do fim da tarde
@@ -48,6 +49,11 @@ export function passoTempo(G, dt) {
   if (G.raioT > 0) G.raioT -= dt;
   if (fora && t === 'tempestade') { G.trovaoT = (G.trovaoT ?? 4) - dt;
     if (G.trovaoT <= 0) { G.trovaoT = (G.levi ? 3 : 7) + Math.random() * 8; G.raioT = 0.35; G.raioX = Math.random(); G.clarao = Math.max(G.clarao || 0, 0.22); setTimeout(() => sfx('trovao'), 200 + Math.random() * 700); } }
+  // noite de meteoros: o céu abre (as nuvens se afastam) e quem para e olha com calma vê os olhos acenderem
+  { const met = fora && noiteDeMeteoros(G) && G.ceuEscuro, p = G.p; G.ceuAbertoK = clamp((G.ceuAbertoK || 0) + (met ? dt * 0.4 : -dt * 0.6), 0, 1);
+    const parado = met && p.chao && Math.abs(p.vx) < 8 && !p.atk && !G.ui.blocking && !G.luta && !p.morto;
+    G.contemplaT = parado ? (G.contemplaT || 0) + dt : 0; G.contemplaK = clamp((G.contemplaK || 0) + (G.contemplaT > 2.5 ? dt * 0.5 : -dt * 0.8), 0, 1);
+    if (G.contemplaK > 0.9 && G.cm.olhosNoite !== noiteN(G)) { G.cm.olhosNoite = noiteN(G); sfx('sino'); G.textoEm(p.x, p.y - 120, '"Os olhos do Senhor estão em todo lugar" (Pv 15:3)', '#DCE4FF', 13); if (!G.cm.olhosVistos) { G.cm.olhosVistos = 1; G.ovo?.('olhos', 'No meio da galáxia, dois olhos. "Os olhos do Senhor estão em todo lugar" (Pv 15:3).'); } G.salvar(); } }
   // os meteoros: avisa uma vez por noite
   const nn = noiteN(G); if (fora && noiteDeMeteoros(G) && G.ceuEscuro && G.cm.meteorosAviso !== nn) { G.cm.meteorosAviso = nn; G.ui.toast('☄ Chuva de meteoros esta noite. Olhe para o céu… com calma.', 6500); }
   void L;
@@ -91,21 +97,32 @@ export function pintarCeuDoTempo(g, G, vw, dy, cx, noite) {
     g.globalAlpha = a * 0.25; g.fillStyle = '#FFF2C0'; g.beginPath(); g.arc(sx, sy, 9 + b * 2, 0, 6.29); g.fill(); g.globalAlpha = a; g.fillStyle = '#FFF8E0';
     g.fillRect(sx - 1, sy - 9, 2, 18); g.fillRect(sx - 7, sy - 1, 14, 2); g.fillRect(sx - 3, sy - 3, 6, 6); g.fillRect(sx, sy + 9, 1, 8); g.globalAlpha = 1; }
 }
-// a galáxia, as estrelas cadentes e, escondidos nela, dois olhos que piscam devagar (quase ninguém vai ver)
+// a galáxia, as estrelas cadentes e, escondidos nela, dois olhos feitos de estrelas. Quem para e olha com calma vê melhor:
+// eles brilham, piscam devagar e acompanham o peregrino. "Os olhos do Senhor estão em todo lugar" (Pv 15:3).
 function pintarMeteoros(g, G, vw, dy, cx, k) {
-  const Tm = G.T, par = cx * 0.015;
-  // a faixa da galáxia: poeira e estrelas miúdas numa diagonal
-  for (let i = 0; i < 900; i++) { const u = h(i * 3 + 1), v = h(i * 7 + 2), x = Math.round(((u * vw * 1.3 - par) % vw + vw) % vw), base = dy + 20 + (x / vw) * 70, y = Math.round(base + (v - 0.5) * (30 + 26 * Math.sin(x * 0.02)));
-    g.globalAlpha = k * (0.08 + h(i) * 0.22) * (0.8 + 0.2 * Math.sin(Tm * 2 + i)); g.fillStyle = i % 9 ? '#C9D4F2' : '#F2D8E8'; g.fillRect(x, y, 1, 1); }
-  // os olhos: no meio da galáxia, duas amêndoas de estrelas, quase da cor do céu; piscam a cada tanto
-  { const ex = Math.round(vw * 0.5 - par), ey = Math.round(dy + 20 + 0.5 * 70), pisca = (Tm % 47) > 46.6 ? 0.2 : 1, a = k * 0.13;
-    for (const lado of [-1, 1]) { const ox = ex + lado * 15;
-      for (let i = -9; i <= 9; i++) { const al = Math.round(Math.sqrt(Math.max(0, 1 - (i / 9) ** 2)) * 4 * pisca); g.globalAlpha = a; g.fillStyle = '#E8EEFF'; g.fillRect(ox + i, ey - al, 1, 1); g.fillRect(ox + i, ey + al, 1, 1); }
-      g.globalAlpha = a * 1.8 * pisca; g.fillStyle = '#FFF4D6'; g.fillRect(ox - 1, ey - 1, 3, 3); g.globalAlpha = a * 0.6 * pisca; g.fillRect(ox - 3, ey - 2, 7, 5); } }
-  // as estrelas cadentes: um risco que corre na diagonal e some
-  for (let i = 0; i < 4; i++) { const P = 1.3 + i * 0.55, c = Math.floor((Tm + i * 0.77) / P), u = ((Tm + i * 0.77) % P) / 0.7; if (u > 1) continue;
-    const x0 = h(c * 13 + i) * vw * 1.2 - 40, y0 = dy + 8 + h(c * 5 + i) * 70, L = 24 + h(c) * 30, x = x0 + u * 90, y = y0 + u * 40;
-    for (let j = 0; j < L; j++) { g.globalAlpha = k * (1 - j / L) * (1 - u * 0.6); g.fillStyle = j < 3 ? '#FFFFFF' : '#BFD4FF'; g.fillRect(Math.round(x - j * 0.9), Math.round(y - j * 0.4), 1, 1); } }
+  const Tm = G.T, par = cx * 0.015, c = clamp(G.contemplaK || 0, 0, 1), faixa = x => dy + 26 + (x / vw) * 46 + Math.sin(x * 0.012) * 8; // a galáxia desce em diagonal suave
+  // a nebulosa: manchas pontilhadas de azul, violeta e rosa ao longo da faixa
+  for (let i = 0; i < 1400; i++) { const u = h(i * 3 + 1), v = h(i * 7 + 2), w = h(i * 11 + 5), x = Math.round(((u * vw * 1.4 - par) % vw + vw) % vw), esp = 14 + 18 * Math.sin(x * 0.017 + 1) ** 2, y = Math.round(faixa(x) + (v - 0.5) * 2 * esp * (0.4 + w * 0.6));
+    if (Math.abs(v - 0.5) > 0.42 && w > 0.3) continue; g.globalAlpha = k * (0.05 + (1 - Math.abs(v - 0.5) * 2) * 0.16); g.fillStyle = ['#3A4A9A', '#5A3A8A', '#8A4A8A', '#2E5A8A'][i % 4]; g.fillRect(x, y, 2, 1); }
+  // as estrelas da galáxia: muitas e miúdas, umas maiores que cintilam
+  for (let i = 0; i < 900; i++) { const u = h(i * 5 + 9), v = h(i * 13 + 4), x = Math.round(((u * vw * 1.3 - par) % vw + vw) % vw), y = Math.round(faixa(x) + (v - 0.5) * (34 + 22 * Math.sin(x * 0.02)));
+    const bri = h(i * 17), cint = 0.7 + 0.3 * Math.sin(Tm * (1.5 + bri * 3) + i); g.globalAlpha = k * (0.18 + bri * 0.5) * cint; g.fillStyle = i % 7 ? '#DCE4FF' : i % 3 ? '#FFE4F2' : '#FFF4D6'; g.fillRect(x, y, 1, 1);
+    if (bri > 0.96) { g.globalAlpha = k * 0.35 * cint; g.fillRect(x - 1, y, 3, 1); g.fillRect(x, y - 1, 1, 3); } }
+  // os olhos: no meio da galáxia, duas amêndoas desenhadas por estrelas, a íris em anel e a pupila acesa; piscam a cada tanto e olham para o peregrino
+  { const ex = Math.round(vw * 0.5 - par * 0.6), ey = Math.round(faixa(ex)), ciclo = Tm % 23, fecha = ciclo > 22.5 ? Math.sin((ciclo - 22.5) / 0.5 * Math.PI) : 0, abre = 1 - fecha * 0.92;
+    const px = (G.p.x / 2 - cx), olha = clamp((px - ex) / vw * 8, -3, 3), a = k * (0.32 + c * 0.6);
+    if (c > 0.05) { for (let i = 0; i < 160; i++) { const ang = h(i * 3 + 7) * 6.29, rr = Math.sqrt(h(i * 5 + 3)), xx = Math.round(ex + Math.cos(ang) * rr * 64), yy = Math.round(ey + Math.sin(ang) * rr * 20); g.globalAlpha = c * k * (1 - rr) * (0.35 + 0.25 * Math.sin(Tm * 2 + i)); g.fillStyle = i % 3 ? '#BFD4FF' : '#FFF4D6'; g.fillRect(xx, yy, 1, 1); } } // o brilho de quando se olha com calma: poeira de estrelas que acende em volta
+    for (const lado of [-1, 1]) { const ox = ex + lado * 24, W = 13, H = 6 * abre;
+      for (let i = -W; i <= W; i++) { const al = Math.sqrt(Math.max(0, 1 - (i / W) ** 2)), up = Math.round(al * H), dn = Math.round(al * H * 0.8), tw = 0.75 + 0.25 * Math.sin(Tm * 3 + i * 0.9 + lado);
+        g.globalAlpha = a * tw * (i % 2 ? 0.75 : 1); g.fillStyle = '#E8EEFF'; g.fillRect(ox + i, ey - up, 1, 1); g.fillRect(ox + i, ey + dn, 1, 1); } // as pálpebras, estrela por estrela
+      g.fillStyle = '#E8EEFF'; g.globalAlpha = a; g.fillRect(ox - W - 2, ey, 2, 1); g.fillRect(ox + W + 1, ey, 2, 1); // os cantos
+      if (abre > 0.3) { const ix = Math.round(ox + olha), r = 4;
+        for (let t = 0; t < 16; t++) { const ang = t / 16 * 6.29, yy = Math.round(Math.sin(ang) * r * Math.min(1, abre)); if (Math.abs(yy) > H - 1) continue; g.globalAlpha = a * 0.7; g.fillStyle = '#9FC4FF'; g.fillRect(ix + Math.round(Math.cos(ang) * r), ey + yy, 1, 1); } // a íris
+        const ac = Math.min(1, a * 1.9); g.globalAlpha = ac * 0.35; g.fillStyle = '#FFE9A8'; g.fillRect(ix - 2, ey - 1, 5, 3); g.fillRect(ix - 1, ey - 2, 3, 5); g.globalAlpha = ac; g.fillStyle = '#FFF8E8'; g.fillRect(ix - 1, ey - 1, 3, 3); g.fillStyle = '#FFFFFF'; g.fillRect(ix, ey - 1, 1, 1); g.fillRect(ix - 1, ey, 1, 1); } } } // a pupila acesa: uma estrela redonda, com brilho
+  // as estrelas cadentes: riscos que correm na diagonal e somem; mais delas quando se para para olhar
+  for (let i = 0; i < 6; i++) { const P = 1.2 + i * 0.5, cc = Math.floor((Tm + i * 0.77) / P), u = ((Tm + i * 0.77) % P) / 0.7; if (u > 1 || (i > 3 && c < 0.5)) continue;
+    const x0 = h(cc * 13 + i) * vw * 1.2 - 40, y0 = dy + 8 + h(cc * 5 + i) * 80, L = 26 + h(cc) * 34, x = x0 + u * 100, y = y0 + u * 44;
+    for (let j = 0; j < L; j++) { g.globalAlpha = k * (1 - j / L) * (1 - u * 0.6); g.fillStyle = j < 3 ? '#FFFFFF' : j < 10 ? '#FFF4D6' : '#BFD4FF'; g.fillRect(Math.round(x - j * 0.9), Math.round(y - j * 0.4), 1, 1); } }
   g.globalAlpha = 1;
 }
 

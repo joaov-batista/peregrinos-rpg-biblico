@@ -230,8 +230,9 @@ export function pintarCeuVivo(g, G, C, vw, dy, cx, cy) {
   if (G.N.def.aberto) pintarCeuDoTempo(g, G, vw, dy, cx, L ? 1 - L.d : G.area === 'sardes' ? 0.85 : 0.2); // arco-íris, meteoros, a estrela do Natal
   if (G.N.def.aberto) { const noite = L ? 1 - L.d : G.area === 'sardes' ? 0.9 : 0.3; estrelasVivas(g, G, vw, dy, cx, noite);
     const { chave, cores } = corNuvens(G, L), chuva = Math.min(0.6, (G.chuvaK || 0) * 0.6);
-    g.globalAlpha = 0.92; faixa(g, faixaDeNuvens(cores, false, chave), cx * 0.03 + G.T * 1.5, dy + 6 + Math.round(-cy * 0.02), vw);
-    g.globalAlpha = 1; faixa(g, faixaDeNuvens(cores, true, chave), cx * 0.07 + G.T * 3.2, dy + 30 + Math.round(-cy * 0.03), vw); g.globalAlpha = 1;
+    const abre = 1 - (G.ceuAbertoK || 0) * 0.9; // noite de meteoros: as nuvens se afastam e o céu fica limpo
+    g.globalAlpha = 0.92 * abre; faixa(g, faixaDeNuvens(cores, false, chave), cx * 0.03 + G.T * 1.5, dy + 6 + Math.round(-cy * 0.02) - Math.round((1 - abre) * 40), vw);
+    g.globalAlpha = abre; faixa(g, faixaDeNuvens(cores, true, chave), cx * 0.07 + G.T * 3.2, dy + 30 + Math.round(-cy * 0.03) - Math.round((1 - abre) * 50), vw); g.globalAlpha = 1;
     // bandos de pássaros voando de verdade: atravessam o céu (uns para cada lado), em V, batendo as asas e planando, cada um no seu ritmo
     if (!L || L.d > 0.2) { const cB = L && L.poente > 0.4 ? '#2E2230' : '#2E3648';
       for (let b = 0; b < 3; b++) { const P = 14 + b * 6, u = ((G.T + b * 9.3) % P) / P, dir = b % 2 ? -1 : 1, n = [5, 3, 7][b], esc = b === 1 ? 2 : 1, faixaY = dy + 36 + b * 30;
