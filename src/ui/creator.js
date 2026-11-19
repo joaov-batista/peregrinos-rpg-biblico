@@ -49,7 +49,8 @@ function sanctuary(g, t) {
   for (let y = 100; y < 110; y++) { g.globalAlpha = (y - 99) / 12; P(0, y, 90, 1, '#0B1024'); } g.globalAlpha = 1;
 }
 
-export function mountCreator(root, onCreated, onBack) {
+// opts.criar: outra forma de guardar o peregrino (a sala da célula guarda só neste aparelho, sem conta)
+export function mountCreator(root, onCreated, onBack, opts = {}) {
   desligarCeu(); root.replaceChildren();root.hidden=false;root.classList.add('creating');
   const look=defaultLook(),motionActor={};
   let cls='guerreiro',step=0,appearance='rosto',face=0,motion='idle',time=0,last=0,raf=0,busy=false,attackStart=-9,customCloth=false;
@@ -140,7 +141,7 @@ export function mountCreator(root, onCreated, onBack) {
     if(!/^[\p{L}0-9 _-]{3,16}$/u.test(n)){msg.textContent='Use de 3 a 16 letras ou números para o nome.';name.setAttribute('aria-invalid','true');name.focus();return;}
     busy=true;next.disabled=true;back.disabled=true;nav.querySelectorAll('button').forEach(b=>b.disabled=true);msg.textContent='Preparando sua jornada…';
     try{
-      const c=await net.createChar({name:n,cls,look:{...look},data:newCharData(cls)});
+      const c=await (opts.criar||(d=>net.createChar(d)))({name:n,cls,look:{...look},data:newCharData(cls)});
       cancelAnimationFrame(raf);root.classList.remove('creating');sfx('level');onCreated(c);
     }catch(err){busy=false;next.disabled=false;back.disabled=false;nav.querySelectorAll('button').forEach(b=>b.disabled=false);msg.textContent=err.message;}
   }},preview,h('section',{class:'creation-panel'},nav,body,h('footer',{class:'creation-footer'},msg,h('div',{class:'creation-actions'},back,next))));

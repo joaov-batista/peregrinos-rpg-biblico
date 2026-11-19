@@ -21,12 +21,12 @@ export const limparCodigo = s => (s || '').toUpperCase().replace(/[^A-Z0-9]/g, '
 // Mensagens grandes (o retrato de uma luta cheia de dardos) são partidas em pedaços: um canal WebRTC fecha
 // se receber de uma vez mais do que aguenta, e era isso que congelava a sala no meio dos chefes.
 const LIMITE = 12000, partes = new Map(); let seqPt = 0;
-function manda(c, m) {
+export function manda(c, m) {
   const s = JSON.stringify(m); if (s.length <= LIMITE) return c.send(m);
   const k = ++seqPt + Math.random().toString(36).slice(2, 6), n = Math.ceil(s.length / LIMITE);
   for (let i = 0; i < n; i++) c.send({ t: 'pt', k, i, n, s: s.slice(i * LIMITE, (i + 1) * LIMITE) });
 }
-function junta(m) {
+export function junta(m) {
   if (m?.t !== 'pt') return m;
   let p = partes.get(m.k); if (!p) partes.set(m.k, p = { n: m.n, v: [], c: 0, t: performance.now() });
   if (p.v[m.i] == null) { p.v[m.i] = m.s; p.c++; }
@@ -81,14 +81,16 @@ async function retransmissor(nome) {
   const ouvintes = []; r.ouvir(m => { for (const f of ouvintes) f(m); });
   return { via: 'retransmissor', enviar: m => r.enviar(m), ouvir: f => ouvintes.push(f), fechar: r.fechar };
 }
-async function ligar(codigo, anfitriao, local, t) {
-  const nome = PREFIXO + codigo;
+// prefixo: outra família de salas no mesmo transporte (a sala da célula usa 'peregrinos-celula-')
+export async function ligar(codigo, anfitriao, local, t, prefixo = PREFIXO) {
+  const nome = prefixo + codigo;
   if (local) {
     const ch = new BroadcastChannel(nome), ouvintes = [];
     ch.onmessage = ev => { for (const f of ouvintes) f(ev.data); };
-    const b = barramento({ via: 'local', enviar: m => ch.postMessage(m), ouvir: f => ouvintes.push(f) }, anfitriao, t);
+    let aberto = true; // depois de fechado, mandar não pode estourar erro (a aba pode estar indo embora)
+    const b = barramento({ via: 'local', enviar: m => { if (aberto) try { ch.postMessage(m); } catch { /* fechando */ } }, ouvir: f => ouvintes.push(f) }, anfitriao, t);
     if (!anfitriao) await b.abrir(1500);
-    const fim = () => { b.fechar(); ch.close(); };
+    const fim = () => { if (!aberto) return; try { b.fechar(); } catch { /* */ } aberto = false; ch.close(); };
     addEventListener('pagehide', fim, { once: true });
     return { con: b.con, fechar: fim, via: 'local' };
   }

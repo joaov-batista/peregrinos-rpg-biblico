@@ -8,6 +8,7 @@ import { CHEFES_C } from './chefes-c.js';
 import { CHEFES_D } from './chefes-d.js';
 import { CHEFES_E } from './chefes-e.js';
 import { CHEFES_F } from './chefes-f.js';
+import { GRANDES } from './chefes-g.js'; // os chefes da célula: quadro maior (mais detalhe com o mesmo tamanho de pixel)
 
 const PINTORES = { ...CHEFES_A, ...CHEFES_B, ...CHEFES_C, ...CHEFES_D, ...CHEFES_E, ...CHEFES_F };
 // estes foram desenhados olhando para a esquerda; os antigos olham para a direita. Quem desenha na tela desvira
@@ -80,8 +81,8 @@ export const CHEFES_PX = {
 
 // Quadro pronto de um chefe (ou null se ainda não foi redesenhado)
 export function quadroChefe(b, Tm, G) {
-  const def = CHEFES_PX[b.id] || (PINTORES[b.id] && { ax: 60, ay: 104, pinta: PINTORES[b.id] }); if (!def) return null;
-  const s = quadro.limpa(); def.pinta(s, b, Tm, G);
+  const def = CHEFES_PX[b.id] || GRANDES[b.id] || (PINTORES[b.id] && { ax: 60, ay: 104, pinta: PINTORES[b.id] }); if (!def) return null;
+  const s = (def.w ? (def.spr ||= new Sprite(def.w, def.h)) : quadro).limpa(); def.pinta(s, b, Tm, G);
   if (b.flash > 0) s.tinge(BRANCO);
   if (b.morrendo > 0) s.dissolve(1 - b.morrendo / 1.7, 3);
   if ((b.alpha ?? 1) < 1) s.dissolve(1 - b.alpha, 2);

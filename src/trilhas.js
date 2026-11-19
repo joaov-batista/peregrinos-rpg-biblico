@@ -157,13 +157,33 @@ export const TRILHAS = {
 };
 // trilhas que servem a mais de um lugar
 const APELIDOS = { zeloteFoice: 'conselho', zelotePunhal: 'conselho', zelotes: 'masmorra', treino: 'bosque', desafio: 'raid', getsemani: 'jardim', getsemani2: 'jardim', ermo: 'sombra', mar: 'conves', porto: 'jope', pecado: 'desespero', dragao: 'mentira', chefe: 'batalha' };
+// ---- a fase da célula ("Jesus me escolheu"): uma batalha épica para cada chefe ----
+Object.assign(TRILHAS, {
+  // A Rejeição: mi menor, marcha larga, coro e cordas, a melodia sobe como quem não aceita o "ninguém"
+  rejeicao: { tom: 7, esc: 'menor', bpm: 150, voz: 'serra', bat: 'epico', luta: 1, coro: 1, cordas: 1, metal: 1, prato: 1, riff: "1 . 1 1 . 1 1 . 1 . 1 1 . 5 7 8", prog: [1, 6, 3, 7, 1, 6, 4, 5],
+    mel: "1' - - 7 1' - 3' - | 1' - 7 6 7 - 5 - | 3' - - 2' 3' - 5' - | 4' - 3' 2' 4' - 2' - | 5' - - 4' 5' - 6' - | 3' - 2' 1' 3' - 1' - | 6 - 1' - 4' - 3' 2' | 2' - 7 - 5 - 7 -" },
+  // O Interesseiro: menor harmônica com balanço de tango, metais de cassino e cordas em pulso
+  interesseiro: { tom: 2, esc: 'harmonica', bpm: 138, voz: 'quadrada', bat: 'marchaEpica', luta: 1, metal: 1, cordas: 2, prato: 1, riff: "1 . . 1 5 . 1 . 1 . . 1 5 . 7 .", prog: [1, 4, 5, 1, 6, 4, 5, 5],
+    mel: "5' . 5' 6' 5' - 3' - | 4' . 4' 5' 4' - 1' - | 7 - 2' - 4' - 2' 7 | 1' - 3' 5' 1'' - . . | 6' . 6' 7' 6' - 4' - | 4' . 3' 4' 6' - 4' - | 2' - 4' - 7' - 5' - | 7 - 2' - 5' 4' 2' 7" },
+  // A Condenação: frígio pesado, órgão e taikos, o coro grave como sentença
+  condenacao: { tom: -2, esc: 'frigio', bpm: 118, voz: 'orgao', bat: 'epico2', luta: 1, coro: 1, metal: 1, prato: 1, oit: 1, riff: "1 . 1 . 1 1 . 1 2 . 1 . 1 1 2 1", prog: [1, 2, 1, 7, 1, 2, 6, 7],
+    mel: "1' - - - 2' - 1' - | 3' - 2' - 1' - 7 - | 1' - - - 2' - 3' - | 2' - 1' - 7 - 6 - | 5 - 6 - 7 - 1' - | 2' - - 3' 2' - 1' - | 6 - 7 - 1' - 3' - | 2' - - - 7 - - -" },
+  // A Covardia: tempestade em galope, cordas nervosas, a melodia foge e volta
+  covardia: { tom: 5, esc: 'harmonica', bpm: 172, voz: 'quadrada', bat: 'galope', luta: 1, cordas: 1, coro: 1, prato: 1, riff: "1 1 8 1 1 8 1 1 b2 b2 8 b2 1 1 5 1", prog: [1, 6, 7, 1, 4, 6, 5, 5],
+    mel: "5' 4' 3' 4' 5' - 1' - | 6' 5' 4' 5' 6' - 3' - | 7' 6' 5' 6' 7' - 2' - | 1'' - 7' - 5' - . . | 4' 3' 2' 3' 4' - 6 - | 3' 2' 1' 2' 3' - 6 - | 2' 3' 4' 5' 7' - 5' - | 7 - 2' - 5' - 7' -" },
+  // O Fracasso: o último chefe. Órgão, coro, cordas, metais e taikos: tudo junto, e a melodia de quem não desiste
+  fracasso: { tom: -3, esc: 'harmonica', bpm: 162, voz: 'orgao', bat: 'epico2', luta: 1, oit: 1, coro: 1, cordas: 2, metal: 1, prato: 1, riff: "1 1 8 1 1 8 1 1 b6 b6 8 b6 5 5 7 5", prog: [1, 6, 4, 5, 1, 6, 2, 5],
+    mel: "1' - - 7 1' - 5' - | 6' - 5' 4' 3' - 1' - | 4' - - 3' 4' - 6' - | 7' - - - 5' - - - | 1'' - - 7' 1'' - 5' - | 6' - 5' 4' 3' - 4' - | 2' - 3' - 4' - 6' - | 7' - 6' - 7' - 2'' -" }
+});
 export const trilhaDe = id => TRILHAS[id] || TRILHAS[APELIDOS[id]] || null;
 
 // batidas: k = bumbo, s = caixa, h = chimbal, t = tímpano, m = metal; em semicolcheias (16 por compasso de quatro tempos)
 const BATIDAS = {
   leve: 'k...h...k...h.h.', marcha: 'k.h.s.h.k.hhs.h.', martelo: 'm...h...m...h.m.', timpano: 't...........t.t.', tempestade: 'k.hhk.hhk.hhkshh',
   rock: 'k.h.s.h.k.k.s.h.', duplo: 'khkhshkhkhkhshkh', relogio: 'h...m...h...m...', tango: 'k..hs.h.k..hs.hh', pesado: 'k.......s.....k.',
-  guerra: 'k.kks.k.k.kks.ss', bigorna: 'k...m...k.k.m...', tribal: 'k..k..k..k..s.s.'
+  guerra: 'k.kks.k.k.kks.ss', bigorna: 'k...m...k.k.m...', tribal: 'k..k..k..k..s.s.',
+  // épicas (a fase da célula): T = taiko, c = prato no começo do compasso
+  epico: 'T.kTs.k.T.kTs.ks', epico2: 'TkkTs.kkTkkTsTss', marchaEpica: 'T...s..kT.k.s.ss', galope: 'TkkskkTkkskksTss'
 };
 
 function ler(mel, esc) { // "5 - 1' ." → [{ casa, st, dur }]
@@ -201,6 +221,10 @@ export function tocar(AC, saida, eco, id, ate) {
     serra(f, t, dur, v) { const g = env(t, dur, v * 0.32, 0.02, 0.1, 0.75), lp = filtro('lowpass', 1700, g, 1.2); osc('sawtooth', f, t, t + dur + 0.15, lp, -7, 6); osc('sawtooth', f, t, t + dur + 0.15, lp, 7, 6); mandaEco(g, 0.6); },
     orgao(f, t, dur, v) { const g = env(t, dur, v * 0.3, 0.015, 0.12), lp = filtro('lowpass', 2200, g); for (const [m, k] of [[1, 1], [2, 0.6], [3, 0.3], [4, 0.2]]) { const x = AC.createGain(); x.gain.value = k; x.connect(lp); osc('sine', f * m, t, t + dur + 0.15, x); } osc('square', f / 2, t, t + dur + 0.15, lp); mandaEco(g, 0.8); }
   };
+  // camadas épicas: coro ("ah", serras num filtro de vogal), cordas curtas em ostinato e metais que marcam o acorde
+  const coro = (sts, t, d, v) => { for (const st of sts) for (const des of [-9, 0, 9]) { const g = AC.createGain(), bp = filtro('bandpass', 760, g, 1.4), bp2 = filtro('bandpass', 1180, g, 2); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + d * 0.25); g.gain.linearRampToValueAtTime(v * 0.85, t + d * 0.8); g.gain.linearRampToValueAtTime(0.0001, t + d * 1.05); g.connect(saida); mandaEco(g, 1.2); const o = AC.createOscillator(); o.type = 'sawtooth'; o.frequency.value = hz(st); o.detune.value = des; o.connect(bp); o.connect(bp2); o.start(t); o.stop(t + d * 1.1); } };
+  const corda = (f, t, d, v) => { const g = env(t, d, v * 0.5, 0.004, 0.05, 0.35), lp = filtro('lowpass', 2400, g, 0.9); osc('sawtooth', f, t, t + d + 0.06, lp, -5); osc('sawtooth', f, t, t + d + 0.06, lp, 6); };
+  const metal = (sts, t, d, v) => { for (const st of sts) { const g = env(t, d, v * 0.3, 0.03, 0.12, 0.6), lp = filtro('lowpass', 1500, g, 1.6); osc('sawtooth', hz(st), t, t + d + 0.15, lp, -4); osc('square', hz(st), t, t + d + 0.15, lp, 5); mandaEco(g, 0.6); } };
   const harpa = (f, t, v) => { const g = env(t, 0.7, v, 0.004, 0.2, 0.05); osc('triangle', f, t, t + 1, g); mandaEco(g, 0.8); };
   const chip = (f, t, d, v) => { const g = env(t, d, v * 0.3, 0.003, 0.02, 0.5); osc('square', f, t, t + d + 0.03, g); };
   const baixo = (f, t, d, v, sujo) => { const g = env(t, d, v, 0.008, 0.06, 0.7); osc('triangle', f, t, t + d + 0.08, g); if (sujo) { const s = AC.createGain(); s.gain.value = 0.28; const lp = filtro('lowpass', 520, g); s.connect(lp); osc('sawtooth', f, t, t + d + 0.08, s); } };
@@ -212,6 +236,8 @@ export function tocar(AC, saida, eco, id, ate) {
     if (ch === 'k') bumbo(t, 0.34 * (tr.luta ? 1 : 0.5)); else if (ch === 's') { chiado(t, 0.16, 0.16, 'bandpass', 1800); bumbo(t, 0.1, 1.6); }
     else if (ch === 'h') chiado(t, 0.04, forte ? 0.07 : 0.045, 'highpass', 7000); else if (ch === 't') { bumbo(t, 0.3, 0.7); chiado(t, 0.25, 0.03, 'lowpass', 300); }
     else if (ch === 'm') { const g = env(t, 0.08, 0.05, 0.002, 0.1, 0.1); osc('square', 1870, t, t + 0.2, g); osc('square', 2810, t, t + 0.2, g); }
+    else if (ch === 'T') { bumbo(t, 0.42, 0.55); chiado(t, 0.3, 0.05, 'lowpass', 220); } // taiko: grave e com corpo
+    else if (ch === 'c') { chiado(t, 1.1, 0.07, 'highpass', 5200); chiado(t, 0.5, 0.05, 'bandpass', 3200); } // prato
   };
 
   // ---- o que toca em cada semicolcheia ----
@@ -221,6 +247,11 @@ export function tocar(AC, saida, eco, id, ate) {
     const calmo = !tr.luta, jeito = volta % 4; // em cada volta o arranjo muda um pouco: a música respira
     // tapete de cordas, um acorde por compasso
     if (noComp === 0 && tr.pad) tapete([grau(ac, baixoOit + 1), grau(ac + 2, baixoOit + 2), grau(ac + 4, baixoOit + 2)].concat(tr.pad > 1 ? [grau(ac, baixoOit + 3)] : []), t, semisComp * semi, 0.02 * vol * (tr.luta ? 0.8 : 1));
+    // camadas épicas (tr.epico): coro no acorde do compasso, cordas em semicolcheias, metais no começo e na "puxada"
+    if (tr.coro && noComp === 0 && (volta > 0 || comp > 1)) coro([grau(ac, 0), grau(ac + 2, 0), grau(ac + 4, 0)], t, semisComp * semi, 0.018 * vol);
+    if (tr.cordas) { const pad = tr.cordas === 2 ? [0, 0, 7, 0, 0, 7, 0, 4, 0, 0, 7, 0, 4, 7, 9, 7] : [0, 7, 0, 7, 0, 7, 0, 7, 4, 7, 4, 7, 2, 7, 4, 7], g = pad[noComp % 16]; corda(hz(grau(ac, -1) + (g === 7 ? 7 : g === 4 ? esc[2] : g === 9 ? 12 : g === 2 ? esc[1] : 0)), t, semi * 0.8, 0.09 * vol); }
+    if (tr.metal && (noComp === 0 || (noComp === 12 && comp % 2 === 1) || (noComp === 14 && comp % 2 === 1))) metal([grau(ac, 0), grau(ac + 4, 0), grau(ac, 1)], t, noComp === 0 ? semi * 6 : semi * 1.6, 0.12 * vol);
+    if (tr.prato && noComp === 0 && comp % 4 === 0) bateria('c', t);
     // baixo
     if (riff) { for (const nt of riff.notas) if (nt.casa === noComp % riff.casas) baixo(hz(grau(ac + nt.g, baixoOit) + (nt.st - esc[nt.g % 7] - 12 * Math.floor(nt.g / 7)) + 12 * Math.floor(nt.g / 7)), t, nt.dur * semi * 0.9, 0.2 * vol, true); }
     else if (tr.baixo === 'longo') { if (noComp === 0) baixo(hz(grau(ac, baixoOit)), t, semisComp * semi * 0.95, 0.15 * vol); }

@@ -11,6 +11,7 @@
 import semana01 from './semana-01.js';
 import { CINEMAS_JONAS } from './cinematicas-jonas.js';
 import { CINEMAS_DANIEL } from './cinematicas-daniel.js';
+import { CINEMAS_CELULA } from './cinematicas-celula.js';
 
 const F = (n, k) => semana01.fases[n - 1].npcs[k].look;
 const PAULO = F(1, 'M'), PRISCILA = F(2, 'N'), AQUILA = F(2, 'M'), SILAS = F(3, 'M'), TIMOTEO = F(3, 'O');
@@ -22,6 +23,7 @@ const EVA = { skin: '#D9A273', hair: '#2B1A10', tunic: '#ECE3CF', cape: 'none', 
 export const CINEMAS = {
   ...CINEMAS_JONAS,
   ...CINEMAS_DANIEL,
+  ...CINEMAS_CELULA,
   /* ================= Começo do jogo ================= */
   prologo: {
     titulo: 'Prólogo',

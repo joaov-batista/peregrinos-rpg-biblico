@@ -6,12 +6,15 @@ import { validarChefe } from '../game/bossMoves.js';
 import semana01 from './semana-01.js';
 import semana02 from './semana-02.js';
 import semana03 from './semana-03.js';
+import celulaEscolheu from './celula-escolheu.js';
 
 // TODAS: o que o Caminho (remake) joga. SEMANAS: as que também têm mapa de letras para o modo clássico.
 export const TODAS = [semana01, semana02, semana03];
 export const SEMANAS = TODAS.filter(s => !s.soCaminho);
 export const SEMANA_ATUAL = SEMANAS[SEMANAS.length - 1];
+// EVENTOS: fases à parte do jogo (a sala da célula, em /celula). Não aparecem no Salão nem no Refúgio.
+export const EVENTOS = [celulaEscolheu];
 
-for (const sem of TODAS) Object.assign(BOSSES, sem.chefes || {});
+for (const sem of [...TODAS, ...EVENTOS]) Object.assign(BOSSES, sem.chefes || {});
 for (const [id, d] of Object.entries(BOSSES)) if (d.fases || d.golpes) validarChefe(id, d);
-for (const sem of TODAS) for (const f of sem.fases) if (!BOSSES[f.chefe]) console.warn('[' + sem.id + '] a fase ' + f.n + ' usa o chefe "' + f.chefe + '", que não existe');
+for (const sem of [...TODAS, ...EVENTOS]) for (const f of sem.fases) if (!BOSSES[f.chefe]) console.warn('[' + sem.id + '] a fase ' + f.n + ' usa o chefe "' + f.chefe + '", que não existe');

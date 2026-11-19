@@ -68,6 +68,8 @@ self.addEventListener('fetch', event => {
   // o painel de acessos nunca vem do cache do app: sempre do servidor (e nunca vira a tela do jogo)
   if (new URL(req.url).pathname.startsWith('/painel')) return;
   if (req.mode === 'navigate') {
+    // a sala da célula (/celula) é outra página: rede primeiro (o link de convite tem de abrir a sala certa), cache se offline
+    if (url.pathname.startsWith('/celula')) { event.respondWith(fetch(req).catch(() => caches.open(CACHE).then(cache => cache.match('/celula.html')))); return; }
     event.respondWith(caches.open(CACHE).then(cache => cache.match('/index.html')).then(hit => hit || fetch(req)));
   } else if (CORE.includes(url.pathname)) {
     event.respondWith((async () => {
