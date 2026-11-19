@@ -297,18 +297,36 @@ function pintarObjeto(g, o, G, x, y, Tm) {
     case 'boneco': { const bal = o.bal > 0 ? Math.round(Math.sin(Tm * 40) * 3 * (o.dir || 1)) : 0; if (o.bal > 0) o.bal -= 0.016; g.fillStyle = '#17121f'; g.fillRect(x - 2, y - 30, 4, 30); g.fillRect(x - 9 + bal, y - 30, 18, 18); g.fillRect(x - 5 + bal, y - 40, 10, 11); g.fillRect(x - 13 + bal, y - 26, 26, 3); g.fillStyle = '#6B4A2E'; g.fillRect(x - 1, y - 12, 2, 12); g.fillRect(x - 12 + bal, y - 25, 24, 1); g.fillStyle = '#C9A86A'; g.fillRect(x - 8 + bal, y - 29, 16, 16); g.fillRect(x - 4 + bal, y - 39, 8, 9); g.fillStyle = '#8A7A3A'; for (let i = 0; i < 4; i++) g.fillRect(x - 7 + bal + i * 4, y - 27 + (i % 2) * 6, 2, 4); g.fillStyle = '#B03A2E'; g.fillRect(x - 2 + bal, y - 23, 4, 4); return true; }
     case 'casa': { // casa de adobe de teto plano (anda-se por cima): porta, janela acesa, parapeito e um sinal de quem mora ali
       const tom = { estalagem: '#8A6A4E', marta: '#9A8468', oleiro: '#7E5E4A', viuva: '#8C7A66' }[o.id] || '#8A7460';
-      const sp = sprObj('casa' + o.id, 68, 58, s => { const A = rampa(tom), M = rampa('#5A3E28'), J = rampa('#FFD98A');
-        s.ret(2, 8, 64, 50, A[2]); for (let y = 8; y < 58; y++) { s.px(2, y, A[1]); s.px(3, y, A[1]); s.px(65, y, A[3]); }
-        for (let i = 0; i < 60; i++) { const x = 4 + (i * 37) % 60, y = 12 + (i * 53) % 44; s.px(x, y, i % 3 ? A[1] : A[3]); if (i % 5 === 0) s.ret(x, y, 3, 1, A[1]); }
-        s.ret(0, 4, 68, 5, A[3]); s.ret(0, 8, 68, 1, A[0]); for (let x = 1; x < 68; x += 8) s.ret(x, 1, 5, 3, A[2]); // parapeito
-        for (let x = 6; x < 64; x += 9) s.ret(x, 11, 3, 2, M[1]); // vigas
-        s.ret(26, 30, 14, 28, M[1]); s.ret(27, 31, 12, 27, M[2]); s.ret(32, 31, 1, 27, M[0]); s.px(37, 45, J[3]); s.ret(24, 28, 18, 2, A[4]); // porta
-        s.ret(8, 24, 10, 10, M[0]); s.ret(9, 25, 8, 8, J[2]); s.ret(12, 25, 1, 8, M[0]); s.ret(9, 28, 8, 1, M[0]); s.ret(7, 34, 12, 1, A[4]);
-        s.ret(50, 24, 8, 10, M[0]); s.ret(51, 25, 6, 8, J[1]);
-        if (o.id === 'estalagem') { s.ret(44, 14, 16, 8, M[2]); s.ret(45, 15, 14, 6, M[3]); s.ret(48, 17, 3, 3, J[3]); s.ret(53, 17, 3, 3, J[3]); s.ret(51, 12, 1, 2, M[0]); }
-        if (o.id === 'oleiro') for (const [x, c] of [[46, '#B5673C'], [52, '#C98A5A'], [58, '#9A5030']]) { const R2 = rampa(c); s.ret(x, 50, 5, 8, R2[2]); s.ret(x + 1, 48, 3, 2, R2[3]); s.px(x, 52, R2[1]); }
-        if (o.id === 'marta') { s.ret(46, 52, 14, 6, M[2]); s.ret(47, 50, 4, 2, '#D9D2C5'); s.ret(54, 50, 4, 2, rampa('#C9A63C')[3]); }
-        if (o.id === 'viuva') { s.ret(48, 50, 6, 8, rampa('#B5673C')[2]); s.ret(49, 48, 4, 2, rampa('#B5673C')[3]); s.ret(57, 52, 5, 6, rampa('#D9D2C5')[2]); } });
+      const sp = sprObj('casa' + o.id, 68, 58, s => { const A = rampa(tom), M = rampa('#5A3E28'), J = rampa('#FFD98A'), P = rampa('#7A7064'), hh = (x2, y2, k = 0) => hash(x2 + k * 17, y2 + k * 31);
+        // o reboco: manchas largas (gasto, remendado), mais claro à esquerda (a luz vem de lá), e as pedras aparecendo onde caiu
+        for (let y2 = 9; y2 < 51; y2++) for (let x2 = 2; x2 < 48; x2++) { const m = hh(x2 >> 3, y2 >> 3, 2) * 0.6 + hh(x2 >> 2, y2 >> 2, 3) * 0.4, k = m > 0.72 ? 1 : m < 0.2 ? 3 : 2; s.px(x2, y2, x2 < 4 ? A[3] : x2 > 45 ? A[1] : A[k]); }
+        for (const [px0, py0] of [[5, 40], [38, 16], [8, 14]]) for (let j = 0; j < 7; j++) for (let i = 0; i < 9; i++) { const pedra = ((j >> 1) + (i >> 2)) % 2, junta = j % 3 === 2 || (i + (j / 3 | 0) * 2) % 5 === 4; if (hh(i, j, px0) < 0.25 && (i === 0 || i === 8 || j === 0 || j === 6)) continue; s.px(px0 + i, py0 + j, junta ? P[0] : P[pedra ? 2 : 3]); }
+        s.linha(30, 12, 28, 22, 1, A[0]); s.linha(28, 22, 29, 27, 1, A[0]); // uma rachadura
+        // o alicerce de pedras grandes
+        for (let y2 = 50; y2 < 58; y2++) for (let x2 = 1; x2 < 49; x2++) { const fi = y2 < 54 ? 0 : 1, jx = (x2 + fi * 6) % 12; s.px(x2, y2, y2 === 53 || jx === 0 ? P[0] : y2 === 50 || y2 === 54 ? P[4] : jx === 1 ? P[3] : P[2]); }
+        // o teto: a laje de barro e madeira, as pontas das vigas saindo, e o parapeito baixo com a calha
+        s.ret(0, 6, 50, 3, M[1]); s.ret(0, 6, 50, 1, M[3]); for (let x2 = 3; x2 < 48; x2 += 7) { s.ret(x2, 9, 3, 2, M[2]); s.px(x2, 9, M[4]); s.ret(x2, 11, 3, 1, A[0]); }
+        s.ret(1, 1, 48, 5, A[2]); s.ret(1, 1, 48, 1, A[4]); s.ret(1, 5, 48, 1, A[1]); for (let x2 = 6; x2 < 46; x2 += 13) s.px(x2, 3, A[1]);
+        s.ret(46, 8, 5, 2, M[2]); s.px(50, 10, M[1]); // a calha
+        // a porta em arco: o vão fundo, as tábuas, os cravos, a soleira de pedra e o lintel
+        for (let y2 = 32; y2 < 50; y2++) for (let x2 = 17; x2 < 31; x2++) { const arco = y2 < 37 && Math.hypot(x2 - 23.5, y2 - 37) > 7.2; if (arco) continue; const borda = x2 === 17 || x2 === 30 || (y2 < 38 && Math.hypot(x2 - 23.5, y2 - 37) > 6.2); s.px(x2, y2, borda ? P[1] : x2 < 19 ? M[0] : (x2 - 19) % 4 === 0 ? M[1] : M[x2 < 24 ? 3 : 2]); }
+        for (const [cx2, cy2] of [[21, 40], [26, 40], [21, 46], [26, 46]]) s.px(cx2, cy2, rampa('#A8A090')[4]); s.px(28, 43, rampa('#C9A63C')[3]); // cravos e argola
+        s.ret(15, 50, 18, 1, P[4]); s.ret(16, 30, 16, 2, P[3]); s.ret(16, 30, 16, 1, P[4]);
+        // as janelas altas, em arco, com a treliça de madeira e o peitoril; a luz de dentro
+        for (const wx of [6, 36]) { for (let y2 = 18; y2 < 27; y2++) for (let x2 = wx; x2 < wx + 7; x2++) { if (y2 < 21 && Math.hypot(x2 - wx - 3, y2 - 21) > 3.6) continue; s.px(x2, y2, (x2 - wx + y2) % 3 === 0 || (x2 - wx - y2 + 30) % 3 === 0 ? M[1] : J[y2 < 22 ? 3 : 2]); } s.ret(wx - 1, 27, 9, 1, P[4]); s.ret(wx - 1, 28, 9, 1, A[0]); }
+        // a escada de pedra subindo pela parede de fora até o terraço
+        for (let x2 = 49; x2 < 68; x2++) { const topo = Math.round(9 + (x2 - 49) * 2.55); for (let y2 = topo; y2 < 58; y2++) { const deg = (y2 - topo) < 1; s.px(x2, y2, deg ? P[4] : (y2 + (x2 >> 2)) % 5 === 0 || x2 % 6 === 0 ? P[0] : x2 > 65 ? P[1] : P[2]); } } // a escada de pedra encostada na parede: o maciço cheio e os degraus
+        for (let k = 0; k < 7; k++) { const x2 = 50 + k * 2.6, y2 = Math.round(9 + (x2 - 49) * 2.55); s.ret(Math.round(x2), y2 - 1, 3, 1, P[4]); s.px(Math.round(x2) + 3, y2, P[0]); }
+        for (let y2 = 8; y2 < 58; y2++) s.px(48, y2, A[0]); // a quina da casa na sombra
+        // quem mora ali
+        if (o.id === 'estalagem') { s.ret(33, 13, 14, 7, M[2]); s.ret(34, 14, 12, 5, M[3]); s.ret(36, 15, 3, 3, J[3]); s.ret(41, 15, 3, 3, J[3]); s.ret(39, 11, 1, 2, M[0]); } // a tabuleta da estalagem
+        if (o.id === 'oleiro') for (const [x2, c] of [[2, '#B5673C'], [8, '#C98A5A'], [36, '#9A5030']]) { const R2 = rampa(c); s.ret(x2, 44, 5, 6, R2[2]); s.ret(x2 + 1, 42, 3, 2, R2[3]); s.px(x2, 46, R2[1]); s.px(x2 + 1, 45, R2[4]); }
+        if (o.id === 'marta') { s.ret(34, 44, 12, 6, M[2]); s.ret(35, 42, 4, 2, '#D9D2C5'); s.ret(40, 42, 4, 2, rampa('#C9A63C')[3]); } // o cesto de pães
+        if (o.id === 'viuva') { const R2 = rampa('#B5673C'); s.ret(36, 42, 6, 8, R2[2]); s.ret(37, 40, 4, 2, R2[3]); s.px(37, 44, R2[4]); s.ret(43, 45, 4, 5, rampa('#D9D2C5')[2]); } // a botija que nunca secou
+        if (o.id === 'peregrino' || o.id === 'pescador1' || o.id === 'pescador2') for (let i = 0; i < 16; i++) for (let j = 0; j < 8; j++) if ((i + j) % 2 === 0) s.px(4 + i - (j > 5 ? (j - 5) : 0), 2 + j, rampa('#B8A88A')[2]); // a rede (ou o pano) secando no parapeito
+        if (o.id === 'peregrino') { s.ret(34, 0, 2, 1, M[0]); const R2 = rampa('#8A5A34'); s.ret(36, -1, 1, 1, R2[2]); s.ret(38, 2, 6, 4, rampa('#C98A4A')[2]); s.ret(39, 1, 4, 1, rampa('#C98A4A')[3]); } // o cântaro no terraço
+        if (o.id === 'pescador3') for (let i = 0; i < 4; i++) { s.ret(8 + i * 6, 2, 3, 5, rampa('#B8B8C8')[2]); s.px(8 + i * 6, 2, rampa('#B8B8C8')[4]); } // peixes secando
+      });
       carimbar(g, sp, x + 8, y, 34, 57); if (Math.floor(Tm * 3 + x) % 7 === 0) { g.fillStyle = '#FFE9A8'; g.fillRect(x - 15, y - 31, 1, 1); } return true; }
     case 'planta': { const q = o.qual;
       if (q === 'oliveira') { const so = sprObj('oliveira2', 64, 80, s => oliveiraPx(s)); carimbar(g, so, x, y, 32, 79); return true; } // a oliveira tem desenho próprio
