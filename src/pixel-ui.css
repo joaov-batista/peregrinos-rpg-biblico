@@ -278,6 +278,11 @@ html.remake .panel.esquema.dificuldade { width: min(980px, calc(100% - 24px)); m
 .dif-facil:hover, .dif-facil:focus-visible { border-color: #9BE0B4; } .dif-facil b { color: #9BE0B4; }
 .dif-hard:hover, .dif-hard:focus-visible { border-color: #FF8A5A; } .dif-hard b { color: #FF8A5A; }
 @media (max-height: 480px) { .dif-icone { font-size: 26px; } .dif-card { padding: 8px; gap: 3px; } .dif-card ul { font-size: 14px; } html.remake .panel.esquema.dificuldade h2 { font-size: 20px; } }
+.pag-passos { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) !important; }
+.pag-card { cursor: default; position: relative; } .pag-card:hover { transform: none; border-color: #3B4766; background: rgba(10, 12, 22, .75); }
+.pag-n { position: absolute; top: 6px; left: 8px; font-size: 18px; color: #E8C873; }
+.pag-dicas { font-size: 15px; margin: 4px 0 12px; }
+@media (max-height: 480px) { .pag-card ul { font-size: 13px !important; line-height: 1.2; } .pag-card b { font-size: 17px; } .pag-dicas { font-size: 12px; margin: 2px 0 6px; } html.remake .panel.pagina > p.muted:first-of-type { margin: 0; font-size: 13px; } .pag-passos { gap: 6px !important; margin: 6px 0 !important; } }
 @media (max-width: 620px) { .esq-opcoes { grid-template-columns: 1fr; } .esq-desenho { min-height: 70px; } }
 @media (max-width: 900px) { html.remake .panel.dialog { width: max(380px, calc(100% - 300px)) !important; } }
 

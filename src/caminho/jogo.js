@@ -230,13 +230,28 @@ export class Caminho {
   nomeChefe(id) { return BOSSES[id]?.nome || id; }
   musicaDaArea() { this.musicaChuva = false; const d = this.def; if (d.desafio) return music('raid'); music(d.paz ? 'mundo' : 'fase', d.treino || d.pvp ? 'bosque' : d.id === 'sardes' && this.cm.sar?.feita ? 'sardes2' : d.tema + (d.fase ? d.fase.n : '')); }
   async chegada(def) {
-    if (def.fase) { await this.cinema(def.sem.id); await this.cinema(def.sem.id + '-fase-' + def.fase.n); }
+    if (def.fase) { await this.cinema(def.sem.id); await this.cinema(def.sem.id + '-fase-' + def.fase.n); if (!this.cm.visto.pagina && this.running) { this.cm.visto.pagina = 1; this.salvar(); await this.explicarPagina(def); } }
     else if ((def.id === 'refugio' || def.id === 'bosque') && !this.cm.visto.intro) {
       this.cm.visto.intro = 1; if (def.id === 'bosque') this.cm.visto.bosque = 1; marco('personagem', { cls: this.char.cls });
       await this.cinema('caminho-prologo');
       if (!this.cm.difEscolhida) await this.escolherDificuldade();
       this.cm.visto.tut = 0; // os primeiros passos são ensinados fazendo (ver tutorial())
     }
+  }
+  // a primeira página que o peregrino entra: como funciona (rolos e selos, a porta, o chefe), em cartões
+  async explicarPagina(def) {
+    const n = def.rolos || 3, est = (def.estacoes || []).length, passos = [
+      ['📜', 'Ache os rolos', 'Há ' + n + ' rolos escondidos pelas salas. Leia e responda certo: cada acerto acende um selo.'],
+      ...(est ? [['✦', 'As estações', 'Esta página tem ' + est + (est > 1 ? ' estações' : ' estação') + ' de estudo. Responda também: ' + (est > 1 ? 'contam' : 'conta') + ' como selo.']] : []),
+      ['🔒', 'A porta do chefe', 'Fica trancada. Com todos os selos acesos, ela se abre.'],
+      ['⚔', 'Vença o chefe', 'Vencer fecha a página e libera a próxima. É assim que o caminho se abre.']];
+    await this.ui.modal((p, close) => {
+      p.classList.add('esquema', 'dificuldade', 'pagina');
+      p.append(h('h2', {}, 'Como funciona uma página'), h('p', { class: 'muted' }, 'Cada página é uma passagem da Bíblia vivida por dentro. Para liberar tudo:'),
+        h('div', { class: 'esq-opcoes dif-opcoes pag-passos', style: 'grid-template-columns: repeat(' + passos.length + ', 1fr) !important' }, ...passos.map(([ic, tit, txt], i) => h('div', { class: 'esq-card dif-card pag-card' }, h('span', { class: 'pag-n' }, String(i + 1)), h('span', { class: 'dif-icone' }, ic), h('b', {}, tit), h('ul', {}, h('li', {}, txt))))),
+        h('p', { class: 'muted pag-dicas' }, 'Errou a resposta? O rolo fecha por uns segundos e você tenta de novo · Caiu? Volta na última Pedra de Ebenézer, e a sacola de denários fica onde você caiu · A lâmpada acesa mostra segredos escondidos.'),
+        h('button', { class: 'btn gold', onclick: () => { sfx('click'); close(); } }, 'Entendi, vamos!'));
+    }, { dismiss: false, wide: true });
   }
   // logo no começo: como o peregrino quer caminhar (dá para mudar depois em Ajustes)
   async escolherDificuldade() {
