@@ -60,6 +60,7 @@ export function abrirMenu(G, aba = 'inventario') {
       out.push(h('h4', {}, 'Páginas da semana · Armadura ' + Object.keys(cm.hab).length + ' de 6'));
       out.push(h('div', { class: 'dia-trilha' }, ...TODAS.map(s2 => { const n = s2.fases.filter(f => cm.feitas[s2.id + ':' + f.n]).length; return linha(n >= s2.fases.length ? '✓' : n ? '▶' : '·', s2.titulo, s2.estudo + ' · ' + n + ' de ' + s2.fases.length + ' páginas', n >= s2.fases.length ? 'feito' : n ? 'atual' : 'falta'); })));
       out.push(t(c.name + ' · nível ' + c.level + ' · fôlegos ' + G.p.vida + '/' + G.p.vidaMax + ' · maná ' + cm.mana + ' · pedras ' + cm.pedras + '/5 · segredos ' + cm.ovos.length, 'muted'));
+      { const feitas = G.provasFolego?.() || []; out.push(t('Limite de fôlegos: ' + G.tetoFolego?.() + ' pelo caminho. Além dele, só as provas: ' + [['zelo', 'o Conselho Zelote'], ['levi', 'o Leviatã no mar bravo'], ['satanas', 'o Acusador']].map(([id, n]) => (feitas.some(f => f[0] === id) ? '✓ ' : '· ') + n).join('  ') + ' (+1 fôlego cada).', 'muted')); }
       out.push(h('div', { class: 'btn-row' }, h('button', { class: 'btn gold', onclick: () => close() }, 'Continuar'),
         G.area !== 'refugio' ? h('button', { class: 'btn', onclick: () => { close(); G.entrar('refugio'); } }, 'Voltar ao Refúgio') : ''));
       return out;
@@ -120,7 +121,7 @@ export function abrirMenu(G, aba = 'inventario') {
         grade.append(boneco); }
       sec('Bolsa', [
         quadro(iconeItem('denarios'), true, false, () => mostra('Denários', Math.floor(c.data.gold) + ' na bolsa', 'Caem dos vícios e dos vasos. Se você cair, a sacola fica no chão até você buscá-la.')),
-        quadro(iconeItem('mana'), cm.mana > 0, false, () => mostra('Maná escondido', cm.mana + ' porções', 'A cada três porções, um fôlego a mais (Ap 2:17).')),
+        quadro(iconeItem('mana'), cm.mana > 0, false, () => mostra('Maná escondido', cm.mana + ' porções', 'A cada três porções, um fôlego a mais, até três (Ap 2:17).')),
         quadro(iconeItem('pedras'), cm.pedras > 0, false, () => mostra('Pedras lisas do ribeiro', cm.pedras + ' de 5', 'Com as cinco, o Vale de Elá se abre (1Sm 17:40).'))]);
       { const bo = cm.bolsa || {}, ORIGEM = { figo: 'Das figueiras do mercado e do olival.', peixe: 'Da pesca, com Zebedeu, no porto.', pao: 'Dos vasos e do forno do sítio.', flor: 'Dos canteiros do olival e da praça (uma por dia em cada).', mel: 'Raro, dentro dos vasos.', trigo: 'Da lavoura do sítio.', uva: 'Das videiras do sítio.', azeitona: 'Das oliveiras do sítio.', leite: 'Das cabras do sítio.', ovo: 'Das galinhas do sítio.', la: 'Das ovelhas do sítio.', azeite: 'Da prensa do sítio. Use para encher o jarro da lâmpada.', vinho: 'Do lagar do sítio.' };
         const base = ['figo', 'peixe', 'pao', 'flor', 'mel'], lista = Object.keys(ITENS_BOLSA).filter(k => !AZEITES[k] && (base.includes(k) || (bo[k] || 0) > 0));

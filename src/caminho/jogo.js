@@ -48,6 +48,8 @@ import { falarZebedeu } from './pescaviva.js';
 
 // Primeiros passos: [toque, controle, teclado]
 // os trechos do Bosque do Treino onde cada passo conta (em blocos, da esquerda): [de, até, barreira]. A barreira não deixa seguir antes.
+// o limite de fôlegos e as três provas que dão um a mais, cada (ver vidaMax)
+const TETO_FOLEGO = 8, PROVAS_FOLEGO = [['zelo', 'Vencer o Conselho Zelote'], ['levi', 'Vencer o Leviatã no mar bravo'], ['satanas', 'Vencer o Acusador']];
 const ZONA_TUT = { andar: [0, 12.5, 12.5], saltar: [9, 21, 21], pular: [18, 29.5, 31], golpe: [30, 47, 47], passo: [40, 49, 49], descer: [47, 56, 57], luz: [60, 74, 73], vigilia: [72, 90, 90], azeite: [60, 90, 90], mira: [90, 112, 112], orar: [90, 120, 116] };
 const PASSOS = [ // t: [toque, controle, teclado]; alvo: o botão de toque que pisca. No Bosque do Treino cada passo tem o seu lugar na trilha.
   { id: 'andar', titulo: 'Andar', t: ['arraste à esquerda', 'direcional', '← →', 'A D'], txt: 'Siga a trilha.' },
@@ -125,7 +127,13 @@ export class Caminho {
   // PÁGINAS DA SEMANA: todos lutam em pé de igualdade. Nível, forja, fôlegos extras e dons de força não contam lá dentro;
   // quem acabou de chegar entra com o mesmo golpe e os mesmos fôlegos de um veterano. Armas e relíquias mudam o jeito, não a conta.
   nivelado() { return !!this.def?.fase; }
-  vidaMax() { if (this.nivelado()) return Math.max(3, 5 + this.dif.vidas); return Math.max(3, 5 + (this.tem('veste_branca') ? 1 : 0) + (this.tem('cantil_masada') ? 1 : 0) + (this.cm.getsemaniDom === 'folego' ? 1 : 0) + (this.hab.couraca ? 2 : 0) + Math.floor(this.cm.mana / 3) + (this.tem('osso_bronze') ? 1 : 0) + this.dif.vidas); }
+  // O teto de fôlegos: o que se junta pelo caminho (relíquias, couraça, dons, até 3 do maná) para em TETO_FOLEGO; acima dele, só as provas difíceis (uma cada)
+  provasFolego() { const cm = this.cm; return PROVAS_FOLEGO.filter(([id]) => id === 'zelo' ? !!cm.zelo : id === 'levi' ? (cm.leviMar || 0) > 0 : (cm.chefes?.[id] || 0) > 0); }
+  tetoFolego() { return TETO_FOLEGO + this.dif.vidas; }
+  vidaMax() { if (this.nivelado()) return Math.max(3, 5 + this.dif.vidas); const soma = 5 + (this.tem('veste_branca') ? 1 : 0) + (this.tem('cantil_masada') ? 1 : 0) + (this.cm.getsemaniDom === 'folego' ? 1 : 0) + (this.hab.couraca ? 2 : 0) + Math.min(3, Math.floor(this.cm.mana / 3)) + (this.tem('osso_bronze') ? 1 : 0) + this.dif.vidas;
+    return Math.max(3, Math.min(soma, this.tetoFolego()) + this.provasFolego().length); }
+  // venceu uma das provas: um fôlego além do teto, na hora
+  conferirFolego() { const cm = this.cm, n = this.provasFolego().length; if (n <= (cm.provasFolego || 0)) return; cm.provasFolego = n; const p = this.p; p.vidaMax = this.vidaMax(); p.vida = p.vidaMax; sfx('level'); this.ui.toast('+1 fôlego além do limite (' + n + ' de ' + PROVAS_FOLEGO.length + ' provas). Agora são ' + p.vidaMax + ' fôlegos.', 6000); this.salvar(); }
   oleoMax() { return (this.tem('odre_novo') ? 132 : 99) + (this.cm.getsemaniDom === 'azeite' ? 22 : 0) + (this.tem('chifre_azeite') ? 25 : 0); }
   espacos() { return 3 + (this.cm.reliquias.includes('coroa_restituida') ? 1 : 0) + (this.cm.reliquias.includes('perola_preco') ? 1 : 0); }
   temDom(id) { const d = DONS[id], ds = this.cm.dons || {}; if (!d) return false; return d.exige ? d.exige.every(x => this.temDom(x)) && !!ds.lingua : (ds[id] || 0) >= (d.partes || 1); }
@@ -1137,6 +1145,7 @@ export class Caminho {
     if (this.mp && !this.temSelos()) { this.ui.toast(b.d.nome + ' caiu. A recompensa pede os três rolos desta página: leia-os e volte.', 8000); this.semLutaAte = this.T + 8; return; }
     this.venceu = true; this.N.portaAberta = true;
     this.fx.anel(b.x, b.y - b.h / 2, '#FFE9A8', 260); this.soltarMoedas(b.x, b.y - b.h / 2, 18);
+    setTimeout(() => this.running && this.conferirFolego(), 2500);
     cm.chefes[b.id] = (cm.chefes[b.id] || 0) + 1; marco('chefe:' + b.id); corcaVenceu(this, b); c.data.stats.bosses = c.data.stats.bosses || {}; c.data.stats.bosses[b.id] = (c.data.stats.bosses[b.id] || 0) + 1;
     this.p.vida = this.p.vidaMax;
     await this.ui.dialog({ nome: b.d.nome + ' caiu', texto: b.d.derrota || 'A sombra se desfaz.', acoes: [{ label: 'Amém' }] });
@@ -1193,7 +1202,7 @@ export class Caminho {
     if (id === 'mana') {
       cm.mana++; sfx('key');
       const falta = 3 - cm.mana % 3;
-      await this.ui.dialog({ nome: 'Maná escondido', texto: '"Ao vencedor darei do maná escondido" (Ap 2:17).\n\n' + (falta === 3 ? 'Três porções: você ganhou um fôlego a mais!' : 'Faltam ' + falta + ' para ganhar um fôlego a mais.'), acoes: [{ label: 'Guardar' }] });
+      await this.ui.dialog({ nome: 'Maná escondido', texto: '"Ao vencedor darei do maná escondido" (Ap 2:17).\n\n' + (cm.mana > 9 ? 'O maná já deu todos os fôlegos que podia (três). Além do limite, só as provas difíceis: o Conselho Zelote, o Leviatã no mar bravo e o Acusador.' : falta === 3 ? (this.vidaMax() > p.vidaMax ? 'Três porções: você ganhou um fôlego a mais!' : 'Três porções… mas você já está no limite de fôlegos. Além dele, só as provas difíceis.') : 'Faltam ' + falta + ' para ganhar um fôlego a mais.'), acoes: [{ label: 'Guardar' }] });
       if (falta === 3) { p.vidaMax = this.vidaMax(); p.vida = p.vidaMax; }
       return;
     }

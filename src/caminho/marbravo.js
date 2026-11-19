@@ -33,7 +33,7 @@ function acabar(G, venceu) {
   const L = G.levi, p = G.p; G.levi = null; G.nado = false; p.mergulho = 0; music('mundo', 'refugio');
   if (!venceu) return;
   const cm = G.cm, n = cm.leviMar = (cm.leviMar || 0) + 1, ouro = n === 1 ? 1500 : 700;
-  G.char.data.gold += ouro; sfx('level'); G.clarao = 0.6; G.xp?.(400);
+  G.char.data.gold += ouro; sfx('level'); setTimeout(() => G.conferirFolego?.(), 3000); G.clarao = 0.6; G.xp?.(400);
   G.ui.toast('O Leviatã afundou de volta ao abismo. +' + ouro + ' denários. Zebedeu vem remando com outro bote: "Eu vi! Ninguém vai acreditar."', 8000);
   setTimeout(() => G.achado?.(n === 1 ? { epica: 55, lendaria: 45 } : { rara: 30, epica: 50, lendaria: 20 }, false, true), 1200);
   G.salvar();
