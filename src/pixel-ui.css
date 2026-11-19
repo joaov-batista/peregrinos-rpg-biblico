@@ -585,3 +585,15 @@ html.remake #screens:not(.creating) .screen > h2.title { color: var(--ab-cor); t
 }
 @media (min-aspect-ratio: 1/1) { html.remake #screens:not(.creating) .criar-primeiro { align-self: flex-start; min-width: 300px; } }
 #actions [data-act="devagar"] { display: none !important; } /* no celular, andar devagar é empurrar pouco o direcional */
+/* o pop-up de jogar com amigos */
+.juntos-pop { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(3, 4, 9, .72); animation: fade .18s; }
+.juntos-caixa { width: min(460px, 100%); max-height: 92vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 16px; background: var(--px-fundo, #1C1510); border: 12px solid transparent; border-image: var(--px-moldura) 9 fill / 18px / 0 round; color: #F1E9D2; }
+.juntos-topo { display: flex; align-items: center; justify-content: space-between; } .juntos-topo b { font-size: 24px; color: #E8C873; }
+.juntos-caixa .saguao { display: flex !important; flex-direction: column; gap: 8px; }
+.juntos-caixa .btn.gold { align-self: stretch; }
+html.remake #screens:not(.creating) .juntos-btn { background: none !important; box-shadow: none !important; color: var(--px-apagado, #B3A285) !important; text-decoration: none; font-size: 17px; letter-spacing: .1em; text-transform: uppercase; }
+.juntos-caixa .saguao, .juntos-caixa .porta-linha { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.juntos-caixa .porta-linha { display: grid !important; grid-template-columns: 1fr 1fr; gap: 6px; }
+.juntos-caixa .porta-linha > * { min-width: 0; width: 100%; box-sizing: border-box; }
+.juntos-caixa .saguao-local .porta-linha { grid-template-columns: repeat(3, 1fr); }
+html.remake #screens:not(.creating) .juntos-btn { box-shadow: none !important; border: 0 !important; }

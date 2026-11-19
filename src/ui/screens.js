@@ -126,7 +126,7 @@ export async function showSelect(onPlay, onNew, onLogout) {
   // primeira vez: um botão só. Jogar com amigos fica recolhido (quem veio por um código de sala já o encontra aberto)
   if (!chars.length) { const comSala = /sala=/.test(location.search); return screen(logo(), h('h2', { class: 'title' }, 'Bem-vindo, peregrino'),
     h('button', { class: 'btn gold criar-primeiro', type: 'button', onclick: () => { sfx('click'); onNew(); } }, 'Criar meu peregrino'),
-    h('details', { class: 'saguao-recolhido', open: comSala }, h('summary', {}, 'Jogar com amigos'), saguaoJuntos(true)),
+    botaoJuntos(true, comSala),
     h('div', { class: 'btn-row' }, h('button', { class: 'btn link', onclick: onLogout }, ONLINE && net.user ? 'Sair da conta' : 'Voltar'))); }
   const list = h('div', { class: 'char-list' });
   for (const c of chars) {
@@ -157,7 +157,7 @@ export async function showSelect(onPlay, onNew, onLogout) {
         } }, 'Apagar'))));
     if (conflict) list.append(conflictBox);
   }
-  screen(logo(), h('h2', { class: 'title' }, 'Escolha seu peregrino'), list, saguaoJuntos(),
+  screen(logo(), h('h2', { class: 'title' }, 'Escolha seu peregrino'), list, botaoJuntos(false, /sala=/.test(location.search)),
     installButton(h('p', {})),
     h('div', { class: 'btn-row' }, chars.length < 3 ? h('button', { class: 'btn', onclick: onNew }, '+ Novo personagem') : '', h('button', { class: 'btn link', onclick: onLogout }, ONLINE && net.user ? 'Sair da conta' : 'Voltar')));
 }
@@ -165,6 +165,15 @@ export async function showSelect(onPlay, onNew, onLogout) {
 // O saguão do "Caminhar juntos": antes de entrar no jogo dá para escolher abrir uma sala (você é o anfitrião e passa o código)
 // ou entrar na sala de alguém. A escolha fica guardada até o jogo começar (jogo.js lê 'peregrinos.sala').
 // O multiplayer local (tela dividida) fica recolhido embaixo.
+// "Jogar com amigos": um botão discreto que abre o painel num pop-up (sala online e tela dividida), em vez de ficar solto na tela
+function botaoJuntos(novo, abre) {
+  const b = h('button', { class: 'btn link juntos-btn', type: 'button', onclick: () => { sfx('click'); abrir(); } }, '▸ Jogar com amigos');
+  function abrir() { const fundo = h('div', { class: 'juntos-pop' }), fecha = () => { fundo.remove(); removeEventListener('keydown', esc); }, esc = e => { if (e.key === 'Escape') fecha(); };
+    fundo.append(h('div', { class: 'juntos-caixa', role: 'dialog', 'aria-label': 'Jogar com amigos' }, h('div', { class: 'juntos-topo' }, h('b', {}, 'Jogar com amigos'), h('button', { class: 'x', type: 'button', 'aria-label': 'Fechar', onclick: fecha }, '✕')), saguaoJuntos(novo), h('button', { class: 'btn gold', type: 'button', onclick: fecha }, 'Pronto')));
+    fundo.addEventListener('pointerdown', e => { if (e.target === fundo) fecha(); }); addEventListener('keydown', esc); document.body.append(fundo); }
+  if (abre) setTimeout(abrir, 300);
+  return b;
+}
 function saguaoJuntos(novo) {
   if (new URLSearchParams(location.search).has('quadro')) return '';
   const CH = 'peregrinos.sala', le = () => { try { return sessionStorage.getItem(CH) || ''; } catch { return ''; } }, poe = v => { try { v ? sessionStorage.setItem(CH, v) : sessionStorage.removeItem(CH); } catch {} };

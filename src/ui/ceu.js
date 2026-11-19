@@ -2,11 +2,13 @@
 // partículas de luz subindo, a Cidade de Refúgio ao longe e pássaros. Roda só enquanto as telas iniciais estão abertas.
 import { hash, TAU } from '../util.js';
 import { desenharAbertura, sortearCena } from './abertura.js';
+import { music, audio } from '../audio.js';
 let cenaAbertura = '';
 
 let cv = null, raf = 0, t0 = 0;
 export function ligarCeu() {
   if (cv) return;
+  tocarAbertura();
   cv = document.createElement('canvas'); cv.id = 'ceu';
   if (!cenaAbertura) cenaAbertura = sortearCena(); document.documentElement.dataset.abertura = cenaAbertura;
   document.body.prepend(cv);
@@ -15,7 +17,9 @@ export function ligarCeu() {
   const loop = now => { raf = requestAnimationFrame(loop); if (cv) desenhar(cv, Math.max(0, now - t0) / 1000); };
   raf = requestAnimationFrame(loop);
 }
-export function desligarCeu() { cancelAnimationFrame(raf); cv?.remove(); cv = null; }
+export function desligarCeu() { cancelAnimationFrame(raf); cv?.remove(); cv = null; if (audio.modo === 'abertura') music(null); }
+// a música da tela inicial: o navegador só deixa tocar depois do primeiro toque ou tecla; a partir daí, toca enquanto a tela estiver aberta
+function tocarAbertura() { const vai = () => { if (cv) music('abertura', 'abertura'); }; vai(); for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => setTimeout(vai, 30), { once: true }); }
 
 // Remake: a abertura é uma cena em pixel art — a noite sobre as ruínas, e um peregrino parado com a lâmpada acesa.
 let baixa = null;
