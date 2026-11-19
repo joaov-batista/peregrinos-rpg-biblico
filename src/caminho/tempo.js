@@ -54,6 +54,7 @@ export function passoTempo(G, dt) {
     const parado = met && p.chao && Math.abs(p.vx) < 8 && !p.atk && !G.ui.blocking && !G.luta && !p.morto;
     G.contemplaT = parado ? (G.contemplaT || 0) + dt : 0; G.contemplaK = clamp((G.contemplaK || 0) + (G.contemplaT > 2.5 ? dt * 0.5 : -dt * 0.8), 0, 1);
     if (G.contemplaK > 0.9 && G.cm.olhosNoite !== noiteN(G)) { G.cm.olhosNoite = noiteN(G); sfx('sino'); G.textoEm(p.x, p.y - 120, '"Os olhos do Senhor estão em todo lugar" (Pv 15:3)', '#DCE4FF', 13); if (!G.cm.olhosVistos) { G.cm.olhosVistos = 1; G.ovo?.('olhos', 'No meio da galáxia, dois olhos. "Os olhos do Senhor estão em todo lugar" (Pv 15:3).'); } G.salvar(); } }
+  { const hh = ((G.cm.relogio || 0) / 600 * 24 + 7) % 24; if (G.cm.meteorosForcado === 'casamento' && hh > 5 && hh < 18) G.cm.meteorosForcado = false; } // a chuva de meteoros do casamento dura só aquela noite
   // os meteoros: avisa uma vez por noite
   const nn = noiteN(G); if (fora && noiteDeMeteoros(G) && G.ceuEscuro && G.cm.meteorosAviso !== nn) { G.cm.meteorosAviso = nn; G.ui.toast('☄ Chuva de meteoros esta noite. Olhe para o céu… com calma.', 6500); }
   void L;

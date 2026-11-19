@@ -90,7 +90,20 @@ async function pedir(G, ob) {
   if (coracoesDe(G, ob.id) < 10 || !cm.anel) return G.ui.dialog({ nome: ob.nome, look: ob.look, texto: CASAMENTO.falta(nome) + (cm.anel ? '' : '\n\n(Tubalcaim, o ferreiro, forja anéis.)'), acoes: [{ label: 'Um dia' }] });
   await G.ui.dialog({ nome: ob.nome, look: ob.look, texto: 'Você mostra o anel. ' + nome + ' fica um tempo sem dizer nada.\n\n"' + CASAMENTO.pedido[ob.id] + '"', acoes: [{ label: 'Ir à sinagoga' }] });
   cm.anel = 0; cm.conjuge = ob.id; cm.casouDia = dia(G); sfx('level'); G.salvar();
-  for (const t of CASAMENTO.festa) await G.ui.dialog({ nome: 'O casamento', texto: t, acoes: [{ label: 'Continuar' }], cls: 'fala-narra', voz: false });
+  // quando será a festa: a hora muda de verdade (o relógio anda até lá) e a aldeia se junta diante da sinagoga
+  const PER = { 'Ao sol do meio-dia': { h: 12.5, k: 'sol' }, 'Ao pôr do sol': { h: 18.3, k: 'poente' }, 'À noite, com lamparinas': { h: 21.5, k: 'noite' }, 'Na noite de meteoros': { h: 21.5, k: 'meteoros' } };
+  const quando = await G.ui.dialog({ nome: 'O casamento', texto: 'Quando será a festa?', acoes: Object.keys(PER).map(label => ({ label })), cls: 'fala-narra', voz: false });
+  const P = PER[quando] || PER['Ao pôr do sol'], rel = cm.relogio || 0, base = Math.floor(rel / 600) * 600; let alvo = base + (((P.h - 7) % 24 + 24) % 24) / 24 * 600; if (alvo < rel) alvo += 600;
+  cm.relogio = alvo; cm.tempoForcado = 'sol'; if (P.k === 'meteoros') cm.meteorosForcado = 'casamento';
+  const sin = G.N?.celulas?.find(c => /^Sinagoga$/.test(c.nome || '')), px = sin ? (sin.cx * 30 + 12) * 32 : G.p.x, gente = G.objs.filter(o => o.tipo === 'morador' && o.vv && o.id !== ob.id);
+  if (sin) { G.p.x = px; G.p.y = 16 * 32 - 1; G.p.vx = 0; G.vista.cam.x = G.p.x - G.vista.W / 2; }
+  if (ob.vv) { ob.vv.festa = true; ob.vv.x = G.p.x + 30; ob.vv.estado = 'parado'; ob.vv.face = -1; }
+  gente.forEach((o, i) => { o.vv.festa = true; o.vv.x = G.p.x + (i % 2 ? 1 : -1) * (70 + Math.floor(i / 2) * 26); o.vv.estado = 'parado'; o.vv.face = o.vv.x > G.p.x ? -1 : 1; });
+  G.fade = 1; await new Promise(r => setTimeout(r, 900));
+  const ABRE = { sol: 'O sol do meio-dia brilha nas pedras claras da sinagoga. Ninguém se lembra de um dia tão limpo.', poente: 'O céu se tinge de laranja e de rosa por cima da muralha. A luz fica dourada nos rostos de todo mundo.', noite: 'Acendem-se as lamparinas, uma por uma, até a praça inteira ficar quente de luz.', meteoros: 'E então, no meio da bênção, o céu começa a riscar: um, dois, dez meteoros. Ninguém consegue não olhar para cima.' };
+  for (const t of [ABRE[P.k], ...CASAMENTO.festa]) await G.ui.dialog({ nome: 'O casamento', texto: t, acoes: [{ label: 'Continuar' }], cls: 'fala-narra', voz: false });
+  for (const o of [ob, ...gente]) if (o.vv) o.vv.festa = false;
+  cm.tempoForcado = null; G.salvar();
   G.ui.toast(nome + ' agora mora com você na Rua das casas.', 6000);
 }
 
