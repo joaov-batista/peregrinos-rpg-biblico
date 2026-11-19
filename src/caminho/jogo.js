@@ -319,7 +319,8 @@ export class Caminho {
   lerControles() {
     if (this.cena) { this.ctl = { mx: this.cenaMx || 0, my: 0 }; for (const k of ['dodge', 'attack', 'dash', 'lock', 'defend', 'botija', 'item1', 'skill', 'interact', 'item2', 'menu', 'escape', 'map']) input.consume(k); return; } // numa cena, o peregrino não se move sozinho
     const m = input.move(), c = this.ctl = {};
-    c.mx = Math.abs(m.x) > 0.3 ? Math.sign(m.x) * (Math.abs(m.x) < 0.62 ? 0.42 : 1) : 0; // no celular e no controle, empurrar pouco o direcional é andar devagar c.my = Math.abs(m.y) > 0.45 ? Math.sign(m.y) : 0;
+    c.mx = Math.abs(m.x) > 0.3 ? Math.sign(m.x) * (Math.abs(m.x) < 0.62 ? 0.42 : 1) : 0; /* no celular e no controle, empurrar pouco o direcional é andar devagar */
+    c.my = Math.abs(m.y) > 0.45 ? Math.sign(m.y) : 0;
     if (this.invertido > 0) c.mx = -c.mx; // a palavra torta da Mentira: esquerda vira direita
     c.pulo = input.consume('dodge'); c.puloSeg = input.isHeld('dodge');
     c.atk = input.consume('attack'); c.atkSeg = input.isHeld('attack');
