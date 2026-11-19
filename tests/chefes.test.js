@@ -5,13 +5,16 @@ import assert from 'node:assert/strict';
 
 globalThis.document ??= { documentElement: { style: { setProperty() {} } }, body: { classList: { add() {}, remove() {}, toggle() {} } } };
 globalThis.localStorage ??= { getItem() { return null; }, setItem() {} };
-const { CHEFES, novoChefe, atualizarChefe } = await import('../src/caminho/chefes.js');
+const { CHEFES, novoChefe, atualizarChefe, CELULA_DE } = await import('../src/caminho/chefes.js');
+// os chefes da fase da célula (/celula) são de propósito os estilos de outros chefes com arte e falas novas: ficam fora da regra de exclusividade
+const daCelula = id => id in CELULA_DE;
 const { ESTILOS } = await import('../src/caminho/estilos.js');
 const { T, SOLIDO, VAZIO, PONTE } = await import('../src/caminho/nivel.js');
 
 test('nenhum golpe é repetido entre chefes e todo chefe tem estilo completo', () => {
   const dono = new Map();
   for (const [id, c] of Object.entries(CHEFES)) {
+    if (daCelula(id)) continue;
     const E = ESTILOS[id];
     assert.ok(E, id + ' sem estilo');
     assert.equal(typeof E.mover, 'function', id + ' sem jeito de se mover');
@@ -20,7 +23,7 @@ test('nenhum golpe é repetido entre chefes e todo chefe tem estilo completo', (
     assert.ok(usados.size >= 4, id + ' precisa de pelo menos 4 golpes próprios');
     for (const nome of usados) {
       assert.equal(typeof E.golpes[nome], 'function', id + ': golpe ' + nome + ' não existe');
-      for (const [outro, F] of Object.entries(ESTILOS)) if (outro !== id) assert.notEqual(F.golpes[nome], E.golpes[nome], nome + ' repetido em ' + outro);
+      for (const [outro, F] of Object.entries(ESTILOS)) if (outro !== id && !daCelula(outro)) assert.notEqual(F.golpes[nome], E.golpes[nome], nome + ' repetido em ' + outro);
       assert.ok(!dono.has(nome), nome + ' usado por ' + id + ' e por ' + dono.get(nome)); dono.set(nome, id);
     }
     for (const f of c.fases) for (const g of f.golpes) assert.ok(c.golpes[g], id + ': fase usa ' + g + ' que não existe');
@@ -77,7 +80,7 @@ test('vícios, salas de chefe e fases: cada um tem o seu, sem repetir', async ()
   const ais = Object.entries(VICIOS).map(([id, v]) => [id, v.ai]);
   for (const [id, ai] of ais) assert.equal(ais.filter(([, a]) => a === ai).length, 1, id + ' divide o comportamento "' + ai + '" com outro vício');
   // cada chefe tem uma sala própria, e nenhuma planta de sala se repete
-  const arenas = Object.entries(CHEFES).filter(([, c]) => !c.parte).map(([id, c]) => [id, c.arena]); // os companheiros de um chefe (o Conselho Zelote) lutam na sala dele
+  const arenas = Object.entries(CHEFES).filter(([id, c]) => !c.parte && !daCelula(id)).map(([id, c]) => [id, c.arena]); // os companheiros de um chefe (o Conselho Zelote) lutam na sala dele
   for (const [id, a] of arenas) { assert.ok(ARENAS[a], id + ': sala ' + a + ' não existe'); assert.equal(arenas.filter(([, b]) => b === a).length, 1, id + ' divide a sala ' + a); }
   const plantas = arenas.map(([, a]) => JSON.stringify(ARENAS[a])); assert.equal(new Set(plantas).size, plantas.length, 'duas salas com a mesma planta');
   // cada fase tem o seu perigo e a sua sala marcante, diferentes de todas as outras

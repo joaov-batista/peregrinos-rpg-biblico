@@ -28,6 +28,31 @@ comentário direto para quem faz o jogo.
 **Para quem administra:** o painel de acessos (quem joga, até onde chegou, opiniões) fica em `/painel`. Veja como
 ligar e o que é coletado em [docs/PAINEL.md](docs/PAINEL.md).
 
+## Fase da célula: "Jesus me escolheu" (`/celula`)
+
+Uma sala **à parte do jogo**, para a célula de adolescentes (estudo da semana de 15 a 21/11, João 15:16). Abre por link,
+**sem conta** (só o nome) e sem limite de gente.
+
+- **Como usar na célula:** o líder abre `/celula` no computador/TV e toca em **"Sou o líder: abrir o telão"**. Aparece o
+  código grande e o link; a turma abre o link no celular, cria o peregrino, escolhe como vai jogar (celular, teclado ou
+  controle, com a **transparência dos botões**) e começa. O telão mostra o placar ao vivo e as votações em tela cheia.
+  Sem telão, quem abre "Criar uma sala" segura a sala enquanto joga.
+- **Cinco páginas curtas, cinco chefes:** Ele me escolheu (A Rejeição) · me amou (O Interesseiro) · me formou (A Condenação)
+  · me capacitou (A Covardia) · me enviou (O Fracasso). Cada página tem três personagens explicando a Palavra, duas câmaras
+  com vícios e frutos no chão. Dificuldade própria (`celula` em `DIFICULDADES`): fácil, mas pede atenção.
+- **Votação dos rolos (estilo Kahoot / Among Us):** quem abre um rolo manda a pergunta para **todos**; o jogo **congela
+  para todos**, cada um vota (toque, teclas 1–4 ou A B X Y), e no fim aparece quem votou em quê. Vale a maioria; empate ou
+  ninguém votar é erro. Acertou: o selo acende para quem está na página e quem votou certo ganha pontos. Errou: **monstros
+  para o grupo inteiro** (em luta, o chefe se cura). Uma votação por vez; as outras esperam na fila.
+- **Frutos sincronizados:** quem pega primeiro leva (o anfitrião decide); o fruto some para todos.
+- **Estabilidade:** cada um joga a própria partida (sem atraso); a sala só leva posições (em lotes, 5×/s, só para quem está
+  na mesma página), votos, frutos e placar. O anfitrião trabalha por `setInterval` (segue em segundo plano). Se ele cair,
+  os outros religam em ordem e um só assume, com o placar.
+- **Código:** `src/celula/` (página, sala, votação, título em PixelFX), `content/celula-escolheu.js` (estudo, NPCs e
+  quizzes), `content/cinematicas-celula.js`, chefes no fim de `caminho/chefes.js` e a arte em `caminho/pixel/chefes-g.js`.
+  Testes: `tests/celula.test.js` (no `npm test`) e `node tests/celula-browser.cjs` (telão + 3 jogadores, com o
+  `npm run dev` ligado; em desenvolvimento a página é `/celula.html`).
+
 ---
 
 ## Documentação técnica

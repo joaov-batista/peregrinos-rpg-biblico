@@ -96,6 +96,7 @@ function planta(def, rng) {
   const caminho = [cur], ramos = [];
   for (let x = 1; x < cols; x++) { const n = cel(x, 1, x === cols - 1 ? 'arena' : x === cols - 2 ? 'ebenezer' : 'corredor'); liga(cur, n); cur = n; caminho.push(n); }
   if (def.tesouro !== false) { const n = cel(0, rng() < 0.5 ? 0 : 2, 'tesouro'); liga(caminho[0], n); ramos.push(n); }
+  if (def.arenaLarga) { const n = cel(cols, 1, 'arena2'); liga(cur, n); caminho.push(n); return { cols: cols + 1, rows, celulas: [...g.values()], caminho, ramos }; } // a arena com o dobro da largura (a fase da célula: muita gente na mesma luta)
   return { cols, rows, celulas: [...g.values()], caminho, ramos };
 }
 
@@ -158,6 +159,12 @@ export function gerarNivel(def) {
       N.arena = { x0: (ox + 1) * T, x1: (ox + CW - 1) * T, y0: (oy + 1) * T, chao: (oy + CH - 1) * T, cx: (ox + CW / 2) * T, cel: c };
       for (let y = 13; y <= 15; y++) set(ox, oy + y, PORTAO);
       N.porta = { x: ox * T + 16, y: (oy + 16) * T, tx: ox, ty: oy + 13 };
+      continue;
+    }
+    if (c.papel === 'arena2') { // a segunda metade da arena larga: as mesmas plataformas, e sem parede entre as duas metades
+      for (const [row, a, b] of ARENAS[def.arena] || ARENAS.plana) for (let x = a; x <= b; x++) set(ox + x, oy + row, PONTE);
+      for (let y = 1; y < CH - 1; y++) { set(ox, oy + y, VAZIO); set(ox - 1, oy + y, VAZIO); }
+      if (N.arena) { N.arena.x1 = (ox + CW - 1) * T; N.arena.cx = (N.arena.x0 + N.arena.x1) / 2; N.arena.larga = true; }
       continue;
     }
     if (c.papel === 'inicio') N.inicio = { x: (ox + 4) * T, y: (oy + 16) * T };

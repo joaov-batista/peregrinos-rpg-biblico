@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 let outputDir = 'dist';
 export default defineConfig(({ mode }) => ({
   // na versão publicada: sem mapas do código-fonte, sem console.log/debugger e sem comentários de licença no pacote
-  build: { sourcemap: false, rollupOptions: { input: { main: 'index.html', painel: 'painel.html', site: 'site.html' } } },
+  build: { sourcemap: false, rollupOptions: { input: { main: 'index.html', painel: 'painel.html', site: 'site.html', celula: 'celula.html' } } },
   esbuild: mode === 'production' ? { drop: ['console', 'debugger'], legalComments: 'none' } : {},
   plugins: [{
     // o link de compartilhamento precisa do endereço completo da imagem: vem de VITE_SITE_URL ou do domínio do Vercel

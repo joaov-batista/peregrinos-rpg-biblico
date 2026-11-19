@@ -198,6 +198,8 @@ const FRENTE = {
     g.fillStyle = 'rgba(190,220,240,.45)'; for (let i = 0; i < 80; i++) { const x = A.x0 + ((i * 97 + Tm * 400) % (A.x1 - A.x0)), y = A.y0 + ((i * 53 + Tm * 900) % (A.chao - A.y0)); px(g, x, y, 1, 6); }
   }
 };
+// os chefes da célula lutam com os golpes de outro chefe: o palco (que lê o mesmo estado) vem junto
+for (const [novo, base] of Object.entries({ rejeicao: 'desprezo', interesseiro: 'mamom', condenacao: 'jugo', covardia: 'pavor', fracasso: 'satanas' })) { if (FUNDO[base]) FUNDO[novo] = FUNDO[base]; if (FRENTE[base]) FRENTE[novo] = FRENTE[base]; }
 
 // x e y em coordenadas do mundo; X e Y convertem para a tela de pixels
 export function pintarPalco(g, G, b, X, Y, Tm, frente) {

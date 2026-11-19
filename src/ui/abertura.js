@@ -5,7 +5,7 @@
 //   jerusalem  — o sol baixo atrás das muralhas e do Templo, e a caravana de peregrinos chegando para a festa
 // Cada quadro tem uma parte parada (pintada uma vez e guardada) e uma parte viva, pintada a cada quadro por cima.
 // Tudo é desenhado em 180 px de altura e ampliado sem suavizar.
-import { createFrame, Painter, composite, hex } from '../vendor/pixelfx/core/index.js';
+import { createFrame, Painter, composite, hex, FONTS } from '../vendor/pixelfx/core/index.js';
 import { quadroPessoa } from '../caminho/pixel/humano.js';
 
 const H = 180;
@@ -544,7 +544,88 @@ const praca = {
   }
 };
 
-const CENAS = { cais, praca, getsemani, jerusalem };
+
+// ======================================================================================================
+// A GALILEIA AO ENTARDECER — a tela da fase da célula ("Jesus me escolheu", /celula). É o cais da beira do lago,
+// com o que o estudo da semana conta: a videira subindo pela casa e passando por cima do terraço, carregada de cachos
+// ("eu os escolhi para darem fruto", Jo 15:16), o barco de Pedro com a rede, e a fogueira de brasas na beira, onde a
+// turma da célula está sentada em volta (Jo 21:9). O peregrino de lâmpada acesa chega pelo cais.
+const VIDE = rampa(['#08141C', '#0E2028', '#163030', '#1E4236', '#28563C', '#366C44', '#4A844C', '#62A056', '#86BE6A']);
+const UVA = rampa(['#1A0A26', '#2E1240', '#481C5C', '#662878', '#863A92', '#A854AA', '#CC7AC4']);
+const OURO_U = rampa(['#6A3A12', '#9A5E1C', '#C88A2C', '#ECB84A', '#FFE07A', '#FFF6C8']);
+const TURMA = [
+  { skin: '#8A5A3A', hair: '#1C120A', tunic: '#A8442E', cape: 'none', style: 'cacheado', beard: false },
+  { skin: '#D9A273', hair: '#6B4423', tunic: '#3A6A8A', cape: 'none', style: 'longo', beard: false },
+  { skin: '#C68B59', hair: '#2B1A10', tunic: '#5E7A4A', cape: 'none', style: 'veu', beard: false },
+  { skin: '#A0673E', hair: '#3A2314', tunic: '#E3DED2', cape: '#7A5A3A', style: 'curto', beard: false }
+];
+function cacho(T, x, y, R, n = 4) { // um cacho em triângulo: bagos de 2x2 com brilho no alto
+  for (let j = 0; j < n; j++) for (let i = 0; i < n - j; i++) { const X = x + i * 2 - (n - j) + 1 + (j % 2), Y = y + j * 2; T.set(X, Y, R[3]); T.set(X + 1, Y, R[2]); T.set(X, Y + 1, R[2]); T.set(X + 1, Y + 1, R[1]); if ((i + j) % 2 === 0) T.set(X, Y, R[5] || R[4]); }
+  T.set(x, y - 1, VIDE[3]); T.set(x + 1, y - 2, VIDE[4]);
+}
+const galileia = Object.assign(Object.create(cais), {
+  parada(T, R, f) {
+    cais.parada.call(this, T, R, f);
+    const w = T.w, cx0 = w - 92, cx1 = w - 20, cb = 122, pt = cb - 42;
+    // o tronco retorcido da videira, saindo do terraço na quina da casa
+    galho(T, [[cx0 - 3, cb - 1], [cx0 - 5, cb - 14], [cx0 - 2, cb - 26], [cx0 - 4, pt + 2], [cx0 + 4, pt - 4]], 2.4, 1.2, CASCA_N, { s: 41 });
+    // a latada: um caibro saindo da casa por cima do terraço, e a folhagem pesada por cima dele e da parede
+    for (let x = cx0 - 34; x < cx0; x++) { T.set(x, pt + 4, MADEIRA[4]); T.set(x, pt + 5, MADEIRA[2]); }
+    for (const x of [cx0 - 33, cx0 - 18]) for (let y = pt + 5; y < cb - 1; y++) { T.set(x, y, MADEIRA[3]); T.set(x + 1, y, MADEIRA[2]); }
+    const bl = []; for (let i = 0; i < 26; i++) { const u = i / 25; bl.push({ x: cx0 - 36 + u * 110, y: pt + 1 - Math.sin(u * 9) * 2 + (u > 0.33 ? -4 : 0), r: 4 + (i % 3) * 1.6, a: 0.75 }); }
+    copa(T, bl, VIDE, { s: 83, folha: 2.6, forca: 0.55, base: 0.12, lx: 0.75, ly: -0.6, borda: 0.12, buracos: 0.22 });
+    // os cachos: roxos, e três dourados (o fruto que permanece) que brilham na parte viva
+    this.uvas = [];
+    for (const [x, y, ouro] of [[cx0 - 30, pt + 7, 0], [cx0 - 22, pt + 8, 1], [cx0 - 12, pt + 6, 0], [cx0 + 3, pt + 5, 0], [cx0 + 22, pt + 4, 1], [cx0 + 44, pt + 3, 0], [cx0 + 63, pt + 4, 1], [cx0 - 6, pt + 9, 0]]) {
+      cacho(T, x, y, ouro ? OURO_U : UVA, ouro ? 4 : 3 + (x % 2)); if (ouro) this.uvas.push([x, y + 3]); }
+    // a fogueira de brasas no terraço, em roda de pedras, com o peixe no braseiro (Jo 21:9)
+    // a prainha de areia no canto, na frente da escada de pedra, onde a turma acendeu o fogo
+    const fx = w - 46, fy = H - 12; this.fogo = [fx, fy];
+    const AREIA = rampa(['#2A2236', '#3E3040', '#584446', '#76604E', '#94785A', '#B08E68']);
+    for (let y = fy - 9; y < H; y++) for (let x = fx - 46; x < w; x++) { const d = Math.pow((x - fx - 4) / 50, 2) + Math.pow((y - fy - 6) / 12, 2); if (d > 1) continue; T.set(x, y, tom(AREIA, 0.62 - d * 0.35 + (h2(x, y, 9) - 0.5) * 0.12 - (y - fy + 9) * 0.012, x, y, 0.4)); if (d > 0.86) T.veu(x, y, ESPUMA, 0.55); }
+    for (let i = -6; i <= 6; i += 2) { const Y = fy + (Math.abs(i) > 4 ? -1 : 0); T.set(fx + i, Y, PEDRA_C[5]); T.set(fx + i + 1, Y, PEDRA_C[3]); T.set(fx + i, Y + 1, PEDRA_C[2]); }
+    for (let i = -4; i <= 4; i++) { T.set(fx + i, fy - 1, i % 2 ? hex('#5A1A0A') : hex('#8A2A0A')); }
+    for (let i = -5; i <= 5; i++) T.set(fx + i, fy - 7, hex('#3A3A44')); // a grelha
+    for (let i = -3; i <= 2; i++) { T.set(fx + i, fy - 8, hex('#B8C8D0')); } T.set(fx + 3, fy - 8, hex('#7A8A98')); T.set(fx - 4, fy - 9, hex('#B8C8D0')); // o peixe
+    this.luzes.push({ x: fx, y: fy - 6, r: 34, k: 0.7, tremer: true });
+  },
+  viva(T, t, f) {
+    cais.viva.call(this, T, t, f);
+    const [fx, fy] = this.fogo;
+    // a chama, as fagulhas subindo e a luz dançando nas paredes
+    for (let i = -3; i <= 3; i++) { const alt = 3 + Math.round(Math.abs(Math.sin(t * 9 + i * 1.7)) * (5 - Math.abs(i))); for (let j = 0; j < alt; j++) T.set(fx + i, fy - 2 - j, j > alt - 2 ? hex('#FFF0B8') : j > alt / 2 ? hex('#FFC040') : BRASA); }
+    for (let i = 0; i < 9; i++) { const k = (t * 0.6 + i / 9) % 1, X = fx + Math.sin(t * 2 + i * 3) * (2 + k * 5), Y = fy - 8 - k * 34; if (k < 0.85) T.set(X, Y, k < 0.4 ? hex('#FFD878') : BRASA); }
+    T.brilho(fx, fy - 6, 34, hex('#FF8A30'), 0.5 + Math.sin(t * 11) * 0.06 + Math.sin(t * 5.3) * 0.05);
+    // os frutos dourados acendem devagar
+    for (const [x, y] of this.uvas) T.brilho(x, y, 7, hex('#FFD860'), 0.35 + Math.sin(t * 1.6 + x) * 0.15);
+    // a turma sentada em volta do fogo
+    const tinta = hex('#20183A');
+    [[-17, 1], [13, -1], [-28, 1], [25, -1]].forEach(([dx, vira], i) => { const s = quadroPessoa(TURMA[i], t + i * 0.7, 'abertura-turma-' + i, 'ceu'); if (!s?.b) return;
+      for (let j = 0; j < s.h; j++) for (let k = 0; k < s.w; k++) { const c = s.b[j * s.w + k]; if (!(c >>> 24)) continue; T.set(fx + dx - 24 + (vira < 0 ? s.w - 1 - k : k), fy - 38 + j + (i >= 2 ? 3 : 0), mixc2(mixc2(c, tinta, 0.18), hex('#FF9A40'), Math.max(0, 0.22 - Math.abs(dx) * 0.006))); } });
+  }
+});
+
+// O logo da célula, em pixel, para pôr no canto da tela (como um carimbo): letras creme com contorno de tinta e sombra,
+// o ramo de videira com o cacho dourado e a referência. Devolve um canvas pequeno (o CSS amplia sem suavizar).
+export function logoCelula(linhas = ['JESUS ME', 'ESCOLHEU'], sub = 'JOÃO 15:16 · CÉLULA') {
+  const F = FONTE, k = 2, larg = Math.max(...linhas.map(l => largura(l))) * k + 20, alt = linhas.length * 9 * k + 26, T = new Tela(larg, alt);
+  const CREME = rampa(['#8A6A4A', '#C8A878', '#EAD6AE', '#F6EBD0', '#FFFAEC']), TINT = hex('#120C1C');
+  const px = [];
+  linhas.forEach((l, li) => { let x = 10; for (const ch of l) { const nfd = ch.normalize('NFD'), g = F.glyphs[nfd[0].toUpperCase()]; if (!g) { x += (F.space + F.gap) * k; continue; }
+    g.rows.forEach((row, y) => row.forEach((on, gx) => { if (on) px.push([x + gx * k, 4 + li * 9 * k + y * k + (li ? 2 : 0) - (gx % 2 && li === 0 ? 0 : 0)]); })); x += (g.w + F.gap) * k; } });
+  for (const [x, y] of px) for (let j = -1; j <= k; j++) for (let i = -1; i <= k; i++) T.set(x + i + 1, y + j + 2, TINT); // sombra
+  for (const [x, y] of px) for (let j = -1; j <= k; j++) for (let i = -1; i <= k; i++) T.set(x + i, y + j, TINT); // contorno
+  for (const [x, y] of px) for (let j = 0; j < k; j++) for (let i = 0; i < k; i++) T.set(x + i, y + j, CREME[(y % (9 * k)) < 5 ? 4 : (y % (9 * k)) < 10 ? 3 : 2]);
+  // o ramo de videira por baixo, com folhas e o cacho dourado na ponta
+  const y0 = alt - 14; for (let x = 8; x < larg - 18; x++) { const Y = y0 + Math.round(Math.sin(x * 0.18) * 1.5); T.set(x, Y, CASCA_N[5]); T.set(x, Y + 1, TINT); if (x % 11 === 0) { for (let i = 0; i < 4; i++) { T.set(x + i, Y - 1 - (i % 2), VIDE[6]); T.set(x + i, Y - 2, VIDE[7]); } } }
+  cacho(T, larg - 16, y0 - 1, OURO_U, 4);
+  // a referência em letra pequena
+  let x = 12; const MINI = FONTS.mini; for (const ch of sub) { const nfd = ch.normalize('NFD'), g = MINI.glyphs[nfd[0].toUpperCase()]; if (!g) { x += MINI.space + MINI.gap; continue; } g.rows.forEach((row, yy) => row.forEach((on, gx) => { if (on) { T.set(x + gx, y0 + 4 + yy, CREME[3]); T.set(x + gx + 1, y0 + 5 + yy, TINT); } })); const m = nfd.slice(1), mx = x + (g.w >> 1); if (m.includes('\u0303')) { T.set(mx - 1, y0 + 2, CREME[3]); T.set(mx, y0 + 1, CREME[3]); T.set(mx + 1, y0 + 2, CREME[3]); } if (m.includes('\u0301')) T.set(mx + 1, y0 + 2, CREME[3]); x += g.w + MINI.gap; }
+  const cv = document.createElement('canvas'); cv.width = larg; cv.height = alt; const im = new ImageData(larg, alt); composite(T.f, im.data, null, 1); cv.getContext('2d').putImageData(im, 0, 0); return cv;
+}
+const FONTE = FONTS.big, largura = l => { let w = 0; for (const ch of l) { const g = FONTE.glyphs[ch.normalize('NFD')[0].toUpperCase()]; w += (g ? g.w : FONTE.space) + FONTE.gap; } return w; };
+
+const CENAS = { cais, praca, getsemani, jerusalem, galileia };
 const SORTEIO = ['cais', 'praca']; // as telas entram no sorteio quando estão prontas
 export const NOMES_CENAS = Object.keys(CENAS);
 

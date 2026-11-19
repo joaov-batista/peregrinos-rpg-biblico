@@ -5,7 +5,8 @@
   "rewrites": [
     { "source": "/painel", "destination": "/painel.html" },
     { "source": "/site", "destination": "/site.html" },
-    { "source": "/((?!painel|site).*)", "destination": "/index.html" }
+    { "source": "/celula", "destination": "/celula.html" },
+    { "source": "/((?!painel|site|celula).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
