@@ -4,12 +4,12 @@
 import { clamp, TAU, hash } from '../../util.js';
 import { input, wasd } from '../../input.js';
 import { TODAS } from '../../content/index.js';
-import { T, CH, tileEm } from '../nivel.js';
+import { T, CH, CW, tileEm } from '../nivel.js';
 import { desenharVicio } from '../bichos.js';
 import { quadroVicio } from './viciospx.js';
 import { desenharChefe } from '../chefes.js';
 import { desenharObjeto } from '../objetos.js';
-import { MUNDO } from '../dados.js';
+import { MUNDO, RX } from '../dados.js';
 import { OLEO_USO } from '../heroi.js';
 import { Sprite, rampa, cor, carimbar, TINTA, BRANCO, PX } from './raster.js';
 import { quadroHeroi, quadroPessoa, vulto, AX, AY } from './humano.js';
@@ -625,6 +625,7 @@ export function renderPixel(G) {
   }
   if (G.def?.casaDe) { const y0 = Y(16 * 32) - 240; for (let k = -1; k < 10; k++) { const bx = Math.round((k * 140 - (G.vista.cam.x / PX) * 0.25) % 1400); g.fillStyle = '#17121f'; g.fillRect(bx, y0 - 30, 20, 40); g.fillStyle = '#4A3420'; g.fillRect(bx + 1, y0 - 30, 18, 38); g.fillStyle = '#5A4028'; g.fillRect(bx + 1, y0 - 30, 4, 38); } } // as vigas da frente, mais perto da câmara (a camada da frente)
   if (chefe) pintarPalco(g, G, chefe, X, Y, Tm, true);
+  if (G.emTreino?.()) mataFechada(g, X(RX * CW * T - 150), vw, vh, Y(16 * T), Tm); // no treino, a ponta da trilha é mata fechada: o Refúgio ainda não existe
   pintarLuzPixel(g, G, vw, vh, cx, cy, luzCv);
   pintarClima(g, G, vw, vh, cx, Tm);
   pintarTempo(g, G, vw, vh, cx, Tm, cy);
@@ -936,4 +937,19 @@ function medirChefe(e, q, vira) {
   const k = (q.esc || 1) * PX, w = (x1 - x0 + 1) * k, h = (y1 - y0 + 1) * k; // pixel do desenho → unidade do mundo (cada pixel vale PX)
   e.hb = { dx: ((x0 + x1 + 1) / 2 - q.ax) * k * vira, w: Math.max(30, w * 0.82), y0: (y0 - q.ay) * k + h * 0.06, h: Math.max(40, h * 0.9) };
   const area = e.hb.w * e.hb.h; if (!(e.hbArea >= area * 0.98) && !e.morrendo) { e.hbArea = Math.max(e.hbArea || 0, area); tanque(e, e.hbArea); }
+}
+
+// a mata fechada que encerra a trilha do treino: troncos, copas que se sobrepõem até o céu e o escuro do meio da mata
+function mataFechada(g, x0, vw, vh, chao, Tm) {
+  if (x0 > vw + 40) return;
+  const h = (n) => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+  g.fillStyle = '#0B1610'; g.fillRect(Math.max(0, x0 + 46), 0, vw, vh); // o fundo escuro
+  for (let i = 0; i < 6; i++) { const xx = x0 + 10 + i * 16 + Math.round(h(i) * 8); g.fillStyle = '#17121f'; g.fillRect(xx - 1, chao - 70 - i * 6, 7, 70 + i * 6); g.fillStyle = i % 2 ? '#3A2A1E' : '#4A3524'; g.fillRect(xx, chao - 68 - i * 6, 5, 68 + i * 6); } // os troncos da beira
+  const cores = ['#1E3A2A', '#26462F', '#2F5536', '#183024'];
+  for (let k = 0; k < 70; k++) { const bx = x0 + Math.round(h(k + 3) * 60 + (k % 7) * 18) - 10, by = Math.round(h(k + 9) * (chao - 10)) - 10, r = 14 + Math.round(h(k + 17) * 16), bal = Math.round(Math.sin(Tm * 0.8 + k) * 1.5);
+    g.fillStyle = '#0B1610'; for (let yy = -r; yy <= r; yy += 2) { const w = Math.round(Math.sqrt(r * r - yy * yy)); g.fillRect(bx - w - 1 + bal, by + yy, w * 2 + 2, 2); }
+    g.fillStyle = cores[k % 4]; for (let yy = -r + 1; yy <= r - 1; yy += 2) { const w = Math.round(Math.sqrt(r * r - yy * yy)) - 1; g.fillRect(bx - w + bal, by + yy, w * 2, 2); }
+    g.fillStyle = '#3F6A44'; g.fillRect(bx - Math.round(r * 0.4) + bal, by - Math.round(r * 0.6), Math.round(r * 0.5), 2); }
+  g.fillStyle = '#0B1610'; for (let yy = 0; yy < vh; yy += 2) for (let xx = 0; xx < 30; xx += 2) if ((xx + yy) % 4 === 0 && xx > 12 + Math.sin(yy * 0.07) * 6) g.fillRect(x0 + 40 + xx, yy, 2, 2); // a borda pontilhada para dentro do escuro
+  for (let i = 0; i < 8; i++) { const fx = x0 + 6 + i * 9 + Math.round(h(i + 40) * 6); g.fillStyle = i % 2 ? '#2F5536' : '#3F6A44'; g.fillRect(fx, chao - 8 - (i % 3) * 3, 6, 8 + (i % 3) * 3); } // o mato baixo
 }

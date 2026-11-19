@@ -266,6 +266,18 @@ html.remake .panel.esquema h2 { margin: 0 0 4px; }
 .esq-mouse { position: relative; width: 44px; height: 66px; border: 3px solid #4A5878; border-radius: 22px 22px 18px 18px; background: #1B2133; overflow: hidden; }
 .esq-mouse i { position: absolute; top: 0; width: 50%; height: 26px; border-bottom: 3px solid #4A5878; } .esq-mouse i:first-child { left: 0; border-right: 2px solid #4A5878; background: #8E6A2A; } .esq-mouse i:last-child { right: 0; background: #3F5A8A; }
 .esq-pad { font-size: 15px; }
+/* ---------- escolha de dificuldade (antes do treino): a tela inteira escura, três cartões ---------- */
+.modal.dif-tela { background: radial-gradient(ellipse at 50% 30%, #1A1F33 0%, #07080F 70%) !important; }
+html.remake .panel.esquema.dificuldade { width: min(980px, calc(100% - 24px)); max-height: calc(100vh - 24px); overflow: auto; }
+.dif-opcoes { grid-template-columns: repeat(3, 1fr) !important; }
+@media (max-width: 520px) and (orientation: portrait) { .dif-opcoes { grid-template-columns: 1fr !important; } }
+.dif-card { gap: 6px; padding: 16px 12px 14px; }
+.dif-card small { color: #9AA3BC; font-size: 15px; }
+.dif-icone { font-size: 40px; line-height: 1; margin-bottom: 2px; }
+.dif-card ul li { padding: 2px 0; }
+.dif-facil:hover, .dif-facil:focus-visible { border-color: #9BE0B4; } .dif-facil b { color: #9BE0B4; }
+.dif-hard:hover, .dif-hard:focus-visible { border-color: #FF8A5A; } .dif-hard b { color: #FF8A5A; }
+@media (max-height: 480px) { .dif-icone { font-size: 26px; } .dif-card { padding: 8px; gap: 3px; } .dif-card ul { font-size: 14px; } html.remake .panel.esquema.dificuldade h2 { font-size: 20px; } }
 @media (max-width: 620px) { .esq-opcoes { grid-template-columns: 1fr; } .esq-desenho { min-height: 70px; } }
 @media (max-width: 900px) { html.remake .panel.dialog { width: max(380px, calc(100% - 300px)) !important; } }
 

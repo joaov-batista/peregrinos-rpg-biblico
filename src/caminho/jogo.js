@@ -206,7 +206,9 @@ export class Caminho {
     this.fade = 1; this.t0 = this.T; this.ok = 0; this.err = 0; this.mortosAqui = 0;
     this.musicaDaArea();
     this.ui.bossBar(null);
-    this.ui.banner(def.sem ? def.sem.titulo.toUpperCase() : 'PEREGRINOS', def.nome, def.sub);
+    const treino = id === 'refugio' && (this.cm.visto.tut == null ? !this.cm.visto.intro : this.cm.visto.tut < PASSOS.length);
+    if (treino) { if (this.cm.visto.tut == null) this.cm.visto.tut = 0; this.p.face = -1; if (this.p.x > RX * CW * T - 280) { this.p.x = RX * CW * T - 280; this.vista.cam.x = this.p.x - this.vista.W / this.vista.Z / 2; this.prenderCam(); } } // novo peregrino: nasce na trilha do treino, longe da beira e dos botões
+    this.ui.banner(def.sem ? def.sem.titulo.toUpperCase() : 'PEREGRINOS', treino ? 'A trilha' : def.nome, treino ? 'Os primeiros passos' : def.sub);
     if (def.fase && !this.avisoNivelado) { this.avisoNivelado = true; setTimeout(() => this.running && this.ui.toast('Página da semana: todos em pé de igualdade.', 4000), 3500); }
     if (!o.quieto) this.chegada(def);
     this.salvar();
@@ -224,15 +226,23 @@ export class Caminho {
     else if ((def.id === 'refugio' || def.id === 'bosque') && !this.cm.visto.intro) {
       this.cm.visto.intro = 1; if (def.id === 'bosque') this.cm.visto.bosque = 1; marco('personagem', { cls: this.char.cls });
       await this.cinema('caminho-prologo');
-      if (!this.cm.difEscolhida) { await new Promise(r => setTimeout(r, 1400)); await this.escolherDificuldade(); }
+      if (!this.cm.difEscolhida) await this.escolherDificuldade();
       this.cm.visto.tut = 0; // os primeiros passos são ensinados fazendo (ver tutorial())
     }
   }
   // logo no começo: como o peregrino quer caminhar (dá para mudar depois em Ajustes)
   async escolherDificuldade() {
-    const op = id => ({ label: DIFICULDADES[id].nome + (id === 'provacao' ? ' (do jeito que é)' : '') }), ids = ['facil', 'provacao', 'hard'];
-    const r = await this.ui.dialog({ nome: 'Como você quer caminhar?', texto: '🌿 FÁCIL: ' + DIFICULDADES.facil.desc + '\n\n⚔ ORIGINAL: ' + DIFICULDADES.provacao.desc + '\n\n🔥 HARD: ' + DIFICULDADES.hard.desc + '\n\n(Dá para mudar depois, no menu, em Ajustes.)', acoes: ids.map(op), voz: false });
-    this.cm.dif = ids.find(id => op(id).label === r) || 'provacao'; this.cm.difEscolhida = 1; this.p.vidaMax = this.vidaMax(); this.p.vida = this.p.vidaMax; this.salvar();
+    const CARTAS = [
+      ['facil', '🌿', 'Fácil', 'Para viver a história', ['Seus golpes ferem mais', 'Chefes com menos vida', 'Avisos mais longos', 'Dois fôlegos a mais']],
+      ['provacao', '⚔', 'Original', 'O jogo como ele é', ['Chefes rápidos e duros', 'Agarram quem fica em cima', 'Dano em dobro na última fase', 'Espere morrer algumas vezes']],
+      ['hard', '🔥', 'Hard', 'Para quem quer sofrer', ['Você recebe o dobro de dano', 'Chefes com mais vida', 'Curam-se uma vez no fim', 'Portas sem brilho nem aviso']]];
+    const id = await this.ui.modal((p, close) => {
+      p.classList.add('esquema', 'dificuldade');
+      p.append(h('h2', {}, 'Como você quer caminhar?'), h('p', { class: 'muted' }, 'Escolha a dificuldade. Dá para trocar depois em ☰ › Ajustes.'),
+        h('div', { class: 'esq-opcoes dif-opcoes' }, ...CARTAS.map(([id, ic, nome, sub, linhas]) => h('button', { class: 'esq-card dif-card dif-' + id, 'aria-label': nome + ': ' + sub, onclick: () => { sfx('click'); close(id); } },
+          h('span', { class: 'dif-icone' }, ic), h('b', {}, nome), h('small', {}, sub), h('ul', {}, ...linhas.map(l => h('li', {}, l)))))));
+    }, { dismiss: false, wide: true, cls: 'dif-tela' });
+    this.cm.dif = id || 'provacao'; this.cm.difEscolhida = 1; this.p.vidaMax = this.vidaMax(); this.p.vida = this.p.vidaMax; this.salvar();
   }
   textoControles() {
     return input.touch
@@ -481,7 +491,6 @@ export class Caminho {
     const v = this.vista, vw = v.W / v.Z, vh = v.H / v.Z, N = this.N;
     let x0 = 0, x1 = N.w * T - vw;
     if (this.area === 'refugio' && !(this.cm.visto?.tut != null && this.cm.visto.tut < PASSOS.length)) x0 = RX * CW * T; // depois do treino, a trilha fica para trás: a câmara não mostra o que fica além do portão
-    else if (this.area === 'refugio') x1 = Math.min(x1, RX * CW * T - 130 - vw); // no treino a câmara para no fim da trilha
     if (this.luta && N.arena) { x0 = N.arena.x0 - T; x1 = N.arena.x1 + T - vw; if (x1 < x0) x0 = x1 = (x0 + x1) / 2; }
     if (x1 < x0) { x0 = x1 = (N.w * T - vw) / 2; }
     v.cam.x = clamp(v.cam.x, x0, x1); v.cam.y = clamp(v.cam.y, 0, Math.max(0, N.h * T - vh));
@@ -955,7 +964,7 @@ export class Caminho {
   tutorial(dt) {
     const v = this.cm.visto, p = this.eu;
     if (v.tut == null || v.tut >= PASSOS.length) { if (this.tutEl) { this.tutEl.remove(); this.tutEl = null; document.querySelectorAll('.tut-alvo').forEach(x => x.classList.remove('tut-alvo')); } return; }
-    if (this.area === 'refugio' && p.x > RX * CW * T - 170) { p.x = RX * CW * T - 170; if (p.vx > 0) p.vx = 0; } // no treino só existe a trilha: o Refúgio ainda não aparece
+    if (this.area === 'refugio' && p.x > RX * CW * T - 220) { p.x = RX * CW * T - 220; if (p.vx > 0) p.vx = 0; } // no treino só existe a trilha: o Refúgio ainda não aparece
     const s = PASSOS[v.tut], modo = input.touch ? 0 : document.body.classList.contains('pad') ? 1 : wasd() ? 3 : 2;
     this.tutT = (this.tutT || 0) + dt;
     // a dica é um cartão grande no alto da tela: o que fazer, com que tecla, numa frase
@@ -1466,6 +1475,7 @@ export class Caminho {
   // quem já vinha jogando antes de o mapa existir não precisa voltar para buscá-lo
   temMapa() { const cm = this.cm; if (!cm.mapa && (Object.keys(cm.feitas).length || Object.keys(cm.hab).length || cm.falas.velho)) cm.mapa = true; return !!cm.mapa; }
   // A missão da vez no Refúgio: o portal da primeira semana com fase por fazer. Na superfície, o alvo é a escada que leva até ele.
+  emTreino() { const t = this.cm.visto?.tut; return this.area === 'refugio' && t != null && t < PASSOS.length; }
   objetivo() {
     if (this.cm.visto?.tut != null && this.cm.visto.tut < PASSOS.length) return null; // no treino não há missão: só a trilha
     if (this.area === 'sardes') return objetivoSardes(this);
