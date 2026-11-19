@@ -198,7 +198,7 @@ export class Caminho {
     aoEntrar(this, id, o);
     // onde o peregrino aparece
     let pos = N.inicio;
-    const eb = this.objs.find(ob => ob.tipo === 'ebenezer');
+    const eb = this.pedraDescanso();
     if (o.ebenezer && (cm.ebenezer?.area === id || o.novo) && eb) pos = { x: eb.x - 40, y: eb.y };
     else if (o.borda) pos = { x: o.borda === 'direita' ? (N.w - 3) * T : (id === 'refugio' ? RX * CW + 3 : 3) * T, y: 16 * T }; /* chegando a pé pela beira do mapa (no Refúgio, pela Praça: a trilha ficou para trás) */
     else if (o.junto) { const ob = this.objs.find(x => x.tipo === o.junto); if (ob) pos = { x: ob.x - 70, y: ob.y }; }
@@ -505,7 +505,7 @@ export class Caminho {
   reviver() {
     // Se alguém ainda está de pé, o caído volta para dentro da mesma câmara (ou da arena do chefe).
     // Se todos caíram, o encontro recomeça e cada um volta ao início.
-    const p = this.eu, eb = this.cm.ebenezer?.area === this.area && this.objs.find(ob => ob.tipo === 'ebenezer'), A = this.N.arena, cel = this.emb?.c || this.embLocal;
+    const p = this.eu, eb = this.cm.ebenezer?.area === this.area && this.pedraDescanso(), A = this.N.arena, cel = this.emb?.c || this.embLocal;
     const recomeca = this.T - (this.resetT ?? -99) < 5;
     const pos = !recomeca && this.luta && A ? { x: A.x0 + 96, y: A.chao } : !recomeca && cel ? { x: (cel.cx * CW + 3.5) * T, y: (cel.cy * CH + 16) * T } : eb ? { x: eb.x - 40, y: eb.y } : this.N.inicio;
     Object.assign(p, novoHeroi(pos.x, pos.y - 1, this.vidaMax())); p.oleo = Math.min(this.oleoMax(), OLEO_USO); p.inv = 2; this.fade = 1; this.usouSelo = this.usouCepa = false;
@@ -1340,7 +1340,7 @@ export class Caminho {
       case 'discipulo': await this.ui.dialog({ nome: ob.nome, texto: { Pedro: 'Pedro dorme sentado, a mão ainda perto da espada. Ele prometeu que nunca o negaria (Mt 26:35).', Tiago: 'Tiago dorme com a cabeça sobre os joelhos. Os olhos dele estavam carregados (Mt 26:43).', 'João': 'João dorme encostado na oliveira. Anos depois, ele escreverá: "Deus é amor" (1Jo 4:8).' }[ob.nome] || 'Dorme.', acoes: [{ label: 'Deixar dormir' }], voz: false }); break;
       case 'ebenezer': {
         const primeira = !cm.ebenezer;
-        cm.ebenezer = { area: this.area }; if (!this.luta && this.souDono()) this.povoar(); p.vida = p.vidaMax; p.oleo = Math.max(p.oleo, OLEO_USO); this.usouSelo = this.usouCepa = false; sfx('heal'); this.fx.anel(ob.x, ob.y - 30, '#FFE9A8', 120); this.salvar();
+        cm.ebenezer = { area: this.area, x: ob.x, y: ob.y }; // guarda QUAL pedra: renasce na última em que descansou if (!this.luta && this.souDono()) this.povoar(); p.vida = p.vidaMax; p.oleo = Math.max(p.oleo, OLEO_USO); this.usouSelo = this.usouCepa = false; sfx('heal'); this.fx.anel(ob.x, ob.y - 30, '#FFE9A8', 120); this.salvar();
         if (primeira) this.ovo('ebenezer', '"Até aqui nos ajudou o Senhor" (1Sm 7:12). As Pedras de Ebenézer guardam o seu caminho.');
         const acoes = [{ label: 'Levantar' }];
         if (this.area !== 'refugio') acoes.push({ label: 'Voltar ao Refúgio', fn: () => this.entrar('refugio', { ebenezer: false }) });
@@ -1508,6 +1508,8 @@ export class Caminho {
   // quem já vinha jogando antes de o mapa existir não precisa voltar para buscá-lo
   temMapa() { const cm = this.cm; if (!cm.mapa && (Object.keys(cm.feitas).length || Object.keys(cm.hab).length || cm.falas.velho)) cm.mapa = true; return !!cm.mapa; }
   // A missão da vez no Refúgio: o portal da primeira semana com fase por fazer. Na superfície, o alvo é a escada que leva até ele.
+  // a pedra onde renascer: a última em que se descansou nesta área (a mais perto da posição guardada); sem posição, a primeira
+  pedraDescanso() { const pedras = this.objs.filter(ob => ob.tipo === 'ebenezer'), e = this.cm.ebenezer; if (!pedras.length) return null; if (e?.area !== this.area || e.x == null) return pedras[0]; return pedras.reduce((a, b) => Math.hypot(b.x - e.x, b.y - e.y) < Math.hypot(a.x - e.x, a.y - e.y) ? b : a); }
   emTreino() { const t = this.cm.visto?.tut; return this.area === 'refugio' && t != null && t < PASSOS.length; }
   objetivo() {
     if (this.cm.visto?.tut != null && this.cm.visto.tut < PASSOS.length) return null; // no treino não há missão: só a trilha
