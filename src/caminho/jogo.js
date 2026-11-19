@@ -219,7 +219,7 @@ export class Caminho {
     if (treino) { if (this.cm.visto.tut == null) this.cm.visto.tut = 0; this.p.face = -1; if (this.p.x > RX * CW * T - 280) { this.p.x = RX * CW * T - 280; this.vista.cam.x = this.p.x - this.vista.W / this.vista.Z / 2; this.prenderCam(); } } // novo peregrino: nasce na trilha do treino, longe da beira e dos botões
     this.ui.banner(def.sem ? def.sem.titulo.toUpperCase() : 'PEREGRINOS', treino ? 'A trilha' : def.nome, treino ? 'Os primeiros passos' : def.sub);
     if (def.fase && !this.avisoNivelado) { this.avisoNivelado = true; setTimeout(() => this.running && this.ui.toast('Página da semana: todos em pé de igualdade.', 4000), 3500); }
-    if (def.reverente) setTimeout(() => { if (this.running && this.def === def) this.textoEm(this.p.x, this.p.y - 90, 'Casa de oração: aqui se anda devagar, sem pulos e sem armas', '#E8DEC4', 12); }, 1200);
+    if (def.reverente) setTimeout(() => { if (this.running && this.def === def) this.ui.toast('Casa de oração: aqui se anda devagar, sem pulos e sem armas.', 4500); }, 1200);
     if (!o.quieto) this.chegada(def);
     this.salvar();
   }
@@ -379,6 +379,7 @@ export class Caminho {
     const v = this.vista, vw = v.W / v.Z, vh = v.H / v.Z;
     if (this.N.barco) this.balanco = Math.sin(this.T * 0.9) * 7 + Math.sin(this.T * 2.3) * 2; else this.balanco = 0; // o navio sobe e desce na tempestade
     const meio = this.juntas && this.meioDoGrupo(), foco = this.cena && this.cenaFoco && (this.cenaFoco.alfa ?? 1) > 0.2 ? (this.cenaFoco.x + p.x) / 2 : null; // numa cena, a câmera fica entre os dois
+    if (!!this.def?.reverente !== this.reverCls) { this.reverCls = !!this.def?.reverente; document.body.classList.toggle('reverente', this.reverCls); } // casa de oração: sem os botões de pular, golpear, passo e verso
     if (!!this.cena !== this.cenaCls) { this.cenaCls = !!this.cena; document.body.classList.toggle('em-cena', this.cenaCls); } // os controles somem: é quase uma cutscene
     v.cam.x = damp(v.cam.x, (foco ?? (meio ? meio.x : p.x)) - vw / 2, foco != null ? 4 : 14, dt); v.cam.y = damp(v.cam.y, this.camYAlvo(vh), 6, dt); this.prenderCam();
     this.tremorA = Math.max(0, this.tremorA - dt * 34);

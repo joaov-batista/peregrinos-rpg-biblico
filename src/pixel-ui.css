@@ -420,3 +420,6 @@ html.remake .inv-q.mini { width: 40px; height: 40px; }
 .dia-m { width: 18px; text-align: center; color: #9AA6C4; } .dia-l.feito .dia-m { color: #7FD08A; } .dia-l.atual { background: rgba(201, 166, 60, .12); } .dia-l.atual .dia-m, .dia-l.atual b { color: #FFE9A8; } .dia-l.falta b { color: #5E6A88; }
 .dia-agora .dia-tambem { font-size: 15px; color: #E8D9A8; margin-top: 6px; }
 html.remake .inv-q.esp, .inv-q.esp { box-shadow: inset 0 0 0 2px #7FD0A0; margin-right: 8px; }
+
+/* casa de oração: não se pula nem se golpeia lá dentro */
+body.reverente #actions [data-act="dodge"], body.reverente #actions [data-act="attack"], body.reverente #actions [data-act="lock"], body.reverente #actions [data-act="skill"] { visibility: hidden !important; }

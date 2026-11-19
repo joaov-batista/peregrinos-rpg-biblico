@@ -550,6 +550,7 @@ export function renderPixel(G) {
   const chefe = G.N.arena && G.inimigos.find(e => e.kind === 'chefe' && e.cen);
   if (chefe) pintarPalco(g, G, chefe, X, Y, Tm, false); // o cenário que muda durante a luta
   pintarBlocosPixel(g, G, C, vw, vh, cx, cy);
+  if (G.def.interior) pintarAlemDasParedes(g, G, X, vw, vh); // por dentro: além das paredes é pedra, não a cidade lá fora
   pintarChaoDoTempo(g, G, vw, vh, cx, cy, Tm); // neve assentada e poças
   for (const o of G.objs) if (o.tipo === 'mar' || o.tipo === 'barco' || o.tipo === 'aguaAberta' || o.tipo === 'areia') pintarAgua(g, o, G, X(o.x), Y(o.y), Tm);
   pintarMarVivo(g, G, X, Y, Tm); // peixes que saltam, golfinho, gaivotas, águas-vivas, caranguejos
@@ -972,4 +973,16 @@ function mataFechada(g, x0, vw, vh, chao, Tm) {
     g.fillStyle = '#3F6A44'; g.fillRect(bx - Math.round(r * 0.4) + bal, by - Math.round(r * 0.6), Math.round(r * 0.5), 2); }
   g.fillStyle = '#0B1610'; for (let yy = 0; yy < vh; yy += 2) for (let xx = 0; xx < 30; xx += 2) if ((xx + yy) % 4 === 0 && xx > 12 + Math.sin(yy * 0.07) * 6) g.fillRect(x0 + 40 + xx, yy, 2, 2); // a borda pontilhada para dentro do escuro
   for (let i = 0; i < 8; i++) { const fx = x0 + 6 + i * 9 + Math.round(h(i + 40) * 6); g.fillStyle = i % 2 ? '#2F5536' : '#3F6A44'; g.fillRect(fx, chao - 8 - (i % 3) * 3, 6, 8 + (i % 3) * 3); } // o mato baixo
+}
+
+// salas por dentro mais estreitas que a tela (celular deitado): o que fica além das paredes é alvenaria escura, nunca o céu lá fora
+function pintarAlemDasParedes(g, G, X, vw, vh) {
+  const a = X(0), b = X(G.N.w * T);
+  const faixa = (x0, x1, lado) => {
+    if (x1 <= x0) return;
+    g.fillStyle = '#0B0A12'; g.fillRect(x0, 0, x1 - x0, vh);
+    for (let y = 0; y < vh; y += 12) { const des = (y / 12) % 2 ? 12 : 0; for (let x = Math.floor((x0 - des) / 24) * 24 + des; x < x1; x += 24) { g.fillStyle = '#16141F'; g.fillRect(Math.max(x0, x + 1), y + 1, Math.min(22, x1 - x - 1), 10); g.fillStyle = '#1D1A28'; g.fillRect(Math.max(x0, x + 1), y + 1, Math.min(22, x1 - x - 1), 1); } }
+    const borda = lado < 0 ? x1 - 1 : x0; g.fillStyle = '#05040A'; g.fillRect(borda - (lado < 0 ? 3 : 0), 0, 4, vh);
+  };
+  faixa(0, Math.min(vw, a), -1); faixa(Math.max(0, b), vw, 1);
 }
