@@ -5,6 +5,7 @@ import { hash, clamp } from '../../util.js';
 import { T, CW, CH, SOLIDO, PONTE, ESPINHO, OCULTO, FALSA, PORTAO, TRANCA, tileEm, semente } from '../nivel.js';
 import { Sprite, rampa, cor, TINTA, PX } from './raster.js';
 import { fundoSala } from './salas.js';
+import { fundoMasmorra } from './masmorra.js';
 import { luzDoDia } from '../moradores.js';
 import { TEMAS, RX } from '../dados.js';
 import { pintarCeuDoTempo, ehNatal, aoArLivre } from '../tempo.js';
@@ -255,11 +256,13 @@ export function pintarSalasPixel(g, G, C, vw, vh, cx, cy) {
     if (cel.ceu) continue; // praça a céu aberto: nada de véu, pilar ou estandarte
     if (N.def.aberto) { g.fillStyle = SUBSOLO; g.fillRect(x0, y0, salaW, salaH); } // o subsolo não deixa ver o céu
     const fs = cel.deco && fundoSala(cel.deco); if (fs) { g.drawImage(fs, x0, y0); continue; } // salões com cenário próprio
-    g.fillStyle = tm.bloco; g.globalAlpha = 0.26; g.fillRect(x0 + TL, y0 + TL, salaW - 2 * TL, salaH - 2 * TL); g.globalAlpha = 1;
+    const fm = fundoMasmorra(G, cel); // a parede de verdade (pintada uma vez por sala)
+    if (fm) g.drawImage(fm, x0, y0);
+    else { g.fillStyle = tm.bloco; g.globalAlpha = 0.26; g.fillRect(x0 + TL, y0 + TL, salaW - 2 * TL, salaH - 2 * TL); g.globalAlpha = 1; }
     for (let k = 0; k < 3; k++) {
       if (k === 1 && cel.mask & 12) continue;
       const r = hash(cel.cx * 7 + k, cel.cy * 13 + 3), px = x0 + Math.round((5 + k * 10 + r * 3) * TL) - 20;
-      g.drawImage(C.pilar, px, y0 + TL);
+      if (!fm) g.drawImage(C.pilar, px, y0 + TL);
       if (hash(cel.cx * 5 + k, cel.cy * 3 + 9) > 0.4 && tm.deco !== 'costelas' && tm.deco !== 'arvores') g.drawImage(C.estandarte, px + 44 + Math.round(r * 20), y0 + TL + (Math.floor(G.T * 2 + k) % 4 === 0 ? 1 : 0));
     }
   }

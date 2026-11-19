@@ -5,6 +5,7 @@
 import { hash } from '../../util.js';
 import { T, CW, CH, SOLIDO, FALSA, PONTE, tileEm } from '../nivel.js';
 import { Sprite, cor, PX } from './raster.js';
+import { estilo as estiloParede } from './masmorra.js';
 
 const TL = T / PX; // 16
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
@@ -22,8 +23,9 @@ function paleta(G, mat) {
 // onde se pisa: rua (terra batida com lajes gastas), grama (trilha, sítio, olival) ou laje (Sardes)
 function materialEm(G, tx, ty) {
   const d = G.def, N = G.N;
-  if (!(d.aberto || d.sitio) || d.interior) return null;
+  if (d.interior) return null;
   const cel = N.celulas.find(c => c.cx === Math.floor(tx / CW) && c.cy === Math.floor(ty / CH));
+  if (!(d.aberto || d.sitio)) { const e = estiloParede(G); return !e || !cel ? null : e === 'caverna' ? 'rua' : 'laje'; } // nas salas fechadas: lajes (ou terra, na caverna)
   if (!cel || cel.cy > 0 || cel.deco) return null; // o subsolo é salão de pedra
   if (cel.trilha || d.sitio || d.tema === 'bosque' || d.tema === 'floresta' || d.tema === 'getsemani' || /Olival/.test(cel.nome || '')) return 'grama';
   if (d.tema === 'sardes' || d.tema === 'sardes2') return 'laje';
@@ -96,18 +98,26 @@ function cadaPiso(G, vw, vh, cx, cy, fn) {
 }
 
 // sombra de contato: uma elipse pontilhada, mais funda no meio, que escurece o chão sob a base
+// as sombras são carimbos guardados por largura (um drawImage por coisa, em vez de centenas de pontinhos por quadro)
+const carimbos = new Map();
+function carimbo(chave, w, h, ox, oy, pinta) { let c = carimbos.get(chave); if (!c) { c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.fillStyle = '#0A0710'; pinta((px, py) => x.fillRect(px + ox, py + oy, 1, 1)); c.ox = ox; c.oy = oy; carimbos.set(chave, c); } return c; }
 function sombra(g, x, y, w, forca = 1) {
-  if (w < 4) return; const hw = w / 2 + 4 + w * 0.14, dx = Math.round(w * 0.1); // passa da base (senão a própria coisa a esconde) e corre um pouco para a direita, longe da luz
-  for (let r = 0; r < 4; r++) { const k = [1, 0.9, 0.74, 0.5][r], dens = [0.9, 0.7, 0.45, 0.22][r] * forca, l = Math.round(hw * k), yy = y - 1 - r;
-    for (let i = -l; i <= l; i++) { const borda = Math.abs(i) / (l + 1); if (pont(x + dx + i, yy, dens * (1 - borda * borda * borda))) g.fillRect(x + dx + i, yy, 1, 1); } }
+  if (w < 4) return; w = Math.round(w); const f = Math.round(forca * 10) / 10, hw = w / 2 + 4 + w * 0.14, dx = Math.round(w * 0.1), L = Math.ceil(hw) + Math.abs(dx) + 1;
+  const c = carimbo('s' + w + ':' + f, L * 2 + 1, 5, L, 4, put => {
+    for (let r = 0; r < 4; r++) { const k = [1, 0.9, 0.74, 0.5][r], dens = [0.9, 0.7, 0.45, 0.22][r] * f, l = Math.round(hw * k), yy = -1 - r;
+      for (let i = -l; i <= l; i++) { const borda = Math.abs(i) / (l + 1); if (pont(dx + i, yy, dens * (1 - borda * borda * borda))) put(dx + i, yy); } } }); // a sombra passa da base e corre um pouco para a direita, longe da luz
+  g.drawImage(c, x - c.ox, y - c.oy);
 }
 // na beirada, logo abaixo da base: o chão escurece onde a coisa encosta (é isto que tira o 'colado')
 function sombraBeira(g, x, y, w, forca = 1) {
-  const l = Math.round(w * 0.46); for (let i = -l; i <= l; i++) { const b = Math.abs(i) / (l + 1); if (pont(x + i, y, 0.7 * forca * (1 - b * b))) g.fillRect(x + i, y, 1, 1); if (pont(x + i, y + 1, 0.4 * forca * (1 - b))) g.fillRect(x + i, y + 1, 1, 1); }
+  w = Math.round(w); const f = Math.round(forca * 10) / 10, l = Math.round(w * 0.46);
+  const c = carimbo('b' + w + ':' + f, l * 2 + 1, 2, l, 0, put => { for (let i = -l; i <= l; i++) { const b = Math.abs(i) / (l + 1); if (pont(i, 0, 0.7 * f * (1 - b * b))) put(i, 0); if (pont(i, 1, 0.4 * f * (1 - b))) put(i, 1); } });
+  g.drawImage(c, x - c.ox, y);
 }
 
 export function pintarChaoAtras(g, G, vw, vh, cx, cy) {
-  if (!(G.def.aberto || G.def.sitio) || G.def.interior) return;
+  if (globalThis.__semChao) return;
+  if (G.def.interior || !(G.def.aberto || G.def.sitio || estiloParede(G))) return;
   cadaPiso(G, vw, vh, cx, cy, (tx, ty, mat, x, y) => g.drawImage(tiraAtras(G, mat, Math.floor(hash(tx, 3) * 8)).tela(), x, y - 8));
   // as sombras de contato de tudo o que toca o chão
   g.fillStyle = '#0A0710'; g.globalAlpha = 0.6;
@@ -119,7 +129,8 @@ export function pintarChaoAtras(g, G, vw, vh, cx, cy) {
 }
 
 export function pintarChaoFrente(g, G, vw, vh, cx, cy) {
-  if (!(G.def.aberto || G.def.sitio) || G.def.interior) return;
+  if (globalThis.__semChao) return;
+  if (G.def.interior || !(G.def.aberto || G.def.sitio || estiloParede(G))) return;
   cadaPiso(G, vw, vh, cx, cy, (tx, ty, mat, x, y) => {
     g.drawImage(tiraFrente(G, mat, Math.floor(hash(tx, 9) * 8)).tela(), x, y - 2);
     // a ponta do chão (beira de plataforma ou de muro) arredonda em vez de cortar reto

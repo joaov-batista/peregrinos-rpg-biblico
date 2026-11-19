@@ -889,9 +889,17 @@ function pintarClima(g, G, vw, vh, cx, Tm) {
 }
 
 // textos na resolução da tela, com fonte de pixel
+const rotulos = new Map();
+function rotulo(s, tam, corT) {
+  const k = s + '|' + tam + '|' + corT; let c = rotulos.get(k); if (c) return c;
+  if (rotulos.size > 500) rotulos.clear();
+  c = document.createElement('canvas'); const x = c.getContext('2d'), fonte = `600 ${tam}px ${FONTE}`, lw = Math.max(2, tam / 4.5), pad = Math.ceil(lw) + 2; x.font = fonte; const w = Math.ceil(x.measureText(s).width);
+  c.width = w + pad * 2; c.height = Math.ceil(tam * 1.45) + pad * 2; x.font = fonte; x.lineJoin = 'round'; x.lineWidth = lw; x.strokeStyle = '#17121f'; x.strokeText(s, pad, pad + tam); x.fillStyle = corT; x.fillText(s, pad, pad + tam);
+  c.pad = pad; c.lw = w; c.tam = tam; rotulos.set(k, c); return c;
+}
 function pintarTextos(g, G, esc, cx, cy) {
   const d = G.dpr, e = esc * d, v = G.vista, p = G.p, cm = G.cm, def = G.def, u = Math.max(1, Math.round(e / 2.4));
-  const txt = (s, x, y, tam, corT, alinha = 'left') => { g.font = `600 ${tam}px ${FONTE}`; g.textAlign = alinha; g.lineJoin = 'round'; g.lineWidth = Math.max(2, tam / 4.5); g.strokeStyle = '#17121f'; g.strokeText(s, x, y); g.fillStyle = corT; g.fillText(s, x, y); };
+  const txt = (s, x, y, tam, corT, alinha = 'left') => { const r = rotulo(String(s), Math.round(tam), corT); g.drawImage(r, Math.round(x - r.pad - (alinha === 'center' ? r.lw / 2 : alinha === 'right' ? r.lw : 0)), Math.round(y - r.pad - r.tam)); }; // texto com contorno: pintado uma vez e guardado (o contorno do canvas é caro a cada quadro)
   const sx = wx => (wx / PX - cx) * e, sy = wy => (wy / PX - cy) * e;
   for (const t of G.textos) { const x = t.fixo ? t.fixo.x : t.x, y = t.fixo ? t.fixo.y - t.fixo.h - 16 : t.y, tam = Math.round(t.tam * 0.62 * e / 1.3); g.font = `600 ${tam}px ${FONTE}`; const meia = g.measureText(t.txt).width / 2 + tam * 0.6, W = g.canvas.width; g.globalAlpha = Math.min(1, t.t * 2); txt(t.txt, meia * 2 < W ? clamp(sx(x), meia, W - meia) : W / 2, sy(y), tam, t.cor, 'center'); } // a fala nunca sai pela borda da tela
   g.globalAlpha = 1;
