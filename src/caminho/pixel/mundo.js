@@ -6,6 +6,7 @@ import { T, CW, CH, SOLIDO, PONTE, ESPINHO, OCULTO, FALSA, PORTAO, TRANCA, tileE
 import { Sprite, rampa, cor, TINTA, PX } from './raster.js';
 import { fundoSala } from './salas.js';
 import { fundoMasmorra } from './masmorra.js';
+import { copa as copaF, galho as galhoF } from './folhagem.js';
 import { luzDoDia } from '../moradores.js';
 import { TEMAS, RX } from '../dados.js';
 import { pintarCeuDoTempo, ehNatal, aoArLivre } from '../tempo.js';
@@ -91,7 +92,7 @@ const PECAS = {
     if (r > 0.45) { const w2 = w * 0.5, h2 = hh * 0.45; s.ret(x + w * 0.4, base - hh - 3 - h2, w2, h2, c[1]); s.ret(x + w * 0.4 - 2, base - hh - 5 - h2, w2 + 4, 2, c[2]); s.ret(x + w * 0.55, base - hh - h2 * 0.7, 3, 4, jan); }
     for (let k = 0; k < 6; k++) s.ret(x + w + k * 2, base - 3 - k * 2, 2, 3 + k * 2, c[0]); // escada externa
   },
-  arvore(s, x, base, h, c, r) { s.ret(x + 8, base - h * 0.7, 4, h * 0.7, c[0]); for (let k = 0; k < 6; k++) { const cx = x + 10 + Math.sin(k * 2.4 + r * 6) * 14, cy = base - h * 0.75 - k * 5 * r - 4, rr = 10 + ((k * 5) % 7); for (let yy = -rr; yy <= rr; yy++) for (let xx = -rr; xx <= rr; xx++) { const d = xx * xx + yy * yy; if (d < rr * rr && (d < (rr - 2) * (rr - 2) || (xx + yy) % 2)) s.px(cx + xx, cy + yy * 0.75, xx + yy < -rr * 0.5 ? c[2] : c[1]); } } },
+  arvore(s, x, base, h, c, r) { galhoF(s, [[x + 10, base], [x + 10 + (r - 0.5) * 4, base - h * 0.45], [x + 10 + (r - 0.5) * 8, base - h * 0.7]], 2.2, 1.2, [c[0], c[0], c[1]], { sd: Math.round(r * 99) }); const bl = []; for (let k = 0; k < 6; k++) bl.push({ x: x + 10 + Math.sin(k * 2.4 + r * 6) * 13, y: base - h * 0.78 - (k % 3) * 6 * r - 3, r: 7 + ((k * 5) % 6) }); copaF(s, bl, [c[0], c[1], c[1], c[2]], { sd: Math.round(r * 97) + 3, folha: 2.8, buracos: 0.15, soltas: false }); }, // árvore ao longe: tronco e copa em cachos, em três tons
   duna(s, x, base, h, c, r) { const w = 90 + r * 70; for (let i = 0; i < w; i++) { const hh = Math.sin(i / w * Math.PI) * h * 0.35; s.ret(x + i, base - hh, 1, hh + 1, i < w * 0.45 ? c[1] : c[0]); s.px(x + i, base - hh, c[2]); } if (r > 0.6) { s.ret(x + w * 0.3, base - h * 0.75, 2, h * 0.5, c[0]); for (let k = -6; k <= 6; k++) s.px(x + w * 0.3 + k, base - h * 0.75 - 2 + Math.abs(k) * 0.6, c[1]); } },
   costela(s, x, base, h, c, r) { for (let i = 0; i < 60; i++) { const k = i / 60, px = x + k * 46, py = base - Math.sin(k * 1.5) * h * 1.6; s.ret(px, py, 4 - k * 2, 5, k < 0.5 ? c[1] : c[0]); s.px(px, py, c[2]); } },
   tenda(s, x, base, h, c, r) { const w = 50 + r * 30, hh = h * 0.6; for (let j = 0; j < hh; j++) { const lg = w * (j / hh) / 2; s.ret(x + w / 2 - lg, base - hh + j, lg * 2, 1, (j + (lg | 0)) % 6 < 1 ? c[0] : c[1]); s.px(x + w / 2 + lg - 1, base - hh + j, c[2]); } s.ret(x + w / 2, base - hh - 5, 1, 6, c[0]); s.ret(x + w / 2 + 1, base - hh - 5, 4, 2, c[3] || c[2]); }

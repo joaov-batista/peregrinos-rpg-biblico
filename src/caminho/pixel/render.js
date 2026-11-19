@@ -2,6 +2,7 @@
 // 1 pixel de arte = 2 unidades do mundo) e ampliado sem suavização; só os textos ficam na resolução da tela.
 // A lógica do jogo não muda: este arquivo só lê o estado e desenha.
 import { pintarChaoAtras, pintarChaoFrente } from './chao.js';
+import { arvore as arvorePx, copa as copaPx, galho as galhoPx, oliveira as oliveiraPx } from './folhagem.js';
 import { clamp, TAU, hash } from '../../util.js';
 import { input, wasd } from '../../input.js';
 import { TODAS } from '../../content/index.js';
@@ -310,13 +311,12 @@ function pintarObjeto(g, o, G, x, y, Tm) {
         if (o.id === 'viuva') { s.ret(48, 50, 6, 8, rampa('#B5673C')[2]); s.ret(49, 48, 4, 2, rampa('#B5673C')[3]); s.ret(57, 52, 5, 6, rampa('#D9D2C5')[2]); } });
       carimbar(g, sp, x + 8, y, 34, 57); if (Math.floor(Tm * 3 + x) % 7 === 0) { g.fillStyle = '#FFE9A8'; g.fillRect(x - 15, y - 31, 1, 1); } return true; }
     case 'planta': { const q = o.qual;
+      if (q === 'oliveira') { const so = sprObj('oliveira2', 64, 80, s => oliveiraPx(s)); carimbar(g, so, x, y, 32, 79); return true; } // a oliveira tem desenho próprio
       const sp = sprObj('planta' + q, 48, 72, s => { const Tr = rampa(q === 'palmeira' ? '#7A5A3A' : '#5E4630'), F = rampa(q === 'cipreste' ? '#2E5548' : q === 'palmeira' ? '#4E8A4A' : '#6E8A5E'), F2 = rampa(q === 'oliveira' ? '#4F6B4A' : '#2A4A3E');
         if (q === 'cipreste') { s.ret(22, 60, 4, 12, Tr[2]); for (let yy = 4; yy < 62; yy++) { const lg = Math.max(1, Math.round(Math.sin((yy - 4) / 58 * 2.6) * 8)); for (let xx = -lg; xx <= lg; xx++) s.px(24 + xx, yy, xx < -lg * 0.4 ? F[3] : (xx + yy) % 5 === 0 ? F2[1] : F[2]); } }
         else if (q === 'palmeira') { for (let yy = 16; yy < 72; yy++) { const xx = 24 + Math.round(Math.sin(yy * 0.05) * 3); s.ret(xx - 2, yy, 4, 1, yy % 5 === 0 ? Tr[1] : Tr[2]); s.px(xx + 1, yy, Tr[3]); }
           for (let k = 0; k < 7; k++) { const an = -Math.PI * (0.08 + k * 0.14), cx2 = 26, cy2 = 16; for (let t2 = 0; t2 < 22; t2++) { const px2 = cx2 + Math.cos(an) * t2, py2 = cy2 + Math.sin(an) * t2 * 0.7 + t2 * t2 * 0.03; s.ret(px2, py2, 2, 2, t2 % 3 ? F[2] : F[3]); if (t2 % 2) s.px(px2, py2 + 2, F2[1]); } } s.bola(25, 18, 2, 2, rampa('#8E5A2E')); }
-        else { s.poli([[20, 71], [22, 50], [18, 40], [23, 38], [27, 50], [29, 71]], Tr[2]); s.linha(22, 46, 12, 34, 3, Tr[2]); s.linha(26, 46, 37, 32, 3, Tr[2]); s.linha(22, 60, 22, 70, 1, Tr[0]);
-          for (const [bx, by, rx, ry, R2] of [[12, 28, 11, 9, F2], [37, 26, 10, 9, F2], [24, 20, 15, 12, F], [18, 22, 8, 7, F], [32, 18, 8, 7, F]]) s.bola(bx, by, rx, ry, R2, 0.4, -0.75);
-          for (let i = 0; i < 26; i++) { const xx = 4 + (i * 37) % 40, yy = 10 + (i * 23) % 26; if (s.le(xx, yy)) s.px(xx, yy, F[4]); } } });
+        else arvorePx(s, { base: [24, 71], alt: 64, larg: 44, Rt: Tr, Rf: rampa('#6E8A5E'), sd: 11, torto: 0.5, tronco: 3.2, cachos: 6 }); }); // a oliveira: tronco torto que se abre em galhos, a copa prateada em cachos
       carimbar(g, sp, x, y, 24, 71); return true; }
     case 'jesus': { // de joelhos sobre a pedra; uma luz mansa em volta, que não ofusca
       const al = o.alfa ?? 1; if (al <= 0) return true; const pedra = G.objs.find(r => r.tipo === 'rocha'), sobre = pedra && Math.abs(o.x - pedra.x) < 30, yy = y - (sobre ? 14 : 0); // só fica no alto em cima da pedra; andando, pisa no chão
@@ -472,10 +472,8 @@ function pintarObjeto(g, o, G, x, y, Tm) {
       return true; }
     case 'arpao': { const b = Math.floor(Tm * 3) % 2; g.fillStyle = '#17121f'; g.fillRect(x - 1, y - 24 - b, 3, 24); g.fillStyle = '#A0662A'; g.fillRect(x, y - 23 - b, 1, 22); g.fillStyle = '#EEF6FB'; g.fillRect(x - 1, y - 28 - b, 3, 5); g.fillRect(x, y - 30 - b, 1, 2); g.fillStyle = '#BFF0F8'; g.fillRect(x - 3 + b * 5, y - 32, 1, 1); return true; }
     case 'arvore': { // o sicômoro de Zaqueu: tronco torto, copa em três massas, figos
-      const s = sprObj('sicomoro', 96, 112, s => { const T = rampa('#6B4A2E'), F = rampa('#3F7A4A'), F2 = rampa('#2E5E44');
-        s.poli([[40, 111], [44, 70], [38, 44], [46, 40], [52, 66], [58, 111]], T[2]); s.poli([[40, 111], [44, 70], [38, 44], [41, 43], [47, 72], [45, 111]], T[1]); s.linha(52, 66, 57, 110, 1, T[3]);
-        s.linha(44, 62, 22, 40, 4, T[2]); s.linha(50, 58, 74, 34, 4, T[2]); s.linha(45, 46, 48, 22, 3, T[1]); for (let y = 76; y < 110; y += 5) s.ret(46 + (y % 2), y, 3, 1, T[0]);
-        for (const [x, y, rx, ry, R2] of [[22, 34, 20, 15, F2], [74, 30, 19, 15, F2], [48, 20, 26, 18, F], [30, 22, 14, 11, F], [66, 18, 14, 11, F]]) s.bola(x, y, rx, ry, R2, 0.4, -0.75);
+      const s = sprObj('sicomoro', 96, 112, s => { const T = rampa('#6B4A2E'), F = rampa('#3F7A4A'); // o sicômoro: tronco grosso e baixo, galhos largos e a copa larga em cachos
+        arvorePx(s, { base: [48, 111], alt: 104, larg: 86, Rt: T, Rf: F, sd: 23, torto: 0.25, tronco: 6, cachos: 8 });
         for (let i = 0; i < 46; i++) { const x = 8 + (i * 37) % 80, y = 6 + (i * 23) % 40; if (s.le(x, y)) { s.px(x, y, F[4]); s.px(x + 1, y + 1, F2[0]); } }
         for (const [x, y] of [[20, 44], [34, 36], [58, 38], [72, 44], [46, 34], [82, 34]]) if (s.le(x, y - 3)) s.bola(x, y, 1.6, 2, rampa('#8E3B5E'));
         s.contorno(TINTA); }); carimbar(g, s, x, y, 48, 111); return true; }
@@ -547,7 +545,8 @@ export function renderPixel(G) {
   pintarSalasPixel(g, G, C, vw, vh, cx, cy);
   pintarChaoAtras(g, G, vw, vh, cx, cy); // a face de cima do chão e as sombras de contato
   if (G.area.startsWith('sinagoga')) pintarLuzSinagoga(g, G, cx, cy, luzDoDia(G).d > 0.3);
-  for (const o of G.objs) { const x = X(o.x), xv = o.vv ? X(o.vv.x) : x; if (xv + (o.ate && o.tipo === 'muroOlival' ? o.ate * T / PX : 0) < -60 || xv > vw + 60) continue; /* o muro do olival é comprido: conta a largura */ /* quem anda é visto onde está, não onde mora */ if (o.oculto && !G.achou(o)) { const k = G.p.lampA * clamp(1 - (Math.hypot(o.x - G.p.x, o.y - G.p.y) - 200) / 160, 0, 1); if (k < 0.05) continue; g.globalAlpha = k; } if (!pintarObjeto(g, o, G, x, Y(o.y), Tm)) antigo(() => desenharObjeto(g, o, G)); g.globalAlpha = 1; }
+  const fimTreino = G.emTreino?.() ? RX * CW * T - 200 : Infinity; // no treino, nada do que fica além da paliçada aparece
+  for (const o of G.objs) { if (o.x > fimTreino) continue; const x = X(o.x), xv = o.vv ? X(o.vv.x) : x; if (xv + (o.ate && o.tipo === 'muroOlival' ? o.ate * T / PX : 0) < -60 || xv > vw + 60) continue; /* o muro do olival é comprido: conta a largura */ /* quem anda é visto onde está, não onde mora */ if (o.oculto && !G.achou(o)) { const k = G.p.lampA * clamp(1 - (Math.hypot(o.x - G.p.x, o.y - G.p.y) - 200) / 160, 0, 1); if (k < 0.05) continue; g.globalAlpha = k; } if (!pintarObjeto(g, o, G, x, Y(o.y), Tm)) antigo(() => desenharObjeto(g, o, G)); g.globalAlpha = 1; }
   if (G.def.mundo && G.N.arena) pintarArenaTema(g, G, X, Y, Tm);
   const chefe = G.N.arena && G.inimigos.find(e => e.kind === 'chefe' && e.cen);
   if (chefe) pintarPalco(g, G, chefe, X, Y, Tm, false); // o cenário que muda durante a luta
@@ -646,7 +645,7 @@ export function renderPixel(G) {
   }
   if (G.def?.casaDe) { const y0 = Y(16 * 32) - 240; for (let k = -1; k < 10; k++) { const bx = Math.round((k * 140 - (G.vista.cam.x / PX) * 0.25) % 1400); g.fillStyle = '#17121f'; g.fillRect(bx, y0 - 30, 20, 40); g.fillStyle = '#4A3420'; g.fillRect(bx + 1, y0 - 30, 18, 38); g.fillStyle = '#5A4028'; g.fillRect(bx + 1, y0 - 30, 4, 38); } } // as vigas da frente, mais perto da câmara (a camada da frente)
   if (chefe) pintarPalco(g, G, chefe, X, Y, Tm, true);
-  if (G.emTreino?.()) mataFechada(g, X(RX * CW * T - 150), vw, vh, Y(16 * T), Tm); // no treino, a ponta da trilha é mata fechada: o Refúgio ainda não existe
+  if (G.emTreino?.()) barreira(g, X(RX * CW * T - 196), Y(16 * T), Tm); // no treino, a trilha termina numa paliçada: o Refúgio ainda não existe
   pintarLuzPixel(g, G, vw, vh, cx, cy, luzCv);
   pintarClima(g, G, vw, vh, cx, Tm);
   pintarTempo(g, G, vw, vh, cx, Tm, cy);
@@ -972,18 +971,28 @@ function medirChefe(e, q, vira) {
 }
 
 // a mata fechada que encerra a trilha do treino: troncos, copas que se sobrepõem até o céu e o escuro do meio da mata
+// a paliçada no fim da trilha do treino: estacas de madeira apontadas, amarradas com corda, e o capim no pé
+let palicada = null;
+function barreira(g, x, chao, Tm) {
+  if (!palicada) { const S = new Sprite(40, 60), M = rampa('#6A4A2E');
+    for (let k = 0; k < 6; k++) { const bx = 3 + k * 6, alt = 44 + ((k * 7) % 3) * 4; for (let y = 60 - alt; y < 60; y++) { const ponta = y - (60 - alt); for (let i = 0; i < 5; i++) { if (ponta < 4 && Math.abs(i - 2) > ponta / 2) continue; S.px(bx + i, y, i === 0 ? M[3] : i === 4 ? M[1] : (y + k * 3) % 9 === 0 ? M[1] : M[2]); } } }
+    for (const yy of [26, 44]) for (let x2 = 2; x2 < 38; x2++) { S.px(x2, yy + ((x2 >> 2) % 2), (x2 >> 1) % 2 ? rampa('#B8A070')[2] : rampa('#B8A070')[1]); }
+    S.contorno(TINTA); palicada = S.tela(); }
+  g.drawImage(palicada, Math.round(x - 20), Math.round(chao - 60));
+}
+// a mata fechada no fim da trilha do treino: troncos altos de casca sulcada, copas em cachos sobrepostas, do escuro do
+// fundo para a borda acesa, e o mato baixo na frente. Pintada uma vez e guardada.
+let mataCv = null;
 function mataFechada(g, x0, vw, vh, chao, Tm) {
   if (x0 > vw + 40) return;
-  const h = (n) => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
-  g.fillStyle = '#0B1610'; g.fillRect(Math.max(0, x0 + 46), 0, vw, vh); // o fundo escuro
-  for (let i = 0; i < 6; i++) { const xx = x0 + 10 + i * 16 + Math.round(h(i) * 8); g.fillStyle = '#17121f'; g.fillRect(xx - 1, chao - 70 - i * 6, 7, 70 + i * 6); g.fillStyle = i % 2 ? '#3A2A1E' : '#4A3524'; g.fillRect(xx, chao - 68 - i * 6, 5, 68 + i * 6); } // os troncos da beira
-  const cores = ['#1E3A2A', '#26462F', '#2F5536', '#183024'];
-  for (let k = 0; k < 70; k++) { const bx = x0 + Math.round(h(k + 3) * 60 + (k % 7) * 18) - 10, by = Math.round(h(k + 9) * (chao - 10)) - 10, r = 14 + Math.round(h(k + 17) * 16), bal = Math.round(Math.sin(Tm * 0.8 + k) * 1.5);
-    g.fillStyle = '#0B1610'; for (let yy = -r; yy <= r; yy += 2) { const w = Math.round(Math.sqrt(r * r - yy * yy)); g.fillRect(bx - w - 1 + bal, by + yy, w * 2 + 2, 2); }
-    g.fillStyle = cores[k % 4]; for (let yy = -r + 1; yy <= r - 1; yy += 2) { const w = Math.round(Math.sqrt(r * r - yy * yy)) - 1; g.fillRect(bx - w + bal, by + yy, w * 2, 2); }
-    g.fillStyle = '#3F6A44'; g.fillRect(bx - Math.round(r * 0.4) + bal, by - Math.round(r * 0.6), Math.round(r * 0.5), 2); }
-  g.fillStyle = '#0B1610'; for (let yy = 0; yy < vh; yy += 2) for (let xx = 0; xx < 30; xx += 2) if ((xx + yy) % 4 === 0 && xx > 12 + Math.sin(yy * 0.07) * 6) g.fillRect(x0 + 40 + xx, yy, 2, 2); // a borda pontilhada para dentro do escuro
-  for (let i = 0; i < 8; i++) { const fx = x0 + 6 + i * 9 + Math.round(h(i + 40) * 6); g.fillStyle = i % 2 ? '#2F5536' : '#3F6A44'; g.fillRect(fx, chao - 8 - (i % 3) * 3, 6, 8 + (i % 3) * 3); } // o mato baixo
+  if (!mataCv || mataCv.h !== vh || mataCv.chao !== chao) { const S = new Sprite(170, vh), Tr = rampa('#3A2A1E'), Tr2 = rampa('#2A2016'), F1 = rampa('#1E3A2A'), F2 = rampa('#2F5536'), F3 = rampa('#3F6A44');
+    for (let i = 0; i < 5; i++) { const bx = 20 + i * 28 + (i % 2) * 6; galhoPx(S, [[bx, chao], [bx + 2, chao - 60], [bx - 3, chao - 150], [bx + 1, 0]], 5 - i * 0.4, 3, i % 2 ? Tr2 : Tr, { sd: i }); }
+    for (let k = 0; k < 4; k++) { const blobs = []; for (let n = 0; n < 9; n++) blobs.push({ x: 30 + k * 30 + ((n * 37) % 60) - 20, y: 20 + ((n * 53 + k * 29) % Math.max(40, chao - 80)), r: 16 + ((n * 7 + k) % 9) }); copaPx(S, blobs, [F1, F1, F2, F3][k], { sd: 70 + k, folha: 3.4, buracos: 0.12, lx: -0.8, ly: -0.5 }); }
+    for (let i = 0; i < 26; i++) { const fx = 6 + i * 6, hh = 8 + ((i * 13) % 12); galhoPx(S, [[fx, chao], [fx + ((i % 3) - 1) * 3, chao - hh]], 1.4, 0.4, F3, { sd: i + 90 }); } // samambaias e mato
+    S.contorno(TINTA); mataCv = S.tela(); mataCv.h = vh; mataCv.chao = chao; }
+  g.fillStyle = '#0B1610'; g.fillRect(Math.max(0, x0 + 70), 0, vw, vh); // o escuro de dentro da mata
+  for (let yy = 0; yy < vh; yy += 2) for (let xx = 0; xx < 40; xx += 2) if (((xx >> 1) + (yy >> 1)) % 2 === 0 || xx > 22) g.fillRect(x0 + 30 + xx + Math.round(Math.sin(yy * 0.05) * 5), yy, 2, 2); // a borda do escuro, pontilhada
+  g.drawImage(mataCv, Math.round(x0), 0);
 }
 
 // salas por dentro mais estreitas que a tela (celular deitado): o que fica além das paredes é alvenaria escura, nunca o céu lá fora
