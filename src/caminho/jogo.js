@@ -1044,6 +1044,7 @@ export class Caminho {
     return !this.emb && !this.inimigos.some(e => e.hp > 0 && e.x > x0 && e.x < x0 + CW * T && e.y > y0 && e.y < y0 + CH * T);
   }
   trancar(c, fecha) {
+    if (fecha && this.evento) return; // a fase da célula: câmara sem grade (os bichos vêm em ondas, mas ninguém fica trancado do lado de fora)
     const N = this.N, ox = c.cx * CW, oy = c.cy * CH;
     for (const x of [ox, ox + CW - 1]) for (let y = 13; y <= 15; y++) { const i = (oy + y) * N.w + x; if (fecha ? N.tiles[i] === VAZIO : N.tiles[i] === TRANCA) N.tiles[i] = fecha ? TRANCA : VAZIO; }
   }
@@ -1117,7 +1118,7 @@ export class Caminho {
     const d = this.def, A = this.N.arena;
     this.luta = true; this.luta0 = true; this.vazioT = 0; this.semCair = true; sfx('gate'); this.tremor(8);
     const juntos = this.mp?.acompanhado();
-    if (!juntos) { this.N.portaAberta = false; await this.cinema(CINEMA_CHEFE[d.chefe] || 'chefe-' + d.chefe); }
+    if (!juntos) { if (!this.evento) this.N.portaAberta = false; await this.cinema(CINEMA_CHEFE[d.chefe] || 'chefe-' + d.chefe); }
     else { this.congela = true; await this.cinema(CINEMA_CHEFE[d.chefe] || 'chefe-' + d.chefe); this.congela = false; } // todos assistem à entrada do chefe; ele espera
     const b = novoChefe(d.chefe, A, this.dif);
     if (juntos) { b.max = b.hp = Math.round(b.hp * (1 + (this.evento ? 0.45 : 0.6) * this.mp.naArea().length)); b.art.max = b.max; } // mais peregrinos, mais fôlego na sombra

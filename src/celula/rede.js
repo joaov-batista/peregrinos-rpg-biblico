@@ -55,6 +55,7 @@ export class Rede {
     this.cons = new Map(); // (anfitrião) conexão → id
     this.prox = 1; this.meuPg = {}; this.ultimo = performance.now();
     this.frutos = {}; // 'area#k' → nome de quem pegou
+    this.selos = {}; // área → rolos já acertados pela sala (valem para todos, até para quem chega depois)
     this.fila = []; this.quiz = null; this.nQuiz = 0; // (anfitrião) votações
     this.aoAviso = null; this.aoMudar = null; this.aoQuiz = null; this.aoVotos = null; this.aoResultado = null; this.aoFruto = null;
     this.ger = 0; this.coop = false; this.aoJx = null; this.areaDe = new Map(); this.nE = new Map(); this.tPulso = performance.now();
@@ -129,7 +130,7 @@ export class Rede {
       const id = this.prox++; this.cons.set(c, id);
       const q = { id, nome: String(m.nome || 'Peregrino').slice(0, 16), look: m.look || {}, cls: m.cls, pg: m.pg || {}, pts: m.pts || 0, visto: performance.now() };
       this.lista.set(id, q);
-      manda(c, { t: 'bem', id, ger: this.ger, l: this.rol(), fr: this.frutos, qz: this.quiz && this.quizParaRede(), vc: this.quiz && this.contagem() });
+      manda(c, { t: 'bem', id, ger: this.ger, l: this.rol(), fr: this.frutos, sl: this.selos, qz: this.quiz && this.quizParaRede(), vc: this.quiz && this.contagem() });
       this.paraTodos({ t: 'ch', q: this.ficha(q) }, c);
       this.aoAviso?.(q.nome + ' entrou na sala.'); this.aoMudar?.();
       return;
@@ -159,7 +160,7 @@ export class Rede {
       this.lotes();
       if ((this.nP = (this.nP || 0) + 1) % 10 === 0) { // a cada 2 s: o placar inteiro (também serve de "estou vivo")
         for (const [c, id] of [...this.cons]) { const q = this.lista.get(id); if (q && agora - q.visto > 15000) { this.cons.delete(c); try { c.close(); } catch { /* */ } this.saiu(id); this.paraTodos({ t: 'sx', id }); this.conferirVotos(); } }
-        this.paraTodos({ t: 'rol', l: this.rol(), fr: this.frutos });
+        this.paraTodos({ t: 'rol', l: this.rol(), fr: this.frutos, sl: this.selos });
       }
     } else {
       if ((this.nP = (this.nP || 0) + 1) % 10 === 0) try { manda(this.rede.con, { t: 'vivo' }); } catch { /* */ }
@@ -170,9 +171,9 @@ export class Rede {
   // ---------- todos ----------
   receber(m) {
     switch (m.t) {
-      case 'bem': this.lista.clear(); for (const q of m.l) this.lista.set(q.id, { ...q, visto: performance.now() }); this.lista.set(this.id, { id: this.id, ...this.eu, pg: this.meuPg, pts: this.lista.get(this.id)?.pts || 0 });
+      case 'bem': this.juntarSelos(m.sl); this.lista.clear(); for (const q of m.l) this.lista.set(q.id, { ...q, visto: performance.now() }); this.lista.set(this.id, { id: this.id, ...this.eu, pg: this.meuPg, pts: this.lista.get(this.id)?.pts || 0 });
         this.frutos = m.fr || {}; this.aoFruto?.(null); if (m.qz) this.chegouQuiz(m.qz, m.vc); this.aoMudar?.(); break;
-      case 'rol': { const meus = this.lista.get(this.id); this.lista.clear(); for (const q of m.l) this.lista.set(q.id, { ...q, visto: performance.now() }); if (meus && !this.lista.has(this.id)) this.lista.set(this.id, meus);
+      case 'rol': { this.juntarSelos(m.sl); const meus = this.lista.get(this.id); this.lista.clear(); for (const q of m.l) this.lista.set(q.id, { ...q, visto: performance.now() }); if (meus && !this.lista.has(this.id)) this.lista.set(this.id, meus);
         const novos = Object.keys(m.fr || {}).some(k => !this.frutos[k]); this.frutos = m.fr || {}; if (novos) this.aoFruto?.(null); this.aoMudar?.(); break; }
       case 'ch': this.lista.set(m.q.id, { ...m.q, visto: performance.now() }); this.aoAviso?.(m.q.nome + ' entrou na sala.'); this.aoMudar?.(); break;
       case 'sx': this.saiu(m.id); break;
@@ -301,6 +302,7 @@ export class Rede {
     const n = z.pac.op.map(() => 0); for (const i of z.votos.values()) n[i]++;
     const r = apurar(n, z.pac.certa), votos = z.pac.op.map(() => []);
     for (const [id, i] of z.votos) { const q = this.lista.get(id); if (!q) continue; votos[i].push(q.nome); if (i === z.pac.certa) q.pts = (q.pts || 0) + 100; }
+    if (r.certo && z.tipo !== 'chefe' && z.area && z.rolo >= 0) this.juntarSelos({ [z.area]: [z.rolo] });
     const m = { t: 'qr', id: z.id, n, votos, certa: z.pac.certa, venc: r.venc, certo: r.certo, empate: r.empate, porque: z.pac.porque, area: z.area, rolo: z.rolo, tipo: z.tipo, dono: z.dono, quem: z.quem };
     this.paraTodos(m); this.resultado(m);
     setTimeout(() => this.proximoQuiz(), REVELA_S * 1000 + 600); // a próxima pergunta só depois de todos verem o resultado
@@ -308,5 +310,6 @@ export class Rede {
   // aparece para mim (jogador ou telão)
   chegouQuiz(q, vc) { this.quizLocal = q; this.aoQuiz?.(q); if (vc) this.aoVotos?.(vc); }
   meuVoto(i) { const z = this.quizLocal; if (!z || this.telao) return; if (this.anfitriao) this.votar(this.id, z.id, i); else try { manda(this.rede.con, { t: 'vt', id: z.id, i }); } catch { /* */ } }
-  resultado(m) { if (this.quizLocal?.id === m.id) this.quizLocal = null; this.aoResultado?.(m); }
+  juntarSelos(sl) { let novo = false; for (const [a, l] of Object.entries(sl || {})) { const meu = this.selos[a] = this.selos[a] || []; for (const n of l) if (!meu.includes(n)) { meu.push(n); novo = true; } } if (novo) this.aoSelos?.(); }
+  resultado(m) { if (m.certo && m.tipo !== 'chefe' && m.area && m.rolo >= 0) this.juntarSelos({ [m.area]: [m.rolo] }); if (this.quizLocal?.id === m.id) this.quizLocal = null; this.aoResultado?.(m); }
 }

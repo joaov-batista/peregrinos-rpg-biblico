@@ -31,6 +31,7 @@ export function criarEvento({ sem, char, rede, salvar, sair, ui }) {
     rede.aoVotos = vc => voto?.votos(vc);
     rede.aoResultado = m => revelar(m);
     rede.aoFruto = m => sincronizarFrutos(m);
+    rede.aoSelos = () => selosDaSala(true);
     rede.aoMudar = () => { hudT = 0; if (G?.mp instanceof JuntosCelula) G.mp.sincronizar(); };
     rede.aoJx = m => { if (G?.mp instanceof JuntosCelula && G.running) G.mp.chegouDaSala(m); };
     rede.progresso(pg());
@@ -52,6 +53,12 @@ export function criarEvento({ sem, char, rede, salvar, sair, ui }) {
     aplicar(m);
   }
   // o efeito da votação na MINHA partida
+  // os rolos que a sala já acertou valem para todos: quem chega depois não fica barrado na porta do chefe
+  function selosDaSala(agora) {
+    if (!G || !rede || !G.def?.fase) return; const l = rede.selos[G.area] || [], cm = G.cm; let mudou = false;
+    for (const n of l) { if (!cm.selos[G.area].includes(n)) { cm.selos[G.area].push(n); mudou = true; } const ob = G.objs.find(o => o.tipo === 'rolo' && o.n === n); if (ob && !ob.feito) { ob.feito = true; mudou = true; } }
+    if (mudou && agora) { G.conferirPorta(); G.salvar(); }
+  }
   function aplicar(m) {
     if (!G || !G.running || m.tipo === 'chefe') return; // no chefe, quem aplica é a luta (estaEscrito em jogo.js)
     const st = d.stats;
@@ -158,7 +165,7 @@ export function criarEvento({ sem, char, rede, salvar, sair, ui }) {
       if (E.fim) E.pagina = 1;
       return area(Math.min(5, E.pagina));
     },
-    entrou(g, id) { G = g; if (!id.startsWith(sem.id)) return; E.pagina = +id.split(':')[1]; porFrutos(g); rede?.progresso(pg()); hudT = 0; },
+    entrou(g, id) { G = g; if (!id.startsWith(sem.id)) return; E.pagina = +id.split(':')[1]; porFrutos(g); selosDaSala(false); rede?.progresso(pg()); hudT = 0; },
     tick(g, dt) {
       G = g; rede?.tick(g, dt);
       if (!g.ui.blocking && !g.pausaGeral && !E.fim) E.tempo += dt;
