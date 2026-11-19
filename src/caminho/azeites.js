@@ -53,12 +53,7 @@ export async function mesaDeEssencias(G) {
     acoes: [...Object.keys(AZEITES).filter(pode).map(k => ({ label: 'Fazer ' + AZEITES[k].nome.toLowerCase(), fn: () => { for (const [i, n] of Object.entries(AZEITES[k].receita)) b[i] -= n; ganhar(G, k, 1, G.p.x, G.p.y - 80); sfx('level'); G.fx.anel(G.p.x, G.p.y - 30, AZEITES[k].cor, 70); G.salvar(); reabre(); } })), { label: 'Sair' }] });
 }
 // Lídia também vende perfumes (mais caros do que fazer). Devolve false para seguir para a loja de sempre.
-export async function lojaDeLidia(G, ob) {
-  const qual = await G.ui.dialog({ nome: ob.nome, look: ob.look, texto: '"Púrpura para o caminho, ou perfume para a alma?"', acoes: [{ label: 'Ver a loja' }, { label: 'Óleos e perfumes' }, { label: 'Até mais' }] });
-  if (qual === 'Ver a loja') return false;
-  if (qual === 'Óleos e perfumes') await lojaPerfumes(G, ob);
-  return true;
-}
+export async function lojaDeLidia(G, ob) { return false; } // a púrpura, o maná e os perfumes ficam todos na mesma vitrine (menu.js)
 async function lojaPerfumes(G, ob) {
   const c = G.char, reabre = () => setTimeout(() => lojaPerfumes(G, ob), 60);
   await G.ui.dialog({ nome: ob.nome + ' · perfumes', look: ob.look, texto: '"Púrpura de Tiatira e perfume de todo canto. Cada cor tem um uso; quem tem sítio faz em casa, mais barato, com azeite da prensa."\n\nDenários: ' + Math.floor(c.data.gold),

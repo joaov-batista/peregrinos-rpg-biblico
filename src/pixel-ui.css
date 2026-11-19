@@ -507,3 +507,46 @@ html.remake .mm-loja { color: #8A5A10; } html.remake .mm-gente { color: #2E5A2A;
 html.remake .mm-quadro { overflow-x: auto; overflow-y: hidden; scrollbar-color: #8E2B2B #2E1F14; }
 html.remake .mm-cv { width: auto; height: min(300px, 42vh); max-width: none; }
 html.remake .mm { min-width: 0; max-width: 100%; } html.remake .mm-quadro { max-width: 100%; box-sizing: border-box; }
+
+/* ---- a vitrine das lojas ---- */
+html.remake .vitrine { width: min(1040px, 96vw) !important; }
+.vt-balcao { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; margin: 4px 0 10px; }
+.vt-moldura { width: 110px; height: 100px; display: grid; place-items: center; border: 12px solid transparent; border-image: var(--px-moldura) 9 fill / 18px / 0 round; background: radial-gradient(ellipse at 50% 80%, #4A3420, #1C1510 70%); background-clip: padding-box; }
+.vt-retrato { width: 96px; height: 88px; image-rendering: pixelated; }
+.vt-fala { position: relative; border: 14px solid transparent; border-image: var(--px-papel) 12 fill / 24px / 0 round; padding: 4px 10px; color: #3A2614; }
+.vt-fala::before { content: ''; position: absolute; left: -24px; top: 26px; border: 10px solid transparent; border-right-color: #C9AA74; } /* a ponta do balão */
+.vt-dono { display: inline-block; margin: -6px 0 2px -4px; padding: 1px 20px; color: #FFE9C8; font-size: 17px; letter-spacing: .05em; border: 7px solid transparent; border-image: var(--px-fita) 0 10 fill / 0 18px / 0 stretch; text-shadow: 1px 1px 0 #3A0E0E; }
+.vt-fala p { margin: 2px 0 0; font-size: 18px; line-height: 1.35; font-style: italic; color: #3A2614; }
+.vt-bolsa { display: grid; justify-items: center; padding: 6px 14px; border: 8px solid transparent; border-image: var(--px-couro) 8 fill / 16px / 0 round; color: #FFE9A8; min-width: 84px; }
+.vt-bolsa b { font-size: 24px; line-height: 1; } .vt-bolsa small { color: #D8BE8A; font-size: 13px; }
+.vt-aviso { margin: 0 0 8px; padding: 6px 10px; background: #3A1A12; box-shadow: 0 0 0 2px #0D0806, inset 0 0 0 2px #8E2B2B; color: #FFD9C0; font-size: 16px; }
+.vt-corpo { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr); gap: 14px; align-items: start; }
+.vt-grade { min-width: 0; max-height: min(52vh, 460px); overflow-y: auto; padding-right: 4px; scrollbar-color: #8E2B2B #2E1F14; }
+.vt-sec { display: inline-block; margin: 6px 0 4px -4px !important; padding: 1px 24px; color: #FFE9C8 !important; font-size: 15px !important; letter-spacing: .08em; border: 7px solid transparent; border-image: var(--px-fita) 0 10 fill / 0 18px / 0 stretch; text-shadow: 1px 1px 0 #3A0E0E; }
+.vt-linha { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; padding: 8px; border: 8px solid transparent; border-image: var(--px-couro) 8 fill / 16px / 0 round; margin-bottom: 6px; }
+html.remake .vt-carta { display: grid; justify-items: center; gap: 3px; padding: 8px 4px 6px; min-height: 108px; cursor: pointer; background: #24180F; border: 0; border-radius: 0; color: #F1E9D2; box-shadow: inset 0 2px 0 #3E2A1A, inset 0 -2px 0 #120C08, 0 0 0 2px #0D0806, inset 0 0 0 3px var(--rar, transparent); font: inherit; }
+html.remake .vt-carta:hover, html.remake .vt-carta:focus-visible { background: #33231A; outline: 0; }
+html.remake .vt-carta.sel { background: #4A3020; box-shadow: inset 0 2px 0 #6E4A2E, inset 0 -2px 0 #120C08, 0 0 0 2px #FFE9A8, inset 0 0 0 3px var(--rar, transparent); }
+.vt-ico { width: 48px; height: 48px; display: grid; place-items: center; border: 6px solid transparent; border-image: var(--px-quadro) 6 fill / 12px / 0 round; }
+.vt-ico canvas { width: 34px !important; height: 34px !important; }
+.vt-tranca { font-size: 22px; color: #6A5034; }
+.vt-nome { font-size: 14px; line-height: 1.1; text-align: center; min-height: 30px; display: grid; place-items: center; }
+.vt-preco { display: inline-flex; align-items: center; gap: 3px; color: #FFE08A; font-size: 15px; }
+.vt-preco canvas { width: 14px !important; height: 13px !important; }
+.vt-selo { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: #9BE0B4; }
+.vt-usando .vt-selo { color: #FFE9A8; } .vt-trancado { opacity: .55; } .vt-carta.caro .vt-preco { color: #E07A6E; }
+.vt-ficha { position: relative; min-height: 260px; border: 14px solid transparent; border-image: var(--px-papel) 12 fill / 24px / 0 round; padding: 8px 12px; color: #2E1E10; margin-top: 14px; }
+.vt-ficha::before, .vt-ficha::after { content: ''; position: absolute; left: -10px; right: -10px; height: 10px; background: linear-gradient(#6A4A2A, #A8804E 35%, #5A3A20 80%, #2A1A0E); box-shadow: 0 0 0 2px #0D0806; }
+.vt-ficha::before { top: -18px; } .vt-ficha::after { bottom: -18px; }
+.vt-topo { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.vt-icone-g { width: 84px; height: 84px; display: grid; place-items: center; border: 6px solid transparent; border-image: var(--px-medalha) 6 fill / 12px / 0 stretch; }
+.vt-icone-g canvas, .vt-big { width: 64px !important; height: 64px !important; }
+.vt-ficha h4 { margin: 0; color: #7A1E1E; font-size: 22px; text-shadow: none; } .vt-ficha small { color: #6A5034; font-style: italic; font-size: 15px; }
+.vt-desc { font-size: 18px; line-height: 1.4; white-space: pre-line; margin: 10px 0; color: #2E1E10; }
+.vt-acao { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-top: 8px; }
+.vt-custa { font-size: 17px; color: #3A2614; display: inline-flex; gap: 4px; align-items: center; } .vt-custa .vt-preco { color: #7A4A10; } .vt-custa.falta { color: #8E2B2B; }
+.vt-vazio { color: #6A5034; font-style: italic; font-size: 18px; }
+.vt-extra { font-size: 16px; color: #3A2614; margin: 6px 0; } .vt-extra b { color: #7A1E1E; }
+@media (max-width: 720px), (max-height: 520px) { .vt-corpo { grid-template-columns: 1fr; } .vt-balcao { grid-template-columns: auto 1fr; } .vt-bolsa { grid-column: 1 / -1; grid-auto-flow: column; gap: 8px; align-items: center; } .vt-moldura { width: 80px; height: 74px; } .vt-retrato { width: 64px; height: 59px; } .vt-grade { max-height: none; } .vt-fala p { font-size: 16px; } }
+.vt-rar { display: inline-block; width: 9px; height: 9px; margin-right: 6px; box-shadow: 0 0 0 1px #0D0806; vertical-align: 1px; }
+html.remake .vt-ficha h4 { color: #7A1E1E !important; font-size: 22px !important; text-transform: none !important; letter-spacing: .02em !important; text-shadow: none !important; }

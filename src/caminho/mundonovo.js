@@ -20,6 +20,8 @@ import { falarPedro, semChamado, sardesAoEntrar, rotuloSardesNovo, usarSardesNov
 import { sitioAoEntrar, rotuloSitio, usarSitio, falarConjugeSitio } from './sitio.js';
 import { casaAoEntrar, rotuloCasa, usarCasa } from './lar.js';
 import { lojaDeLidia } from './azeites.js';
+import { vitrine } from './vitrine.js';
+import { iconeItem, iconeArma } from './pixel/icones.js';
 import { falarConvite } from './convites.js';
 import { ehNatal } from './tempo.js';
 import { RX } from './dados.js';
@@ -271,14 +273,14 @@ function sortearViajante(G) {
 }
 export async function viajante(G, ob) {
   const c = G.char, cm = G.cm, V = G.viajante || { rel: [], arma: null };
-  const ofertas = [...V.rel.filter(id => !cm.reliquias.includes(id)).map(id => ({ id, R: RELIQUIAS[id], preco: RELIQUIAS[id].porto }))];
-  const A = V.arma && !cm.armas?.[c.cls + ':' + V.arma] ? ARMAS_ALT[G.tipoArma][V.arma] : null;
-  if (!ofertas.length && !A) return G.ui.dialog({ nome: ob.nome, look: ob.look, texto: 'Vendi tudo o que trouxe. O mar é largo e meu barco é pequeno: volto quando o vento quiser.', acoes: [{ label: 'Boa viagem' }] });
-  const acoes = ofertas.map(o => ({ label: rarDe(o.R).marca + ' ' + o.R.nome + ' — ' + o.preco, fn: () => { if (c.data.gold < o.preco) return G.ui.toast('Faltam denários.'); c.data.gold -= o.preco; sfx('coin'); G.ganhar(o.id); G.salvar(); } }));
-  if (A) { const preco = Math.round(A.preco * 0.8); acoes.push({ label: rarDe(A).marca + ' ' + A.nome + ' — ' + preco, fn: () => { if (c.data.gold < preco) return G.ui.toast('Faltam denários.'); cm.armas = cm.armas || {}; cm.armaAlt = cm.armaAlt || {}; const volta = valorTroca(ARMAS_ALT[G.tipoArma][cm.armaAlt[c.cls]]); c.data.gold += volta - preco; cm.armas[c.cls + ':' + V.arma] = 2; cm.armaAlt[c.cls] = V.arma; G.equiparArma(); sfx('coin'); G.salvar(); G.ui.toast('Agora é sua: ' + A.nome + '. Já está na sua mão.' + (volta ? ' O mercador ficou com a antiga: +' + volta + ' denários (peregrino carrega uma arma só).' : ''), 5500); } }); }
-  acoes.push({ label: 'Só olhar' });
-  const lista = ofertas.map(o => '◆ ' + o.R.nome + ' (' + rarDe(o.R).nome + ') — ' + o.R.desc).join('\n') + (A ? '\n◆ ' + A.nome + ' (' + rarDe(A).nome + ', ' + especiaisDe(A).map(k => ESPECIAIS[k].nome).join(' + ') + ') — ' + A.desc : '');
-  return G.ui.dialog({ nome: ob.nome, look: ob.look, texto: 'Coisas de além-mar, que nenhum mercador daqui tem. Amanhã eu posso não estar.\n\n' + lista + '\n\nVocê tem ' + Math.floor(c.data.gold) + ' denários.', acoes });
+  const ofertas = () => V.rel.filter(id => !cm.reliquias.includes(id)).map(id => ({ id, R: RELIQUIAS[id], preco: RELIQUIAS[id].porto }));
+  const A = () => V.arma && !cm.armas?.[c.cls + ':' + V.arma] ? ARMAS_ALT[G.tipoArma][V.arma] : null;
+  if (!ofertas().length && !A()) return G.ui.dialog({ nome: ob.nome, look: ob.look, texto: 'Vendi tudo o que trouxe. O mar é largo e meu barco é pequeno: volto quando o vento quiser.', acoes: [{ label: 'Boa viagem' }] });
+  return vitrine(G, { titulo: 'O navio de além-mar', dono: ob.nome, look: ob.look, fala: 'Coisas de além-mar, que nenhum mercador daqui tem. Amanhã eu posso não estar.',
+    secoes: () => { const a = A(), itens = ofertas().map(o => ({ chave: o.id, icone: iconeItem(o.id), nome: o.R.nome, sub: rarDe(o.R).nome + ' · ' + o.R.ref, desc: o.R.desc, preco: o.preco, cor: rarDe(o.R).cor, estado: 'comprar', acao: { rot: 'Comprar', fn: () => { c.data.gold -= o.preco; sfx('coin'); G.ganhar(o.id); G.salvar(); } } }));
+      if (a) { const preco = Math.round(a.preco * 0.8); itens.push({ chave: 'arma', icone: iconeArma(G.tipoArma, a.lamina, 34), nome: a.nome, sub: rarDe(a).nome + ' · ' + especiaisDe(a).map(k => ESPECIAIS[k].nome).join(' + '), desc: a.desc + '\n\nPeregrino carrega uma arma só: a da mão fica com o mercador.', preco, cor: rarDe(a).cor, estado: 'comprar',
+        acao: { rot: 'Comprar e levar', fn: () => { cm.armas = cm.armas || {}; cm.armaAlt = cm.armaAlt || {}; const volta = valorTroca(ARMAS_ALT[G.tipoArma][cm.armaAlt[c.cls]]); c.data.gold += volta - preco; cm.armas[c.cls + ':' + V.arma] = 2; cm.armaAlt[c.cls] = V.arma; G.equiparArma(); sfx('coin'); G.salvar(); G.ui.toast('Agora é sua: ' + a.nome + '.' + (volta ? ' O mercador ficou com a antiga: +' + volta + ' denários.' : ''), 5500); } } }); }
+      return [{ titulo: 'Trazido de longe', itens }]; } });
 }
 
 // a seta dourada em Sardes: a vela apagada mais perto, ou quem ainda espera a Palavra, ou Epafras

@@ -64,6 +64,9 @@ const ITENS = {
   ancora: ['....OOO....', '....O.O....', '....OOO....', '.....O.....', '..OOOOOOO..', '.....O.....', 'O....O....O', 'OO...O...OO', '.OO..O..OO.', '..OOOOOOO..'],
   estrela: ['.....O.....', '.....W.....', '....OWO....', 'OOOOWWWOOOO', '..OOWWWOO..', '...OOWOO...', '..OO...OO..', '.OO.....OO.'],
   barquinho: ['.....O.....', '.....OW....', '.....OWW...', '.....OWWW..', '.....O.....', 'oOOOOOOOOOo', '.oOOOOOOOo.', '..ooooooo..'],
+  cao: ['.........oo', '........OOO', '.......OOWo', 'o......OOO.', 'oOOOOOOOO..', '.OWWOOOOO..', '.OOOOOOOO..', '.O.O..O.O..', '.O.O..O.O..', '.o.o..o.o..'],
+  leao: ['......ooo..', '.....oOOOo.', '....oOOWOOo', 'o...oOOOOo.', 'oOOOOOOOoo.', '.OWWOOOOO..', '.OOOOOOOO..', '.O.O..O.O..', '.O.O..O.O..', '.o.o..o.o..'],
+  papagaio: ['....OOO....', '...OWWOO...', '...OOOOOo..', '..oOOOOO...', '..OOOOOO...', '..OOWOOO...', '...OOOO....', '....OOo....', '....OOo....', '...o..o....'],
   flor: ['...O...O...', '..OWO.OWO..', '...OOWOO...', '..OOWWWOO..', '...OOWOO...', '..OWO.OWO..', '...O.o.O...', '.....o.....', '....oo.....']
 };
 // item → [desenho, cor]
@@ -82,6 +85,7 @@ const DE = {
   lampada_vigia: ['candeia', '#FFE08A'], figo: ['gota', '#8E3B5E'], peixe: ['peixe', '#9FC8D8'], flor: ['flor', '#E86A8A'], mel: ['odre', '#E8B030'], pao: ['pao', '#D9A86A'],
     ancora_esperanca: ['ancora', '#9FB0C0'], vela_paulo: ['barquinho', '#E8E2CF'], estrela_magos: ['estrela', '#FFE08A'], veste_branca: ['tunica', '#F4F1E6'],
   vara_florida: ['flor', '#F2B8D0'], cantico_novo: ['onda', '#E8C24A'], pomba_jordao: ['pomba', '#FFF4CF'],
+  pet_cachorro: ['cao', '#A8743E'], pet_leao: ['leao', '#D9A040'], pet_papagaio: ['papagaio', '#3FA85A'],
   tornado: ['fogo', '#FF8A2A'], raios: ['raio', '#FFE26B'], enchente: ['onda', '#5ED1E8'], vento: ['vento', '#BFF0F8'], espirito: ['pomba', '#FFE9A8']
 };
 const prontos = new Map();
