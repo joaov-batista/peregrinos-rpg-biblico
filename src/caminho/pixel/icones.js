@@ -94,12 +94,45 @@ export function iconeItem(id, tam = 30) {
   return cv;
 }
 
-// ícone de uma arma (tipo da vocação), na cor da lâmina da variação
-const ARMA_DESENHO = { espada: 'espada', adaga: 'adaga', lanca: 'lanca', cajado: 'cajado', trombeta: 'trombeta', funda: 'funda', chicote: 'chicote' };
+// ícone de uma arma (tipo da vocação), na cor da lâmina da variação. As armas são as do tempo: o gládio romano,
+// o pugio, a lança de ponta em folha, o cajado de pastor, o shofar (o chifre de carneiro), a funda de Davi e o chicote.
+// Cada uma é desenhada por partes ao longo da diagonal (punho embaixo à esquerda, ponta em cima à direita), com
+// luz do lado de cima, sombra do lado de baixo, sulco na lâmina e o punho de madeira com voltas de couro.
+const S2 = Math.SQRT1_2;
+function armaPx(tipo, lamina) {
+  const s = new Sprite(18, 18), L = rampa(lamina || '#B8D0E0'), M = rampa('#8A5A34'), Ou = rampa('#C9A44A'), C = rampa('#6A4428'), Ch = rampa('#D8C49A'), P = rampa('#8E8A80');
+  const eixo = (x, y, x0 = 3, y0 = 14) => [((x - x0) - (y - y0)) * S2, ((x - x0) + (y - y0)) * S2]; // u ao longo da arma, v para o lado (v < 0: lado da luz)
+  const tons = (R, v, hw, sulco) => { if (sulco) return v < -hw + 0.8 ? R[4] : v > hw - 0.8 ? R[1] : Math.abs(v) < 0.4 ? R[2] : v < 0 ? R[3] : R[3]; const k = v / Math.max(0.6, hw); return k < -0.3 ? R[3] : k > 0.4 ? R[1] : R[2]; }; // lâmina: fio aceso em cima, fio escuro embaixo, sulco no meio
+  const cada = fn => { for (let y = 0; y < 18; y++) for (let x = 0; x < 18; x++) { const c = fn(x + 0.5, y + 0.5); if (c) s.px(x, y, c); } };
+  const lamina_ = (u1, u2, hw0, ponta, folha) => (u, v) => { if (u < u1 || u > u2) return null; const t = (u - u1) / (u2 - u1), hw = folha ? hw0 * (0.75 + Math.sin(t * Math.PI) * 0.45) * (t > 0.8 ? (1 - t) / 0.2 : 1) : hw0 * (u > u2 - ponta ? (u2 - u) / ponta : 1); return Math.abs(v) <= hw + 0.15 ? tons(L, v, hw, true) : null; };
+  const empunhadura = (u1, u2, hw = 0.8) => (u, v) => u >= u1 && u <= u2 && Math.abs(v) <= hw ? (Math.floor((u - u1) * 1.5) % 2 ? tons(C, v, hw) : tons(M, v, hw)) : null; // madeira com voltas de couro
+  const guarda = (u0, hw, esp = 0.9) => (u, v) => Math.abs(u - u0) <= esp / 2 && Math.abs(v) <= hw ? (v < -hw * 0.3 ? Ou[4] : v < hw * 0.4 ? Ou[3] : Ou[1]) : null;
+  const pomo = (u0, r) => (u, v) => (u - u0) ** 2 + v * v <= r * r ? ((u - u0) - v < -0.3 ? Ou[4] : (u - u0) + v > 0.6 ? Ou[1] : Ou[3]) : null;
+  const juntar = (...ps) => (x, y) => { const [u, v] = eixo(x, y); for (const f of ps) { const c = f(u, v); if (c) return c; } return null; };
+  if (tipo === 'adaga') cada(juntar(pomo(2.4, 1.6), guarda(5.8, 2.9, 1.4), empunhadura(3.4, 5.1, 1), lamina_(6.4, 14.6, 1.8, 0, true))); // o pugio: lâmina em folha, guarda e pomo largos
+  else if (tipo === 'lanca') { cada(juntar((u, v) => u >= 12.6 && u <= 13.6 && Math.abs(v) <= 1 ? Ou[(u > 13.1) ? 3 : 2] : null, lamina_(13.6, 19.6, 1.9, 0, true), empunhadura(-3, 12.6, 0.85))); }
+  else if (tipo === 'cajado') { // o cajado do pastor: a vara e a curva no alto
+    const [cx, cy] = [13.4, 4.4]; cada((x, y) => { const [u, v] = eixo(x, y); if (u >= -3 && u <= 13 && Math.abs(v) <= 0.75) return tons(M, v, 0.75); const d = Math.hypot(x - cx, y - cy); if (d >= 1.6 && d <= 2.9 && (y < cy + 0.8 || x < cx - 0.5)) return d < 2.25 ? M[3] : M[1]; return null; }); }
+  else if (tipo === 'trombeta') { // o shofar: o chifre de carneiro, curvo, com os anéis do chifre e o bocal escuro
+    const pts = []; for (let i = 0; i <= 40; i++) { const t = i / 40; pts.push([2.5 + t * 12.5, 13.5 - t * 9 - Math.sin(t * Math.PI) * 3.2, 0.7 + t * t * 2.3]); }
+    cada((x, y) => { let best = 1e9, bi = 0; for (let i = 0; i < pts.length; i++) { const d = Math.hypot(x - pts[i][0], y - pts[i][1]) - pts[i][2]; if (d < best) { best = d; bi = i; } } if (best > 0.1) return null; const anel = bi % 5 === 0 && bi > 2 && bi < 38, borda = best > -0.7; if (bi > 37) return Ch[1]; return anel ? Ch[1] : borda ? (y < pts[bi][1] ? Ch[4] : Ch[2]) : Ch[3]; }); s.px(2, 13, C[0]); s.px(3, 13, C[1]); }
+  else if (tipo === 'funda') { // a funda de Davi: duas cordas de couro, a bolsa e a pedra lisa do ribeiro
+    const corda = (x0, y0, x1, y1, cai) => { for (let i = 0; i <= 30; i++) { const t = i / 30; s.px(Math.round(x0 + (x1 - x0) * t + Math.sin(t * Math.PI) * cai), Math.round(y0 + (y1 - y0) * t), i % 3 ? C[3] : C[2]); } };
+    corda(4, 2, 7, 11, -1.5); corda(8, 1, 10, 11, 1.2); s.px(3, 1, C[2]); s.px(4, 1, C[3]); s.px(5, 2, C[2]); s.px(3, 3, C[2]); // a laçada do dedo
+    for (let y = 10; y <= 15; y++) for (let x = 5; x <= 13; x++) { const d = ((x - 9) / 4.2) ** 2 + ((y - 12.6) / 2.6) ** 2; if (d <= 1) s.px(x, y, d > 0.6 ? C[1] : y < 12 ? C[4] : C[3]); }
+    for (let y = 10; y <= 13; y++) for (let x = 8; x <= 11; x++) { const d = ((x - 9.5) / 1.8) ** 2 + ((y - 11.4) / 1.5) ** 2; if (d <= 1) s.px(x, y, d < 0.3 && y < 11.5 ? P[4] : x < 9.5 ? P[3] : P[2]); } }
+  else if (tipo === 'chicote') { // o cabo de couro trançado e a correia enrolada em laço
+    cada(juntar(pomo(1.2, 1.3), empunhadura(1.9, 7.4, 0.95)));
+    for (let i = 0; i <= 90; i++) { const t = i / 90, a = -0.8 + t * Math.PI * 2.1, r = 4.4 - t * 1.6, x = 11.2 + Math.cos(a) * r, y = 6.2 + Math.sin(a) * r * 0.85; s.px(Math.round(x), Math.round(y), t > 0.92 ? C[4] : (i >> 2) % 2 ? C[2] : C[3]); }
+    for (let i = 0; i < 4; i++) s.px(8 + i, 10 - i, C[2]); } // a correia sai do cabo
+  else cada(juntar(pomo(1.3, 1.75), guarda(5.1, 3.4, 1.5), empunhadura(2.4, 4.4, 1.05), lamina_(5.8, 17.2, 2.0, 3.2, false))); // o gládio: lâmina curta e larga, com sulco, a guarda e o pomo redondo
+  s.contorno(TINTA); return s.tela();
+}
 export function iconeArma(tipo, lamina, tam = 30) {
   const chave = 'arma:' + tipo + ':' + (lamina || ''); let cv0 = prontos.get(chave);
-  if (!cv0) { const g = ITENS[ARMA_DESENHO[tipo] || 'espada'], r = rampa(lamina || '#B8D0E0'), s = new Sprite(13, 12); s.carimbo(g, 1, 1 + ((10 - g.length) >> 1), { O: r[3], o: rampa('#8A623C')[2], W: r[4] }); s.contorno(TINTA); cv0 = s.tela(); prontos.set(chave, cv0); }
+  if (!cv0) { cv0 = armaPx(ARMAS_TIPOS.includes(tipo) ? tipo : 'espada', lamina); prontos.set(chave, cv0); }
   const cv = document.createElement('canvas'); cv.width = cv0.width; cv.height = cv0.height; cv.getContext('2d').drawImage(cv0, 0, 0);
-  cv.style.cssText = `width:${tam}px;height:${Math.round(tam * 12 / 13)}px;image-rendering:pixelated;pointer-events:none`; cv.className = 'ico-px';
+  cv.style.cssText = `width:${tam}px;height:${tam}px;image-rendering:pixelated;pointer-events:none`; cv.className = 'ico-px';
   return cv;
 }
+const ARMAS_TIPOS = ['espada', 'adaga', 'lanca', 'cajado', 'trombeta', 'funda', 'chicote'];
