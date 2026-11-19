@@ -22,10 +22,11 @@ function celulas(x, y, s) { const xi = Math.floor(x), yi = Math.floor(y); let d1
 function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
 // ---- a tela: um quadro da PixelFX com atalhos ----
+const ESPUMA = hex('#7AD4E8');
 class Tela {
   constructor(w, h) { this.w = w; this.h = h; this.f = createFrame(w, h); this.p = new Painter(this.f); this.C = this.f.color; this.L = this.f.light; }
-  set(x, y, c) { x |= 0; y |= 0; if (x < 0 || y < 0 || x >= this.w || y >= this.h || !c) return; this.C[y * this.w + x] = c; }
-  veu(x, y, c, a) { this.p.blendPx(x | 0, y | 0, c, a); } // translúcido (névoa, sombra)
+  set(x, y, c) { x |= 0; y |= 0; if (x < 0 || y < 0 || x >= this.w || y >= this.h || !c) return; const i = y * this.w + x; this.C[i] = c; if (this.M) this.M[i] = 1; } // M: marca o que foi pintado (para o reflexo saber o que é coisa e o que é água)
+  veu(x, y, c, a) { this.p.blendPx(x | 0, y | 0, c, a); if (this.P && c === ESPUMA && x >= 0 && y >= 0 && x < this.w && y < this.h) this.P[(y | 0) * this.w + (x | 0)] = 1; } // translúcido (névoa, sombra); a espuma marca onde uma coisa entra na água
   luz(x, y, c, k) { this.p.add(x | 0, y | 0, c, k); }
   brilho(x, y, r, c, k) { this.p.glow(x, y, r, c, k); }
 }
@@ -315,34 +316,37 @@ const cais = {
     } }
     for (let i = 0; i < 5; i++) for (let x = 0; x < w; x++) T.veu(x, yh + i, hex('#9A86A4'), 0.3 - i * 0.05); // a linha clara do horizonte
     for (let y = yh + 1; y < H; y++) { const k = (y - yh) / (H - yh), meia = 2 + k * 12; for (let x = sx - meia; x < sx + meia; x++) if (fbm(x * 0.12, y * 0.9, 31) > 0.6 - (1 - Math.abs(x - sx) / meia) * 0.18) T.set(x, y, tom(LUZ_Q, 0.75 - k * 0.5, x | 0, y)); }
+    T.M = new Uint8Array(w * H); T.P = new Uint8Array(w * H); // daqui em diante, tudo o que se pinta é coisa sobre a água
     // ---- a torre do fogo, num rochedo ao longe, e os rochedos no mar ----
     const torreX = Math.round(w * 0.36), torreY = yh + 10;
     pedra(T, torreX, torreY, 16, 7, PEDRA_C, { s: 51, faceta: 4, corte: 0.3, lx: 0.7, ly: -0.6, rachas: false });
+    { const yb = Math.round(torreY + 7 * 0.3) + 1; for (let i = -15; i <= 15; i++) { const X = torreX + i; let topo = yb; while (topo > torreY - 8 && !T.M[topo * w + X]) topo--; if (topo > yb - 3) T.veu(X, topo + 1, ESPUMA, 0.45); } }
     for (let y = torreY - 22; y < torreY - 5; y++) for (let x = torreX - 3; x <= torreX + 3; x++) T.set(x, y, tom(PEDRA_C, x > torreX + 1 ? 0.6 : x < torreX - 1 ? 0.2 : 0.4, x, y));
     for (let x = torreX - 4; x <= torreX + 4; x++) { T.set(x, torreY - 22, PEDRA_C[6]); T.set(x, torreY - 23, PEDRA_C[3]); }
     for (let x = torreX - 4; x <= torreX + 4; x += 2) T.set(x, torreY - 24, PEDRA_C[3]);
     T.set(torreX, torreY - 15, LANTERNA); T.set(torreX, torreY - 14, LANTERNA); this.luzes.push({ x: torreX, y: torreY - 26, r: 14, k: 0.6, fogo: true });
-    for (const [x, y, rx, ry, s] of [[w * 0.62, yh + 7, 10, 9, 61], [w * 0.66, yh + 9, 6, 5, 62], [w * 0.2, yh + 8, 8, 6, 63]]) pedra(T, x, y, rx, ry, PEDRA_C, { s, faceta: 3, corte: 0.35, lx: 0.7, ly: -0.6, musgo: MUSGO_C });
+    const espuma = (x, y, rx, ry, corte) => { const yb = Math.round(y + ry * corte) + 1; for (let i = -rx; i <= rx; i++) { const X = Math.round(x + i); let topo = yb - 1; while (topo > y - ry - 2 && !T.M[topo * w + X]) topo--; if (topo > yb - 3) { T.veu(X, topo + 1, ESPUMA, 0.5); } } };
+    for (const [x, y, rx, ry, s] of [[w * 0.62, yh + 7, 10, 9, 61], [w * 0.66, yh + 9, 6, 5, 62], [w * 0.2, yh + 8, 8, 6, 63]]) { pedra(T, x, y, rx, ry, PEDRA_C, { s, faceta: 3, corte: 0.35, lx: 0.7, ly: -0.6, musgo: MUSGO_C }); espuma(x, y, rx, ry, 0.35); }
     // ---- as ruínas do mundo antigo, na água: blocos e colunas partidas, com musgo e flores ----
-    const ruina = (x, y, l, a, p) => { caixa(T, x, y, l, a, p, PEDRA_C, PEDRA_C, PEDRA_C, { vf: 0.42, vl: 0.25, vt: 0.62, tex: true }); for (let i = 0; i < l + p * 0.62; i++) if (h2(x + i, y, 3) < 0.55) { const X = Math.round(x + i), Y = Math.round(y - 1 - Math.max(0, i - l) * 0.42 + (i < l ? 0 : 0)); T.set(X, Y, MUSGO_C[3 + (h2(X, 1, 2) * 3 | 0)]); if (h2(X, 2, 2) < 0.25) T.set(X, Y + 1, MUSGO_C[2]); if (h2(X, 3, 2) < 0.1) T.set(X, Y - 1, hex('#E07AA0')); } for (let i = 0; i < l; i++) { T.veu(x + i, y + a, hex('#7AD4E8'), 0.55); T.veu(x + i, y + a + 1, hex('#0A1430'), 0.45); } };
+    const ruina = (x, y, l, a, p) => { caixa(T, x, y, l, a, p, PEDRA_C, PEDRA_C, PEDRA_C, { vf: 0.42, vl: 0.25, vt: 0.62, tex: true }); for (let i = 0; i < l + p * 0.62; i++) if (h2(x + i, y, 3) < 0.55) { const X = Math.round(x + i), Y = Math.round(y - 1 - Math.max(0, i - l) * 0.42 + (i < l ? 0 : 0)); T.set(X, Y, MUSGO_C[3 + (h2(X, 1, 2) * 3 | 0)]); if (h2(X, 2, 2) < 0.25) T.set(X, Y + 1, MUSGO_C[2]); if (h2(X, 3, 2) < 0.1) T.set(X, Y - 1, hex('#E07AA0')); } for (let i = 0; i < l; i++) { T.veu(x + i, y + a, ESPUMA, 0.55); T.veu(x + i, y + a + 1, hex('#0A1430'), 0.45); } };
     const rx0 = Math.round(w * 0.44);
     // um arco partido, de um aqueduto ou de uma porta antiga
     { const ax = Math.round(w * 0.36), ay = 136; caixa(T, ax, ay - 30, 6, 30, 5, PEDRA_C, PEDRA_C, PEDRA_C, { vf: 0.45, vl: 0.25, vt: 0.6, tex: true }); caixa(T, ax + 24, ay - 22, 6, 22, 5, PEDRA_C, PEDRA_C, PEDRA_C, { vf: 0.45, vl: 0.25, vt: 0.6, tex: true });
       for (let a = 0; a <= 40; a++) { const t = Math.PI - a / 40 * Math.PI * 0.82, X = ax + 15 + Math.cos(t) * 13, Y = ay - 30 - Math.sin(t) * 10; for (let k = 0; k < 4; k++) T.set(X, Y - k, tom(PEDRA_C, k === 3 ? 0.75 : 0.45 - k * 0.04, X | 0, (Y - k) | 0)); if (a % 6 === 0) T.set(X, Y - 1, PEDRA_C[1]); }
       for (let i = 0; i < 18; i++) { const X = ax + h2(i, 1, 8) * 28, Y = ay - 30 - h2(i, 2, 8) * 10; T.set(X, Y - 4, MUSGO_C[4]); T.set(X, Y - 3, MUSGO_C[3]); if (h2(i, 3, 8) < 0.4) for (let j = 0; j < 6; j++) T.set(X, Y + j, MUSGO_C[2]); }
-      for (const [x0, l] of [[ax, 6], [ax + 24, 6]]) for (let i = 0; i < l; i++) { T.veu(x0 + i, ay, hex('#7AD4E8'), 0.55); for (let j = 1; j < 10; j++) T.veu(x0 + i, ay + j, PEDRA_C[1], 0.4 - j * 0.04); } }
+      for (const [x0, l] of [[ax, 6], [ax + 24, 6]]) for (let i = 0; i < l; i++) { T.veu(x0 + i, ay, ESPUMA, 0.55); for (let j = 1; j < 10; j++) T.veu(x0 + i, ay + j, PEDRA_C[1], 0.4 - j * 0.04); } }
     ruina(rx0, 124, 8, 14, 5); ruina(rx0 + 10, 132, 6, 7, 4); ruina(rx0 - 16, 140, 9, 8, 5); ruina(rx0 + 2, 104, 5, 16, 4); ruina(rx0 + 24, 118, 4, 6, 3); ruina(Math.round(w * 0.3), 150, 10, 6, 6); ruina(Math.round(w * 0.3) + 12, 158, 6, 5, 4);
     // ---- a casa do pescador, sobre a base de pedra ----
     const cx0 = w - 92, cx1 = w - 20, cb = 122; // frente da casa: de cx0 a cx1; cb = chão do terraço
     caixa(T, cx0 - 6, cb, cx1 - cx0 + 12, 14, 14, PEDRA_C, PEDRA_C, null, { vf: 0.45, vl: 0.25, tex: true }); // a base de pedra
     for (let j = 0; j < 14; j += 4) for (let i = (j / 4 % 2) * 4; i < cx1 - cx0 + 12; i += 8) T.set(cx0 - 6 + i, cb + j, PEDRA_C[1]);
-    for (let i = 0; i < cx1 - cx0 + 12; i++) { T.veu(cx0 - 6 + i, cb + 14, hex('#7AD4E8'), 0.5); T.veu(cx0 - 6 + i, cb + 15, hex('#0A1430'), 0.4); }
+    for (let i = 0; i < cx1 - cx0 + 12; i++) { T.veu(cx0 - 6 + i, cb + 14, ESPUMA, 0.5); T.veu(cx0 - 6 + i, cb + 15, hex('#0A1430'), 0.4); }
     // o terraço de tábuas em cima da base
     for (let k = 0; k < 14; k++) for (let i = 0; i < cx1 - cx0 + 12; i++) { const X = Math.round(cx0 - 6 + i + k * PROF[0]), Y = Math.round(cb - 1 + k * PROF[1]); T.set(X, Y, tom(MADEIRA, (i % 4 === 0 ? 0.35 : 0.6) + (h2(X, Y, 3) - 0.5) * 0.1, X, Y)); }
     // as paredes: reboco claro com a armação de madeira
     const pt = cb - 42;
-    for (let y = pt; y < cb - 1; y++) for (let x = cx0; x < cx1; x++) { const borda = x === cx0 || x === cx1 - 1 || x === cx0 + 26 || x === cx0 + 50 || y === pt || y === cb - 2 || y === pt + 19; T.set(x, y, borda ? tom(MADEIRA, 0.3 + (x === cx0 ? 0 : 0.1), x, y) : tom(REBOCO, 0.42 + (y - pt) / 42 * -0.12 + (h2(x, y, 5) - 0.5) * 0.08, x, y, 0.3)); }
-    for (let k = 0; k < 10; k++) for (let y = pt; y < cb - 1; y++) { const X = Math.round(cx1 + k * PROF[0]), Y = Math.round(y + k * PROF[1]); T.set(X, Y, tom(REBOCO, 0.22 + (h2(X, Y, 5) - 0.5) * 0.06, X, Y)); if (k === 9) T.set(X, Y, MADEIRA[1]); }
+    for (let y = pt; y < cb - 1; y++) for (let x = cx0; x < cx1; x++) { const borda = x === cx0 || x === cx1 - 1 || x === cx0 + 26 || x === cx0 + 50 || y === pt || y === cb - 2 || y === pt + 19; T.set(x, y, borda ? tom(MADEIRA, 0.3 + (x === cx0 ? 0 : 0.1), x, y) : tom(REBOCO, 0.4 + (y - pt) / 42 * -0.12 + (fbm(x * 0.12, y * 0.16, 5) - 0.5) * 0.2 + (x > cx1 - 8 ? 0.06 : 0), x, y, 0.22)); } // reboco em manchas largas (gasto, remendado), não em chuvisco
+    for (let k = 0; k < 10; k++) for (let y = pt; y < cb - 1; y++) { const X = Math.round(cx1 + k * PROF[0]), Y = Math.round(y + k * PROF[1]); T.set(X, Y, mixc2(tom(REBOCO, 0.5 + k * 0.025 + (fbm(X * 0.12, Y * 0.16, 6) - 0.5) * 0.14, X, Y, 0.22), hex('#E8946A'), 0.22 + k * 0.02)); if (k === 9) T.set(X, Y, hex('#F2B07A')); } // o lado virado para o poente pega a luz quente do sol
     // as janelas acesas, com as grades de madeira e a floreira
     const janela = (x, y, l, a) => { for (let j = 0; j < a; j++) for (let i = 0; i < l; i++) T.set(x + i, y + j, tom(LUZ_Q, 0.95 - j / a * 0.35 - (i === 0 ? 0.2 : 0), x + i, y + j)); for (let j = -1; j <= a; j++) { T.set(x - 1, y + j, MADEIRA[2]); T.set(x + l, y + j, MADEIRA[2]); T.set(x + (l >> 1), y + j, MADEIRA[3]); } for (let i = -1; i <= l; i++) { T.set(x + i, y - 1, MADEIRA[4]); T.set(x + i, y + a, MADEIRA[2]); T.set(x + i, y + (a >> 1), MADEIRA[3]); } this.luzes.push({ x: x + l / 2, y: y + a / 2, r: 16, k: 0.35 }); };
     janela(cx0 + 7, pt + 5, 11, 10); janela(cx0 + 32, pt + 5, 11, 10); janela(cx0 + 56, pt + 24, 7, 9);
@@ -360,7 +364,7 @@ const cais = {
     for (let i = -3; i <= 3; i++) { T.set(cx0 + 62 + i, cb - 3, MADEIRA[5]); T.set(cx0 + 62 + i, cb - 2, MADEIRA[3]); T.set(cx0 + 62 + i, cb - 4, i % 2 ? hex('#9AB0C8') : hex('#C8D4E0')); }
     // o telhado de telhas, com a empena na frente e a água do lado
     const rt = pt - 2, apice = rt - 22, meio = (cx0 + cx1) / 2;
-    for (let y = apice; y <= rt; y++) { const a = (y - apice) / (rt - apice), mx = (cx1 - cx0 + 8) / 2 * a; for (let x = Math.round(meio - mx); x <= meio + mx; x++) T.set(x, y, tom(REBOCO, 0.3 + (h2(x, y, 9) - 0.5) * 0.06, x, y)); }
+    for (let y = apice; y <= rt; y++) { const a = (y - apice) / (rt - apice), mx = (cx1 - cx0 + 8) / 2 * a; for (let x = Math.round(meio - mx); x <= meio + mx; x++) T.set(x, y, tom(REBOCO, 0.3 + (fbm(x * 0.14, y * 0.14, 9) - 0.5) * 0.12, x, y, 0.2)); }
     for (let k = 0; k < 18; k++) for (let i = 0; i <= 44; i++) { const t = i / 44, X = Math.round(meio + (cx1 + 5 - meio) * t + k * PROF[0] * 1.15), Y = Math.round(apice + (rt + 1 - apice) * t + k * PROF[1] * 1.15); const fileira = (i % 4 === 0), dente = ((k + (i >> 2)) % 3 === 0); T.set(X, Y, tom(TELHA, 0.5 + (fileira ? -0.25 : 0) + (dente ? 0.12 : 0) - t * 0.15 + (h2(X, Y, 4) - 0.5) * 0.1, X, Y, 0.3)); T.set(X, Y + 1, tom(TELHA, 0.3 - t * 0.1, X, Y + 1)); }
     for (let i = 0; i <= 44; i++) { const t = i / 44; T.set(meio - (meio - cx0 + 5) * t, apice + (rt + 1 - apice) * t, TELHA[6]); T.set(meio - (meio - cx0 + 5) * t, apice + (rt + 2 - apice) * t, TELHA[2]); T.set(meio + (cx1 + 5 - meio) * t, apice + (rt + 1 - apice) * t, TELHA[7]); }
     for (let k = 0; k < 18; k++) T.set(meio + k * PROF[0] * 1.15, apice + k * PROF[1] * 1.15, TELHA[7]);
@@ -374,7 +378,7 @@ const cais = {
     const borda = t => [A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t];
     this.cais = { A, B, V, borda };
     // as estacas embaixo, com o reflexo e o brilho da água em volta
-    for (let k = 0; k <= 5; k++) for (const lado of [0, 1]) { const [x, y] = borda(k / 5), X = Math.round(x + V[0] * lado), Y = Math.round(y + V[1] * lado); for (let j = 0; j < 10; j++) for (let i = 0; i < 2; i++) T.set(X + i, Y + 2 + j, tom(MADEIRA, 0.25 + i * 0.25, X + i, Y + 2 + j)); for (let j = 0; j < 6; j++) T.veu(X, Y + 12 + j, MADEIRA[1], 0.5 - j * 0.07); T.veu(X - 1, Y + 11, hex('#7AD4E8'), 0.6); T.veu(X + 2, Y + 11, hex('#7AD4E8'), 0.6); }
+    for (let k = 0; k <= 5; k++) for (const lado of [0, 1]) { const [x, y] = borda(k / 5), X = Math.round(x + V[0] * lado), Y = Math.round(y + V[1] * lado); for (let j = 0; j < 10; j++) for (let i = 0; i < 2; i++) T.set(X + i, Y + 2 + j, tom(MADEIRA, 0.25 + i * 0.25, X + i, Y + 2 + j)); for (let j = 0; j < 6; j++) T.veu(X, Y + 12 + j, MADEIRA[1], 0.5 - j * 0.07); T.veu(X - 1, Y + 11, ESPUMA, 0.6); T.veu(X + 2, Y + 11, ESPUMA, 0.6); }
     // o tabuado: tábuas atravessadas, uma clara e uma escura, com as frestas
     for (let i = 0; i <= N * 2; i++) { const t = i / (N * 2), [x, y] = borda(t), q = i % 9, tab = Math.floor(i / 9), fresta = q === 8; for (let u = 0; u <= 1; u += 0.05) { const X = Math.round(x + V[0] * u), Y = Math.round(y + V[1] * u), veio = fbm(tab * 3.1, u * 9, 3); T.set(X, Y, fresta ? MADEIRA[1] : tom(MADEIRA, 0.48 + (h2(tab, 1, 3) - 0.5) * 0.22 + (veio - 0.5) * 0.25 + (q === 0 ? 0.12 : 0) - u * 0.1, X, Y, 0.25)); } if (h2(tab, 7, 3) < 0.3 && q === 4) { const X = Math.round(x + V[0] * 0.5), Y = Math.round(y + V[1] * 0.5); T.set(X, Y, MADEIRA[2]); } }
     for (let i = 0; i <= N; i++) { const [x, y] = borda(i / N); for (let j = 1; j <= 3; j++) T.set(x + V[0], y + V[1] + j, tom(MADEIRA, 0.3 - j * 0.06, Math.round(x), Math.round(y) + j)); }
@@ -387,9 +391,14 @@ const cais = {
       corda(T, X0, Y0, X1, Y1, cai, hex('#A89A80'));
       const panos = [['#E8DCC0', 5, 8, 0.18], ['#3A4A8A', 4, 10, 0.38], ['#E8DCC0', 4, 6, 0.56], ['#A8442E', 4, 8, 0.74]];
       for (const [c, l, a, u] of panos) { const cc = hex(c); for (let i = 0; i < l; i++) { const uu = u + i / (X1 - X0), PX = Math.round(X0 + (X1 - X0) * uu), PY = Math.round(ry(uu)); for (let j = 1; j <= a - (i === l - 1 ? 1 : 0); j++) T.set(PX, PY + j, j === a || i === l - 1 ? mixc(cc, 0.62) : i === 0 ? mixc(cc, 0.85) : cc); T.set(PX, PY, hex('#5A4A3A')); } } }
+    // ---- o reflexo: tudo o que toca a água se espelha nela, ondulado e escurecido, partido em riscos ----
+    refletir(T, yh); T.M = null; T.P = null;
+    // a sombra do peregrino nas tábuas (ele entra na parte viva; a sombra é do chão)
+    { const [hx, hy] = borda(0.56), X = Math.round(hx + V[0] * 0.5), Y = Math.round(hy + V[1] * 0.5) + 1; for (let i = -6; i <= 6; i++) for (let j = -1; j <= 1; j++) { const d = (i * i) / 36 + j * j; if (d < 1) T.veu(X + i + 2, Y + j, hex('#0C0810'), 0.5 * (1 - d)); } }
     // ---- o primeiro plano: folhagem escura na esquerda (onde fica o menu) e capim de praia ----
     const bl = []; for (let i = 0; i < 9; i++) bl.push({ x: R() * 70 - 10, y: H - R() * 34, r: 10 + R() * 12 });
-    copa(T, bl, FOLHA_C, { s: 71, folha: 3, forca: 0.45, base: 0.08, lx: 0.6, ly: -0.7, borda: 0.05 });
+    T.M = new Uint8Array(w * H); copa(T, bl, FOLHA_C, { s: 71, folha: 3, forca: 0.45, base: 0.08, lx: 0.6, ly: -0.7, borda: 0.05 });
+    { const M = T.M; for (let y = 1; y < H - 1; y++) for (let x = 1; x < w - 1; x++) { const i = y * w + x; if (!M[i]) continue; if (!M[i + 1] && y < H - 8) T.set(x, y, h2(x, y, 4) > 0.3 ? hex('#5A4A6E') : hex('#7A5A70')); else if (!M[i - w] && !M[i + 1 - w]) T.set(x, y, hex('#3E3A5A')); } T.M = null; } // o contorno do lado do sol acende: a moita ganha forma contra a água
     for (let i = 0; i < 26; i++) { const x = R() * 90, hh = 14 + R() * 30, b = 4 + R() * 10; for (let j = 0; j < hh; j++) { const q = j / hh; T.set(x + b * q * q, H - 2 - j, FOLHA_C[q > 0.8 ? 3 : 1]); } }
     for (let i = 0; i < 6; i++) { const x = w - 8 - R() * 30, hh = 10 + R() * 14; for (let j = 0; j < hh; j++) { const q = j / hh; T.set(x - 6 * q * q, H - j, FOLHA_C[q > 0.8 ? 3 : 1]); } }
   },
@@ -406,7 +415,7 @@ const cais = {
     const [mx, my] = this.chamine; for (let i = 0; i < 7; i++) { const k = (t * 0.12 + i / 7) % 1, X = mx + Math.sin(t * 0.8 + k * 5) * 2 + k * 14, Y = my - k * 34; T.veu(X, Y, hex('#6A6A8A'), (1 - k) * 0.45); T.veu(X + 1, Y, hex('#6A6A8A'), (1 - k) * 0.35); }
     // o barco de Simão, amarrado na ponta do cais, balançando
     const bob = Math.sin(t * 1.4) * 0.8, bx = A[0] - 34, by = A[1] + 8 + Math.round(bob);
-    for (let i = 0; i < 40; i++) { const u = i / 39, larg = Math.sin(u * Math.PI) * 6 + 1.5, X = bx + i, cY = by - u * 10; for (let j = -larg; j <= larg; j++) { const Y = Math.round(cY + j * 0.55), dentro = Math.abs(j) < larg - 1.4; T.set(X, Y, dentro ? tom(MADEIRA, 0.28 + (i % 9 === 0 ? 0.3 : 0), X, Y) : tom(MADEIRA, j < 0 ? 0.75 : 0.5, X, Y)); } for (let j = 1; j <= 4; j++) T.set(X, Math.round(cY + larg * 0.55 + j), tom(MADEIRA, 0.45 - j * 0.07 + (j === 2 ? 0.12 : 0), X, Math.round(cY + larg * 0.55 + j))); T.veu(X, Math.round(cY + larg * 0.55 + 5), hex('#7AD4E8'), 0.5); for (let j = 6; j < 10; j++) T.veu(X, Math.round(cY + larg * 0.55 + j), MADEIRA[1], 0.3); }
+    for (let i = 0; i < 40; i++) { const u = i / 39, larg = Math.sin(u * Math.PI) * 6 + 1.5, X = bx + i, cY = by - u * 10; for (let j = -larg; j <= larg; j++) { const Y = Math.round(cY + j * 0.55), dentro = Math.abs(j) < larg - 1.4; T.set(X, Y, dentro ? tom(MADEIRA, 0.28 + (i % 9 === 0 ? 0.3 : 0), X, Y) : tom(MADEIRA, j < 0 ? 0.75 : 0.5, X, Y)); } for (let j = 1; j <= 4; j++) T.set(X, Math.round(cY + larg * 0.55 + j), tom(MADEIRA, 0.45 - j * 0.07 + (j === 2 ? 0.12 : 0), X, Math.round(cY + larg * 0.55 + j))); T.veu(X, Math.round(cY + larg * 0.55 + 5), ESPUMA, 0.5); for (let j = 6; j < 10; j++) T.veu(X, Math.round(cY + larg * 0.55 + j), MADEIRA[1], 0.3); }
     for (let i = 4; i < 36; i += 10) { const X = bx + i, cY = by - i / 39 * 10; for (let j = -3; j <= 3; j++) T.set(X, Math.round(cY + j * 0.55), MADEIRA[6]); } // os bancos
     for (let j = 0; j < 9; j++) T.set(bx + 37, by - 10 - j, MADEIRA[3]); lanterna(T, bx + 38, by - 22); T.brilho(bx + 38, by - 19, 20, hex('#FFB050'), 0.5 + Math.sin(t * 8) * 0.05);
     for (let j = 0; j < 14; j += 2) { const yy = by + 2 + j; T.set(bx + 38 + Math.round(Math.sin(t * 3 + j)), yy, LUZ_Q[3 - Math.min(2, j / 5 | 0)]); }
@@ -423,6 +432,26 @@ const cais = {
     lanterna(T, HX - 7, HY - 18); T.brilho(HX - 7, HY - 15, 30, hex('#FFC060'), 0.6 + Math.sin(t * 7) * 0.05);
   }
 };
+// o espelho d'água: para cada coluna, onde uma coisa termina e a água começa, a coisa se repete de cabeça para baixo
+function refletir(T, yh) {
+  const w = T.w, M = T.M, C = T.C, fonte = C.slice(), escuro = hex('#0A1430');
+  for (let x = 0; x < w; x++) {
+    for (let y = yh + 1; y < H - 1; y++) {
+      const i = y * w + x; if (!M[i] || M[i + w] || !(T.P[i + w] || T.P[i + 2 * w] || T.P[i])) continue; // o pé de uma coisa que entra na água (onde há espuma): o que pende no ar não se espelha
+      let alt = 0; while (alt < 46 && y - alt > yh && M[(y - alt) * w + x]) alt++;
+      if (alt < 2) continue;
+      for (let d = 1; d <= alt && y + d < H; d++) {
+        const yy = y + d, k = yy * w + x; if (M[k]) break; // outra coisa na frente: o reflexo para
+        if ((yy + (x >> 3)) % 6 === 0 && d > 3) continue; // a marola parte o reflexo em riscos
+        const ond = Math.round(Math.sin(yy * 0.9 + x * 0.05) * (0.5 + d * 0.06)), xs = clamp(x + ond, 0, w - 1), src = fonte[(y - d + 1) * w + xs];
+        if (!M[(y - d + 1) * w + xs]) continue;
+        const a = (0.8 - d / alt * 0.45) * (d === 1 ? 0.75 : 1);
+        C[k] = mixc2(C[k], mixc2(src, escuro, 0.3), a);
+      }
+      C[(y + 1) * w + x] = mixc2(C[(y + 1) * w + x], hex('#9FD8E8'), 0.45); // a linha de espuma onde a coisa entra na água
+    }
+  }
+}
 function mixc(c, k) { return ((255 << 24) | ((((c >>> 16) & 255) * k) << 16) | ((((c >>> 8) & 255) * k) << 8) | ((c & 255) * k)) >>> 0; }
 function mixc2(a, b, k) { const ch = s => Math.round(((a >>> s) & 255) * (1 - k) + ((b >>> s) & 255) * k); return ((255 << 24) | (ch(16) << 16) | (ch(8) << 8) | ch(0)) >>> 0; }
 
