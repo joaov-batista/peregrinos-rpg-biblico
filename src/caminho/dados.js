@@ -197,13 +197,13 @@ const REFUGIO = [
     { ...povo(25, 3, VILA.bartimeu.look), id: 'bartimeu', nome: VILA.bartimeu.nome }, { ...povo(21, 2, MIRIA), id: 'miria', nome: 'Miriã, a tecelã' },
     { tipo: 'vaso', col: 27.5 }, { tipo: 'vaso', col: 28.3 }, { tipo: 'ave', col: 5, lin: 12 }, { tipo: 'ave', col: 23, lin: 14 }] },
   // o bairro: casas de teto plano (dá para andar por cima), a estalagem e o oleiro
-  { cx: 3, nome: 'Bairro', papel: 'vila', tiles: sala([13, 3, 6], [13, 10, 13], [10, 15, 17], [13, 19, 22]), objs: [
+  { cx: 3, nome: 'Bairro', papel: 'vila', tiles: sala([13, 3, 6], [13, 10, 13], [13, 19, 22]), objs: [
     casa(4, 'estalagem', 'Estalagem do caminho'), planta(7.5, 'palmeira'), casa(11, 'marta', 'Casa de Marta e Maria'), planta(15.5, 'oliveira'), casa(20, 'oleiro', 'Casa do oleiro'), planta(27.5, 'cipreste'),
     { tipo: 'vaso', col: 26.5 }, { tipo: 'npc', col: 18, id: 'zelote2', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#4A3A36', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } },
     { ...povo(8, 5, VILA.rute.look), id: 'rute', nome: VILA.rute.nome }, { ...povo(16, 3, VILA.eutico.look), id: 'eutico', nome: VILA.eutico.nome },
     { tipo: 'ave', col: 5, lin: 13 }, { tipo: 'ave', col: 16, lin: 10 }, { tipo: 'ave', col: 21, lin: 13 }] },
   // o pátio das provas; a escada do meio desce à cisterna
-  { cx: 4, nome: 'Pátio das provas', papel: 'vila', desce: true, tiles: sala([12, 22, 26]), objs: [
+  { cx: 4, nome: 'Pátio das provas', papel: 'vila', desce: true, tiles: sala(), objs: [
     planta(1.5, 'cipreste'), { tipo: 'cenario', col: 14, qual: 'descida', rotulo: 'Cisterna' },
     { tipo: 'npc', col: 4, id: 'mestre', nome: 'Benaia, mestre das provas', look: { skin: '#8A5A3A', hair: '#D9D2C5', tunic: '#343F51', cape: '#877451', style: 'curto', beard: true, body: 'forte' } },
     { tipo: 'boneco', col: 7 }, { tipo: 'boneco', col: 9.5 },
@@ -226,8 +226,13 @@ const REFUGIO = [
     { tipo: 'npc', col: 24.5, id: 'mercador', nome: 'Mercador', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#7A5A2E', cape: '#3F2E4F', style: 'turbante', beard: true } },
     { tipo: 'poco', col: 7 }, { tipo: 'npc', col: 17.5, id: 'zelote3', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5E4A3A', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } }, { ...povo(12.5, 2, VILA.ana.look), id: 'ana', nome: VILA.ana.nome }, { ...povo(5, 2, ELIABE), id: 'eliabe', nome: 'Eliabe, o pastor' }, { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
   // o porto: o píer sobre o mar, o barqueiro que leva a Sardes, o pescador e, às vezes, um mercador de além-mar
+  // o bairro dos pescadores: casas de teto plano (dá para subir e ver o mar de cima), as redes secando, os cântaros e a escada de pedra
+  { cx: 7, nome: 'Bairro dos pescadores', papel: 'vila', tiles: sala([13, 3, 6], [13, 11, 14], [13, 20, 23]), objs: [
+    { ...casa(4.5, 'pescador1', 'Casa de Zebedeu'), falas: ['A porta está encostada. Lá dentro, redes por remendar e cheiro de peixe seco. "Deixaram logo as redes e o seguiram" (Mt 4:20).', 'Zebedeu passa o dia no porto. A casa fica com as redes.'] }, planta(8.5, 'palmeira'), { ...casa(12.5, 'pescador2', 'Casa de André'), falas: ['André foi o primeiro a dizer ao irmão: "Achamos o Messias" (Jo 1:41). A casa é pequena, mas a mesa é grande.', 'Pela janela, um pão sobre a mesa e duas canecas.'] }, { tipo: 'vaso', col: 16 }, { tipo: 'vaso', col: 16.8 },
+    { tipo: 'cenario', col: 17.6, qual: 'redes' }, { ...casa(21.5, 'pescador3', 'Casa de Salomé'), falas: ['Salomé seca peixe no terraço. Dá para subir pela parede e ver o mar de cima.', 'Ela foi ao sepulcro com aromas, de madrugada (Mc 16:1). Aqui ainda se acorda cedo.'] }, planta(26, 'oliveira'), { tipo: 'placa', col: 28, txt: 'Porto do Refúgio →' },
+    { tipo: 'ave', col: 6, lin: 12 }, { tipo: 'ave', col: 22, lin: 12 }] },
   // o porto: a gente do mar (pescador, barqueiro, o mercador que chega de navio) e, no estaleiro do fim do cais, a arca de Noé
-  { cx: 7, nome: 'Porto do Refúgio', papel: 'vila', tiles: sala([12, 3, 6], [12, 24, 27]), objs: [
+  { cx: 8, nome: 'Porto do Refúgio', papel: 'vila', tiles: sala([12, 3, 6], [12, 24, 27]), objs: [
     planta(1.5, 'palmeira'), { tipo: 'cenario', col: 5, qual: 'redes' }, { tipo: 'banco', col: 11.5, lugar: 'mirante' },
     { tipo: 'npc', col: 7.5, id: 'zebedeu', nome: 'Zebedeu, o pescador', look: { skin: '#A0673E', hair: '#D9D2C5', tunic: '#3F5A6A', cape: 'none', style: 'curto', beard: true, body: 'forte' } },
     { tipo: 'npc', col: 14.5, id: 'viajante', nome: 'Mercador de além-mar', look: { skin: '#6B4A2E', hair: '#1C120A', tunic: '#2E5E6A', cape: '#C9A63C', style: 'turbante', beard: true }, vezOutra: true },
@@ -237,12 +242,12 @@ const REFUGIO = [
     { tipo: 'npc', col: 22.6, id: 'noe', nome: 'Noé, criador de animais', look: { skin: '#C68B59', hair: '#D9D2C5', tunic: '#4C665E', cape: '#877451', style: 'longo', beard: true } },
     { tipo: 'ave', col: 12, lin: 11 }, { tipo: 'ave', col: 25, lin: 9 }] },
   // a margem e o mar aberto: da pedra da margem ou de bote se pesca de verdade (Zebedeu empresta a vara)
-  { cx: 8, nome: 'A margem do mar', papel: 'vila', semPostes: true, tiles: sala(), objs: [
+  { cx: 9, nome: 'A margem do mar', papel: 'vila', semPostes: true, tiles: sala(), objs: [
     planta(3, 'palmeira'), { tipo: 'placa', col: 6, txt: 'Da pedra se pesca o raso. De bote, mar adentro, os grandes.' }, { tipo: 'bote', col: 10 }, { tipo: 'aguaAberta', col: 12, ate: 118, pierCols: 6 }, { tipo: 'barco', col: 20 }, { tipo: 'ave', col: 20, lin: 11 }] },
   // mar adentro: só de bote. Longe da margem andam os grandes, e na tempestade, o Leviatã (Jó 41)
-  { cx: 9, nome: 'O mar aberto', papel: 'vila', semPostes: true, tiles: sala(), objs: [] },
-  { cx: 10, nome: 'O alto-mar', papel: 'vila', semPostes: true, tiles: sala(), objs: [] },
-  { cx: 11, nome: 'Mar adentro', papel: 'vila', semPostes: true, marAberto: 'dir', tiles: sala(), objs: [] },
+  { cx: 10, nome: 'O mar aberto', papel: 'vila', semPostes: true, tiles: sala(), objs: [] },
+  { cx: 11, nome: 'O alto-mar', papel: 'vila', semPostes: true, tiles: sala(), objs: [] },
+  { cx: 12, nome: 'Mar adentro', papel: 'vila', semPostes: true, marAberto: 'dir', tiles: sala(), objs: [] },
   // ---- o subsolo ----
   { cx: 0, cy: 1, nome: 'Salão das Subfases', deco: 'subfases', papel: 'vila', tiles: sala(), objs: [
     { tipo: 'portal', col: 6, area: 'vale', rotulo: 'Vale da Mentira' }, { tipo: 'selado', col: 15, rotulo: 'Selado' }, { tipo: 'selado', col: 24, rotulo: 'Selado' },

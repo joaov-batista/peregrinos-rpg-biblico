@@ -44,7 +44,7 @@ const juntaTrilha = L => { const t = L.filter(c => c.cx < RX), r = L.filter(c =>
 function camadas(G) {
   const v = G.cm.visitou || {}, foi = a => !!v[a] || G.area === a, sid = G.def?.sitio ? G.area : G.area?.startsWith?.('casa:') ? 'sitio:' + G.area.slice(5) : sitioId(G);
   return [
-    { id: 'refugio', nome: 'Refúgio', sub: 'A aldeia, a céu aberto', lugares: juntaTrilha(lugaresDe('refugio', c => c.cy === 0 && c.cx < 7 + RX)), ver: true, chao: '#3A4A2E', ceu: ['#1A2744', '#3B4B6B'] },
+    { id: 'refugio', nome: 'Refúgio', sub: 'A aldeia, a céu aberto', lugares: juntaTrilha(lugaresDe('refugio', c => c.cy === 0 && c.cx < 8 + RX)), ver: true, chao: '#3A4A2E', ceu: ['#1A2744', '#3B4B6B'] },
     { id: 'subsolo', nome: 'Subsolo', sub: 'Os salões de pedra, debaixo da aldeia', lugares: lugaresDe('refugio', c => c.cy === 1), ver: true, chao: '#2A2638', ceu: ['#0E0C16', '#1E1A2C'] },
     { id: 'mata', nome: 'Bosque e mata', sub: 'O caminho de chegada e as trilhas da mata', ver: true, chao: '#24361F', ceu: ['#0A1418', '#1E3A32'],
       lugares: [{ area: 'clareira', nome: 'Clareira das Provas', ver: foi('clareira'), coisas: [{ k: 'portal', t: 'Arena, ondas e o Conselho' }] },
@@ -52,7 +52,7 @@ function camadas(G) {
     { id: 'sitio', nome: 'Sítio e praia', sub: 'A sua terra, fora do portão: a casa, a lavoura, o pasto e o mar', ver: true, chao: '#3A4A2A', ceu: ['#1A2E44', '#5A7A9A'],
       lugares: lugaresDe(sid).flatMap(L => /estrada/i.test(L.nome) ? [{ ...L, nome: 'A estrada' }] : /^a casa$/i.test(L.nome) ? [L, { area: 'casa:' + sid.slice(6), nome: 'Dentro de casa', coisas: [{ k: 'casa', t: 'Cama: cochilar ou dormir até de manhã' }, { k: 'casa', t: 'Mesa: a ceia' }, { k: 'vela', t: 'Lareira: +1 fôlego' }] }] : [L]) },
     { id: 'mar', nome: 'Porto e mar', sub: 'Onde o Refúgio encontra o mar', ver: true, chao: '#1F3A4A', ceu: ['#0E1A30', '#2E4A6A'],
-      lugares: [...lugaresDe('refugio', c => c.cy === 0 && c.cx >= 7 + RX), { area: 'mar', nome: 'A travessia', ver: foi('sardes'), coisas: [{ k: 'portal', t: 'Três dias de mar até Sardes' }] }] },
+      lugares: [...lugaresDe('refugio', c => c.cy === 0 && c.cx >= 8 + RX), { area: 'mar', nome: 'A travessia', ver: foi('sardes'), coisas: [{ k: 'portal', t: 'Três dias de mar até Sardes' }] }] },
     { id: 'sardes', nome: 'Sardes', sub: 'A cidade que perdeu a luz', ver: foi('sardes'), chao: '#26222E', ceu: ['#05060C', '#2A2438'], lugares: lugaresDe('sardes') },
     { id: 'vale', nome: 'Vale da Mentira', sub: 'O que assusta aqui não existe', ver: foi('vale'), chao: '#2A1A30', ceu: ['#0A0618', '#5A2E5E'], lugares: lugaresDe('vale') }
   ];
@@ -60,7 +60,7 @@ function camadas(G) {
 // em que camada e lugar o peregrino está agora
 function ondeEstou(G) {
   const cx = Math.floor(G.p.x / 960), cy = Math.floor((G.p.y - 2) / 544);
-  if (G.area === 'refugio') return cy === 1 ? { cam: 'subsolo', cx, cy } : cx >= 7 + RX ? { cam: 'mar', cx, cy } : { cam: 'refugio', cx, cy };
+  if (G.area === 'refugio') return cy === 1 ? { cam: 'subsolo', cx, cy } : cx >= 8 + RX ? { cam: 'mar', cx, cy } : { cam: 'refugio', cx, cy };
   if (G.def?.sitio || G.area?.startsWith?.('casa:')) return { cam: 'sitio', cx, cy, area: G.area };
   const m = { bosque: 'mata', clareira: 'mata', floresta: 'mata', getsemani: 'mata', sardes: 'sardes', vale: 'vale' }[G.area];
   return m ? { cam: m, cx, cy, area: G.area } : null;

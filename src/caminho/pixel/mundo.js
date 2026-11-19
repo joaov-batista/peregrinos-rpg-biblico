@@ -270,6 +270,15 @@ export function pintarSalasPixel(g, G, C, vw, vh, cx, cy) {
   for (const l of N.luzes) { const x = Math.round(l.x / PX - cx), y = Math.round(l.y / PX - cy); if (x < -10 || x > vw + 10) continue; if (l.poste) { const pe = Math.round(l.poste / PX - cy); g.fillStyle = '#17121f'; g.fillRect(x - 1, y + 5, 3, pe - y - 5); g.fillRect(x - 3, pe - 3, 7, 3); g.fillStyle = '#4A4658'; g.fillRect(x, y + 5, 1, pe - y - 8); g.drawImage(C.lampiao, x - 4, y - 6); continue; } const topo = Math.floor(l.y / T / CH) * salaH + TL - cy; g.fillStyle = tm.bloco; g.fillRect(x, topo, 1, y - 6 - topo); g.drawImage(C.lampiao, x - 4, y - 6); }
 }
 
+// as passarelas que não são tábua: as de dentro das copas (o galho sustenta) e as da torre da sinagoga (degraus de pedra)
+function estiloPonte(G, tx, ty) {
+  const N = G.N; if (!N._ponte) { N._ponte = new Map(); const copas = G.objs.filter(o => o.tipo === 'arvore' || (o.tipo === 'planta' && o.qual !== 'cipreste'));
+    for (let j = 0; j < N.h; j++) for (let i = 0; i < N.w; i++) { if (tileEm(N, i, j) !== PONTE) continue; const wx = i * T + 16, wy = j * T;
+      const naCopa = copas.some(o => Math.abs(wx - o.x) < (o.tipo === 'arvore' ? 150 : 92) && wy < o.y - 30 && wy > o.y - (o.tipo === 'arvore' ? 260 : 250));
+      const cel = N.celulas.find(c => c.cx === Math.floor(i / CW) && c.cy === Math.floor(j / CH));
+      if (naCopa) N._ponte.set(j * N.w + i, 'oculta'); else if (cel && /sinagoga/i.test(cel.nome || '')) N._ponte.set(j * N.w + i, 'pedra'); } }
+  return N._ponte.get(ty * N.w + tx);
+}
 export function pintarBlocosPixel(g, G, C, vw, vh, cx, cy) {
   const N = G.N, x0 = Math.max(0, Math.floor(cx / TL)), x1 = Math.min(N.w - 1, Math.floor((cx + vw) / TL)), y0 = Math.max(0, Math.floor(cy / TL)), y1 = Math.min(N.h - 1, Math.floor((cy + vh) / TL));
   const cheio = (tx, ty) => { const t = tileEm(N, tx, ty); return t === SOLIDO || (t === FALSA && !N.desfeita.has(ty * N.w + tx)); };
@@ -279,7 +288,7 @@ export function pintarBlocosPixel(g, G, C, vw, vh, cx, cy) {
       const m = (cheio(tx, ty - 1) ? 0 : 1) | (cheio(tx + 1, ty) ? 0 : 2) | (cheio(tx, ty + 1) ? 0 : 4) | (cheio(tx - 1, ty) ? 0 : 8);
       g.drawImage(C.blocos, m * TL, ((tx * 3 + ty * 5) & 3) * TL, TL, TL, x, y, TL, TL);
       if (t === FALSA && G.p.lamp && (tx + ty + Math.floor(G.T * 8)) % 3 === 0) { g.fillStyle = G.tm.acento; g.globalAlpha = 0.35; g.fillRect(x + ((tx * 5) % 12), y + ((ty * 7) % 12), 2, 2); g.globalAlpha = 1; }
-    } else if (t === PONTE) g.drawImage(C.extras, ((tx & 1)) * TL, 0, TL, 8, x, y, TL, 8);
+    } else if (t === PONTE) { const e = estiloPonte(G, tx, ty); if (e === 'pedra') { g.fillStyle = '#17121f'; g.fillRect(x, y, TL, 7); g.fillStyle = '#8A8070'; g.fillRect(x, y + 1, TL, 4); g.fillStyle = '#B8AE98'; g.fillRect(x, y + 1, TL, 1); g.fillStyle = '#5A5248'; g.fillRect(x + (tx & 1 ? 9 : 4), y + 2, 1, 3); g.fillRect(x, y + 5, TL, 1); } else if (!e) g.drawImage(C.extras, ((tx & 1)) * TL, 0, TL, 8, x, y, TL, 8); } // tábua; dentro de árvore não aparece (é o galho); na sinagoga é pedra
     else if (t === ESPINHO) g.drawImage(C.extras, 2 * TL, 0, TL, TL, x, y, TL, TL);
     else if ((t === PORTAO && !N.portaAberta) || t === TRANCA) g.drawImage(C.extras, 3 * TL, 0, TL, TL, x, y, TL, TL);
     else if (t === OCULTO) {

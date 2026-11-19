@@ -474,7 +474,7 @@ function pintarObjeto(g, o, G, x, y, Tm) {
     case 'arvore': { // o sicômoro de Zaqueu: tronco torto, copa em três massas, figos
       const s = sprObj('sicomoro', 96, 112, s => { const T = rampa('#6B4A2E'), F = rampa('#3F7A4A'); // o sicômoro: tronco grosso e baixo, galhos largos e a copa larga em cachos
         arvorePx(s, { base: [48, 111], alt: 104, larg: 86, Rt: T, Rf: F, sd: 23, torto: 0.25, tronco: 6, cachos: 8 });
-        for (let i = 0; i < 46; i++) { const x = 8 + (i * 37) % 80, y = 6 + (i * 23) % 40; if (s.le(x, y)) { s.px(x, y, F[4]); s.px(x + 1, y + 1, F2[0]); } }
+        for (let i = 0; i < 46; i++) { const x = 8 + (i * 37) % 80, y = 6 + (i * 23) % 40; if (s.le(x, y)) { s.px(x, y, F[4]); } }
         for (const [x, y] of [[20, 44], [34, 36], [58, 38], [72, 44], [46, 34], [82, 34]]) if (s.le(x, y - 3)) s.bola(x, y, 1.6, 2, rampa('#8E3B5E'));
         s.contorno(TINTA); }); carimbar(g, s, x, y, 48, 111); return true; }
     case 'querubim': { // a leste do jardim: o querubim e a espada de fogo que se revolve
