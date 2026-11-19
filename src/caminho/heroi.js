@@ -103,15 +103,17 @@ export function atualizarHeroi(G, dt) {
   if (p.avisoEsp > 0) p.avisoEsp -= dt;
   // ---- Oração: gasta azeite para recuperar um fôlego; fica parado e vulnerável ----
   const custoOra = G.custoOracao();
-  if (c.orar && p.chao && !preso && !emDash && !p.lamp && p.oleo >= custoOra && p.vida < p.vidaMax) {
+  const semCessar = !!G.cm?.semCessar; // "Orai sem cessar" (1Ts 5:17): ora andando e no ar
+  if (c.orar && (p.chao || semCessar) && !preso && !emDash && !p.lamp && p.oleo >= custoOra && p.vida < p.vidaMax) {
     p.orando += dt; if (p.orando < dt * 1.5) sfx('magic');
     if (p.orando >= 0.95) { G.aoOrar?.(); p.orando = 0; p.oleo -= custoOra; p.vida = Math.min(p.vidaMax, p.vida + (G.tem('lenho_mara') ? 2 : 1)); sfx('heal'); G.efeito('cura', p.x, p.y, 1, { gruda: p }); G.fx.anel(p.x, p.y - 20, '#FFE9A8', 60); G.fx.sobe(p.x, p.y - 10, 14, '#FFE9A8');
       if (G.tem('vaso_alabastro')) { p.inv = Math.max(p.inv, 1.5); G.fx.anel(p.x, p.y - 26, '#F0E6D8', 90); G.textoEm(p.x, p.y - 72, 'perfume de alabastro', '#F0E6D8', 11); } }
   } else p.orando = 0;
+  p.oraAnda = p.orando > 0 && semCessar && (!p.chao || Math.abs(c.mx) > 0.2);
 
   // ---- correr ----
   const lento = (p.lamp ? 0.5 : 1) * (G.lentidao || 1) * (G.velTemp > 0 && p === G.eu ? 2 : 1); /* óleo de canela: o dobro do passo */
-  const alvo = p.orando > 0 || G.pescaTrava ? 0 : c.mx * VEL * lento * (p.noBote ? 0.45 : 1) * ((G.nado || p.nada) && p === G.eu ? 0.7 : 1); /* pescando, fica parado; no bote, rema devagar */
+  const alvo = (p.orando > 0 && !G.cm?.semCessar) || G.pescaTrava ? 0 : c.mx * VEL * lento * (p.noBote ? 0.45 : 1) * ((G.nado || p.nada) && p === G.eu ? 0.7 : 1); /* pescando, fica parado; no bote, rema devagar */
   if (!preso && !emDash && p.travaX <= 0) p.vx = aprox(p.vx, alvo, (p.chao ? 2700 : 1750) * dt);
   if (preso && p.chao) p.vx = aprox(p.vx, 0, 900 * dt);
   if (c.mx && !preso && !emDash && p.travaX <= 0 && !p.agarra && (!p.atk || arma.duplo)) { // a adaga é leve: dá para virar no meio do golpe, e o segundo corte já sai para o novo lado
@@ -128,7 +130,7 @@ export function atualizarHeroi(G, dt) {
   passoCorca(G, p, c, dt, paredeAoLado, N, emDash, preso); // Pés de Corça: agarrado na parede, firme
   // descer de uma plataforma: segurar para baixo um instante (ou para baixo + pular)
   if (c.my > 0.5 && p.chao && p.naPonte && !preso) { p.baixoT = (p.baixoT || 0) + dt; if (p.baixoT > 0.14 || p.buf > 0) { p.desce = 0.2; p.buf = 0; p.chao = false; p.baixoT = 0; } } else p.baixoT = 0;
-  if (p.buf > 0 && !preso && p.orando <= 0 && !p.noBote && !G.pescaTrava) {
+  if (p.buf > 0 && !preso && (p.orando <= 0 || G.cm?.semCessar) && !p.noBote && !G.pescaTrava) {
     if (p.coyote > 0) { p.vy = -PULO; p.coyote = 0; p.buf = 0; p.sq = 1.22; sfx('step'); G.fx.po(p.x, p.y, 5, '#C9D2C4'); p.dashT = 0; }
     else if ((p.desliza || paredeAoLado(N, p, 1) || paredeAoLado(N, p, -1))) {
       const lado = p.desliza || (paredeAoLado(N, p, 1) ? 1 : -1);

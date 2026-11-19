@@ -284,7 +284,15 @@ export class Caminho {
       this.nascer(lista[i % lista.length], s.x, s.y + 14, false, esc).cel = s.cel; });
   }
   nascer(tipo, x, y, daLuta, esc = 1) { const e = novoVicio(tipo, x, y, esc); e.daLuta = daLuta; const vv = this.dif.vidaVicio; if (vv) e.hp = e.max = Math.max(1, Math.round(e.hp * vv)); sombraDaNoite(this, e); this.inimigos.push(e); return e; }
-  aoOrar() { aoOrar(this); }
+  aoOrar() { aoOrar(this); const cm = this.cm;
+    if (this.luta && this.chefe && !cm.escudoOra) { cm.oraLuta = (cm.oraLuta || 0) + 1; if (cm.oraLuta >= 30) this.revelarSegredoOra('escudoOra'); } }
+  // as habilidades secretas da oração: aparecem só quando se conquista
+  async revelarSegredoOra(id) {
+    const cm = this.cm; if (cm[id]) return; cm[id] = 1; this.salvar(); sfx('level'); this.clarao = 0.4; this.fx.anel(this.p.x, this.p.y - 26, '#FFE9A8', 120);
+    const S = { semCessar: ['Orai sem cessar', '1 Tessalonicenses 5:17', 'Sete madrugadas de vigília. A oração não para mais quando você anda.\n\nAgora você ora andando, correndo e até no ar: a cura vem sem precisar ajoelhar.'],
+      escudoOra: ['Escudo da oração', 'Salmo 28:7', '"O Senhor é a minha força e o meu escudo; nele confiou o meu coração, e fui socorrido."\n\nTrinta orações no meio das lutas. Agora, enquanto você ora, nada fere: o golpe bate no escudo e a oração continua.'] }[id];
+    await this.ui.dialog({ nome: '✦ Habilidade secreta: ' + S[0], texto: S[1] + '\n\n' + S[2], acoes: [{ label: 'Amém' }], cls: 'fala-narra', voz: false });
+  }
 
   temSelos() { const d = this.def, cm = this.cm; return !d.fase || (cm.selos[this.area].length >= (d.rolos || 3) && (d.estacoes || []).every(e => cm.est[this.area].includes(e.id))); }
   conferirPorta(quieto) {
@@ -656,6 +664,7 @@ export class Caminho {
     if (this.dif.ferida) n *= this.dif.ferida; // no Hard, tudo fere em dobro
     const p = this.p;
     if (this.ausente || p !== this.eu || p.morto || p.inv > 0 || this.fade > 0.5) return false;
+    if (p.orando > 0 && this.cm.escudoOra && !o.espinho) { p.inv = Math.max(p.inv, 0.35); sfx('parry'); this.efeito('vigilia', p.x, p.y - 26); this.fx.anel(p.x, p.y - 26, '#FFE9A8', 70); this.textoEm(p.x, p.y - 84, 'o Senhor é o meu escudo', '#FFE9A8', 11); return false; } // Escudo da oração (Sl 28:7): enquanto ora, nada fere
     if (p.vig > 0 && !o.espinho && !o.semDefesa) {
       p.inv = 0.4; this.ganharOleo(this.hab.escudo ? 30 : 20); sfx('parry'); vibrar(90, 0.5);
       this.fx.anel(p.x + p.face * 12, p.y - 26, '#FFE9A8', 54); this.fx.faisca(p.x + p.face * 14, p.y - 28, 12, '#FFE9A8'); this.hitstop = 0.09; this.tremor(5);

@@ -39,7 +39,7 @@ export function poseDe(p, Tm, corpo) {
   const corre = p.chao ? Math.min(1, Math.abs(p.vx) / 252) : 0;
   if (p.morto) { P.agacha = 4; P.incl = -3; P.cabY = 2; return P; }
   if (p.stunT > 0) { P.incl = -2; P.cabX = -1; P.mao = { x: -5, y: -18 }; P.ang = -0.6; P.pf = { x: 3, y: -1 }; P.pt = { x: -3, y: 0 }; return ajusta(P, corpo); }
-  if (p.orando > 0) { P.agacha = 4; P.incl = 1; P.cabY = 1; P.cabX = 1; P.pf = { x: 4, y: 0 }; P.pt = { x: -4, y: 0 }; P.joelho = true; P.mao = { x: 5, y: -13 }; P.ang = 1.57; P.lamp = { x: 6, y: -16 }; return ajusta(P, corpo); }
+  if (p.orando > 0 && !p.oraAnda) { P.agacha = 4; P.incl = 1; P.cabY = 1; P.cabX = 1; P.pf = { x: 4, y: 0 }; P.pt = { x: -4, y: 0 }; P.joelho = true; P.mao = { x: 5, y: -13 }; P.ang = 1.57; P.lamp = { x: 6, y: -16 }; return ajusta(P, corpo); }
   if (p.dashT > 0 && p.rasteiro) { P.incl = -5; P.agacha = 9; P.cabY = 2; P.pf = { x: 9, y: -1 }; P.pt = { x: 4, y: 0 }; P.mao = { x: -6, y: -8 }; P.ang = 2.9; return ajusta(P, corpo); } // rasteira: desliza quase deitado, pés na frente
   if (p.atk?.dir === 'rasteira') { P.agacha = 7; P.incl = 3; P.cabY = 1; P.pf = { x: 5, y: 0 }; P.pt = { x: -5, y: 0 }; P.joelho = true; P.mao = { x: 9, y: -6 }; P.ang = 1.75; return ajusta(P, corpo); } // golpe agachado
   if (p.dashT > 0) { P.incl = 0; P.agacha = 0; P.cabY = -1; P.pf = { x: 2, y: -1 }; P.pt = { x: -2, y: -1 }; P.mao = { x: -4, y: -18 }; P.ang = 2.2; return ajusta(P, corpo); } // passo no ar: em pé, de corpo reto, deslizando no vento
@@ -67,6 +67,7 @@ export function poseDe(p, Tm, corpo) {
   } else if (p.atkCd > 0.08 && p.chao && corre < 0.25 && !p.lamp) { P.ang = 1.35; P.mao = { x: 7, y: -12 }; P.incl = 2; P.pf = { x: 5, y: 0 }; P.pt = { x: -4, y: 0 }; P.agacha = 1; } // recuperação
   else if (p.carga > 0.15) { P.ang = -2.5; P.mao = { x: -4, y: -21 }; P.incl = -1; P.agacha = 1; }
   if (p.lampA > 0.4 && !p.orando) { P.lamp = { x: 6, y: -27 }; if (!a) { P.mao = { x: 3, y: -12 }; P.ang = 1.5; } }
+  if (p.oraAnda) { P.mao = { x: 6, y: -17 }; P.ang = -1.1; P.cabY = 1; P.cabX = 1; P.lamp = null; } // orando de pé, andando ou no ar: as mãos juntas no peito, a cabeça baixa
   return ajusta(P, corpo);
 }
 

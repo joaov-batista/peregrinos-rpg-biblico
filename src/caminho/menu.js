@@ -60,6 +60,7 @@ export function abrirMenu(G, aba = 'inventario') {
       out.push(h('h4', {}, 'Páginas da semana · Armadura ' + Object.keys(cm.hab).length + ' de 6'));
       out.push(h('div', { class: 'dia-trilha' }, ...TODAS.map(s2 => { const n = s2.fases.filter(f => cm.feitas[s2.id + ':' + f.n]).length; return linha(n >= s2.fases.length ? '✓' : n ? '▶' : '·', s2.titulo, s2.estudo + ' · ' + n + ' de ' + s2.fases.length + ' páginas', n >= s2.fases.length ? 'feito' : n ? 'atual' : 'falta'); })));
       out.push(t(c.name + ' · nível ' + c.level + ' · fôlegos ' + G.p.vida + '/' + G.p.vidaMax + ' · maná ' + cm.mana + ' · pedras ' + cm.pedras + '/5 · segredos ' + cm.ovos.length, 'muted'));
+      out.push(t('Segredos da oração: ' + (cm.semCessar ? '✦ Orai sem cessar (orar andando e no ar)' : '✦ ???') + '  ' + (cm.escudoOra ? '✦ Escudo da oração (nada fere enquanto ora)' : '✦ ???'), 'muted'));
       { const feitas = G.provasFolego?.() || []; out.push(t('Limite de fôlegos: ' + G.tetoFolego?.() + ' pelo caminho. Além dele, só as provas: ' + [['zelo', 'o Conselho Zelote'], ['levi', 'o Leviatã no mar bravo'], ['satanas', 'o Acusador']].map(([id, n]) => (feitas.some(f => f[0] === id) ? '✓ ' : '· ') + n).join('  ') + ' (+1 fôlego cada).', 'muted')); }
       out.push(h('div', { class: 'btn-row' }, h('button', { class: 'btn gold', onclick: () => close() }, 'Continuar'),
         G.area !== 'refugio' ? h('button', { class: 'btn', onclick: () => { close(); G.entrar('refugio'); } }, 'Voltar ao Refúgio') : ''));

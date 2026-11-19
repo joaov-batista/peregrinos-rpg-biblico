@@ -136,7 +136,7 @@ async function feira(G, ob) {
 /* ---------------- orar de madrugada; sombras da noite ---------------- */
 export function aoOrar(G) {
   if (G.area !== 'refugio' || !madrugada(G) || G.cm.orouNoite === noiteN(G)) return;
-  G.cm.orouNoite = noiteN(G); G.cm.mana = (G.cm.mana || 0) + 1; sfx('level');
+  G.cm.orouNoite = noiteN(G); G.cm.mana = (G.cm.mana || 0) + 1; sfx('level'); G.cm.vigilias = (G.cm.vigilias || 0) + 1; if (G.cm.vigilias >= 7 && !G.cm.semCessar) setTimeout(() => G.revelarSegredoOra?.('semCessar'), 1800);
   G.textoEm(G.p.x, G.p.y - 96, '"Antecipo-me ao alvorecer e clamo" (Sl 119:147) · +1 maná', '#FFE9A8', 12); G.salvar();
 }
 // nas páginas, à noite, uma ou duas sombras saem mais fortes; de madrugada, deixam algo raro
