@@ -549,6 +549,9 @@ export function renderPixel(G) {
         // os clones da Mentira: iguais ao verdadeiro, mas tremem dentro da luz da lâmpada
         for (const cl of e.clones) { const naLuz = luz && Math.hypot(cl.x - p.x, cl.y - p.y) < luz; carimbar(g, q.s, X(cl.x), Y(cl.y), q.ax, q.ay, vira, (cl.alpha ?? 1) * (naLuz ? 0.22 + 0.12 * Math.sin(Tm * 40) : 1) * Math.min(1, cl.t * 2)); }
         medirChefe(e, q, vira);
+        // o rastro: imagens que ficam para trás quando ele despenca, sai da parede ou corre
+        if (e.rastro > 0 || e.trilha?.length) { const tr = e.trilha = e.trilha || []; if (e.rastro > 0 && (e.alpha ?? 1) > 0.5) { tr.push({ x: e.x, y: e.y }); e.rastro -= 1 / 60; } else tr.shift(); if (tr.length > 6) tr.shift();
+          const cv = q.s.tela(), k = q.esc || 1; tr.forEach((pt, n) => { if (Math.hypot(pt.x - e.x, pt.y - e.y) < 6) return; g.save(); g.globalAlpha = 0.08 + n * 0.05; g.translate(X(pt.x), Y(pt.y)); g.scale(vira * k, k); g.drawImage(cv, -q.ax, -q.ay); g.restore(); }); }
         if (q.esc > 1) { const cv = q.s.tela(), k = q.esc; g.save(); g.translate(X(e.x), Y(e.y)); g.scale(vira * k, k); g.drawImage(cv, -q.ax, -q.ay); g.restore(); }
         else carimbar(g, q.s, X(e.x), Y(e.y), q.ax, q.ay, vira);
         pintarExtrasChefe(g, e, G, X, Y, Tm);
@@ -732,8 +735,14 @@ function pintarTiro(g, t, x, y, Tm) {
     const a = Math.atan2(t.vy, t.vx); g.fillStyle = '#BFF0F8';
     for (let k = 0; k < 3; k++) { const rr = r + k * 3 - 2; g.globalAlpha = 1 - k * 0.3; for (let q = -5; q <= 5; q++) { const b = a + q * 0.16; g.fillRect(x + Math.round(Math.cos(b) * rr - Math.cos(a) * k * 4), y + Math.round(Math.sin(b) * rr - Math.sin(a) * k * 4), k ? 1 : 2, k ? 1 : 2); } }
     g.globalAlpha = 1; return; }
-  if (t.tipo === 'lanca') { const d = Math.sign(t.vx); g.fillStyle = '#17121f'; g.fillRect(x - d * 16 - (d < 0 ? 0 : 0), y - 1, 22, 3); g.fillStyle = '#A0662A'; g.fillRect(Math.min(x - d * 16, x + d * 4), y, 20, 1); g.fillStyle = '#EEF6FB'; for (let k = 0; k < 6; k++) g.fillRect(x + d * (4 + k), y - Math.floor((5 - k) / 2), 1, 1 + (5 - k - ((5 - k) % 2 ? 1 : 0)));
-    for (let k = 1; k <= 5; k++) { g.globalAlpha = 0.5 - k * 0.08; g.fillStyle = '#FFE08A'; g.fillRect(x - d * (16 + k * 5), y, 4, 1); } g.globalAlpha = 1; return; }
+  if (t.tipo === 'lanca') { // a lança (ou o punhal) segue o ângulo do voo: haste, ponta de aço que brilha e um rastro de vento atrás
+    const vv = Math.hypot(t.vx, t.vy) || 1, ux = t.vx / vv, uy = t.vy / vv, curta = (t.r || 7) < 6, L = curta ? 10 : 20, P = (a, b, w = 1, h = 1) => g.fillRect(Math.round(x + a), Math.round(y + b), w, h);
+    for (let k = 1; k <= 7; k++) { g.globalAlpha = 0.42 - k * 0.05; g.fillStyle = k < 3 ? '#FFF3C4' : '#C9B48A'; for (const o of [-2, 2]) P(-ux * (L + k * 5) - uy * o * (k / 3), -uy * (L + k * 5) + ux * o * (k / 3), 2, 1); } g.globalAlpha = 1; // o vento que a lança corta
+    g.fillStyle = '#17121f'; for (let k = -L; k <= 4; k++) P(ux * k - 1, uy * k - 1, 3, 3);
+    g.fillStyle = curta ? '#5A4636' : '#A0662A'; for (let k = -L; k <= 0; k++) P(ux * k, uy * k); if (!curta) { g.fillStyle = '#C9963C'; P(-ux * 2, -uy * 2, 1, 1); } // a haste
+    g.fillStyle = '#EEF6FB'; for (let k = 1; k <= 5; k++) { P(ux * k, uy * k); if (k < 4) { P(ux * k - uy, uy * k + ux); P(ux * k + uy, uy * k - ux); } } // a ponta
+    if (Math.floor(Tm * 16 + t.x) % 4 === 0) { g.fillStyle = '#FFFFFF'; P(ux * 3 - 1, uy * 3 - 1, 2, 2); }
+    return; }
   if (t.tipo === 'onda') { const d = Math.sign(t.vx); for (let yy = -r * 1.5; yy <= r * 1.5; yy++) { const lg = Math.round(Math.sqrt(Math.max(0, 1 - Math.pow(yy / (r * 1.5), 2))) * 5); g.fillStyle = '#FFE08A'; g.fillRect(x + d * (lg - 3), y + yy, 3, 1); g.fillStyle = '#fff'; g.fillRect(x + d * lg, y + yy, 1, 1); } return; }
   if (!t.amigo) { // os dardos dos vícios e dos chefes: bolas de energia que pulsam, com aura, faíscas em órbita e um rastro que ondula
     const C = /^#[0-9a-f]{6}$/i.test(t.cor || '') ? t.cor : '#C79BFF', claro = mistura(C, '#FFFFFF', 0.55), escuro = mistura(C, '#05060B', 0.5), sem = (t.x * 7 + t.y * 3) % 6.28;
@@ -761,6 +770,7 @@ function pintarZona(g, G, z, X, Y, vw, vh, Tm) {
   const luzPerto = p.lamp && Math.hypot(z.x + (z.tipo === 'muro' ? z.w / 2 : 0) - p.x, (z.y ?? p.y) - p.y) < G.raioLuz();
   if (z.oculta && !ativa && !luzPerto) { if (pisca && Math.floor(Tm * 3) % 3 === 0) { g.fillStyle = c; g.globalAlpha = 0.25; g.fillRect(X(z.x), Y(z.y + z.h) - 1, Math.round(z.w / PX), 1); g.globalAlpha = 1; } return; } // a cilada só aparece à luz
   if (z.isca && z.sinal) { const x = X(z.x), y = Y(z.y), r = Math.round(z.r / PX); g.fillStyle = luzPerto ? '#FFE9A8' : c; for (let a = 0; a < 40; a++) if ((a + Math.floor(Tm * 10)) % 2) g.fillRect(x + Math.round(Math.cos(a / 40 * TAU) * r), y + Math.round(Math.sin(a / 40 * TAU) * r), 1, 1); if (luzPerto) { g.globalAlpha = 0.35; for (let yy = -r; yy <= r; yy += 2) for (let xx = -r; xx <= r; xx += 2) if (xx * xx + yy * yy < r * r) g.fillRect(x + xx, y + yy, 1, 1); g.globalAlpha = 1; } return; } // o abrigo verdadeiro brilha sob a lâmpada
+  if (z.semFlash && ativa) return; // quem desenha o golpe é o palco (as lanças do chão)
   if (z.tipo === 'muro' && ativa && z.dur > 0.4) { const x = X(z.x), y = Y(z.y), w = Math.round(z.w / PX), h = Math.round(z.h / PX); g.fillStyle = c; g.globalAlpha = 0.85; g.fillRect(x, y, w, h); g.globalAlpha = 1; g.fillStyle = '#FFFFFF'; g.fillRect(x, y, w, 1); for (let i = 0; i < w; i += 4) g.fillRect(x + i, y + ((i + Math.floor(Tm * 12)) % Math.max(1, h)), 1, 1); return; } // paredes que andam: onda, escudo, âncora, ouro
   if (z.tipo === 'circ') {
     const x = X(z.x), y = Y(z.y), r = Math.round(z.r / PX), k = ativa ? 1 : clamp(1 - z.aviso / 0.9, 0, 1);

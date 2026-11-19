@@ -130,6 +130,15 @@ Object.assign(FUNDO, {
     }
     for (const [k, lado] of [[0, -1], [1, 1], [2, -1], [3, 1]]) { const x = cx + lado * (124 + (k > 1 ? 34 : 0)), y = A.chao - 2, aceso = k < 2 + f; g.fillStyle = '#120908'; px(g, x - 1, y - 30, 3, 30); px(g, x - 6, y - 34, 13, 5); g.fillStyle = '#3E2620'; px(g, x - 5, y - 33, 11, 3); if (aceso) { g.fillStyle = '#FF7A3C'; const h = 4 + (Math.floor(Tm * 9 + k) % 3); px(g, x - 3, y - 34 - h, 7, h); g.fillStyle = '#FFD23F'; px(g, x - 1, y - 33 - h + 2, 3, h - 2); } }
     for (const dx of [-140, 140]) { g.fillStyle = '#120908'; px(g, cx + dx - 7, A.y0 + 6, 14, 54); g.fillStyle = '#6A1A16'; px(g, cx + dx - 6, A.y0 + 6, 12, 50); g.fillStyle = '#C9D2E0'; px(g, cx + dx - 1, A.y0 + 12, 2, 28); px(g, cx + dx, A.y0 + 10, 1, 2); g.fillStyle = '#C9963C'; px(g, cx + dx - 5, A.y0 + 22, 10, 2); } // os estandartes com a espada
+    // as rachaduras que avisam e as brechas que ficam na parede por onde eles saíram
+    for (const r of b.cen.rachas || []) { const k = Math.min(1, r.t / 0.3), d = -r.lado, n = Math.round(4 + k * 8); g.fillStyle = Math.floor(Tm * 14) % 2 ? '#FF7A3C' : '#FFD08A';
+      for (let i = 0; i < n; i++) { const yy = r.y - Math.round(r.alto * 0.5) + Math.round(Math.sin(i * 2.3) * r.alto * 0.45 * k), xx = r.x + d * Math.round(((i * 5) % 7) * k); px(g, xx, yy, 1 + (i % 2), 1); }
+      g.fillStyle = '#0A0605'; for (let i = 0; i < n; i++) px(g, r.x + d * ((i * 3) % 5), r.y - Math.round(r.alto * (i / n)), 2, 2); }
+    for (const q of b.cen.brechas || []) { const d = -q.lado, h = q.alto, y0 = q.y - h, a = q.t > 7 ? 1 - (q.t - 7) / 2 : 1; g.globalAlpha = a;
+      for (let yy = 0; yy < h; yy++) { const w = Math.round(9 + Math.sin(yy * 0.9) * 2 + Math.sin(yy * 0.31) * 3 - Math.abs(yy - h / 2) * 0.18); g.fillStyle = '#050303'; px(g, d > 0 ? q.x : q.x - w, y0 + yy, w, 1); g.fillStyle = '#5A3A2E'; px(g, d > 0 ? q.x + w : q.x - w - 1, y0 + yy, 1, 1); }
+      g.fillStyle = '#3E2620'; for (let i = 0; i < 7; i++) px(g, q.x + d * (3 + ((i * 7) % 13)), q.y - 2 - (i % 3), 3, 2 + (i % 2)); // o entulho no pé da parede
+      if (q.t < 0.4) { g.globalAlpha = (1 - q.t / 0.4) * 0.7; g.fillStyle = '#FFD08A'; px(g, d > 0 ? q.x : q.x - 6, y0 + 2, 6, h - 4); }
+      g.globalAlpha = 1; }
   },
   escassez(g, b, A, Tm) { // o sol da seca, a árvore morta, a prateleira da viúva, o chão que racha; e a botija que não falta
     const L = A.x1 - A.x0, k = b.cen.seca || 0, cx = A.x0 + L * 0.5, cy = A.y0 + 34, r = 22 + Math.round(k * 8);
@@ -164,6 +173,14 @@ Object.assign(FUNDO, {
 });
 
 const FRENTE = {
+  conselho(g, b, A, Tm) { // as lanças que rompem o piso onde Eleazar caiu: brotam, ficam um instante e afundam
+    for (const l of b.cen.lancas || []) { if (l.t < 0) { if (Math.floor(Tm * 16) % 2) { g.fillStyle = '#C9B48A'; for (let i = -6; i <= 6; i += 3) px(g, l.x + i, A.chao - 1, 2, 1); } continue; }
+      const k = l.t < 0.08 ? l.t / 0.08 : l.t > 0.55 ? Math.max(0, 1 - (l.t - 0.55) / 0.2) : 1, h = Math.round(28 * k);
+      for (const [dx, hh] of [[-6, 0.7], [0, 1], [6, 0.8]]) { const H = Math.round(h * hh), x = l.x + dx; if (H < 2) continue;
+        g.fillStyle = '#17121f'; px(g, x - 1, A.chao - H, 3, H); g.fillStyle = '#8A5A36'; px(g, x, A.chao - H + 5, 1, H - 5);
+        g.fillStyle = '#17121f'; px(g, x - 2, A.chao - H - 1, 5, 5); g.fillStyle = '#EEF6FB'; px(g, x, A.chao - H - 1, 1, 5); px(g, x - 1, A.chao - H + 1, 3, 2); g.fillStyle = '#FFFFFF'; px(g, x, A.chao - H - 1, 1, 1); }
+      if (l.t < 0.15) { g.fillStyle = '#C9B48A'; g.globalAlpha = 1 - l.t / 0.15; px(g, l.x - 10, A.chao - 3, 20, 3); g.globalAlpha = 1; } }
+  },
   imoralidade(g, b, A, Tm) { // névoa rosada que sobe do chão
     const k = b.cen.nevoa || 0.25, h = 30 + k * 90;
     for (let y = 0; y < h; y += 2) { g.globalAlpha = (1 - y / h) * 0.28 * (0.6 + k); g.fillStyle = '#FF8FB8'; for (let x = A.x0; x < A.x1; x += 4) if ((x + y + Math.floor(Tm * 6)) % 3) px(g, x + Math.sin(Tm + y * 0.1) * 6, A.chao - y, 4, 2); } g.globalAlpha = 1;
@@ -187,13 +204,16 @@ export function pintarPalco(g, G, b, X, Y, Tm, frente) {
   const pintor = (frente ? FRENTE : FUNDO)[b.id]; if (!pintor || !G.N.arena) return;
   const A0 = G.N.arena, A = { x0: X(A0.x0), x1: X(A0.x1), y0: Y(A0.y0), chao: Y(A0.chao) };
   // o chefe e o jogador também em pixels (as cordas e correntes ligam os dois)
-  const zel = b.id !== 'conselho' ? null : G.figurantes?.length || b.morrendo ? { menaem: 1, eleazar: 1, jair: 1 } : { menaem: G.inimigos.some(q => q.hp > 0 && (q.alpha ?? 1) > 0.1 && (q.id === 'zelotePunhal' || (q.id === 'conselho' && q.cen?.quem === 'menaem'))), eleazar: G.inimigos.some(q => q.id === 'conselho' && q.cen?.quem === 'eleazar' && (q.alpha ?? 1) > 0.1), jair: G.inimigos.some(q => q.id === 'zeloteFoice' && (q.alpha ?? 1) > 0.1) }; // quem está fora do trono (na cena do respeito, todos de pé)
+  const zel = b.id !== 'conselho' ? null : G.figurantes?.length || b.morrendo ? { menaem: 1, eleazar: 1, jair: 1 } : { menaem: G.inimigos.some(q => q.hp > 0 && ((q.alpha ?? 1) > 0.1 || q.oculto) && (q.id === 'zelotePunhal' || (q.id === 'conselho' && q.cen?.quem === 'menaem'))), eleazar: G.inimigos.some(q => q.id === 'conselho' && q.cen?.quem === 'eleazar' && ((q.alpha ?? 1) > 0.1 || q.oculto)), jair: G.inimigos.some(q => q.id === 'zeloteFoice' && ((q.alpha ?? 1) > 0.1 || q.oculto)) }; // quem está fora do trono (na cena do respeito, todos de pé)
   const bb = { ...b, zel, x: X(b.x), y: Y(b.y), h: b.h / PX, w: b.w / PX, px: X(G.p.x), py: Y(G.p.y - 20), amarrado: G.amarra > 0, cen: {
     ...b.cen,
     laco: b.cen.laco ? { x: X(b.cen.laco.x), y: Y(b.cen.laco.y) } : 0,
     planta: b.cen.planta != null ? X(b.cen.planta) : null, verme: b.cen.verme != null ? X(b.cen.verme) : null, nuvem: b.cen.nuvem != null ? X(b.cen.nuvem) : null, raioX: b.cen.raioX != null ? X(b.cen.raioX) : null,
     vortice: b.cen.vortice != null ? X(b.cen.vortice) : null, tripes: b.cen.tripes?.map(X),
     corda: b.cen.corda ? { x: X(b.cen.corda.x), y: Y(b.cen.corda.y) } : null, corrente: b.cen.corrente ? { x: X(b.cen.corrente.x), y: Y(b.cen.corrente.y) } : null,
+    brechas: b.id === 'conselho' ? (G.zelBrechas || []).map(q => ({ x: X(q.x), y: Y(q.y), lado: q.lado, alto: Math.round(q.alto / PX), t: q.t })) : null,
+    rachas: b.id === 'conselho' ? (G.zelRachas || []).map(q => ({ x: X(q.x), y: Y(q.y), lado: q.lado, alto: Math.round(q.alto / PX), t: q.t })) : null,
+    lancas: b.id === 'conselho' ? (G.zelLancas || []).map(q => ({ x: X(q.x), t: q.t })) : null,
     estrelas: b.cen.estrelas?.map(e => ({ x: X(e.x), y: Y(e.y) })), riscos: b.cen.riscos?.map(r => ({ x: X(r.x), y: Y(r.y), s: r.s, t: r.t }))
   } };
   g.save(); pintor(g, bb, A, Tm); g.restore(); g.globalAlpha = 1;

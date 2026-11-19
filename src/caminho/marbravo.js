@@ -4,6 +4,7 @@
 // Pegue (nadando por cima), arremesse (golpe) na cabeça quando ela sobe; mergulhe (para baixo) para escapar do fogo e das ondas.
 import { sfx, music } from '../audio.js';
 import { ehTempestade, quarto } from './tempo.js';
+import { quadroChefe } from './pixel/chefespx.js';
 
 const rand = (a, b) => a + Math.random() * (b - a), clamp = (v, a, b) => Math.max(a, Math.min(b, v)), pick = a => a[Math.floor(Math.random() * a.length)];
 const agua = G => G.objs.find(o => o.tipo === 'aguaAberta');
@@ -131,19 +132,13 @@ function respingo(G, x) { const A = agua(G); for (let i = 0; i < 22; i++) G.part
 
 /* ---------------- desenho (em pixel de jogo; X e Y convertem do mundo) ---------------- */
 const ESC = ['#0E2E36', '#1A4A52', '#2A6A6E', '#4A9A90', '#8AD0BC'], VENTRE = ['#8A7A5A', '#C9B88A', '#E8DCB0'], BARB = ['#6A1A2A', '#A02E44', '#C24058'];
-function bolaPx(g, cx, cy, r, P) { r = Math.max(1, Math.round(r)); for (let yy = -r; yy <= r; yy++) { const w = Math.round(Math.sqrt(r * r - yy * yy)); const sh = yy < -r * 0.4 ? 3 : yy < r * 0.2 ? 2 : 1; g.fillStyle = '#071418'; g.fillRect(cx - w - 1, cy + yy, w * 2 + 2, 1); g.fillStyle = P[sh]; g.fillRect(cx - w, cy + yy, w * 2, 1); } g.fillStyle = P[4] || P[3]; g.fillRect(cx - Math.round(r * 0.4), cy - Math.round(r * 0.6), 2, 1); }
-function cabeca(g, x, y, face, Tm, abre, flash, olhoBr) {
-  const R = (a, b, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x + (face > 0 ? a : -a - w)), Math.round(y + b), w, h); };
-  // o pescoço que sai da água
-  for (let i = 0; i < 9; i++) bolaPx(g, Math.round(x - face * i * 3), Math.round(y + 8 + i * 7), 11 + i * 0.6, flash ? ['#fff', '#fff', '#fff', '#fff', '#fff'] : ESC);
-  R(-14, -16, 30, 22, '#071418'); R(-13, -15, 28, 20, flash ? '#fff' : ESC[2]); R(-13, -15, 28, 4, ESC[3]); // o crânio
-  R(12, -10, 26, 9, '#071418'); R(13, -9, 24, 7, flash ? '#fff' : ESC[2]); R(13, -9, 24, 2, ESC[3]); // o focinho
-  R(12, -1 + abre, 24, 6, '#071418'); R(13, 0 + abre, 22, 4, VENTRE[1]); // a mandíbula
-  if (abre > 2) { R(13, -1, 22, abre + 1, '#3A0A10'); R(16, 0, 18, abre - 1, Math.floor(Tm * 12) % 2 ? '#FF9A3C' : '#E2463C'); for (let i = 14; i < 34; i += 4) { R(i, -1, 1, 2, '#F4EFE0'); R(i + 2, abre - 1, 1, 2, '#F4EFE0'); } }
-  for (const [a, b] of [[-10, -22], [-4, -26], [2, -23]]) { R(a, b, 3, 8, '#071418'); R(a + 1, b + 1, 1, 7, BARB[2]); } // a coroa de barbatanas
-  R(-16, -12, 6, 2, '#E8DCB0'); R(-20, -14, 5, 2, '#E8DCB0'); // os chifres para trás
-  R(4, -11, 5, 4, '#071418'); R(5, -10, 3, 2, olhoBr ? '#FFFFFF' : '#FFC43D'); // o olho aceso
-  for (let i = 0; i < 3; i++) { const k = (Tm * 0.8 + i / 3) % 1; g.fillStyle = '#8A93A8'; g.globalAlpha = 1 - k; g.fillRect(Math.round(x + face * (38 + k * 8)), Math.round(y - 8 - k * 14), 2, 2); g.globalAlpha = 1; } // fumaça das narinas
+// o Leviatã com o sprite do chefe (o mesmo da arena), girado: o pescoço sai da água, ou o corpo inteiro no salto
+const LEV = { id: 'leviata', hp: 1, max: 1, vx: 0, chao: true, voa: 1, cen: {} }, ESCALA = 1.7;
+function serpente(g, L, x, y, ang, Tm, o = {}) {
+  LEV.hp = L.hp; LEV.max = L.max; LEV.flash = L.flash > 0 ? 1 : 0; LEV.tele = o.prep ? 1 : 0; LEV.mov = o.ataca ? { t: 1 } : null; LEV.quebrado = o.caido ? 1 : 0; LEV.morrendo = 0; LEV.alpha = 1;
+  const q = quadroChefe(LEV, Tm); if (!q) return;
+  const inv = Math.cos(ang) < 0; // indo para a esquerda: espelha para a barriga ficar embaixo
+  g.save(); g.translate(Math.round(x), Math.round(y)); g.rotate(ang); g.scale(ESCALA, inv ? -ESCALA : ESCALA); g.drawImage(q.s.tela(), -60, -74); g.restore();
 }
 export function pintarMarBravo(g, G, X, Y, Tm) {
   const L = G.levi, A = agua(G), p = G.p; if (!L || !A) return;
@@ -160,9 +155,11 @@ export function pintarMarBravo(g, G, X, Y, Tm) {
   if (gp?.tipo === 'redemoinho' && gp.t >= gp.aviso) { const x = X(gp.x); for (let r = 4; r < 46; r += 5) for (let a = 0; a < 20; a++) { g.fillStyle = (a + r) % 3 ? '#2E7A8A' : '#DFF6FA'; g.fillRect(x + Math.round(Math.cos(a * 0.314 + Tm * (6 - r / 10)) * r), sup + Math.round(Math.sin(a * 0.314 + Tm * 6) * r * 0.12), 2, 1); } }
   // o que está acima da água (o resto fica escondido pelo mar)
   g.save(); g.beginPath(); g.rect(0, 0, vw, sup + 1); g.clip();
-  if (L.corpo) for (let i = L.corpo.length - 1; i >= 0; i--) { const q = L.corpo[i]; bolaPx(g, X(q.x), Y(q.y), q.r / 2, L.flash > 0 ? ['#fff', '#fff', '#fff', '#fff', '#fff'] : ESC); if (i % 3 === 1) { g.fillStyle = BARB[2]; g.fillRect(X(q.x) - 2, Y(q.y) - Math.round(q.r / 2) - 5, 4, 5); } if (i === 0) cabeca(g, X(q.x), Y(q.y) - 6, Math.sign(gp ? gp.x1 - gp.x0 : 1), Tm, 3, L.flash > 0, false); }
+  if (L.corpo) { const h = L.corpo[0], m = L.corpo[7], ang = Math.atan2(Y(h.y) - Y(m.y), X(h.x) - X(m.x)); serpente(g, L, X(m.x), Y(m.y), ang, Tm, { ataca: true }); }
   if (L.cab) { const k = L.morre > 0 ? 1 : Math.min(1, L.cab.t / 0.35, (L.cab.dur - L.cab.t) / 0.35), y = Y(A.y) + Math.round((1 - k) * 80) + Math.round((L.cab.y - A.y) / 2 * k), face = Math.sign(p.x - L.cab.x) || 1, fogo = gp?.tipo === 'fogo';
-    cabeca(g, X(L.cab.x), y, face, Tm, fogo ? (gp.t >= gp.aviso ? 7 : Math.floor(Tm * 8) % 2 ? 4 : 2) : L.morre > 0 ? 6 : 2, L.flash > 0, fogo && gp.t < gp.aviso && Math.floor(Tm * 14) % 2);
+    // o pescoço sobe da água inclinado para você; a cabeça fica onde o arpão acerta
+    const ang = face > 0 ? -1.15 : Math.PI + 1.15, bal = Math.sin(Tm * 2.2) * 0.06, hx = X(L.cab.x), hy = y;
+    serpente(g, L, hx - Math.cos(ang) * 44 * ESCALA, hy + 44 * ESCALA * Math.sin(1.15) * 0.92, ang + bal, Tm, { prep: fogo && gp.t < gp.aviso, ataca: fogo && gp.t >= gp.aviso || L.morre > 0, caido: L.morre > 0 });
     if (!L.morre && k > 0.9) { g.fillStyle = '#FFE9A8'; if (Math.floor(Tm * 6) % 2) { g.fillRect(X(L.cab.x) - 1, y - 36, 3, 5); g.fillRect(X(L.cab.x) - 1, y - 29, 3, 2); } } } // o "!" de alvo: a cabeça está exposta
   if (gp?.tipo === 'fogo' && gp.t >= gp.aviso && gp.frente != null) { const a = X(Math.min(gp.hx, gp.frente)), b = X(Math.max(gp.hx, gp.frente)); for (let x = a; x < b; x += 2) { const hh = 6 + Math.round(Math.sin(x * 0.3 + Tm * 20) * 3 + Math.sin(x * 0.11 - Tm * 9) * 3); g.fillStyle = '#E2463C'; g.fillRect(x, sup - hh - 2, 2, hh + 2); g.fillStyle = '#FF9A3C'; g.fillRect(x, sup - hh + 1, 2, hh - 1); g.fillStyle = '#FFE08A'; g.fillRect(x, sup - 3, 2, 2); } }
   g.restore();

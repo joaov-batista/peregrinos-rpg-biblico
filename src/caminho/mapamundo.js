@@ -6,6 +6,7 @@ import { RX } from './dados.js';
 import { sfx } from '../audio.js';
 import { areaDef, MUNDO } from './dados.js';
 import { TODAS } from '../content/index.js';
+import { sitioId } from './sitio.js';
 
 const LOJAS = { lidia: 'loja', ferreiro: 'forja', armeiro: 'armas', dorcas: 'roupas', noe: 'animais', mateus: 'banco', mercador: 'loja', zebedeu: 'pesca', viajante: 'loja', barqueiro: 'barco', escriba: 'rolos' };
 // o que cada lugar tem, tirado dos próprios objetos da sala
@@ -22,6 +23,10 @@ function coisas(cel) {
     else if (o.tipo === 'poco') out.push({ k: 'poco', t: 'Poço (azeite cheio)' });
     else if (o.tipo === 'barco') out.push({ k: 'portal', t: o.volta ? 'Barco de volta ao Refúgio' : 'Barco para Sardes' });
     else if (o.tipo === 'vela') out.push({ k: 'vela', t: 'Vela' });
+    else if (o.tipo === 'aguaAberta') out.push({ k: 'poco', t: 'Água funda: nadar e pescar' });
+    else if (o.tipo === 'bote') out.push({ k: 'portal', t: 'Bote: remar mar adentro' });
+    else if (o.tipo === 'bancoPraia') out.push({ k: 'casa', t: 'Banco da praia: sentar e ver a vista' });
+    else if (o.tipo === 'portaoCidade') out.push({ k: 'portal', t: 'Portão do Refúgio' });
   }
   return out;
 }
@@ -30,13 +35,15 @@ const lugaresDe = (area, filtro = () => true) => {
   const def = areaDef(area); return (def.planta || []).map((c, i) => ({ ...c, cx: c.cx ?? i, cy: c.cy ?? 0, area })).filter(filtro).map(c => ({ area, cx: c.cx, cy: c.cy, nome: c.nome || def.nome, deco: c.deco, coisas: coisas(c) }));
 };
 function camadas(G) {
-  const v = G.cm.visitou || {}, foi = a => !!v[a] || G.area === a;
+  const v = G.cm.visitou || {}, foi = a => !!v[a] || G.area === a, sid = G.def?.sitio ? G.area : G.area?.startsWith?.('casa:') ? 'sitio:' + G.area.slice(5) : sitioId(G);
   return [
     { id: 'refugio', nome: 'Refúgio', sub: 'A aldeia, a céu aberto', lugares: lugaresDe('refugio', c => c.cy === 0 && c.cx < 7 + RX), ver: true, chao: '#3A4A2E', ceu: ['#1A2744', '#3B4B6B'] },
     { id: 'subsolo', nome: 'Subsolo', sub: 'Os salões de pedra, debaixo da aldeia', lugares: lugaresDe('refugio', c => c.cy === 1), ver: true, chao: '#2A2638', ceu: ['#0E0C16', '#1E1A2C'] },
     { id: 'mata', nome: 'Bosque e mata', sub: 'O caminho de chegada e as trilhas da mata', ver: true, chao: '#24361F', ceu: ['#0A1418', '#1E3A32'],
-      lugares: [{ area: 'sitio', nome: 'Seu sítio', ver: foi('sitio'), coisas: [{ k: 'casa', t: 'A sua casa, a lavoura e os animais' }] }, { area: 'clareira', nome: 'Clareira das Provas', ver: foi('clareira'), coisas: [{ k: 'portal', t: 'Arena, ondas e o Conselho' }] },
+      lugares: [{ area: 'clareira', nome: 'Clareira das Provas', ver: foi('clareira'), coisas: [{ k: 'portal', t: 'Arena, ondas e o Conselho' }] },
         { area: 'floresta', nome: 'Floresta Escura', ver: foi('floresta'), coisas: [{ k: 'gente', t: 'Só a lâmpada mostra o chão' }] }, { area: 'getsemani', nome: 'Getsêmani', ver: foi('getsemani'), coisas: [{ k: 'casa', t: G.cm.getsemani ? 'O jardim, de manhã' : 'Um jardim de oliveiras' }] }] },
+    { id: 'sitio', nome: 'Sítio e praia', sub: 'A sua terra, fora do portão: a casa, a lavoura, o pasto e o mar', ver: true, chao: '#3A4A2A', ceu: ['#1A2E44', '#5A7A9A'],
+      lugares: lugaresDe(sid).flatMap(L => /estrada/i.test(L.nome) ? [{ ...L, nome: 'A estrada' }] : /^a casa$/i.test(L.nome) ? [L, { area: 'casa:' + sid.slice(6), nome: 'Dentro de casa', coisas: [{ k: 'casa', t: 'Cama: cochilar ou dormir até de manhã' }, { k: 'casa', t: 'Mesa: a ceia' }, { k: 'vela', t: 'Lareira: +1 fôlego' }] }] : [L]) },
     { id: 'mar', nome: 'Porto e mar', sub: 'Onde o Refúgio encontra o mar', ver: true, chao: '#1F3A4A', ceu: ['#0E1A30', '#2E4A6A'],
       lugares: [...lugaresDe('refugio', c => c.cy === 0 && c.cx >= 7 + RX), { area: 'mar', nome: 'A travessia', ver: foi('sardes'), coisas: [{ k: 'portal', t: 'Três dias de mar até Sardes' }] }] },
     { id: 'sardes', nome: 'Sardes', sub: 'A cidade que perdeu a luz', ver: foi('sardes'), chao: '#26222E', ceu: ['#05060C', '#2A2438'], lugares: lugaresDe('sardes') },
@@ -47,6 +54,7 @@ function camadas(G) {
 function ondeEstou(G) {
   const cx = Math.floor(G.p.x / 960), cy = Math.floor((G.p.y - 2) / 544);
   if (G.area === 'refugio') return cy === 1 ? { cam: 'subsolo', cx, cy } : cx >= 7 + RX ? { cam: 'mar', cx, cy } : { cam: 'refugio', cx, cy };
+  if (G.def?.sitio || G.area?.startsWith?.('casa:')) return { cam: 'sitio', cx, cy, area: G.area };
   const m = { bosque: 'mata', clareira: 'mata', floresta: 'mata', getsemani: 'mata', sardes: 'sardes', vale: 'vale' }[G.area];
   return m ? { cam: m, cx, cy, area: G.area } : null;
 }
@@ -130,6 +138,15 @@ function silhueta(g, x, chao, L, ver, cam) {
   if (/bosque|floresta|mata|clareira/.test(n)) { arvore(x - 24, 70); arvore(x + 20, 58); if (/clareira/.test(n)) ret(x - 10, chao - 30, 20, 30, pedra); return; }
   if (/templo/.test(n)) { ret(x - 40, chao - 70, 80, 70, tinta); ret(x - 38, chao - 68, 76, 68, pedra); ret(x - 10, chao - 40, 20, 40, '#05060B'); ret(x - 44, chao - 78, 88, 8, pedra); return; }
   if (cam === 'vale') { g.fillStyle = pedra; g.beginPath(); g.moveTo(x - 44, chao); g.lineTo(x - 20, chao - 70); g.lineTo(x, chao - 40); g.lineTo(x + 24, chao - 84); g.lineTo(x + 44, chao); g.fill(); if (/covil|dragão/.test(n)) ret(x + 10, chao - 50, 10, 6, '#E2463C'); return; }
+  const onda = (a, w) => { for (let k = 0; k < w; k += 12) { ret(a + k, chao - 3 - ((k / 12) % 2) * 2, 8, 2, '#7FD4E4'); ret(a + k + 2, chao - 1, 6, 1, '#2E6B80'); } };
+  if (cam === 'sitio' || cam === 'mar') {
+    if (/margem|mar aberto|alto-mar|mar adentro|^o mar$/.test(n)) { ret(x - 44, chao - 6, 88, 6, '#1C4A5E'); onda(x - 44, 88); if (/alto|adentro/.test(n)) { ret(x - 2, chao - 40, 2, 32, mad); ret(x, chao - 38, 14, 18, '#E8E2CF'); ret(x - 14, chao - 10, 30, 5, mad); } else ret(x - 10, chao - 14, 22, 6, mad); return; }
+    if (/praia/.test(n)) { ret(x - 44, chao - 6, 88, 6, '#C9B07A'); onda(x - 44, 30); ret(x + 6, chao - 14, 24, 3, mad); ret(x + 8, chao - 11, 2, 5, mad); ret(x + 26, chao - 11, 2, 5, mad); ret(x - 18, chao - 12, 22, 6, mad); return; } // a areia, o banco e o bote
+    if (/pasto/.test(n)) { for (let k = -40; k <= 40; k += 16) ret(x + k, chao - 16, 3, 16, mad); ret(x - 40, chao - 12, 83, 2, mad); ret(x - 12, chao - 22, 16, 10, '#E8E2CF'); ret(x + 2, chao - 26, 6, 6, '#E8E2CF'); ret(x + 14, chao - 18, 12, 8, '#E8E2CF'); return; }
+    if (/lavoura/.test(n)) { for (let k = -36; k <= 36; k += 12) { ret(x + k - 1, chao - 4, 8, 4, '#5A3A22'); ret(x + k, chao - 14 - (k % 24 ? 0 : 4), 6, 10, folha); } return; }
+    if (/estrada/.test(n)) { ret(x - 44, chao - 3, 88, 3, '#8A6A4A'); ret(x + 10, chao - 60, 30, 60, tinta); ret(x + 12, chao - 58, 26, 58, pedra); ret(x + 18, chao - 34, 14, 34, '#05060B'); for (let k = 0; k < 3; k++) ret(x + 12 + k * 10, chao - 64, 6, 6, pedra); arvore(x - 26, 50); return; } // o portão do Refúgio
+    if (/casa/.test(n)) { casa(x, 56, 48); ret(x + 14, chao - 62, 8, 14, tinta); ret(x + 16, chao - 60, 4, 12, '#8A6A4A'); if (/dentro/.test(n)) ret(x - 20, chao - 12, 12, 8, '#FF9A3C'); return; }
+  }
   casa(x - 18, 40, 44); casa(x + 22, 34, 34); // ruas de Sardes e o que mais vier
 }
 function estrela(g, x, y) { const P = ['..X..', '.XXX.', 'XXXXX', '.XXX.', 'X...X']; g.fillStyle = '#05060B'; g.fillRect(x - 8, y - 2, 16, 14); g.fillStyle = '#FFD23F'; P.forEach((l, r) => [...l].forEach((c, k) => { if (c === 'X') g.fillRect(x - 5 + k * 2, y + r * 2, 2, 2); })); }

@@ -65,7 +65,11 @@ export function passoPescaViva(G, dt) {
   p.nada = nada; if (nada) { p.pulos = 0; if (p.vy < -420) p.vy = -420; }
   const naBeira = !p.noBote && !nada && (beira - p.x) * mar > -5 && (beira - p.x) * mar < 90 && p.face === mar;
   G.naAgua = (naBeira || p.noBote || nada || noPier) && !!G.cm.vara && !G.nado; if (G.cm.vara === 1) G.cm.vara = 'cedro';
-  if (p.noBote && c.interagir && Math.abs(p.x - beira) < 80) { p.noBote = false; p.x = beira - mar * 20; S.est = 'livre'; G.textoEm(p.x, p.y - 70, 'de volta à margem', '#C9D2E0', 11); }
+  // descer do bote: perto da margem, remar contra a areia (meio segundo), pular ou interagir
+  const pertoBeira = p.noBote && Math.abs(p.x - beira) < 80;
+  S.encosta = pertoBeira && c.mx * -mar > 0.5 ? (S.encosta || 0) + dt : 0;
+  if (pertoBeira && (c.interagir || (c.pulo && S.est === 'livre') || S.encosta > 0.45)) { p.noBote = false; p.x = beira - mar * 24; p.vy = -260; p.face = -mar; S.est = 'livre'; S.encosta = 0; G.pescaTrava = false; sfx('dodge'); G.textoEm(p.x, p.y - 70, 'de volta à margem', '#C9D2E0', 11); }
+  if (pertoBeira && !G.dicaDesce) { G.dicaDesce = 1; G.textoEm(p.x, p.y - 80, 'reme para a areia ou pule para descer', '#C9D2E0', 11); }
   // as sombras dos peixes: andam debaixo d'água, mais e maiores longe da margem
   while (S.sombras.length < 5) { const x = rand(A.x0 + 20, A.x1 - 20), d = fundura(A, x); S.sombras.push({ x, y: p.y + 8 + d * 14, vx: rand(-20, 20), t: rand(0, 4), tam: 4 + d * 8 + rand(0, 3) }); }
   for (const s of S.sombras) { s.t -= dt; if (s.t <= 0) { s.vx = rand(-24, 24); s.t = rand(1.5, 4); } if (!s.alvo) s.x = Math.max(A.x0 + 10, Math.min(A.x1 - 10, s.x + s.vx * dt)); }

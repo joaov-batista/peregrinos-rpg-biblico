@@ -1004,40 +1004,72 @@ const carcere = {
 const QUEM_Z = b => b.id === 'conselho' ? (b.cen?.quem || 'menaem') : b.id === 'zeloteFoice' ? 'jair' : 'menaem';
 export const tronoZ = (A, quem) => ({ x: A.cx + ({ menaem: -1, eleazar: 0, jair: 1 }[quem] ?? 0) * 128, y: A.chao - 124 });
 const arco = (b, x0, y0, x1, y1, k, alto) => { b.x = x0 + (x1 - x0) * k; b.y = y0 + (y1 - y0) * k - Math.sin(k * Math.PI) * alto; };
+// sumir: fumaça negra, brasas que sobem e o corpo se desfaz (o desenho dissolve com o alpha)
+const fumaca = (G, x, y, n = 14) => { G.efeito('fumacaNegra', x, y - 34); for (let i = 0; i < n; i++) G.parts.push({ x: x + rand(-16, 16), y: y - rand(6, 60), vx: rand(-50, 50), vy: rand(-140, -40), t: 0.7, max: 0.7, r: rand(1.2, 2.4), cor: i % 3 ? '#1C1418' : '#FF7A3C', g: -60 }); };
+// a parede se rompe: pedras e pó saem da parede para dentro da sala, e fica a brecha
+const brecha = (G, x, y, lado, alto = 40) => { (G.zelBrechas = G.zelBrechas || []).push({ x, y, lado, alto, t: 0 }); if (G.zelBrechas.length > 8) G.zelBrechas.shift();
+  for (let i = 0; i < 22; i++) G.parts.push({ x: x + rand(-4, 4), y: y - rand(0, alto), vx: -lado * rand(80, 420), vy: rand(-320, -40), t: 0.9, max: 0.9, r: rand(1.5, 3.2), cor: ['#3E2620', '#2E1A16', '#5A3A2E', '#8A6A50'][i % 4], g: 1100 });
+  G.efeito('slamPedra', x - lado * 18, y - alto / 2); G.tremor(5); sfx('block'); };
+// a rachadura que avisa onde a parede vai romper
+const racha = (G, x, y, lado, alto) => { const r = (G.zelRachas = G.zelRachas || []).find(q => Math.abs(q.x - x) < 4 && Math.abs(q.y - y) < 4); if (r) { r.t = Math.min(r.t, 0.5); return; } G.zelRachas.push({ x, y, lado, alto, t: 0 }); if (G.zelRachas.length > 8) G.zelRachas.shift(); };
+const ladoDe = (A, x) => x < A.cx ? -1 : 1;
 const noTrono = (G, b, dt = 0) => { b.vx = 0; b.corre = false;
   // na vez dele, entre um golpe e outro, fica na sala: cai até o chão, encara você e espera o próximo golpe
   if (b.naSala && !b.folga && !b.volta) { const A = G.N.arena; b.alpha = 1; b.y = Math.min(A.chao, b.y + 700 * dt); b.face = Math.sign(G.p.x - b.x) || b.face; return; }
-  if (b.alpha > 0.5 && !b.volta && !(b.hp <= 0)) b.volta = { t: 0, x0: b.x, y0: b.y };
-  const v = b.volta; if (!v) { b.alpha = 0; return; }
-  v.t += dt; const k = Math.min(1, v.t / 0.34), d = tronoZ(G.N.arena, QUEM_Z(b)); b.alpha = 1; b.face = Math.sign(d.x - v.x0) || b.face; b.corre = true; arco(b, v.x0, v.y0, d.x, d.y, k, 90);
-  if (k >= 1) { b.volta = null; b.naSala = false; b.alpha = 0; b.corre = false; } };
-// no começo do golpe: do trono até o ponto de partida (o aviso do golpe continua contando)
-function saiDoTrono(G, b, m) {
-  if (m.t === 0) { const o = tronoZ(G.N.arena, QUEM_Z(b)), daSala = b.naSala || b.volta; m.sai = { x0: daSala ? m.px0 : o.x, y0: daSala ? m.py0 : o.y, x1: b.x, y1: b.y, alto: daSala ? 50 : 80 }; b.volta = null; sfx('dodge'); }
-  const s = m.sai; if (!s) return; const k = Math.min(1, m.t / 0.3); arco(b, s.x0, s.y0, s.x1, s.y1, k, s.alto); b.corre = k < 1; if (k >= 1) { m.sai = null; b.naSala = true; G.efeito('pouso', b.x, b.y); } }
-// rasante: aparece num canto, no chão, e cruza a sala inteira. Pule (ou atravesse com o passo)
+  // de volta ao trono: some em fumaça onde está e reaparece sentado, num sopro de fumaça
+  if (b.alpha > 0.5 && !b.volta && !(b.hp <= 0)) { b.volta = { t: 0 }; fumaca(G, b.x, b.y); sfx('dodge'); }
+  const v = b.volta; if (!v) { b.alpha = 0; b.oculto = false; return; }
+  v.t += dt; b.alpha = Math.max(0, 1 - v.t / 0.16); b.oculto = true;
+  if (v.t >= 0.3) { const d = tronoZ(G.N.arena, QUEM_Z(b)); b.x = d.x; b.y = d.y; b.volta = null; b.naSala = false; b.alpha = 0; b.oculto = false; G.efeito('sumico', d.x, d.y - 26); } };
+// no começo do golpe: some do trono (ou de onde está) e reaparece onde o golpe começa: despencando do céu ('ceu') ou rompendo
+// a parede ('parede'). Enquanto entra não fere nem pode ser ferido; o aviso do golpe só conta depois. Devolve true enquanto entra.
+function entrada(G, b, m, dt, modo) {
+  const A = G.N.arena;
+  if (!m.ent && m.te == null) { const o = tronoZ(A, QUEM_Z(b)), daSala = b.naSala || b.volta; m.ent = { x0: daSala ? m.px0 : o.x, y0: daSala ? m.py0 : o.y, x1: b.x, y1: b.y, k: daSala ? 0.75 : 1, t: 0, lado: ladoDe(A, b.x) }; b.volta = null; b.oculto = true; fumaca(G, m.ent.x0, m.ent.y0); sfx('dodge'); }
+  const e = m.ent; if (!e) return false; e.t += dt; b.tele = 0;
+  const t1 = 0.14 * e.k, t2 = t1 + 0.22 * e.k, t3 = t2 + (modo === 'ceu' ? 0.2 : 0.14), xw = e.lado < 0 ? A.x0 : A.x1;
+  if (e.t < t1) { b.x = e.x0; b.y = e.y0; b.alpha = 1 - e.t / t1; return true; } // desfazendo-se
+  if (e.t < t2) { b.alpha = 0; b.x = e.x1; b.y = e.y1; // escondido; no destino, o aviso de onde ele vai sair
+    if (modo === 'ceu') { if (Math.random() < dt * 30) G.parts.push({ x: e.x1 + rand(-8, 8), y: A.y0 + rand(0, 20), vx: 0, vy: 1100, t: 0.22, max: 0.22, r: 1.2, cor: '#FFE9A8', g: 0 }); }
+    else { racha(G, xw, e.y1, e.lado, 48); if (Math.random() < dt * 20) G.parts.push({ x: xw - e.lado * 3, y: e.y1 - rand(4, 44), vx: -e.lado * 30, vy: 0, t: 0.5, max: 0.5, r: 1.3, cor: '#8A6A50', g: 700 }); }
+    return true; }
+  if (!e.saiu) { e.saiu = true; b.oculto = false; b.naSala = true; if (modo === 'ceu') { sfx('swing'); G.tremor(2); } else brecha(G, xw, e.y1, e.lado, 48); }
+  const k = Math.min(1, (e.t - t2) / (t3 - t2)); b.alpha = 1; b.rastro = 0.22;
+  if (modo === 'ceu') { b.x = e.x1; b.y = A.y0 - 90 + (e.y1 - A.y0 + 90) * (k * k); } // despenca do alto até onde o golpe começa
+  else { const x0 = xw + e.lado * 6; b.x = x0 + (e.x1 - x0) * (1 - (1 - k) * (1 - k)); b.y = e.y1; b.face = -e.lado; } // sai de dentro da parede
+  b.corre = k < 1;
+  if (k >= 1) { m.ent = null; m.te = m.t; b.x = e.x1; b.y = e.y1; if (modo === 'ceu') { G.efeito('sumico', b.x, b.y - 20); for (let i = 0; i < 10; i++) G.parts.push({ x: b.x + rand(-20, 20), y: b.y - rand(0, 30), vx: rand(-120, 120), vy: rand(-80, 40), t: 0.4, max: 0.4, r: 1.5, cor: '#C9B8A0', g: 0 }); } }
+  return true;
+}
+const tt = m => m.t - (m.te || 0); // o tempo do golpe contado depois da entrada
+// as lanças do chão: onde Eleazar cai, pontas de lança rompem o piso uma atrás da outra, para os dois lados
+const lancasDoChao = (G, x, n) => { const A = G.N.arena; G.tremor(8); for (let k = 0; k <= n; k++) for (const s of k ? [-1, 1] : [0]) { const xx = x + s * k * 62; if (xx < A.x0 + 16 || xx > A.x1 - 16) continue; const a = av(G, 0.32 + k * 0.13);
+    zona(G, { tipo: 'muro', x: xx - 12, y: A.chao - 58, w: 24, h: 58, aviso: a, dur: 0.22, cor: LANCA, semFlash: true }); (G.zelLancas = G.zelLancas || []).push({ x: xx, t: -a }); setTimeout(() => { if (G.luta) { sfx('block'); lascas(G, xx, A.chao, 6); } }, a * 1000); } };
+// lascas do piso onde a arma bate
+const lascas = (G, x, y, n) => { for (let i = 0; i < n; i++) G.parts.push({ x: x + rand(-18, 18), y: y - 2, vx: rand(-260, 260), vy: rand(-420, -120), t: 0.7, max: 0.7, r: rand(1.4, 2.8), cor: ['#3E2620', '#5A3A2E', '#8A6A50', '#C9B48A'][i % 4], g: 1200 }); };
+// rasante: rompe a parede rente ao chão e cruza a sala inteira. Pule (ou atravesse com o passo)
 function zRasante(G, b, m, dt, o) {
   const A = G.N.arena;
-  if (m.e === 0) { if (m.t === 0) { m.px0 = b.x; m.py0 = b.y; m.d = G.p.x > A.cx ? 1 : -1; b.x = m.d > 0 ? A.x0 + 46 : A.x1 - 46; b.y = A.chao; b.face = m.d; b.alpha = 1; sfx('swing'); } saiDoTrono(G, b, m); b.alpha = 1; prepara(b); if (m.t > av(G, o.tele)) { m.e = 1; sfx('dodge'); } return false; }
-  if (m.e === 1) { ataca(b); b.corre = true; b.x += m.d * vel(G, o.v) * dt; if (Math.random() < dt * 40) G.fx.po(b.x - m.d * 20, b.y - 4, 2, o.cor);
+  if (m.e === 0) { if (m.t === 0) { m.px0 = b.x; m.py0 = b.y; m.d = G.p.x > A.cx ? 1 : -1; b.x = m.d > 0 ? A.x0 + 46 : A.x1 - 46; b.y = A.chao; b.face = m.d; } if (entrada(G, b, m, dt, 'parede')) return false; b.alpha = 1; b.face = m.d; prepara(b); if (tt(m) > av(G, o.tele)) { m.e = 1; sfx('dodge'); } return false; }
+  if (m.e === 1) { ataca(b); b.corre = true; b.rastro = 0.2; b.x += m.d * vel(G, o.v) * dt; if (Math.random() < dt * 40) G.fx.po(b.x - m.d * 20, b.y - 4, 2, o.cor); if (Math.random() < dt * 50) G.parts.push({ x: b.x - m.d * 14, y: b.y - rand(2, 8), vx: -m.d * rand(40, 140), vy: rand(-90, -20), t: 0.35, max: 0.35, r: 1.4, cor: '#8A6A50', g: 500 }); // o pó que a corrida levanta
     if ((m.d > 0 && b.x > A.x1 - 56) || (m.d < 0 && b.x < A.x0 + 56)) { b.x = clamp(b.x, A.x0 + 56, A.x1 - 56); b.corre = false; if (o.volta && !m.voltou) { m.voltou = true; m.e = 3; m.t0 = m.t; } else { m.e = 2; m.t0 = m.t; } } return false; }
   if (m.e === 3) { prepara(b); b.face = -m.d; if (m.t - m.t0 > av(G, 0.32)) { m.d *= -1; m.e = 1; sfx('dodge'); } return false; } // vira e volta
   return m.t - m.t0 > o.rec; // fica um instante exposto, sem fôlego
 }
-// mergulho: aparece no alto, em cima de você, e desce reto com a arma
+// mergulho: despenca do céu até o alto da sala, em cima de você, e desce reto com a arma
 function zMergulho(G, b, m, dt, o) {
   const A = G.N.arena;
-  if (m.e === 0) { if (m.t === 0) { m.px0 = b.x; m.py0 = b.y; b.x = clamp(G.p.x + (o.adianta ? G.p.vx * 0.25 : 0), A.x0 + 40, A.x1 - 40); b.y = A.chao - 236; b.alpha = 1; b.face = Math.sign(G.p.x - b.x) || 1; sfx('magic'); }
-    saiDoTrono(G, b, m); b.alpha = 1; prepara(b); if (o.segue && m.t < av(G, o.tele) * 0.65) b.x += clamp(G.p.x - b.x, -1, 1) * vel(G, o.segue) * dt;
-    if (!m.marca && m.t > av(G, o.tele) * 0.65) { m.marca = true; zona(G, { tipo: 'circ', x: b.x, y: A.chao - 14, r: 26, aviso: av(G, o.tele) * 0.35 + 0.12, dur: 0.01, cor: o.cor, isca: true }); }
-    if (m.t > av(G, o.tele)) { m.e = 1; sfx('swing'); } return false; }
-  if (m.e === 1) { ataca(b); b.y += vel(G, o.v) * dt; if (b.y >= A.chao) { b.y = A.chao; m.e = 2; m.t0 = m.t; G.tremor(6); G.efeito('pouso', b.x, A.chao); sfx('block'); o.aoCair?.(G, b, m); } return false; }
+  if (m.e === 0) { if (m.t === 0) { m.px0 = b.x; m.py0 = b.y; b.x = clamp(G.p.x + (o.adianta ? G.p.vx * 0.25 : 0), A.x0 + 40, A.x1 - 40); b.y = A.chao - 236; b.alpha = 1; b.face = Math.sign(G.p.x - b.x) || 1; }
+    if (entrada(G, b, m, dt, 'ceu')) return false; b.alpha = 1; prepara(b); if (o.segue && tt(m) < av(G, o.tele) * 0.65) b.x += clamp(G.p.x - b.x, -1, 1) * vel(G, o.segue) * dt;
+    if (!m.marca && tt(m) > av(G, o.tele) * 0.65) { m.marca = true; zona(G, { tipo: 'circ', x: b.x, y: A.chao - 14, r: 26, aviso: av(G, o.tele) * 0.35 + 0.12, dur: 0.01, cor: o.cor, isca: true }); }
+    if (tt(m) > av(G, o.tele)) { m.e = 1; sfx('swing'); } return false; }
+  if (m.e === 1) { ataca(b); b.rastro = 0.25; b.y += vel(G, o.v) * dt; if (b.y >= A.chao) { b.y = A.chao; m.e = 2; m.t0 = m.t; G.tremor(6); G.efeito('pouso', b.x, A.chao); sfx('block'); lascas(G, b.x, A.chao, 16); o.aoCair?.(G, b, m); } return false; }
   return m.t - m.t0 > o.rec;
 }
-// da parede: agarra-se no alto do lado mais longe de você e arremessa
+// da parede: rompe a parede no alto do lado mais longe de você, fica agarrado nela e arremessa
 function zParede(G, b, m, dt, o) {
   const A = G.N.arena;
-  if (m.e === 0) { if (m.t === 0) { m.px0 = b.x; m.py0 = b.y; m.lado = G.p.x > A.cx ? -1 : 1; b.x = m.lado < 0 ? A.x0 + 24 : A.x1 - 24; b.y = A.chao - o.alt; b.face = -m.lado; b.alpha = 1; sfx('swing'); } saiDoTrono(G, b, m); b.alpha = 1; prepara(b); if (m.t > av(G, o.tele)) { m.e = 1; m.n = 0; m.prox = m.t; } return false; }
+  if (m.e === 0) { if (m.t === 0) { m.px0 = b.x; m.py0 = b.y; m.lado = G.p.x > A.cx ? -1 : 1; b.x = m.lado < 0 ? A.x0 + 24 : A.x1 - 24; b.y = A.chao - o.alt; b.face = -m.lado; } if (entrada(G, b, m, dt, 'parede')) return false; b.alpha = 1; b.face = -m.lado; prepara(b); if (tt(m) > av(G, o.tele)) { m.e = 1; m.n = 0; m.prox = m.t; } return false; }
   b.alpha = 1; if (m.prox <= m.t && m.n < o.n) { m.prox = m.t + o.int; m.n++; o.lanca(G, b, m, -m.lado); ataca(b); sfx('shoot'); }
   return m.n >= o.n && m.t > m.prox + o.rec && (!o.espera || o.espera(G, m));
 }
@@ -1048,7 +1080,7 @@ const passoFoices = (G, m, dt) => { const A = G.N.arena; for (const f of m.fs ||
 // o assassino: some, e aparece JÁ nas suas costas. O aviso é curto: ande para a frente ou pule
 function zCostas(G, b, m, dt, o) {
   const A = G.N.arena;
-  if (m.e === 0) { if (m.t === 0) { const lado = -(G.p.face || 1); b.x = clamp(G.p.x + lado * 74, A.x0 + 40, A.x1 - 40); b.y = A.chao; b.face = Math.sign(G.p.x - b.x) || 1; m.d = b.face; b.alpha = 1; b.naSala = true; b.volta = null; G.efeito('sumico', b.x, b.y - 30); sfx('dodge'); zona(G, { tipo: 'circ', x: b.x + m.d * 40, y: A.chao - 26, r: 50, aviso: av(G, o.tele), dur: 0.12, cor: o.cor }); }
+  if (m.e === 0) { if (m.t === 0) { { const o = tronoZ(A, QUEM_Z(b)), daSala = b.naSala || b.volta; fumaca(G, daSala ? b.x : o.x, daSala ? b.y : o.y); } const lado = -(G.p.face || 1); b.x = clamp(G.p.x + lado * 74, A.x0 + 40, A.x1 - 40); b.y = A.chao; b.face = Math.sign(G.p.x - b.x) || 1; m.d = b.face; b.alpha = 1; b.naSala = true; b.volta = null; G.efeito('sumico', b.x, b.y - 30); sfx('dodge'); zona(G, { tipo: 'circ', x: b.x + m.d * 40, y: A.chao - 26, r: 50, aviso: av(G, o.tele), dur: 0.12, cor: o.cor }); }
     b.alpha = 1; prepara(b); if (m.t > av(G, o.tele)) { m.e = 1; m.t0 = m.t; ataca(b); sfx('swing'); b.x = clamp(b.x + m.d * 46, A.x0 + 40, A.x1 - 40); } return false; }
   b.alpha = 1; return m.t - m.t0 > o.rec;
 }
@@ -1070,6 +1102,7 @@ const conselho = {
   // fase 1 e Eleazar daí em diante; Jair é o companheiro zeloteFoice e Menaém, a partir da fase 2, o zelotePunhal.
   // A vida é uma só: o que os companheiros apanham sai da vida do conselho.
   palco(G, b, dt) {
+    for (const k of ['zelBrechas', 'zelRachas', 'zelLancas']) if (G[k]) { for (const q of G[k]) q.t += dt; G[k] = G[k].filter(q => q.t < (k === 'zelBrechas' ? 9 : k === 'zelRachas' ? 0.6 : 0.75)); }
     const f = fase(b), dono = G.souDono?.() !== false, parceiros = !!G.novoParceiro, r = b.cen.rod = b.cen.rod || { i: 0, t: 7, f: 0 };
     if (G.novoParceiro && dono) { b.pars = (b.pars || []).filter(q => G.inimigos.includes(q));
       if (!b.pars.some(q => q.id === 'zeloteFoice')) { const q = G.novoParceiro('zeloteFoice'); if (q) { q.espera = 1; b.pars.push(q); } }
@@ -1099,10 +1132,10 @@ const conselho = {
     pelasCostas(G, b, m, dt) { return zCostas(G, b, m, dt, { tele: 0.46, rec: 0.6, cor: PUNHAL }); },
     /* --- Eleazar, o forte: o mais pesado. Onde ele cai, a sala racha. Entra na segunda fase --- */
     abaloDoForte(G, b, m, dt) { return zMergulho(G, b, m, dt, { tele: 0.8, v: 1400, rec: 0.9, cor: LANCA, segue: 110, aoCair: (G, b) => { G.tremor(14); choque(G, b, LANCA, 380); pedrasDoTeto(G, b, 4); } }); },
-    lancaCadente(G, b, m, dt) { return zMergulho(G, b, m, dt, { tele: 0.62, v: 1250, rec: 0.6, cor: LANCA, adianta: true, aoCair: (G, b) => choque(G, b, LANCA, 300) }); },
+    lancaCadente(G, b, m, dt) { return zMergulho(G, b, m, dt, { tele: 0.62, v: 1250, rec: 0.75, cor: LANCA, adianta: true, aoCair: (G, b) => lancasDoChao(G, b.x, 3) }); },
     estocadaZelote(G, b, m, dt) { return zRasante(G, b, m, dt, { tele: 0.68, v: 1180, rec: 0.7, cor: LANCA }); },
     lancasDaParede(G, b, m, dt) { const A = G.N.arena; return zParede(G, b, m, dt, { tele: 0.55, alt: 120, n: 3, int: 0.42, rec: 0.5, lanca: (G, b, m, dir) => G.tiros.push({ x: b.x, y: A.chao - (m.n % 2 ? 18 : 78), vx: dir * vel(G, 500), vy: 0, r: 7, vida: 3, cor: LANCA, tipo: 'lanca', fixo: true, fura: true }) }); },
-    giroDaLanca(G, b, m, dt) { return zMergulho(G, b, m, dt, { tele: 0.7, v: 1000, rec: 0.75, cor: LANCA, segue: 150, aoCair: (G, b) => zona(G, { tipo: 'circ', x: b.x, y: b.y - 24, r: 112, aviso: av(G, 0.34), dur: 0.2, cor: LANCA }) }); }
+    giroDaLanca(G, b, m, dt) { return zMergulho(G, b, m, dt, { tele: 0.7, v: 1000, rec: 0.75, cor: LANCA, segue: 150, aoCair: (G, b) => { zona(G, { tipo: 'circ', x: b.x, y: b.y - 24, r: 112, aviso: av(G, 0.34), dur: 0.2, cor: LANCA }); setTimeout(() => { if (G.luta) { G.efeito('giro', b.x, b.y - 30); G.efeito('giro', b.x, b.y - 30, -1); sfx('swing'); } }, av(G, 0.34) * 1000); } }); }
   }
 };
 // Jair, o vidente: luta de longe. As foices vão e voltam sozinhas, o fogo desce e as brasas perseguem

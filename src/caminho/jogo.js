@@ -1288,7 +1288,7 @@ export class Caminho {
         else { this.char.data.stats.quizErr++; this.err++; }
         break;
       }
-      case 'npc': case 'casa': case 'morador': ob.parado = 2.5; await this.falar(ob); break;
+      case 'npc': case 'casa': case 'morador': if (ob.tipo === 'casa' && ob.id === 'peregrino' && this.def.sitio) { sfx('gate'); this.entrar('casa:' + this.area.slice(6)); break; } ob.parado = 2.5; await this.falar(ob); break;
       case 'jesus': await encontro(this, ob); break;
       case 'biblia': await lerBiblia(this); break;
       case 'lagar': await this.ui.dialog({ nome: 'O lagar', texto: 'Uma pedra redonda sobre outra, e uma trave de madeira para girá-la. As azeitonas são esmagadas aqui, e o azeite escorre pela canaleta.\n\nÉ o mesmo azeite das lâmpadas.', acoes: [{ label: 'Continuar' }], voz: false }); break;
