@@ -3,6 +3,7 @@
 // gostos de presente, um pedido e presentes para dar quando a amizade cresce (aos 5, 9 e 10 corações; os de 3 e 7 são
 // os eventos de vida.js). O dia tem três partes (manhã, tarde, noite) e dura 10 minutos de jogo.
 import { passoSono } from './sono.js';
+import { passoFesta } from './festa.js';
 import { sfx } from '../audio.js';
 import { GENTE, ITENS, PAPOS } from '../content/gente.js';
 import { VILA } from '../content/vila.js';
@@ -55,9 +56,11 @@ export function passoVida(G, dt) {
   passoMarBravo(G, dt); // na tempestade, o Leviatã
   passoSinagoga(G, dt);
   passoConvites(G, dt);
+  passoFesta(G, dt); // a mesa da festa: quem passa chama, e sentar é uma cena
   const p = G.p, gente = G.objs.filter(o => o.tipo === 'morador');
   for (const o of gente) {
     const v = o.vv || (o.vv = { x: o.x, alvo: o.x, t: rand(0, 3), estado: 'parado', face: 1, emote: null, emoteT: 0, papo: null });
+    if (v.festa) continue; // à mesa da festa, quem manda é a cena
     const casa = G.objs.find(c => c.tipo === 'casa' && c.cel === o.cel && Math.abs(c.x - o.x) < 640);
     const raio = (o.vai || 3) * 32, ag = agendaDe(G, o), longe = Math.abs(v.x - p.x) > 760; /* fora da vista, andam depressa: ninguém perde o culto por morar longe */
     if (v.emoteT > 0) v.emoteT -= dt;

@@ -25,7 +25,8 @@ export function vidaNoRefugio(G) {
 }
 
 // a mesa da festa: uma visita por dia; três dias contam a história da festa e o terceiro traz um presente melhor
-async function mesa(G) {
+export const jaSentouNaFesta = G => { const f = festaDeHoje(), v = vida(G); return v.festa?.id === f.id && v.festa.ult === hoje(); };
+export async function mesa(G) {
   const f = festaDeHoje(), v = vida(G), d = hoje(); if (!v.festa || v.festa.id !== f.id) v.festa = { id: f.id, dias: 0, ult: null };
   if (v.festa.ult === d) return G.ui.dialog({ nome: f.nome, texto: 'Você já se sentou à mesa hoje. A festa continua amanhã.\n\n' + f.sobre + '\n\n(' + f.ref + ')', acoes: [{ label: 'Voltar' }], cls: 'fala-narra', voz: false });
   const n = Math.min(2, v.festa.dias); v.festa.dias++; v.festa.ult = d;
@@ -44,7 +45,7 @@ async function livro(G) {
 }
 
 export function rotuloVida(ob) { return ob.tipo === 'livroRefugio' ? 'Abrir o Livro do Refúgio' : ob.tipo === 'festa' ? 'Sentar-se à mesa da festa' : undefined; }
-export async function usarVida(G, ob) { if (ob.tipo === 'livroRefugio') { await livro(G); return true; } if (ob.tipo === 'festa') { await mesa(G); return true; } return false; }
+export async function usarVida(G, ob) { if (ob.tipo === 'livroRefugio') { await livro(G); return true; } if (ob.tipo === 'festa') { const { comecarFesta } = await import('./festa.js'); if (jaSentouNaFesta(G)) await mesa(G); else comecarFesta(G, ob); return true; } return false; }
 
 // conversar com um morador: o primeiro papo do dia vale um coração; nos marcos, ele conta algo e a conversa é só isso
 export async function amizade(G, ob) {

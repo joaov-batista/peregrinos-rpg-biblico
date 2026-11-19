@@ -1,6 +1,7 @@
 // O que veio depois do Refúgio: o porto (barqueiro, pescador e o mercador de além-mar), a cidade de Sardes (velas,
 // a Palavra levada ao povo, os ataques no meio da rua) e o Vale da Mentira, onde se conquista a descida do Espírito.
 // O jogo chama estas funções em pontos fixos (entrar, a cada quadro, ao falar, ao usar, ao vencer um vício).
+import { falarFesta } from './festa.js';
 import { sfx, music } from '../audio.js';
 import { RELIQUIAS, ARMAS_ALT } from './dados.js';
 import { rarDe, especiaisDe, ESPECIAIS, valorTroca } from './arsenal.js';
@@ -179,6 +180,7 @@ async function barco(G, ob) {
 export async function falarNovo(G, ob) {
   if (G.def?.casaDe && ob.conjuge) return falarConjugeSitio(G, ob);
   if (G.area === 'refugio' && await falarConvite(G, ob)) return true; // quem te chamou: o convite vem primeiro
+  if (await falarFesta(G, ob)) return true; // quem chamou para a mesa da festa
   if (ob.id === 'lidia' && G.area === 'refugio' && await lojaDeLidia(G, ob)) return true; // Lídia: a púrpura (a loja de sempre) ou os perfumes
   if (await falarPedro(G, ob)) return true; // Pedro dá a missão de Sardes
   if (await falarSardesNovo(G, ob)) return true; // a sinagoga e o mercado novo de Sardes

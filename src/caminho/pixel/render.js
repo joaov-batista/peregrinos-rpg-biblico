@@ -11,6 +11,7 @@ import { desenharChefe } from '../chefes.js';
 import { desenharObjeto } from '../objetos.js';
 import { MUNDO, RX } from '../dados.js';
 import { pintarDeitado, pintarSono } from '../sono.js';
+import { pintarMesaFesta, pintarNaFesta, pintarCenaFesta } from '../festa.js';
 import { OLEO_USO } from '../heroi.js';
 import { Sprite, rampa, cor, carimbar, TINTA, BRANCO, PX } from './raster.js';
 import { quadroHeroi, quadroPessoa, vulto, AX, AY } from './humano.js';
@@ -256,7 +257,7 @@ function pintarObjeto(g, o, G, x, y, Tm) {
     case 'sacola': { const s = sprObj('sacola', 12, 13, s => { s.bola(6, 8, 4.5, 4, MADEIRA); s.ret(4, 2, 4, 2, OURO[3]); s.px(6, 8, OURO[4]); }); carimbar(g, s, x, y, 6, 12); if (Math.floor(Tm * 5) % 2) { g.fillStyle = '#FFD23F'; g.fillRect(x - 6, y - 16, 1, 1); g.fillRect(x + 5, y - 13, 1, 1); } return true; }
     case 'morador': { // gente da aldeia, indo e vindo
       if (o.vv?.estado === 'dentro') return true; // entrou na sinagoga
-      if (o.vv && !(o.escondido > G.T)) { const v = o.vv, xx = x + Math.round((v.x - o.x) / PX), anda = v.estado === 'indo' || v.estado === 'susto', pose = v.estado === 'acena' ? 'mao' : anda ? 'anda' : v.estado === 'orando' ? 'ora' : v.estado === 'casa' && (hora(G) >= 22 || hora(G) < 5) ? 'dorme' : null;
+      if (o.vv && !(o.escondido > G.T)) { const v = o.vv, xx = x + Math.round((v.x - o.x) / PX), anda = v.estado === 'indo' || v.estado === 'susto', pose = v.estado === 'sentado' ? 'olha' : v.estado === 'acena' ? 'mao' : anda ? 'anda' : v.estado === 'orando' ? 'ora' : v.estado === 'casa' && (hora(G) >= 22 || hora(G) < 5) ? 'dorme' : null;
         carimbar(g, quadroPessoa({ ...o.look, cls: null }, anda ? Tm * 2.4 : Tm * 0.6, 'mv' + o.x + (pose || ''), pose), xx, y - (v.estado === 'susto' ? 2 : 0), 24, 40, v.face || 1);
         if (o.patrulha && periodo(G) === 'noite') { const tx2 = xx + (v.face || 1) * 7, fl = Math.floor(G.T * 10) % 3; g.fillStyle = '#5A3A1C'; g.fillRect(tx2, y - 24, 2, 12); g.fillStyle = '#FF8A2A'; g.fillRect(tx2 - 1, y - 28 - fl, 4, 4 + fl); g.fillStyle = '#FFE08A'; g.fillRect(tx2, y - 26, 2, 2); g.globalAlpha = 0.12; g.fillStyle = '#FFB86A'; g.fillRect(tx2 - 14, y - 40, 30, 40); g.globalAlpha = 1; } /* a ronda da noite leva tocha */
         if (v.emoteT > 0 && v.emote) { const ey = y - 34 - Math.round(Math.min(1, (2 - v.emoteT) * 4)) ; g.fillStyle = '#17121f'; g.fillRect(xx - 6, ey - 9, 13, 10); g.fillRect(xx - 1, ey + 1, 3, 2); g.fillStyle = '#F4F1E6'; g.fillRect(xx - 5, ey - 8, 11, 8); g.fillStyle = v.emote === '♥' ? '#E2466A' : v.emote === '!' ? '#E2463C' : '#5A4A3A';
@@ -444,7 +445,7 @@ function pintarObjeto(g, o, G, x, y, Tm) {
     case 'lamparina': { const f = Math.floor(Tm * 8) % 3; g.fillStyle = '#17121f'; g.fillRect(x - 1, y - 40, 3, 40); g.fillRect(x - 5, y - 50, 11, 11); g.fillStyle = '#6B4A2E'; g.fillRect(x, y - 39, 1, 39); g.fillStyle = '#3A2A1A'; g.fillRect(x - 4, y - 49, 9, 9); g.fillStyle = '#FFB84A'; g.fillRect(x - 2, y - 47, 5, 6); g.fillStyle = '#FFF1BE'; g.fillRect(x - 1, y - 46 - (f === 1 ? 1 : 0), 3, 4); g.fillStyle = '#D9A63C'; g.fillRect(x - 5, y - 51, 11, 1); return true; }
     case 'pista': { const b = Math.floor(Tm * 3) % 2; g.fillStyle = '#0B0F0A'; g.fillRect(x - 9, y - 3, 18, 3); g.fillRect(x - 5, y - 6, 9, 3); g.fillRect(x + 4, y - 5, 2, 2); g.fillStyle = '#1E2A18'; g.fillRect(x - 7, y - 2, 13, 1); g.fillStyle = '#B8E060'; g.fillRect(x - 3 + b * 4, y - 5, 1, 1); g.fillRect(x + 2 - b * 3, y - 2, 1, 1); g.fillStyle = '#FFD23F'; g.fillRect(x - 1, y - 22 - b, 3, 5); g.fillRect(x + 1, y - 17 - b, 1, 3); g.fillRect(x, y - 12 - b, 2, 2); return true; }
     case 'livroRefugio': { const b = Math.floor(Tm * 2) % 2; g.fillStyle = '#17121f'; g.fillRect(x - 6, y - 18, 12, 18); g.fillRect(x - 11, y - 25, 22, 8); g.fillStyle = '#6E6A78'; g.fillRect(x - 5, y - 17, 10, 17); g.fillStyle = '#8A8696'; g.fillRect(x - 5, y - 17, 2, 17); g.fillStyle = '#E9E6DC'; g.fillRect(x - 10, y - 24, 9, 6); g.fillRect(x + 1, y - 24, 9, 6); g.fillStyle = '#8A6A2C'; g.fillRect(x - 1, y - 24, 2, 6); g.fillStyle = '#5A544A'; for (let i = 0; i < 3; i++) { g.fillRect(x - 8, y - 23 + i * 2, 5, 1); g.fillRect(x + 3, y - 23 + i * 2, 5, 1); } g.fillStyle = '#FFE9A8'; g.fillRect(x - 3 + b * 5, y - 29 - b, 1, 2); return true; }
-    case 'festa': { g.fillStyle = '#17121f'; g.fillRect(x - 17, y - 13, 34, 4); g.fillRect(x - 15, y - 10, 3, 10); g.fillRect(x + 12, y - 10, 3, 10); g.fillStyle = '#C9C4B2'; g.fillRect(x - 16, y - 12, 32, 2); g.fillStyle = '#8E2B45'; g.fillRect(x - 16, y - 10, 32, 1); g.fillStyle = '#6B4A2E'; g.fillRect(x - 14, y - 9, 1, 9); g.fillRect(x + 13, y - 9, 1, 9); g.fillStyle = '#D9A63C'; g.fillRect(x - 10, y - 16, 5, 4); g.fillStyle = '#B8733E'; g.fillRect(x - 1, y - 17, 4, 5); g.fillRect(x, y - 19, 2, 2); g.fillStyle = '#E8D9A8'; g.fillRect(x + 7, y - 15, 6, 3); g.fillStyle = '#FFB84A'; g.fillRect(x - 13, y - 19 - (Math.floor(Tm * 8) % 2), 1, 3); g.fillRect(x + 14, y - 19 - (Math.floor(Tm * 8 + 1) % 2), 1, 3); return true; }
+    case 'festa': pintarMesaFesta(g, G, o, x, y, Tm); return true;
     case 'enfeite': { const q = o.qual;
       if (q === 'cabana') { g.fillStyle = '#17121f'; g.fillRect(x - 15, y - 30, 2, 30); g.fillRect(x + 13, y - 30, 2, 30); g.fillRect(x - 18, y - 34, 36, 5); g.fillStyle = '#6B4A2E'; g.fillRect(x - 14, y - 29, 1, 29); g.fillRect(x + 14, y - 29, 1, 29); for (let i = 0; i < 12; i++) { g.fillStyle = i % 2 ? '#3F7A4A' : '#5E9A56'; g.fillRect(x - 17 + i * 3, y - 35 - (i % 3), 3, 5 + (i % 2) * 2); } g.fillStyle = '#C9A63C'; g.fillRect(x - 8, y - 27, 2, 3); g.fillRect(x + 5, y - 26, 2, 3); }
       else if (q === 'feixe') { g.fillStyle = '#17121f'; g.fillRect(x - 6, y - 20, 12, 20); g.fillStyle = '#D9A63C'; for (let i = 0; i < 5; i++) g.fillRect(x - 5 + i * 2, y - 19 - (i % 2) * 3, 2, 19 + (i % 2) * 3); g.fillStyle = '#FFE08A'; for (let i = 0; i < 5; i++) g.fillRect(x - 5 + i * 2, y - 22 - (i % 2) * 3, 1, 4); g.fillStyle = '#8E2B45'; g.fillRect(x - 6, y - 10, 12, 2); }
@@ -607,7 +608,7 @@ export function renderPixel(G) {
   // outros peregrinos (multijogador) e o herói
   for (const o of G.outros) pintarJogador(g, o.corpo, o.look, o.cls, o.arma, Tm, o.hab, X, Y, false, o.armaCor, o.armaRar);
   const aguaN = (p.nada || G.nado) && G.objs.find(o => o.tipo === 'aguaAberta');
-  if (G.cenaSono?.deita > 0) pintarDeitado(g, G, X, Y, Tm); else if (G.cenaPraia) pintarSentado(g, G, X, Y, Tm); else if (!p.morto && p.noBote) pintarNoBote(g, G, p, X, Y, Tm); else if (!p.morto && aguaN) pintarNadando(g, G, p, aguaN, X, Y, Tm, vw); else if (!p.morto) pintarJogador(g, p, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab, X, Y, true, G.arma?.lamina, G.arma?.rar);
+  if (G.cenaSono?.deita > 0) pintarDeitado(g, G, X, Y, Tm); else if (G.cenaFesta?.sentado) pintarNaFesta(g, G, X, Y, Tm); else if (G.cenaPraia) pintarSentado(g, G, X, Y, Tm); else if (!p.morto && p.noBote) pintarNoBote(g, G, p, X, Y, Tm); else if (!p.morto && aguaN) pintarNadando(g, G, p, aguaN, X, Y, Tm, vw); else if (!p.morto) pintarJogador(g, p, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab, X, Y, true, G.arma?.lamina, G.arma?.rar);
   if (G.pomba) pintarPomba(g, G.pomba, X, Y, Tm);
   else if (G.mortoT > 1.2) { const s = quadroHeroi({ ...p, morto: true, atk: null }, G.char.look || {}, G.char.cls, G.tipoArma, Tm, G.hab); s.dissolve(clamp((1.9 - G.mortoT) / 0.7, 0, 1), 5); carimbar(g, s, X(p.x), Y(p.y), AX, AY, p.face); }
   pintarEfeitos(g, G.fxPx, cx, cy, false);
@@ -631,6 +632,7 @@ export function renderPixel(G) {
   pintarClima(g, G, vw, vh, cx, Tm);
   pintarTempo(g, G, vw, vh, cx, Tm, cy);
   if (G.cenaSono) pintarSono(g, G, vw, vh, Tm);
+  if (G.cenaFesta) pintarCenaFesta(g, G, vw, vh);
   if (G.cenaPraia) pintarPraia(g, G, X, Y, vw, vh, Tm); else { pintarHud(g, G, vw); barraChefe(g, G, vw); }
 
   // amplia: primeiro por um fator inteiro (pixels nítidos), depois ajusta à tela

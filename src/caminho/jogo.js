@@ -1270,14 +1270,14 @@ export class Caminho {
   /* ================= Interações ================= */
   interacoes() {
     const p = this.p; let perto = null, pd = 58;
-    if (p.morto || this.cenaSono) { this.perto = null; this.ui.setInteract(null); return; }
+    if (p.morto || this.cenaSono || this.cenaFesta) { this.perto = null; this.ui.setInteract(null); return; }
     for (const ob of this.objs) {
       const dd = Math.hypot((ob.vv ? ob.vv.x : ob.x) - p.x, ob.y - 20 - (p.y - 20)); /* morador que anda: fala-se com ele onde ele está */
       if (ob.tipo === 'segredo' && dd < 30) { ob.fora = true; this.partilhar('seg', ob); this.efeito('coleta', ob.x, ob.y - 10); this.cm.seg[this.area].push(ob.n); this.ganhar(ob.item); continue; }
       if (ob.tipo === 'fruto' && dd < 30 && !(ob.volta > this.T)) { ob.volta = this.T + 50; this.partilhar('fruto', ob); sfx('coin'); this.efeito('coleta', ob.x, ob.y - 6); ganharItem(this, 'figo', 1); if (p.vida < p.vidaMax) { p.vida++; this.textoEm(p.x, p.y - 60, 'figo: +1 fôlego', '#B8E6A0', 12); } else { this.char.data.gold += 4; this.ganharOleo(12); this.textoEm(p.x, p.y - 60, 'figo: +4 denários', '#FFD23F', 12); } const st = this.char.data.stats; st.figos = (st.figos || 0) + 1; if (st.figos === 12) this.ovo('figos', 'Zaqueu subiu num sicômoro, a figueira brava (Lc 19:4). Doze figos colhidos.'); continue; }
       if (ob.tipo === 'flor' && dd < 26 && this.cm.flores?.[ob.x] !== diaDe(this)) { this.cm.flores = this.cm.flores || {}; this.cm.flores[ob.x] = diaDe(this); sfx('coin'); this.efeito('coleta', ob.x, ob.y - 6); ganharItem(this, 'flor', 1, p.x, p.y - 60); }
       if (ob.tipo === 'sacola' && dd < 30) { ob.fora = true; const s = this.cm.sacola; if (s) { this.char.data.gold += s.gold; this.textoEm(p.x, p.y - 56, '+' + s.gold + ' denários recuperados', '#FFD23F'); sfx('coin'); this.cm.sacola = null; } continue; }
-      const rot = this.rotulo(ob), dk = ob.tipo === 'casa' && ob.id === 'peregrino' && this.def.sitio ? dd * 0.4 : dd; /* a porta de casa ganha de quem está do lado dela */ if (rot && dk < pd) { pd = dk; perto = ob; perto.rot = rot; }
+      const rot = this.rotulo(ob), dk = (ob.tipo === 'casa' && ob.id === 'peregrino' && this.def.sitio) || (ob.tipo === 'morador' && (ob.id === this.festaConv?.id || ob.id === this.cm.convite?.id)) ? dd * 0.4 : dd; /* a porta de casa ganha de quem está do lado dela */ if (rot && dk < pd) { pd = dk; perto = ob; perto.rot = rot; }
     }
     this.objs = this.objs.filter(ob => !ob.fora);
     this.perto = perto;
