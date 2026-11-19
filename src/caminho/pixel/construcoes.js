@@ -50,8 +50,30 @@ export function pintarConstrucao(g, vis, o, x, y, Tm, cor) {
       g.fillStyle = '#3F7A3A'; for (let i = 0; i < 26; i++) g.fillRect(Math.round(x - 50 + (i * 37) % 100), Math.round(y - 64 + ((i * 23) % 50)), 2, 3 + (i % 3)); // trepadeiras
       R(30, -60, 2, 40, '#4A3424'); R(32, -58, 12, 16, '#8E2B2B'); R(36, -42, 3, 4, '#8E2B2B'); R(41, -44, 3, 6, '#8E2B2B'); // o estandarte rasgado
       return; }
-    case 'arbustos': { // uma passagem escondida entre arbustos fechados: escura no meio
-      arbusto(-44, 0, 88, 50, '#1E3A28', '#2E5A3A', '#4A8A4A'); R(-10, -36, 20, 36, '#0B140E'); for (let i = 0; i < 5; i++) R(-8 + i * 4, -38 + (i % 2) * 3, 3, 3, '#2E5A3A'); return; }
+    case 'arbustos': { // a trilha escondida: duas oliveiras velhas que se curvam e se encontram num arco; por baixo, a trilha de terra some no escuro da mata
+      const ln = (x0, y0, x1, y1, w, c) => { const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0)); for (let i = 0; i <= n; i++) R(x0 + (x1 - x0) * i / n - w / 2, y0 + (y1 - y0) * i / n - w / 2, w, w, c); };
+      // o escuro de dentro, em arco, mais fundo no meio
+      for (let yy = 0; yy < 36; yy++) { const lg = Math.round(13 * Math.sqrt(Math.min(1, (36 - yy) / 10))); R(-lg, -yy, lg * 2, 1, yy > 26 ? '#0E1A12' : '#0B140E'); }
+      R(-6, -24, 12, 22, '#060B08'); for (let i = 0; i < 6; i++) R(-9 + ((i * 7) % 18), -30 + (i % 3) * 6, 2, 2, '#1E3A28'); // folhas lá dentro
+      // a trilha de terra, estreitando para dentro, com pedrinhas
+      for (let yy = 0; yy < 10; yy++) { const lg = 12 - yy; R(-lg, -yy - 1, lg * 2, 1, yy < 3 ? '#8A6A44' : yy < 7 ? '#6B4E32' : '#3A2A1E'); }
+      for (const [a, b] of [[-8, -2], [5, -3], [-2, -6], [3, -8]]) R(a, b, 2, 1, '#A89070');
+      // os troncos retorcidos que se curvam até se tocar no alto
+      for (const sd of [-1, 1]) { const pts = [[sd * 20, 0], [sd * 18, -14], [sd * 21, -26], [sd * 15, -38], [sd * 6, -46], [0, -48]];
+        for (let k = 0; k < pts.length - 1; k++) ln(pts[k][0], pts[k][1], pts[k + 1][0], pts[k + 1][1], 8 - k, TI);
+        for (let k = 0; k < pts.length - 1; k++) ln(pts[k][0], pts[k][1], pts[k + 1][0], pts[k + 1][1], 6 - k, '#5A4030');
+        for (let k = 0; k < pts.length - 2; k++) ln(pts[k][0] + sd * -1, pts[k][1], pts[k + 1][0] + sd * -1, pts[k + 1][1], 1, '#7A5A40');
+        R(sd * 20 - 5, -2, 10, 2, TI); R(sd * 20 - 4, -2, 8, 1, '#4A3524'); } // as raízes
+      // a copa das oliveiras: miúda, prateada, com frutos escuros
+      for (const [cx, cy, r] of [[-26, -50, 11], [-12, -58, 13], [6, -60, 13], [22, -52, 11], [-30, -38, 8], [30, -40, 8], [0, -50, 9]]) bola(cx, cy, r + 1, TI);
+      for (const [cx, cy, r] of [[-26, -50, 11], [-12, -58, 13], [6, -60, 13], [22, -52, 11], [-30, -38, 8], [30, -40, 8], [0, -50, 9]]) { bola(cx, cy, r, '#4E6A3E'); bola(cx - 2, cy - 3, Math.round(r * 0.62), '#6E8A52'); R(cx - r * 0.5, cy - r * 0.55, Math.round(r * 0.5), 1, '#A8BC88'); }
+      for (const [a, b] of [[-20, -54], [-6, -62], [10, -56], [24, -48], [-28, -42]]) R(a, b, 2, 2, '#2A2438'); // azeitonas
+      // a hera que pende do arco e as moitas baixas dos lados
+      for (const [a, n] of [[-11, 9], [-4, 5], [5, 7], [11, 10]]) for (let k = 0; k < n; k++) R(a + ((k % 3) - 1), -44 + k * 2, 2, 2, k % 2 ? '#3E6A3A' : '#5E8A4A');
+      arbusto(-38, 0, 18, 14, '#1E3A28', '#2E5A3A', '#4A8A4A'); arbusto(20, 0, 18, 13, '#1E3A28', '#2E5A3A', '#4A8A4A');
+      // vaga-lumes na entrada: é por aqui
+      for (let i = 0; i < 4; i++) { const ph = Tm * 1.3 + i * 1.7, a = Math.sin(ph * 2.1) > 0.2; if (a) R(Math.round(Math.sin(ph) * 10) + (i - 1.5) * 4, -14 - Math.round(Math.cos(ph * 0.8) * 8) - i * 3, 1, 1, '#D8F08A'); }
+      return; }
     case 'portaPedra': { // porta de pedra entalhada, com a luz vazando pelas frestas
       R(-26, -64, 52, 64, TI); R(-24, -62, 48, 62, '#6A6878'); R(-24, -62, 48, 4, '#8A8898'); R(-16, -52, 32, 52, '#4A4858'); R(-1, -52, 2, 52, '#2A2838');
       g.fillStyle = cor; for (const [a, b] of [[-12, -44], [6, -44], [-12, -24], [6, -24]]) g.fillRect(x + a, y + b, 6, 1); g.globalAlpha = 0.5 + 0.3 * Math.sin(Tm * 3); g.fillRect(x - 1, y - 52, 2, 52); g.globalAlpha = 1; return; }

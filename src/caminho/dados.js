@@ -220,7 +220,7 @@ const REFUGIO = [
   // o olival: figos, sombra e a caravana que às vezes traz algo raro
   { cx: 6, nome: 'Olival', papel: 'vila', tiles: sala([12, 8, 11], [9, 13, 16], [12, 18, 21]), objs: [
     { tipo: 'flor', col: 2 }, { tipo: 'flor', col: 12.5 }, { tipo: 'flor', col: 18 }, { tipo: 'flor', col: 22 }, // canteiros: uma flor por dia em cada um
-    planta(4, 'oliveira'), planta(10, 'oliveira'), planta(15.5, 'palmeira'), planta(20, 'oliveira'), { tipo: 'cenario', col: 24.5, qual: 'banca' }, { tipo: 'portal', col: 28.5, area: 'floresta', rotulo: 'Trilha escondida', oculto: true },
+    planta(4, 'oliveira'), planta(10, 'oliveira'), planta(15.5, 'palmeira'), planta(20, 'oliveira'), { tipo: 'cenario', col: 23.5, qual: 'banca' }, { tipo: 'portal', col: 28.6, area: 'floresta', rotulo: 'Trilha escondida', oculto: true },
     { tipo: 'fruto', col: 4, lin: 14 }, { tipo: 'fruto', col: 10, lin: 11 }, { tipo: 'fruto', col: 15, lin: 8 }, { tipo: 'fruto', col: 20, lin: 11 },
     { tipo: 'npc', col: 24.5, id: 'mercador', nome: 'Mercador', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#7A5A2E', cape: '#3F2E4F', style: 'turbante', beard: true } },
     { tipo: 'poco', col: 7 }, { tipo: 'npc', col: 17.5, id: 'zelote3', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5E4A3A', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } }, { ...povo(12.5, 2, VILA.ana.look), id: 'ana', nome: VILA.ana.nome }, { ...povo(5, 2, ELIABE), id: 'eliabe', nome: 'Eliabe, o pastor' }, { tipo: 'ave', col: 9, lin: 12 }, { tipo: 'ave', col: 19, lin: 12 }] },
