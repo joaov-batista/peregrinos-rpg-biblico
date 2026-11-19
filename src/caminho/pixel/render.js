@@ -488,12 +488,8 @@ function pintarObjeto(g, o, G, x, y, Tm) {
       else { g.fillStyle = '#17121f'; g.fillRect(x - 13, y - 11, 26, 3); g.fillRect(x - 11, y - 8, 2, 8); g.fillRect(x + 9, y - 8, 2, 8); g.fillStyle = '#E9E6DC'; g.fillRect(x - 12, y - 10, 24, 1); g.fillStyle = '#C9A86A'; g.fillRect(x - 8, y - 13, 6, 2); g.fillRect(x + 2, y - 13, 6, 2); g.fillStyle = '#5E7A3A'; g.fillRect(x - 1, y - 14, 2, 3); }
       return true; }
     case 'arpao': { const b = Math.floor(Tm * 3) % 2; g.fillStyle = '#17121f'; g.fillRect(x - 1, y - 24 - b, 3, 24); g.fillStyle = '#A0662A'; g.fillRect(x, y - 23 - b, 1, 22); g.fillStyle = '#EEF6FB'; g.fillRect(x - 1, y - 28 - b, 3, 5); g.fillRect(x, y - 30 - b, 1, 2); g.fillStyle = '#BFF0F8'; g.fillRect(x - 3 + b * 5, y - 32, 1, 1); return true; }
-    case 'arvore': { // o sicômoro de Zaqueu: tronco torto, copa em três massas, figos
-      const s = sprObj('sicomoro', 96, 112, s => { const T = rampa('#6B4A2E'), F = rampa('#3F7A4A'); // o sicômoro: tronco grosso e baixo, galhos largos e a copa larga em cachos
-        arvorePx(s, { base: [48, 111], alt: 104, larg: 86, Rt: T, Rf: F, sd: 23, torto: 0.25, tronco: 6, cachos: 8 });
-        for (let i = 0; i < 46; i++) { const x = 8 + (i * 37) % 80, y = 6 + (i * 23) % 40; if (s.le(x, y)) { s.px(x, y, F[4]); } }
-        for (const [x, y] of [[20, 44], [34, 36], [58, 38], [72, 44], [46, 34], [82, 34]]) if (s.le(x, y - 3)) s.bola(x, y, 1.6, 2, rampa('#8E3B5E'));
-        s.contorno(TINTA); }); carimbar(g, s, x, y, 48, 111); return true; }
+    case 'arvore': { // o sicômoro de Zaqueu: tronco grosso e torto, um galho baixo para subir, o galho de cima onde ele está, e a copa larga
+      const s = sprObj('sicomoro2', 104, 132, s => sicomoro(s, false)); carimbar(g, s, x, y, 52, 131); return true; }
     case 'querubim': { // a leste do jardim: o querubim e a espada de fogo que se revolve
       const s = sprObj('querubim', 56, 60, s => { const A = rampa('#E8E2D0'), M = rampa('#C9A63C');
         for (const sd of [-1, 1]) for (let i = 0; i < 5; i++) { s.poli([[28 + sd * 4, 22], [28 + sd * (10 + i * 4), 4 + i * 5], [28 + sd * (8 + i * 3), 30 + i * 3]], A[i % 2 ? 2 : 3]); s.linha(28 + sd * 4, 22, 28 + sd * (10 + i * 4), 4 + i * 5, 1, A[4]); }
@@ -516,9 +512,25 @@ function pintarObjeto(g, o, G, x, y, Tm) {
           s.bola(19, 15, 12, 6, J, 0.4, -0.7); s.bola(19, 18, 9, 3, V, 0.2, -0.4); s.poli([[27, 12], [33, 4], [37, 6], [32, 16]], J[2]); s.bola(35, 7, 4, 4, J, 0.5, -0.7); s.poli([[36, 8], [40, 10], [36, 13]], V[2]);
           s.linha(33, 4, 31, 0, 2, J[1]); s.linha(36, 4, 36, 0, 2, J[3]); s.px(36, 6, TINTA); for (let xx = 28; xx < 33; xx++) s.px(xx, 11 - (xx - 28), TINTA); s.linha(7, 13, 4, 22, 1, J[0]); s.ret(3, 22, 2, 3, TINTA); s.ret(15, 9, 8, 2, rampa('#8E2B45')[2]); s.contorno(TINTA); });
         carimbar(g, s, x, y, 20, 29, G.p.x < o.x ? -1 : 1); return true; }
-      carimbar(g, quadroPessoa({ ...o.look, cls: null }, Tm, (o.id || o.nome) + ''), x, y, 24, 40, G.p.x < o.x ? -1 : 1); return true;
+      carimbar(g, quadroPessoa({ ...o.look, cls: null }, Tm, (o.id || o.nome) + ''), x, y, 24, 40, G.p.x < o.x ? -1 : 1);
+      if (o.id === 'zaqueu') { const arv = G.objs.find(q => q.tipo === 'arvore' && Math.abs(q.x - o.x) < 200); if (arv) carimbar(g, sprObj('sicomoro2f', 104, 132, s => sicomoro(s, true)), x + Math.round((arv.x - o.x) / PX), y + Math.round((arv.y - o.y) / PX), 52, 131); } // as folhas da frente: dele, só a cabeça aparece
+      return true;
   }
   return false;
+}
+
+// o sicômoro (Lc 19:4): a parte de trás (tronco, galhos, copa) e a de frente (o cacho de folhas que esconde Zaqueu até o pescoço)
+function sicomoro(s, frente) {
+  const T = rampa('#6B4A2E'), F = rampa('#3F7A4A'), F2 = rampa('#4E8A52'), FIG = rampa('#8E3B5E');
+  if (frente) { copaPx(s, [{ x: 60, y: 37, r: 10 }, { x: 76, y: 36, r: 10 }, { x: 68, y: 45, r: 9 }, { x: 86, y: 44, r: 7 }], F2, { sd: 41, folha: 2.4, buracos: 0.15, aspero: 0.4 });
+    for (const [fx, fy] of [[58, 40], [80, 42], [70, 48]]) if (s.le(fx, fy - 3)) s.bola(fx, fy, 1.4, 1.8, FIG); return; }
+  galhoPx(s, [[52, 131], [50, 110], [53, 90], [50, 66], [51, 44]], 8, 5, T, { sd: 23 }); // o tronco
+  for (const [a, b] of [[[46, 131], [36, 131]], [[58, 131], [70, 131]]]) galhoPx(s, [a, b], 2.4, 0.8, T, { sd: 24 }); // as raízes
+  for (const pts of [[[50, 52], [34, 40], [18, 30]], [[52, 48], [66, 32], [84, 22]], [[51, 44], [48, 26], [46, 10]]]) galhoPx(s, pts, 3, 1.2, T, { sd: pts[2][0] }); // os galhos de cima
+  copaPx(s, [{ x: 18, y: 30, r: 15 }, { x: 38, y: 18, r: 17 }, { x: 62, y: 15, r: 17 }, { x: 86, y: 26, r: 15 }, { x: 30, y: 42, r: 11 }, { x: 52, y: 30, r: 15 }, { x: 78, y: 40, r: 11 }], F, { sd: 23, folha: 2.6, buracos: 0.3, aspero: 0.4 });
+  galhoPx(s, [[53, 88], [36, 85], [22, 84], [11, 85]], 4.2, 2, T, { sd: 31 }); // o galho baixo (pisa-se nele)
+  galhoPx(s, [[51, 56], [66, 53], [82, 52], [96, 53]], 3.6, 1.8, T, { sd: 32 }); // o galho de cima, onde Zaqueu está
+  for (const [x2, y2] of [[22, 40], [36, 30], [60, 26], [82, 34], [46, 18], [90, 24], [14, 26]]) if (s.le(x2, y2 - 3)) s.bola(x2, y2, 1.5, 2, FIG); // os figos do sicômoro
 }
 
 /* ---------- HUD ---------- */

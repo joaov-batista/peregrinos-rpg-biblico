@@ -181,11 +181,11 @@ const REFUGIO = [ // (a trilha do treino agora é um lugar à parte: o Bosque do
     { tipo: 'npc', col: 26.5, id: 'jumenta', nome: 'Uma jumenta', bicho: 'jumenta' },
     { ...povo(19, 3, VILA.rode.look), id: 'rode', nome: VILA.rode.nome }, { ...povo(8, 2, SOLDADO('#8E2B2B')), id: 'guarda1', nome: 'Cornélio, o centurião', patrulha: [5 * 32, (3 * 30 + 25) * 32] }, { tipo: 'ave', col: 9, lin: 16 }, { tipo: 'ave', col: 22, lin: 13 }] },
   // a rua do mercado; no meio dela, a escada que desce ao Salão dos Rolos
-  { cx: 1, nome: 'Mercado', papel: 'vila', desce: true, tiles: sala([10, 22, 26], [13, 19, 23]), objs: [
+  { cx: 1, nome: 'Mercado', papel: 'vila', desce: true, tiles: sala([11, 22, 25], [13, 21, 23]), objs: [ // as duas passarelas ficam em cima dos galhos do sicômoro: o de baixo para subir, o de cima onde Zaqueu está
     { tipo: 'cenario', col: 3.5, qual: 'banca' }, { tipo: 'cenario', col: 9, qual: 'padaria' }, { tipo: 'cenario', col: 14, qual: 'descida', rotulo: 'Salão dos Rolos' },
     { tipo: 'npc', col: 3.5, id: 'lidia', nome: 'Lídia, vendedora de púrpura', look: lidia },
     { tipo: 'npc', col: 17, id: 'zelote1', nome: 'Um zelote', look: { skin: '#A0673E', hair: '#1C120A', tunic: '#5A4636', cape: '#3A2A2A', style: 'turbante', beard: true, body: 'forte' } },
-    { tipo: 'arvore', col: 23 }, { tipo: 'fruto', col: 20, lin: 9 }, { tipo: 'fruto', col: 22, lin: 8 }, { tipo: 'fruto', col: 25, lin: 9 }, { tipo: 'fruto', col: 26, lin: 12 }, { tipo: 'npc', col: 24, lin: 10, id: 'zaqueu', nome: 'Zaqueu', look: zaqueu }, { ...povo(10, 2, SELA), id: 'sela', nome: 'Sela, a padeira' }] },
+    { tipo: 'arvore', col: 23 }, { tipo: 'fruto', col: 21, lin: 10 }, { tipo: 'fruto', col: 23, lin: 9 }, { tipo: 'fruto', col: 26, lin: 10 }, { tipo: 'fruto', col: 21.5, lin: 9 }, { tipo: 'npc', col: 24, lin: 11, id: 'zaqueu', nome: 'Zaqueu', look: zaqueu }, { ...povo(10, 2, SELA), id: 'sela', nome: 'Sela, a padeira' }] },
   // a praça das armas: armas, roupas e os bichos de Noé
   // a praça das armas é a rua dos ofícios: o fogo e o metal de um lado (armeira e ferreiro, lado a lado), o pano do outro
   { cx: 2, nome: 'Praça das armas', papel: 'vila', tiles: sala([12, 4, 8]), objs: [
