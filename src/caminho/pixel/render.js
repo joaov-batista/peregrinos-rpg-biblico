@@ -1,6 +1,7 @@
 // Renderizador em pixel art do Caminho. O mundo inteiro é pintado numa tela pequena (272 pixels de altura,
 // 1 pixel de arte = 2 unidades do mundo) e ampliado sem suavização; só os textos ficam na resolução da tela.
 // A lógica do jogo não muda: este arquivo só lê o estado e desenha.
+import { pintarChaoAtras, pintarChaoFrente } from './chao.js';
 import { clamp, TAU, hash } from '../../util.js';
 import { input, wasd } from '../../input.js';
 import { TODAS } from '../../content/index.js';
@@ -544,12 +545,14 @@ export function renderPixel(G) {
 
   pintarFundoPixel(g, G, C, vw, vh, cx, cy);
   pintarSalasPixel(g, G, C, vw, vh, cx, cy);
+  pintarChaoAtras(g, G, vw, vh, cx, cy); // a face de cima do chão e as sombras de contato
   if (G.area.startsWith('sinagoga')) pintarLuzSinagoga(g, G, cx, cy, luzDoDia(G).d > 0.3);
   for (const o of G.objs) { const x = X(o.x), xv = o.vv ? X(o.vv.x) : x; if (xv + (o.ate && o.tipo === 'muroOlival' ? o.ate * T / PX : 0) < -60 || xv > vw + 60) continue; /* o muro do olival é comprido: conta a largura */ /* quem anda é visto onde está, não onde mora */ if (o.oculto && !G.achou(o)) { const k = G.p.lampA * clamp(1 - (Math.hypot(o.x - G.p.x, o.y - G.p.y) - 200) / 160, 0, 1); if (k < 0.05) continue; g.globalAlpha = k; } if (!pintarObjeto(g, o, G, x, Y(o.y), Tm)) antigo(() => desenharObjeto(g, o, G)); g.globalAlpha = 1; }
   if (G.def.mundo && G.N.arena) pintarArenaTema(g, G, X, Y, Tm);
   const chefe = G.N.arena && G.inimigos.find(e => e.kind === 'chefe' && e.cen);
   if (chefe) pintarPalco(g, G, chefe, X, Y, Tm, false); // o cenário que muda durante a luta
   pintarBlocosPixel(g, G, C, vw, vh, cx, cy);
+  pintarChaoFrente(g, G, vw, vh, cx, cy); // a beirada viva e os tufos na base das coisas
   if (G.def.interior) pintarAlemDasParedes(g, G, X, vw, vh); // por dentro: além das paredes é pedra, não a cidade lá fora
   pintarChaoDoTempo(g, G, vw, vh, cx, cy, Tm); // neve assentada e poças
   for (const o of G.objs) if (o.tipo === 'mar' || o.tipo === 'barco' || o.tipo === 'aguaAberta' || o.tipo === 'areia') pintarAgua(g, o, G, X(o.x), Y(o.y), Tm);
